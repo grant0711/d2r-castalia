@@ -179,7 +179,7 @@ monsterset	176	3			1						1																												1									fire_cast_2				
 delerium	177	3			1					1	1																																					teleport	teleport															1	212									0
 antidote	178																		1																																																							0
 thawing	179																1																																																									0
-staminapot	180																	1																																																								0
+staminapot	180																																																																									0
 passive_resistfire	181																																																																									0
 passive_resistcold	182																																																																									0
 passive_resistltng	183																																																																									0

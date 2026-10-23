@@ -9,7 +9,8 @@
     "vendor_sell_cap_normal": 500,
     "vendor_sell_cap_nm": 1000,
     "vendor_sell_cap_hell": 1500,
-    "rune_drop_boost": 3.5
+    "rune_drop_boost": 3.5,
+    "qa_blood_moor_boost": false
   },
   "pacing": {
     "zone_density_multiplier": 0.45,

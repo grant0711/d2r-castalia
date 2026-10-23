@@ -1,2 +1,2 @@
 name	code
-Scroll of Identify	isc
+Blacksmith's Malus	bml

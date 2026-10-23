@@ -3503,5 +3503,145 @@
     "bm3": {
       "asset": "hammer/horadric_malus"
     }
+  },
+  {
+    "vk1": {
+      "asset": "spear/spear"
+    }
+  },
+  {
+    "vk2": {
+      "asset": "spear/spear"
+    }
+  },
+  {
+    "vk3": {
+      "asset": "spear/pike"
+    }
+  },
+  {
+    "vk4": {
+      "asset": "spear/pike"
+    }
+  },
+  {
+    "sw1": {
+      "asset": "h2h/hatchet_hands"
+    }
+  },
+  {
+    "sw2": {
+      "asset": "h2h/katar"
+    }
+  },
+  {
+    "sw3": {
+      "asset": "h2h/katar"
+    }
+  },
+  {
+    "sw4": {
+      "asset": "h2h/scissors_katar"
+    }
+  },
+  {
+    "so1": {
+      "asset": "h2h/claws"
+    }
+  },
+  {
+    "so2": {
+      "asset": "h2h/hatchet_hands"
+    }
+  },
+  {
+    "so3": {
+      "asset": "h2h/hatchet_hands"
+    }
+  },
+  {
+    "so4": {
+      "asset": "h2h/claws"
+    }
+  },
+  {
+    "va1": {
+      "asset": "armor/full_plate_mail"
+    }
+  },
+  {
+    "va2": {
+      "asset": "armor/field_plate"
+    }
+  },
+  {
+    "va3": {
+      "asset": "armor/full_plate_mail"
+    }
+  },
+  {
+    "va4": {
+      "asset": "armor/ancient_armor"
+    }
+  },
+  {
+    "vh1": {
+      "asset": "circlet/circlet"
+    }
+  },
+  {
+    "vh2": {
+      "asset": "circlet/coronet"
+    }
+  },
+  {
+    "vh3": {
+      "asset": "circlet/tiara"
+    }
+  },
+  {
+    "vh4": {
+      "asset": "circlet/diadem"
+    }
+  },
+  {
+    "sa1": {
+      "asset": "armor/studded_leather"
+    }
+  },
+  {
+    "sa2": {
+      "asset": "armor/studded_leather"
+    }
+  },
+  {
+    "sa3": {
+      "asset": "armor/studded_leather"
+    }
+  },
+  {
+    "sa4": {
+      "asset": "armor/ancient_armor"
+    }
+  },
+  {
+    "sh1": {
+      "asset": "helm/mask"
+    }
+  },
+  {
+    "sh2": {
+      "asset": "helm/mask"
+    }
+  },
+  {
+    "sh3": {
+      "asset": "circlet/tiara"
+    }
+  },
+  {
+    "sh4": {
+      "asset": "circlet/diadem"
+    }
   }
 ]

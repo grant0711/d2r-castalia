@@ -1,0 +1,32 @@
+{
+    "basedOn": "ContextMenuHD.json",
+    "type": "ContextMenu", "name": "ContextMenu",
+    "fields": {
+        "rect": { "x": 0, "y": 0, "width": 400, "height": 540, "scale": "$ConsoleUIScale" },
+    },
+    "children": [
+        {
+            "type": "RecyclingListWidget", "name": "OptionsList",
+            "children": [
+                {
+                    "type": "HoverListItemWidget", "name": "template",
+                    "children": [
+                        {
+                            "type": "ImageWidget", "name": "Image",
+                        },
+                        {
+                            "type": "TextBoxWidget", "name": "TextBox",
+                        }
+                    ]
+                },
+                {
+                    "type": "Widget", "name": "ContextListSelector",
+                }
+            ]
+        },
+         // TODO: Place holder:: REMOVE/use updated art
+        {
+            "type": "ScrollControllerWidget", "name": "ScrollBar",
+        },
+    ]
+}

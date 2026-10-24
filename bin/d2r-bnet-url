@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Forward battlenet:// and blizzard:// OAuth redirect URLs from Linux browser into active Proton prefix
+source "/home/grant/games/d2r/bin/d2r-common.sh"
+
+URI="${1:-}"
+if [ -z "${URI}" ]; then
+    exit 0
+fi
+
+# Determine which prefix is currently active (check last modified or running wineserver), default to acct1
+ACTIVE_PFX="${D2R_ROOT}/prefixes/acct1"
+if [ -f "${D2R_ROOT}/prefixes/.active_prefix" ]; then
+    CANDIDATE="$(cat "${D2R_ROOT}/prefixes/.active_prefix" 2>/dev/null || true)"
+    if [ -n "${CANDIDATE}" ] && [ -d "${CANDIDATE}" ]; then
+        ACTIVE_PFX="${CANDIDATE}"
+    fi
+fi
+
+export WINEPREFIX="${ACTIVE_PFX}"
+BNET_EXE="${WINEPREFIX}/pfx/drive_c/Program Files (x86)/Battle.net/Battle.net.exe"
+
+if [ -f "${BNET_EXE}" ]; then
+    run_proton "${BNET_EXE}" "--uri=${URI}"
+fi

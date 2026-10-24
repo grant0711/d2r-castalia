@@ -1,0 +1,347 @@
+{
+    "type": "ChronicleRewardsPanel", "name":"ChronicleRewardsPanel",
+    "fields": {
+        "anchor": { "x": 0.5 },
+        "rect": { "x":-1420, "y":125},
+        "priority": 9005
+    },
+    "children":[
+        {
+            "type":"ImageWidget", "name":"RewardsBg",
+                    "fields":{
+                        "filename":"PANEL\\Chronicle\\Chronicle_RewardsMenu_BG"
+                    },
+                    "children":[
+                        {
+                                    "type":"TextBoxWidget", "name": "TitleText",
+                                    "fields": {
+                                        "rect":{"x":0, "y":35, "width":50, "height":50},
+                                        "anchor": {"x":0.5},
+                                        "text": "@ChronicleRewardsTitle",
+                                        "fitToParent": false,
+                                        "style": "$StyleRewardsTitleBlock"
+                                    }
+                                },
+                                {
+                                    "type": "ImageWidget", "name": "RewardScrollBarBackground",
+                                    "fields": {
+                                        "rect": { "x": -70, "y": 105 },
+                                        "anchor": { "x": 1.0 },
+                                        "filename": "Panel\\Chronicle\\Rewards_ScrollBar",
+                                    },
+                                    "children": [
+                                        {
+                                            "type": "ScrollControllerWidget", "name": "RewardScrollController",
+                                            "fields": {
+                                                "rect": { "x": -30, "y": 30, "width": 26, "height": 1395 },
+                                                "anchor": { "x": 1.0 },
+                                                "upArrowFilepath": "FrontEnd\\HD\\Final\\FrontEnd_ScrollUpBtn",
+                                                "downArrowFilepath": "FrontEnd\\HD\\Final\\FrontEnd_ScrollDownBtn",
+                                                "barFilepath": "PauseMenu\\VerticalIndicator",
+                                                "viewName": "RewardScrollView",
+                                                "wheelScrollSound": "cursor_scroll_hd",
+                                                "buttonScrollSound": "cursor_scroll_hd"
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "ScrollViewWidget", "name": "RewardScrollView",
+                                    "fields": {
+                                        "rect": { "x":60, "y":150, "width": 760, "height": 1500 },
+                                        "scrollControllerName": "RewardScrollController"
+                                    },
+                                    "children":[
+                                        {
+                                            "type": "TableWidget", "name": "RewardsTable",
+                                            "fields": {
+                                                "columns": [ { "width": 380, "alignment": { "h": "fit", "v": "fit" } }, { "width": 380, "alignment": { "h": "fit", "v": "fit" } } ],
+                                                "rowHeight": 550,
+                                                "cellPadding": { "top": 15}
+                                            },
+                                            "children":[
+                                                {
+                                                    "type": "TableRowWidget", "name": "Row A",
+                                                    "children":[
+                                                        {
+                                                            "type":"ChronicleRewardsPanelEntry", "name":"UniquesRewards",
+                                                            "fields":{
+                                                                "rect": { "x": 40, "width":300, "height": 550 },
+                                                                "focusIndicatorPadding": { "left": 0,"top": 0, "right": 10, "bottom": -20 },
+                                                                "tooltipTitle": "@ChronicleRewardsUniqueTitle",
+                                                                "tooltipItemType": "@ChronicleRewardsUniqueItemType",
+                                                                "tooltipDescription": "@ChronicleRewardsUniqueDescription",
+                                                                "navigation":{
+                                                                    "down": { "name": "RunewordsRewards" },
+                                                                    "right":{"name": "SetsRewards"}
+                                                                }
+                                                            },
+                                                            "children":[
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntryProgressBg",
+                                                                    "fields":{
+                                                                        "rect": { "width":300, "height": 116 },
+                                                                        "filename": "PANEL\\Chronicle\\Reward_BG_progress"
+                                                                    } 
+                                                                },
+                                                                {
+                                                                    "type":"TextBoxWidget", "name": "EntryCompletionText",
+                                                                    "fields": {
+                                                                        "rect": { "x": 155, "y": 33},
+                                                                        "text": "XX% Complete",
+                                                                        "fitToParent": false,
+                                                                        "style": {
+                                                                            "pointSize": "$MediumFontSize",
+                                                                            "alignment": { "h": "center", "v": "center" },
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntryCompletionFillBg",
+                                                                    "fields":{
+                                                                        "rect": { "x": 10, "y": 60, "width":450, "height": 80 },
+                                                                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_1"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "ProgressBarWidget", "name": "EntryCompletionProgressBar",
+                                                                    "fields": {
+                                                                        "rect": { "x": 25, "y": 69, "width":450, "height": 80 },
+                                                                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_1_FILL",
+                                                                        "frame": 0
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntrySlot",
+                                                                    "fields":{
+                                                                        "rect": { "x": 0, "y": 105, "width":300, "height": 425 },
+                                                                        "filename": "PANEL\\Chronicle\\Slot_Reward"
+                                                                    },
+                                                                    "children": [
+																		{
+																			"type": "AnimatedImageWidget", "name": "RewardAnimation",
+																			"fields": {
+																				"rect": { "x": 5, "y": 6, "width": 290, "height": 410, "scale": 1 },
+																				"filename": "PANEL\\Chronicle\\RewardAnims\\ChronicleReward_Aura_a",
+																				"blendMode": "black",
+																				"fps": 30,
+																				"playing": true,
+																				"loop": true,
+																			},
+																		},
+																	],
+                                                                },
+                                                                {
+                                                                    "type": "ToggleButtonWidget", "name": "ToggleSkillCheck",
+                                                                    "fields": {
+                                                                        "rect": { "x": 215, "y": 445, "width": 65, "height": 65 },
+                                                                        "sound": "cursor_menu_select_hd",
+                                                                        "focusIndicatorPadding": "$OptionsToggleFocusIndicatorPadding",
+                                                                        "focusIndicatorFilename": "$OptionsToggleFocusIndicatorFilename",
+                                                                        "filename": "Lobby\\CreateGame\\CreateGame_AdvancedCheckbox",
+                                                                        "focusIndicatorOffset": { "x": 0, "y": -4 },
+                                                                        "untoggledFrame": 0,
+                                                                        "untoggledPressedFrame": 1,
+                                                                        "untoggledHoveredFrame": 3,
+                                                                        "untoggledDisabledFrame": 2,
+                                                                        "toggledFrame": 4,
+                                                                        "toggledPressedFrame": 5,
+                                                                        "toggledHoveredFrame": 6
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "type":"ChronicleRewardsPanelEntry", "name":"SetsRewards",
+                                                            "fields":{
+                                                                "rect": { "x": 40, "width":300, "height": 550 },
+                                                                "focusIndicatorPadding": { "left": 0,"top": 0, "right": 10, "bottom": -20 },
+                                                                "tooltipTitle": "@ChronicleRewardsSetTitle",
+                                                                "tooltipItemType": "@ChronicleRewardsSetItemType",
+                                                                "tooltipDescription": "@ChronicleRewardsSetDescription",
+                                                                "navigation":{
+                                                                    "down": { "name": "RunewordsRewards" },
+                                                                    "left":{"name": "UniquesRewards"},
+                                                                    "right": { "name": "RunewordsRewards" }
+                                                                }
+                                                            },
+                                                            "children":[
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntryProgressBg",
+                                                                    "fields":{
+                                                                        "rect": { "width":300, "height": 116 },
+                                                                        "filename": "PANEL\\Chronicle\\Reward_BG_progress"
+                                                                    } 
+                                                                },
+                                                                {
+                                                                    "type":"TextBoxWidget", "name": "EntryCompletionText",
+                                                                    "fields": {
+                                                                        "rect": { "x": 155, "y": 33},
+                                                                        "text": "XX% Complete",
+                                                                        "fitToParent": false,
+                                                                        "style": {
+                                                                            "pointSize": "$MediumFontSize",
+                                                                            "alignment": { "h": "center", "v": "center" },
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntryCompletionFillBg",
+                                                                    "fields":{
+                                                                        "rect": { "x": 10, "y": 60, "width":450, "height": 80 },
+                                                                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_1"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "ProgressBarWidget", "name": "EntryCompletionProgressBar",
+                                                                    "fields": {
+                                                                        "rect": { "x": 25, "y": 69, "width":450, "height": 80 },
+                                                                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_1_FILL",
+                                                                        "frame": 0
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntrySlot",
+                                                                    "fields":{
+                                                                        "rect": { "x": 0, "y": 105, "width":300, "height": 425 },
+                                                                        "filename": "PANEL\\Chronicle\\Slot_Reward"
+                                                                    },
+																	"children": [
+																		{
+																			"type": "AnimatedImageWidget", "name": "RewardAnimation",
+																			"fields": {
+																				"rect": { "x": 5, "y": 6, "width": 290, "height": 410, "scale": 1 },
+																				"filename": "PANEL\\Chronicle\\RewardAnims\\ChronicleReward_Footsteps_a",
+																				"blendMode": "black",
+																				"fps": 30,
+																				"playing": true,
+																				"loop": true,
+																			},
+																		},
+																	],
+                                                                },
+                                                                {
+                                                                    "type": "ToggleButtonWidget", "name": "ToggleSkillCheck",
+                                                                    "fields": {
+                                                                        "rect": { "x": 215, "y": 445, "width": 65, "height": 65 },
+                                                                        "sound": "cursor_menu_select_hd",
+                                                                        "focusIndicatorPadding": "$OptionsToggleFocusIndicatorPadding",
+                                                                        "focusIndicatorFilename": "$OptionsToggleFocusIndicatorFilename",
+                                                                        "filename": "Lobby\\CreateGame\\CreateGame_AdvancedCheckbox",
+                                                                        "focusIndicatorOffset": { "x": 0, "y": -4 },
+                                                                        "untoggledFrame": 0,
+                                                                        "untoggledPressedFrame": 1,
+                                                                        "untoggledHoveredFrame": 3,
+                                                                        "untoggledDisabledFrame": 2,
+                                                                        "toggledFrame": 4,
+                                                                        "toggledPressedFrame": 5,
+                                                                        "toggledHoveredFrame": 6
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type":"TableRowWidget", "name":"Row B",
+                                                    "children":[
+                                                        {
+                                                            "type":"ChronicleRewardsPanelEntry", "name":"RunewordsRewards",
+                                                            "fields":{
+                                                                "rect": { "x": 40, "width":300, "height": 550 },
+                                                                "focusIndicatorPadding": { "left": 0,"top": 0, "right": 10, "bottom": -20 },
+                                                                "tooltipTitle": "@ChronicleRewardsRunewordTitle",
+                                                                "tooltipItemType": "@ChronicleRewardsRunewordItemType",
+                                                                "tooltipDescription": "@ChronicleRewardsRunewordDescription",
+                                                                "navigation":{
+                                                                    "up": { "name": "UniquesRewards" },
+                                                                    "left":{"name": "SetsRewards"}
+                                                                }
+                                                            },
+                                                            "children":[
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntryProgressBg",
+                                                                    "fields":{
+                                                                        "rect": { "width":300, "height": 116 },
+                                                                        "filename": "PANEL\\Chronicle\\Reward_BG_progress"
+                                                                    } 
+                                                                },
+                                                                {
+                                                                    "type":"TextBoxWidget", "name": "EntryCompletionText",
+                                                                    "fields": {
+                                                                        "rect": { "x": 155, "y": 33},
+                                                                        "text": "XX% Complete",
+                                                                        "fitToParent": false,
+                                                                        "style": {
+                                                                            "pointSize": "$MediumFontSize",
+                                                                            "alignment": { "h": "center", "v": "center" },
+                                                                        }
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntryCompletionFillBg",
+                                                                    "fields":{
+                                                                        "rect": { "x": 10, "y": 60, "width":450, "height": 80 },
+                                                                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_1"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type": "ProgressBarWidget", "name": "EntryCompletionProgressBar",
+                                                                    "fields": {
+                                                                        "rect": { "x": 25, "y": 69, "width":450, "height": 80 },
+                                                                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_1_FILL",
+                                                                        "frame": 0
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "type":"ImageWidget", "name": "EntrySlot",
+                                                                    "fields":{
+                                                                        "rect": { "x": 0, "y": 105, "width":300, "height": 425 },
+                                                                        "filename": "PANEL\\Chronicle\\Slot_Reward"
+                                                                    },
+																	"children": [
+																		{
+																			"type": "AnimatedImageWidget", "name": "RewardAnimation",
+																			"fields": {
+																				"rect": { "x": 5, "y": 6, "width": 290, "height": 410, "scale": 1 },
+																				"filename": "PANEL\\Chronicle\\RewardAnims\\ChronicleReward_Portal",
+																				"blendMode": "black",
+																				"fps": 30,
+																				"playing": true,
+																				"loop": true,
+																			},
+																		},
+																	],
+                                                                },
+                                                                {
+                                                                    "type": "ToggleButtonWidget", "name": "ToggleSkillCheck",
+                                                                    "fields": {
+                                                                        "rect": { "x": 215, "y": 445, "width": 65, "height": 65 },
+                                                                        "sound": "cursor_menu_select_hd",
+                                                                        "focusIndicatorPadding": "$OptionsToggleFocusIndicatorPadding",
+                                                                        "focusIndicatorFilename": "$OptionsToggleFocusIndicatorFilename",
+                                                                        "filename": "Lobby\\CreateGame\\CreateGame_AdvancedCheckbox",
+                                                                        "focusIndicatorOffset": { "x": 0, "y": -4 },
+                                                                        "untoggledFrame": 0,
+                                                                        "untoggledPressedFrame": 1,
+                                                                        "untoggledHoveredFrame": 3,
+                                                                        "untoggledDisabledFrame": 2,
+                                                                        "toggledFrame": 4,
+                                                                        "toggledPressedFrame": 5,
+                                                                        "toggledHoveredFrame": 6
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+
+
+}

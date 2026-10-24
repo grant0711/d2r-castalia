@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Extract vanilla D2R data/global/excel/*.txt files (and string tables) from CASC storage
+# into:
+#   1) /home/grant/games/d2r/vanilla-reference/  (read-only reference of untouched vanilla files)
+#   2) /home/grant/games/d2r/my-mod/data/global/excel/ (your active mod folder if not already populated)
+set -euo pipefail
+
+D2R_ROOT="/home/grant/games/d2r"
+GAME_DIR="${D2R_ROOT}/game/Diablo II Resurrected"
+EXTRACTOR="${D2R_ROOT}/bin/d2r-casc-extract"
+VANILLA_REF="${D2R_ROOT}/vanilla-reference"
+MOD_MPQ="${GAME_DIR}/mods/custom/custom.mpq"
+
+if [ ! -d "${GAME_DIR}/Data" ]; then
+    echo "Error: D2R CASC Data folder not found at '${GAME_DIR}/Data'."
+    echo "Install D2R via 'd2r-acct1' first, then run 'd2r-extract-txt'."
+    exit 1
+fi
+
+mkdir -p "${VANILLA_REF}"
+echo "=== Extracting vanilla data/global/dataversionbuild.txt to ${VANILLA_REF} ==="
+"${EXTRACTOR}" "${GAME_DIR}" "${VANILLA_REF}" "*dataversionbuild.txt"
+cp -f "${VANILLA_REF}/data/global/dataversionbuild.txt" "${VANILLA_REF}/data/global/DataVersionBuild.txt" 2>/dev/null || true
+
+echo "=== Extracting vanilla data/global/excel/*.txt to ${VANILLA_REF} ==="
+"${EXTRACTOR}" "${GAME_DIR}" "${VANILLA_REF}" "*global*excel*.txt"
+
+echo "=== Extracting vanilla string tables (item-names, skills, modifiers) to ${VANILLA_REF} ==="
+"${EXTRACTOR}" "${GAME_DIR}" "${VANILLA_REF}" "*local*lng*strings*.json"
+
+echo ""
+echo "=== Populating starter .txt files into ${MOD_MPQ}/data/global/excel/ (skipping existing edits) ==="
+mkdir -p "${MOD_MPQ}/data/global/excel"
+cp -f "${VANILLA_REF}/data/global/dataversionbuild.txt" "${MOD_MPQ}/data/global/dataversionbuild.txt" 2>/dev/null || true
+cp -f "${VANILLA_REF}/data/global/dataversionbuild.txt" "${MOD_MPQ}/data/global/DataVersionBuild.txt" 2>/dev/null || true
+cp -rn "${VANILLA_REF}/data/global/excel/"*.txt "${MOD_MPQ}/data/global/excel/" 2>/dev/null || true
+
+if [ -d "${VANILLA_REF}/data/local/lng/strings" ]; then
+    mkdir -p "${MOD_MPQ}/data/local/lng/strings"
+    cp -rn "${VANILLA_REF}/data/local/lng/strings/"*.json "${MOD_MPQ}/data/local/lng/strings/" 2>/dev/null || true
+fi
+
+echo ""
+echo "Done! All vanilla .txt files are ready:"
+echo "  - Active mod files (edit these!): /home/grant/games/d2r/my-mod/excel/"
+echo "  - Untouched vanilla reference:    /home/grant/games/d2r/vanilla-reference/data/global/excel/"

@@ -1,0 +1,721 @@
+{
+    "type": "ChronicleBaseListPanel", "name": "ChronicleBaseListPanel",
+    "fields": {
+        "priority": 9005,
+        "rect": "$OptionsPanelRect", /*1730 x 1284*/
+        "anchor": { "x": 0.5 },
+        "defaultWidget":"ItemScrollViewContainer"
+    },
+    "children": [
+		{
+            "type": "GrowableImageWidget", "name": "InputBackground",
+            "fields": {
+                "rect": "$ChronicleSearchBox",
+                "filename": "PANEL\\Chronicle\\Chronicle_InputBox_Center",
+                "hoveredFrame": 1,
+				"leftCap/filename": "PANEL\\Chronicle\\Chronicle_InputBox_Left",
+				"rightCap/filename": "PANEL\\Chronicle\\Chronicle_InputBox_Right",
+            },
+            "children": [
+                {
+                    "type": "InputTextBoxWidget", "name": "SearchInput",
+                    "fields": {
+                        "rect": "$ChronicleSearchInput",
+                        "backgroundColor":  { "r": 0, "g": 0, "b": 0, "a": 0.0 },
+                        "maxStringLength": 32,
+						"imeEnabled": true,
+						"hint": {
+							"text": "@ChronicleSearchPlaceholder",
+							"style": {
+								"fontFace": "BlizzardGlobal",
+								"alignment": { "v": "center" },
+								"pointSize": "$MediumLargeFontSize",
+								"fontColor": {"a": 84 },
+							},
+						},
+                        "fontStyle": {
+							"fontFace": "BlizzardGlobal",
+							"alignment": { "v": "center" },
+							"pointSize": "$MediumLargeFontSize"
+						},
+						"useParentRectAsFocusRect": true,
+                        "fontType": "12ptF",                        
+						"onUpdateMessage": "ChronicleListPanelMessage:FilterByInput",
+						"navigation": {
+							"down": { "name": "FilterRules" }
+						},
+						"virtualKeyboardType": "Alphabet",
+                        "leftCursorPadding": "$ChronicleLeftCursorPadding"
+                    }
+                }
+            ]
+        },
+		{
+			"type": "StackWidget", "name": "QualityStack",
+			"fields": {
+				"rect": {"x": 0, "y":0, "height": 65, "width": 1300},
+                "direction": "LeftRight",
+				"padding": 15
+			},
+			"children": [
+				{
+					"type": "ToggleButtonWidget", "name": "NormalQualityCheck",
+					"fields": {
+						"rect": { "x": 0, "y": 0, "width": 65, "height": 65 },
+						"focusIndicatorPadding": "$ToggleButtonFocusIndicatorPadding",
+						"sound": "cursor_menu_select_hd",
+						"filename": "Lobby\\CreateGame\\CreateGame_AdvancedCheckbox",                
+						"untoggledFrame": 0,
+						"untoggledPressedFrame": 1,
+						"untoggledHoveredFrame": 3,
+						"untoggledDisabledFrame": 2,
+						"toggledFrame": 4,
+						"toggledPressedFrame": 5,
+						"toggledHoveredFrame": 6,
+						"onClickMessage": "ChronicleListPanelMessage:FilterByQuality:0",
+						"navigation":{
+                            "up": { "name": "SearchInput" },
+							"down": { "name": "TabScrollViewContainer" },
+							"right":{"name": "ExceptionalQualityCheck"}
+						}
+					}
+				},
+				{
+					"type": "TextBoxWidget", "name": "NormalQualityText",
+					"fields": {
+						"text": "@NormalQuality",
+						"rect": { "x": 80, "y": 7, "height": 50 },
+						"style": "$StyleSettingsTitle",
+						"fitToText": true,
+					},
+				},
+				{
+					"type": "Widget", "name": "spacer",
+					"fields": {
+						"rect": { "width": 20, "height": 65 },
+					},
+				},
+				{
+					"type": "ToggleButtonWidget", "name": "ExceptionalQualityCheck",
+					"fields": {
+						"rect": { "x": 406, "y": 0, "width": 65, "height": 65 },
+						"focusIndicatorPadding": "$ToggleButtonFocusIndicatorPadding",
+						"sound": "cursor_menu_select_hd",                
+						"filename": "Lobby\\CreateGame\\CreateGame_AdvancedCheckbox",                
+						"untoggledFrame": 0,
+						"untoggledPressedFrame": 1,
+						"untoggledHoveredFrame": 3,
+						"untoggledDisabledFrame": 2,
+						"toggledFrame": 4,
+						"toggledPressedFrame": 5,
+						"toggledHoveredFrame": 6,
+						"onClickMessage": "ChronicleListPanelMessage:FilterByQuality:1",
+						"navigation":{
+                            "up": { "name": "SearchInput" },
+							"down": {"name" : "TabScrollViewContainer"},
+							"left": {"name": "NormalQualityCheck"},
+							"right": {"name": "EliteQualityCheck"},
+						}
+					}
+				},
+				{
+					"type": "TextBoxWidget", "name": "ExceptionalQualityText",
+					"fields": {
+						"text": "@ExceptionalQuality",
+						"rect": { "x": 486, "y": 7, "height": 50 },
+						"style": "$StyleSettingsTitle",
+						"fitToText": true,
+					},
+				},
+				{
+					"type": "Widget", "name": "spacer",
+					"fields": {
+						"rect": { "width": 20, "height": 65 },
+					},
+				},
+				{
+					"type": "ToggleButtonWidget", "name": "EliteQualityCheck",
+					"fields": {
+						"rect": { "x": 950, "y": 0, "width": 65, "height": 65 },
+						"focusIndicatorPadding": "$ToggleButtonFocusIndicatorPadding",
+						"sound": "cursor_menu_select_hd",
+						"filename": "Lobby\\CreateGame\\CreateGame_AdvancedCheckbox",
+						"untoggledFrame": 0,
+						"untoggledPressedFrame": 1,
+						"untoggledHoveredFrame": 3,
+						"untoggledDisabledFrame": 2,
+						"toggledFrame": 4,
+						"toggledPressedFrame": 5,
+						"toggledHoveredFrame": 6,
+						"onClickMessage": "ChronicleListPanelMessage:FilterByQuality:2",
+						"navigation":{
+                            "up": { "name": "SearchInput" },
+							"down": {"name" : "ItemScrollViewContainer"},
+							"left": {"name": "ExceptionalQualityCheck"},
+							"right": {"name": "FilterRules"},
+						}
+					}
+				},
+				{
+					"type": "TextBoxWidget", "name": "EliteQualityText",
+					"fields": {
+						"text": "@EliteQuality",
+						"rect": { "x": 1030, "y": 7, "height": 50 },
+						"style": "$StyleSettingsTitle",
+						"fitToText": true,
+					},
+				},
+			]
+		},
+        
+		{
+			"type": "DropdownListWidget", "name": "FilterRules",
+			"fields": {
+				"rect": { "x": -390, "y": 0, "width": 610, "height": 105, "scale": 0.65 },
+				"background": {
+				    "rect": { "width": 610, "height": 105 },
+					"filename": "PANEL/DropdownButton_Large_Center",
+					"leftCap/filename": "PANEL/DropdownButton_Large_Left",
+					"rightCap/filename": "PANEL/DropdownButton_Large_Right"
+				},
+				"pressedFrame": 1,
+				"disabledFrame": 2,
+				"hoveredFrame": 3,				
+				"anchor": { "x": 1.0 },
+				"states": [ "@ChronicleFilterSelect", "@ChronicleFilterRemaining", "@ChronicleFilterDiscovered", "@ChronicleFilterRecent" ],
+				"onUpdateMessage": "ChronicleListPanelMessage:UpdateFilterRule",
+				"text/rect": { "scale": 1.538},
+				"text/anchor": {"x": 0, "y": -0.3},
+				"textMargin": {"left": 20, "right": 290},
+				"text/style": "$StyleFilterRuleListButtonTextSmall",
+                "text/truncateWithEllipsis": true,
+				"textColor": "$FontColorLightGold",
+				"navigation": {
+                    "up": { "name": "SearchInput" },
+                    "down": {"name" : "ItemScrollViewContainer"},
+                    "left": {"name": "EliteQualityCheck"},
+				}
+			}
+		},
+        {
+            "type": "ImageWidget", "name": "TypeScrollBarBackground",
+            "fields": {
+                "rect": {"x": 466, "y": 80},
+                "filename": "Panel\\Chronicle\\Chronicle_ScrollBar_Small",
+            },
+            "children": [
+                {
+                    "type": "ScrollControllerWidget", "name": "TypeScrollController",
+                    "fields": {
+                        "rect": {"x": 5, "y": 25, "width": 26, "height": 859 },
+                        "upArrowFilepath": "FrontEnd\\HD\\Final\\FrontEnd_ScrollUpBtn",
+                        "downArrowFilepath": "FrontEnd\\HD\\Final\\FrontEnd_ScrollDownBtn",
+                        "barFilepath": "PauseMenu\\VerticalIndicator",
+                        "viewName": "TypeScrollView",
+                        "wheelScrollSound": "cursor_scroll_hd",
+                        "buttonScrollSound": "cursor_scroll_hd"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "FocusableListContainerWidget", "name": "TabScrollViewContainer",
+            "fields": {
+                "rect": { "x": 0, "y": 80, "width": 450, "height": 908},
+                "focusIndicatorPadding": { "left": 0,"top": 0, "right": 8, "bottom": -2 },
+                "navigation": {
+                    "up": { "name": "NormalQualityCheck" },
+                    "right":{"name": "ItemScrollViewContainer"},
+                    "down":{"name":"RewardsButton"}
+                }
+            },
+            "children": [
+                {
+                    "type": "ChronicleRecyclingListWidget", "name": "TabListContainer",
+                    "fields": {
+                        "fitToParent": true,
+                        "direction": "vertical",
+                        "hasNestedFocusableWidgets": true,
+                        "scrollControllerName": "TypeScrollController",
+                        "isHoverList": true,
+                        "selectorName": "TabListSelector"
+                    },
+                    "children": [
+                        {
+                            "type": "ChronicleCategoryListItem", "name": "CategoryTabTemplate",
+                            "fields": {
+                                "rect": { "x": 0, "y": 0, "width": 450, "height": 100 },
+                                "focusIndicatorPadding": { "left": 3,"top": 3, "right": 8, "bottom": 3 }
+                            },
+                            "children": [
+                                {
+                                    "type":"Widget", "name":"ParentCategoryContainerWidget",
+                                    "children":[
+                                        {
+                                            "type": "ToggleButtonWidget", "name": "CategoryExpandButton",
+                                            "fields": {
+                                                "rect": { "x": 0, "y": 0, "width": 0, "height": 0 },
+                                                "sound": "cursor_menu_select_hd",
+                                                "filename": "PANEL\\Chronicle\\Btn_collapse",
+                                                "untoggledFrame": 0,
+                                                "untoggledPressedFrame": 2,
+                                                "untoggledHoveredFrame": 1,
+                                                "untoggledDisabledFrame": 3,
+                                                "toggledFrame": 4,
+                                                "toggledPressedFrame": 6,
+                                                "toggledHoveredFrame": 5
+                                            }
+                                        },
+                                        {
+                                            "type": "ToggleButtonWidget", "name": "CategoryButton",
+                                            "fields": {
+                                                "rect": { "x": 100, "y": 0, "width": 360, "height": 100},
+                                                "filename": "PANEL\\Chronicle\\Slot_list_small_golddeco",
+                                                "untoggledFrame": 0,
+                                                "toggledFrame": 1,
+                                                "sound": "cursor_close_window_hd"
+                                            },
+                                            "children":[
+                                                {
+                                                    "type":"TextBoxWidget", "name": "CategoryText",
+                                                    "fields": {
+                                                        "rect": { "x": 35, "y": 0, "width": 315, "height": 100},
+                                                        "style": {
+                                                            "pointSize": "$MediumFontSize",
+                                                            "alignment": { "h": "left", "v": "center" },
+                                                        },
+														"truncateWithEllipsis": true,
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type":"Widget", "name":"SubCategoryContainerWidget",
+                                    "children":[
+                                        {
+                                            "type": "ToggleButtonWidget", "name": "CategoryButton",
+                                            "fields": {
+                                                "rect": { "x": 100, "y": 0, "width": 360, "height": 100},
+                                                "filename": "PANEL\\Chronicle\\Slot_list_small",
+                                                "untoggledFrame": 0,
+                                                "toggledFrame": 1,
+                                                "sound": "cursor_close_window_hd"
+                                            },
+                                            "children":[
+                                                {
+                                                    "type":"TextBoxWidget", "name": "CategoryText",
+                                                    "fields": {
+                                                        "rect": { "x": 15, "y": 0, "width": 325, "height": 100},
+                                                        "style": {
+                                                            "pointSize": "$MediumFontSize",
+                                                            "alignment": { "h": "left", "v": "center" },
+                                                        },
+														"truncateWithEllipsis": true,
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type":"Widget", "name":"StandaloneCategoryContainerWidget",
+                                    "children":[
+                                        {
+                                            "type": "ToggleButtonWidget", "name": "CategoryButton",
+                                            "fields": {
+                                                "rect": { "x": 0, "y": 0, "width": 450, "height": 100},
+                                                "filename": "PANEL\\Chronicle\\Slot_list_medium",
+                                                "untoggledFrame": 0,
+                                                "toggledFrame": 1,
+                                                "sound": "cursor_close_window_hd"
+                                            },
+                                            "children":[
+                                                {
+                                                    "type":"TextBoxWidget", "name": "CategoryText",
+                                                    "fields": {
+                                                        "rect": { "x": 40, "y": 0, "width": 400, "height": 100},
+                                                        "style": {
+                                                            "pointSize": "$MediumFontSize",
+                                                            "alignment": { "h": "left", "v": "center" },
+                                                        },
+														"truncateWithEllipsis": true,
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                            ]
+                        },
+                        {
+                            "type": "Widget", "name": "TabListSelector"
+                        }
+                    ]
+                },
+            ]
+        },
+                
+        {
+            "type": "ImageWidget", "name": "ItemScrollBarBackground",
+            "fields": {
+                "rect": { "x": -20, "y": 80 },
+                "anchor": { "x": 1.0 },
+                "filename": "Panel\\Chronicle\\Chronicle_Scrollbar_Large",
+            },
+            "children": [
+                {
+                    "type": "ScrollControllerWidget", "name": "ItemScrollController",
+                    "fields": {
+                        "rect": { "x": -31, "y": 29, "width": 26, "height": 1095 },
+                        "anchor": { "x": 1.0 },
+                        "upArrowFilepath": "FrontEnd\\HD\\Final\\FrontEnd_ScrollUpBtn",
+                        "downArrowFilepath": "FrontEnd\\HD\\Final\\FrontEnd_ScrollDownBtn",
+                        "barFilepath": "PauseMenu\\VerticalIndicator",
+                        "viewName": "ItemScrollView",
+                        "wheelScrollSound": "cursor_scroll_hd",
+                        "buttonScrollSound": "cursor_scroll_hd"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "FocusableListContainerWidget", "name": "ItemScrollViewContainer",
+            "fields": {
+                "rect": { "x": 530, "y": 80, "width": 1157, "height": 1200},
+                "focusIndicatorPadding": { "left": 0,"top": 0, "right": 6, "bottom": 4 },
+                "navigation": {
+                    "up": { "name": "FilterRules" },
+                    "left":{"name": "TabScrollViewContainer"}
+                }
+            },
+            "children": [
+                { 
+                    "type": "ChronicleRecyclingListWidget", "name": "ItemListContainer",
+                    "fields": {
+                        "fitToParent": true,
+                        "direction": "vertical",
+                        "scrollControllerName": "ItemScrollController",
+                        "isHoverList": true,
+                        "selectorName": "ItemListSelector"
+                    },
+                    "children": [
+                        {
+                            "type": "ChronicleItemListItem", "name": "ItemSlotTemplate",
+                            "fields": {
+                                "rect": { "x": 0, "y": 0, "width": 1157, "height": 188 },
+                                "focusIndicatorPadding": { "left": 0,"top": 0, "right": 106, "bottom": 0 },
+                                "standaloneFocusIndicatorPadding": {"left": 6, "top": 6, "right": 12, "bottom": 4 },
+                                "childFocusIndicatorPadding": {"left": -90, "top": 0, "right": 99, "bottom": 0 },
+                            },
+                            "children": [
+                                { 
+                                    "type": "ImageWidget", "name": "ItemSlotBackground_Locked",
+                                    "fields": {
+                                        "filename":"PANEL\\Chronicle\\Slot_list_item_XL"
+                                    },
+                                    "children":[
+                                        {
+                                            "type": "Widget", "name": "ItemSpriteContainer",
+                                            "fields":{
+                                                "rect": { "x": 20, "y": 20, "width": 140, "height": 140 }
+                                            },
+                                            "children":[
+                                                {
+                                                    "type": "ImageWidget", "name": "ItemSprite",
+                                                    "fields":{
+                                                        "transparency": 0.3
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotText",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 0, "width": 875, "height": 180 },
+                                                "style": {
+                                                    "fontColor": "$FontColorMoreLightGray",
+                                                    "pointSize": "$MediumLargeFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "ImageWidget", "name": "ItemSlotBackground_Unlocked",
+                                    "fields": {
+                                        "filename":"PANEL\\Chronicle\\Slot_list_item_divider_XL"
+                                    },
+                                    "children":[
+                                        {
+                                            "type": "Widget", "name": "ItemSpriteContainer",
+                                            "fields":{
+                                                "rect": { "x": 20, "y": 20, "width": 140, "height": 140 },
+                                            },
+                                            "children":[
+                                                {
+                                                    "type": "ImageWidget", "name": "ItemSprite",
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotText",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 12, "width": 875, "height": 50 },
+                                                "style": {
+                                                    "fontColor": "$FontColorGoldYellow",
+                                                    "pointSize": "$LootFilterMediumLargeFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotTimestamp",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 70, "width": 875, "height": 60 },
+                                                "text": "@ChronicleEntryFoundTimestamp",
+                                                "style": {
+                                                    "fontColor": "$FontColorMoreLightGray",
+                                                    "pointSize": "$LootFilterSmallFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotSpawnerName",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 120, "width": 875, "height": 60 },
+                                                "text": "@ChronicleEntryDroppedBy",
+                                                "style": {
+                                                    "fontColor": "$FontColorMoreLightGray",
+                                                    "pointSize": "$LootFilterSmallFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "ImageWidget", "name": "ItemSlotBackground_Subtab_Locked",
+                                    "fields": {
+                                        "rect": { "x": 95, "y": 0},
+                                        "filename":"PANEL\\Chronicle\\Slot_list_item"
+                                    },
+                                    "children":[
+                                        {
+                                            "type": "Widget", "name": "ItemSpriteContainer",
+                                            "fields":{
+                                                "rect": { "x": 20, "y": 20, "width": 140, "height": 140 },
+                                            },
+                                            "children":[
+                                                {
+                                                    "type": "ImageWidget", "name": "ItemSprite",
+                                                    "fields":{
+                                                        "transparency": 0.3
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotText",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 0, "width": 875, "height": 180 },
+                                                "style": {
+                                                    "fontColor": "$FontColorMoreLightGray",
+                                                    "pointSize": "$MediumLargeFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "ImageWidget", "name": "ItemSlotBackground_Subtab_Unlocked",
+                                    "fields": {
+                                        "rect": { "x": 95, "y": 0},
+                                        "filename":"PANEL\\Chronicle\\Slot_list_item_divider"
+                                    },
+                                    "children":[
+                                        {
+                                            "type": "Widget", "name": "ItemSpriteContainer",
+                                            "fields":{
+                                                "rect": { "x": 20, "y": 20, "width": 140, "height": 140 },
+                                            },
+                                            "children":[
+                                                {
+                                                    "type": "ImageWidget", "name": "ItemSprite",
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotText",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 12, "width": 875, "height": 50 },
+                                                "style": {
+                                                    "fontColor": "$FontColorGoldYellow",
+                                                    "pointSize": "$LootFilterMediumLargeFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotSpawnerName",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 70, "width": 875, "height": 60 },
+                                                "text": "@ChronicleEntryDroppedBy",
+                                                "style": {
+                                                    "fontColor": "$FontColorMoreLightGray",
+                                                    "pointSize": "$LootFilterSmallFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        },
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotTimestamp",
+                                            "fields": {
+                                                "rect": { "x": 180, "y": 120, "width": 875, "height": 60 },
+                                                "text": "@ChronicleEntryFoundTimestamp",
+                                                "style": {
+                                                    "fontColor": "$FontColorMoreLightGray",
+                                                    "pointSize": "$LootFilterSmallFontSize",
+                                                    "alignment": { "h": "left", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "ImageWidget", "name": "TabSlotBackground",
+                                    "fields": {
+                                        "rect": { "x": 95, "y": 0},
+                                        "filename": "PANEL\\Chronicle\\Slot_list_long",
+                                        "visible": false
+                                    },
+                                    "children":[
+                                        {
+                                            "type": "TextBoxWidget", "name": "ItemSlotText",
+                                            "fields": {
+                                                "fitToParent": true,
+                                                "style": {
+                                                    "fontColor": "$FontColorGoldYellow",
+                                                    "pointSize": "$MediumLargeFontSize",
+                                                    "alignment": { "h": "center", "v": "center" }
+                                                },
+                                                "truncateWithEllipsis": true
+                                            }
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "ToggleButtonWidget", "name": "TabExpandButton",
+                                    "fields": {
+                                        "rect": { "x": 0, "y": 0, "width": 0, "height": 0 },
+                                        "sound": "cursor_menu_select_hd",
+                                        "filename": "PANEL\\Chronicle\\Btn_collapse",
+                                        "untoggledFrame": 0,
+                                        "untoggledPressedFrame": 2,
+                                        "untoggledHoveredFrame": 1,
+                                        "untoggledDisabledFrame": 3,
+                                        "toggledFrame": 4,
+                                        "toggledPressedFrame": 6,
+                                        "toggledHoveredFrame": 5,
+                                        "visible": false
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "Widget", "name": "ItemListSelector"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ImageWidget", "name": "CompletionContainer",
+            "fields": {
+                "rect": { "x": 0, "y": 1000, "width":450, "height": 110 },
+                "filename": "PANEL\\Chronicle\\Footer_BG_Progress"
+            },
+            "children":[
+                {
+                    "type":"TextBoxWidget", "name": "CompletionText",
+                    "fields": {
+                        "text": "@CompletePercent",
+                        "fitToParent": false,
+                        "rect": { "y": 15, "width":450, "height": 40 },
+                        "style": {
+                            "pointSize": "$MediumFontSize",
+                            "alignment": { "h": "center", "v": "center" },
+                        }
+                    }
+                },
+                {
+                    "type":"ImageWidget", "name": "FillBg",
+                    "fields":{
+                        "rect": { "x": 25, "y": 65, "width":450, "height": 80 },
+                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_2"
+                    }
+                },
+                {
+                    "type": "ProgressBarWidget", "name": "ChronicleCompletionProgressBar",
+                    "fields": {
+                        "rect": { "x": 40, "y": 74, "width":450, "height": 80 },
+                        "filename": "PANEL\\Chronicle\\ProgressBar_Small_2_FILL",
+                        "frame": 0
+                    }
+                }
+            ]
+        },
+        {
+            "type": "ToggleButtonWidget", "name": "RewardsButton",
+            "fields": {
+                "rect": { "x": 0, "y": 1150, "width": 452, "height": 105 },
+                "filename": "PANEL\\Chronicle\\Btn_View_Rewards",
+                "untoggledFrame": 0,
+                "untoggledPressedFrame": 2,
+                "untoggledHoveredFrame": 1,
+                "untoggledDisabledFrame": 3,
+                "toggledFrame": 0,
+                "toggledPressedFrame": 2,
+                "toggledHoveredFrame": 1,
+                "onClickMessage":"ChroniclePanelMessage:ToggleRewards:true",
+                "navigation": {
+                    "up":{"name": "TabScrollViewContainer"},
+                    "right":{"name": "ItemScrollViewContainer"}
+                }
+            },
+            "children":[
+                {
+                    "type":"TextBoxWidget", "name": "RewardsButtonText",
+                    "fields": {
+                        "text": "@ViewRewardsButton",
+                        "rect": { "x": 30, "y": 0, "width": 390, "height": 105 },
+                        "style": {
+                            "pointSize": "$LootFilterMediumFontSize",
+                            "alignment": { "h": "center", "v": "center" },
+							"options": { "lineWrap": true },
+                        }
+                    }
+                }
+            ]
+        },
+		{
+            "type": "ImageWidget", "name": "ChronicleRunewordAtlas",
+            "fields": {
+				"rect": { "x": 0, "y": 0, "width": 0, "height": 0, "scale" : 0 },
+				"filename": "PANEL\\Chronicle\\Chronicle_Runes",
+            }
+        }
+    ]
+}

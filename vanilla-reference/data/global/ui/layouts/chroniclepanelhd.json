@@ -1,0 +1,111 @@
+{
+    "type": "ChroniclePanel", "name": "ChroniclePanel",
+    "fields": {
+        "priority": 9002,
+        "fitToParent": true,
+        "rewardsOffset": 450,
+        "widgetsToAdjust": ["Background", "BackgroundImage", "Title", "CloseButton", "ChronicleBackground", "ChronicleTabs"],
+    },
+    "children": [
+        {
+            "type": "RectangleWidget", "name": "Background",
+            "fields": {
+                "fitToScreen": true,
+                "color": [ 0.0, 0.0, 0.0, 0.7 ]
+            },
+            "children": [
+                {
+                    "type": "ClickCatcherWidget", "name": "catcher",
+                    "fields": {
+                        "fitToParent": true
+                    }
+                },
+                {
+                    "type": "Widget", "name": "Anchor",
+                    "fields": {
+                        "anchor": { "x": 0.5, "y": 0.5 },
+                        "rect": "$SettingsPanelAnchorRect"
+                    },
+                    "children": [
+                        {
+                            "type": "ImageWidget", "name": "BackgroundImage",
+                            "fields": {
+                                "filename": "\\PANEL\\Options\\FrontEndOptionsBG"
+                            }
+                        },
+                        {
+                            "type": "TextBoxWidget", "name": "Title",
+                            "fields": {
+                                "rect": { "x": 0, "y": 45, "width": 1950, "height": 103 },
+                                "text": "@Chronicle",
+                                "style": "$StyleTitleBlock"
+                            }
+                        },
+                        {
+                            "type": "ButtonWidget", "name": "CloseButton",
+                            "fields": {
+                                "rect": { "x": 1868, "y": 8 },
+                                "filename": "PANEL\\closebtn_4x",
+                                "hoveredFrame": 3,
+                                "onClickMessage": "PanelManager:ClosePanel:ChroniclePanel",
+                                "tooltipString": "@strClose",
+                                "sound": "cursor_close_window_hd",
+                                "acceptsEscKeyEverywhere": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "ImageWidget", "name": "ChronicleBackground",
+            "fields": {
+                "rect": "$SettingsPanelBackgroundRect",
+                "anchor": { "x": 0.5 },
+                "filename": "Controller/Panel/Options/Panel_Options_BG"
+            },
+            "children": [
+                {
+                    "type": "ControllerCursorBoundsWidget", "name": "ControllerCursorBounds",
+                    "fields": {
+                        "fitToParent": true
+                    }
+                }
+            ]
+        },
+        {
+            "type": "TabBarWidget", "name": "ChronicleTabs",
+            "fields": {
+                "rect": "$SettingsPanelTabsRect",
+                "anchor": { "x": 0.5 },
+                "tabCount": 3,
+                "tabSize": { "x": 266, "y": 121 },
+                "tabPadding": { "x": 2, "y": 0 },
+                "unavailableTabsLeaveGaps": false,
+                "tabSizingMethod": "fixedCenter",
+                "filename": "Panel\\Chronicle\\Chronicle_Tabs",
+                "inactiveFrames": [ 0, 0, 0],
+                "activeFrames": [ 1, 1, 1],
+                "activeTextColor": "$TabsActiveTextColor",
+                "inactiveTextColor": "$TabsInactiveTextColor",
+                "tabTextOffset": { "x": 0, "y": -4 },
+                "textStyle": {
+                    "pointSize": "$MediumFontSize",
+                    "alignment": { "h": "center", "v": "center" },
+                    "fontColor": "$FontColorWhite",
+                    "spacing": {"leading":0.9, "kerning":0.95}
+                },
+                "textStrings": [ "@Unique", "@Sets", "@Runewords"],
+                "tabMessages": [
+                    "ChroniclePanelMessage:ToggleChildPanel:ChronicleUniquesListPanel",  
+                    "ChroniclePanelMessage:ToggleChildPanel:ChronicleSetsListPanel",
+                    "ChroniclePanelMessage:ToggleChildPanel:ChronicleRunewordsListPanel"
+                ],
+                "tabLeftIndicatorPosition": { "x": 0, "y": -15},
+                "tabRightIndicatorPosition": { "x": 1730, "y": -15},
+				"truncateText": true,
+				"showFullTextWhenTabActive": true,
+            }
+        }
+    ]
+}

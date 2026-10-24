@@ -1,0 +1,160 @@
+{
+    "basedOn": "ChronicleRewardsPanelHD.json",
+    "type": "ChronicleRewardsPanel", "name":"ChronicleRewardsPanel",
+    "fields": {
+        "priority": 9900,
+        "anchor": { "x": 0.5 },
+        "rect": "$ChronicleRewardsControllerRect",
+        "defaultWidget":"UniquesRewards"
+    },
+    "children":[
+        {
+            "type":"ImageWidget", "name":"RewardsBg",
+            "fields":{
+                "filename": "Controller/Panel/Options/Panel_Options_BG",
+            },
+            "children":[
+                {
+                    "type": "ClickCatcherWidget", "name": "catcher",
+                    "fields": {
+                        "fitToParent": true
+                    }
+                },
+                {
+                    "type":"TextBoxWidget", "name": "TitleText",
+                },
+                {
+                    "type": "ImageWidget", "name": "RewardScrollBarBackground",
+                    "fields":{
+                        "filename": "Panel\\Chronicle\\Chronicle_Scrollbar_Large",
+                        "rect": { "x":-70, "y": 185, "width": 36, "height": 1156 },
+                    },
+                    "children": [
+                        {
+                            "type": "ScrollControllerWidget", "name": "RewardScrollController",
+                            "fields":{
+                                "rect": { "x": -31, "y": 29, "width": 26, "height": 1095 },
+                                "anchor": { "x": 1.0 }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "ScrollViewWidget", "name": "RewardScrollView",
+                    "fields":{
+                        "rect": { "x":175, "y":125, "width": 1200, "height": 1110, "scale": 1.16 },
+                    },
+                    "children":[
+                        {
+                            "type": "TableWidget", "name": "RewardsTable",
+                            "fields":{
+                                "columns": [ { "width": 600, "alignment": { "h": "center", "v": "center" } }, { "width": 600, "alignment": { "h": "center", "v": "center" } } ],
+                                "rowHeight": 550,
+                                "cellPadding": { "top": 6}
+                            },
+                            "children":[
+                                {
+                                    "type": "TableRowWidget", "name": "Row A",
+                                    "children":[
+                                        {
+                                            "type":"ChronicleRewardsPanelEntry", "name":"UniquesRewards",
+                                            "children":[
+                                                {
+                                                    "type":"ImageWidget", "name": "EntryProgressBg",
+                                                },
+                                                {
+                                                    "type":"TextBoxWidget", "name": "EntryCompletionText",
+                                                },
+                                                {
+                                                    "type":"ImageWidget", "name": "EntryCompletionFillBg",
+                                                },
+                                                {
+                                                    "type": "ProgressBarWidget", "name": "EntryCompletionProgressBar",
+                                                },
+                                                {
+                                                    "type":"ImageWidget", "name": "EntrySlot",
+                                                    "children":[
+                                                        {
+                                                            "type": "AnimatedImageWidget", "name": "RewardAnimation",
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "ToggleButtonWidget", "name": "ToggleSkillCheck",
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type":"ChronicleRewardsPanelEntry", "name":"SetsRewards",
+                                            "children":[
+                                                {
+                                                    "type":"ImageWidget", "name": "EntryProgressBg",
+                                                },
+                                                {
+                                                    "type":"TextBoxWidget", "name": "EntryCompletionText",
+                                                },
+                                                {
+                                                    "type":"ImageWidget", "name": "EntryCompletionFillBg",
+                                                },
+                                                {
+                                                    "type": "ProgressBarWidget", "name": "EntryCompletionProgressBar",
+                                                },
+                                                {
+                                                    "type":"ImageWidget", "name": "EntrySlot",
+                                                    "children":[
+                                                        {
+                                                            "type": "AnimatedImageWidget", "name": "RewardAnimation",
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "ToggleButtonWidget", "name": "ToggleSkillCheck",
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type":"TableRowWidget", "name":"Row B",
+                                    "children":[
+                                        {
+                                            "type":"ChronicleRewardsPanelEntry", "name":"RunewordsRewards",
+                                            "children":[
+                                                {
+                                                    "type":"ImageWidget", "name": "EntryProgressBg",
+                                                },
+                                                {
+                                                    "type":"TextBoxWidget", "name": "EntryCompletionText",
+                                                },
+                                                {
+                                                    "type":"ImageWidget", "name": "EntryCompletionFillBg",
+                                                },
+                                                {
+                                                    "type": "ProgressBarWidget", "name": "EntryCompletionProgressBar",
+                                                },
+                                                {
+                                                    "type":"ImageWidget", "name": "EntrySlot",
+                                                    "children":[
+                                                        {
+                                                            "type": "AnimatedImageWidget", "name": "RewardAnimation",
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "ToggleButtonWidget", "name": "ToggleSkillCheck",
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "type": "Widget"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

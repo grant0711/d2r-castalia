@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Setup / Install Battle.net for Account 1 and Account 2
+source "/home/grant/games/d2r/bin/d2r-common.sh"
+
+ensure_proton
+
+ACCT="${1:-1}"
+if [ "${ACCT}" = "1" ]; then
+    export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
+elif [ "${ACCT}" = "2" ]; then
+    export WINEPREFIX="${D2R_ROOT}/prefixes/acct2"
+else
+    echo "Usage: d2r-setup [1|2]"
+    exit 1
+fi
+
+mkdir -p "${WINEPREFIX}"
+link_shared_game_dir "${WINEPREFIX}"
+
+BNET_EXE="${WINEPREFIX}/pfx/drive_c/Program Files (x86)/Battle.net/Battle.net Launcher.exe"
+
+echo "================================================================"
+echo " Launching Battle.net Setup / Client for Account ${ACCT}"
+echo " Prefix: ${WINEPREFIX}"
+echo " Shared Game Path inside Wine: C:\\Program Files (x86)\\Diablo II Resurrected (or C:\\D2R)"
+echo "================================================================"
+
+if [ -f "${BNET_EXE}" ]; then
+    run_proton "${BNET_EXE}"
+else
+    run_proton "${BNET_INSTALLER}"
+fi

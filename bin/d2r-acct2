@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Launch Diablo II: Resurrected - Account 2 (Online Battle.net, Isolated Prefix)
+source "/home/grant/games/d2r/bin/d2r-common.sh"
+
+ensure_proton
+export WINEPREFIX="${D2R_ROOT}/prefixes/acct2"
+link_shared_game_dir "${WINEPREFIX}"
+
+BNET_EXE="${WINEPREFIX}/pfx/drive_c/Program Files (x86)/Battle.net/Battle.net Launcher.exe"
+if [ -f "${BNET_EXE}" ]; then
+    run_proton "${BNET_EXE}" --exec="launch OSI" "$@"
+else
+    echo "[d2r-acct2] Battle.net not installed in Account 2 prefix yet. Launching installer..."
+    echo "Tip: Once Battle.net opens on Account 2, click 'Locate the game' next to Install and select C:\\D2R!"
+    run_proton "${BNET_INSTALLER}"
+fi

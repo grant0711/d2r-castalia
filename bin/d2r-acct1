@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Launch Diablo II: Resurrected - Account 1 (Online Battle.net, unmodded)
+source "/home/grant/games/d2r/bin/d2r-common.sh"
+
+ensure_proton
+export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
+link_shared_game_dir "${WINEPREFIX}"
+
+BNET_CFG="${WINEPREFIX}/pfx/drive_c/users/steamuser/AppData/Roaming/Battle.net/Battle.net.config"
+if [ -f "${BNET_CFG}" ]; then
+    if grep -q '"AdditionalLaunchArguments": "-mod' "${BNET_CFG}"; then
+        echo "[d2r-acct1] Clearing mod AdditionalLaunchArguments in Battle.net.config for Online play..."
+        pkill -9 -f "[B]attle.net.exe" 2>/dev/null || true
+        pkill -9 -f "[A]gent.exe" 2>/dev/null || true
+        sleep 1
+        python3 - "${BNET_CFG}" <<'PY'
+import json, sys
+p = sys.argv[1]
+with open(p, "r", encoding="utf-8") as f:
+    data = json.load(f)
+games = data.setdefault("Games", {})
+osi = games.setdefault("osi", {"ServerUid": "osi"})
+osi["AdditionalLaunchArguments"] = ""
+with open(p, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=4)
+PY
+    fi
+fi
+
+BNET_EXE="${WINEPREFIX}/pfx/drive_c/Program Files (x86)/Battle.net/Battle.net.exe"
+if [ -f "${BNET_EXE}" ]; then
+    run_proton "${BNET_EXE}" --exec="launch OSI" "$@"
+else
+    echo "[d2r-acct1] Battle.net not installed in Account 1 prefix yet. Launching installer..."
+    run_proton "${BNET_INSTALLER}"
+fi

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Launch both online D2R accounts simultaneously (Account 1 and Account 2)
+set -euo pipefail
+
+/home/grant/games/d2r/bin/d2r-acct1 &
+sleep 5
+/home/grant/games/d2r/bin/d2r-acct2 &

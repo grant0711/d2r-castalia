@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Launch Diablo II: Resurrected directly in Offline Mode (-uid osi -mod custom -txt)
+# Uses libd2r_offline.so so D2R immediately sees it is offline without connecting to Battle.net.
+source "/home/grant/games/d2r/bin/d2r-common.sh"
+
+ensure_proton
+export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
+link_shared_game_dir "${WINEPREFIX}"
+
+# Ensure mods/custom save directory has Settings.json and offline test character if not already present
+SAVED_BASE="${WINEPREFIX}/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected"
+SAVED_MOD="${SAVED_BASE}/mods/custom"
+mkdir -p "${SAVED_MOD}"
+if [ -f "${SAVED_BASE}/Settings.json" ] && [ ! -f "${SAVED_MOD}/Settings.json" ]; then
+    cp -a "${SAVED_BASE}/Settings.json" "${SAVED_MOD}/"
+fi
+if [ -f "${SAVED_BASE}/TESTER.d2s" ] && [ ! -f "${SAVED_MOD}/TESTER.d2s" ]; then
+    cp -a "${SAVED_BASE}/"TESTER.* "${SAVED_MOD}/" 2>/dev/null || true
+fi
+
+# Lock Quest 41 (Den of Evil Respec Used) in all mod .d2s character saves so Akara never offers respec
+python3 "${D2R_ROOT}/bin/d2r-lock-respec.py" "${SAVED_MOD}"
+
+D2R_WIN_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2R.exe'
+echo "[d2r-mod] Launching D2R in Offline Mode with '-uid osi -mod custom -txt'..."
+echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
+export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
+cd "${GAME_DIR}"
+run_proton "${D2R_WIN_EXE}" -uid osi -mod custom -txt "$@"
+python3 "${D2R_ROOT}/bin/d2r-lock-respec.py" "${SAVED_MOD}"

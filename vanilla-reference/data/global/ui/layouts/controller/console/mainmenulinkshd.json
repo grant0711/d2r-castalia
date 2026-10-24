@@ -1,0 +1,77 @@
+{
+    "basedOn": "MainMenuLinksHD.json",
+    "type": "MainMenuLinksPanel", "name": "MainMenuLinks",
+    "fields": {
+        "defaultWidget": [ "RotwButton", "CommunityLinkButton" ],
+    },
+    "children": [
+        {
+            "type": "StackWidget", "name": "LinksStack",
+            "children": [
+                {
+                    "type": "ImageWidget", "name": "RotwTile",
+                    "children": [
+                        {
+                            "type": "TextBoxWidget", "name": "RotwBodyText",
+                        },
+                        {
+                            "type": "ButtonWidget", "name": "RotwButton",
+                            "fields": {
+                                "focusIndicatorFilename": "Controller/HoverImages/FrontEndButtonMed",
+                                "focusIndicatorVisible": true,
+                                "focusIndicatorOffset": { "x": -2, "y": 0 },
+                                "navigation": {
+                                    "left": { "panelBoundary": true },
+                                    "down": { "name": "CommunityLinkScrollbar", "panelBoundary": true },
+                                }
+                            }
+                        },
+                    ]
+                },
+                {
+                    "type": "ImageWidget", "name": "CommunityLinkTile",
+                    "children": [
+                        {
+                            "type": "ImageWidget", "name": "ScrollBarBackground",
+                            "children": [
+                                {
+                                    "type": "ScrollControllerWidget", "name": "CommunityLinkScrollbar",
+                                    "fields": {
+                                        "navigation": {
+                                            "left": { "panelBoundary": true },
+                                            "up": { "name": "RotwButton" },
+                                            "down": { "name": "CommunityLinkButton" },
+                                        },
+                                        "focusIndicatorFilename": "Controller/HoverImages/ScrollbarExtraSmall_Hover",
+                                        "focusIndicatorOffset": { "x": 0, "y": -4 },
+                                    }
+                                },
+                            ]
+                        },
+                        {
+                            "type": "ScrollViewWidget", "name": "CommunityLinkScrollView",
+                            "children": [
+                                {
+                                    "type": "TextBoxWidget", "name": "CommunityLinkBodyText",
+                                },
+                            ]
+                        },
+                        {
+                            "type": "ButtonWidget", "name": "CommunityLinkButton",
+                            "fields": {
+                                "focusIndicatorFilename": "Controller/HoverImages/FrontEndButtonMed",
+                                "focusIndicatorVisible": true,
+                                "focusIndicatorOffset": { "x": -2, "y": 0 },
+                                "navigation": {
+                                    "left": { "panelBoundary": true },
+                                    "up": { "name": "CommunityLinkScrollbar" },
+                                    "down": { "panelBoundary": true },
+                                }
+                            }
+                        },
+                    ]
+                }
+            ]
+        }
+    ]
+}

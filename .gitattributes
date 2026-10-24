@@ -1,3 +1,0 @@
-# Preserve Tab-Separated Values (TSV) and CRLF line endings for Diablo II: Resurrected data tables
-*.txt text eol=crlf
-*.json text eol=lf

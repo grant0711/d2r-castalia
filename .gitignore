@@ -1,0 +1,12 @@
+# Ignore D2R installation, Wine/Proton prefixes, runtime binaries, and generated mod output
+/game/
+/my-mod
+/prefixes/
+/runtime/
+/bin/d2r-casc-extract
+/tools/Battle.net-Setup.exe
+/tools/CascLib/
+__pycache__/
+*.pyc
+*.pyo
+*.so

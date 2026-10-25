@@ -145,25 +145,41 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
     checks_passed.append("skills/states/missiles/skilldesc referential & rollback bounds")
 
-    # 2. Verify treasureclassex.txt zero-potion, zero-key & zero-base-charm drop contract
+    # 2. Verify treasureclassex.txt & objects.txt drop/chest contracts
     _, tc_rows = _read_mod_tsv("treasureclassex.txt")
-    forbidden_potions = {
-        "key",
+    globally_forbidden_tc_items = {
+        "key", "rvs", "rvl", "cm1", "cm2", "cm3", "cs2",
+    }
+    monster_forbidden_potions = {
         "hp1", "hp2", "hp3", "hp4", "hp5",
         "mp1", "mp2", "mp3", "mp4", "mp5",
-        "rvs", "rvl", "vps", "yps", "wms",
+        "vps", "yps", "wms",
         "vp2", "vp3", "yp2", "yp3", "wm2", "wm3",
-        "cm1", "cm2", "cm3", "cs2",
     }
     for r in tc_rows:
         tc_name = r.get("Treasure Class", "")
+        is_chest_tc = "Chest" in tc_name
         for i in range(1, 11):
             it = r.get(f"Item{i}", "").strip()
-            if it in forbidden_potions:
+            if it in globally_forbidden_tc_items:
                 raise AssertionError(
-                    f"TreasureClassEx.txt ({tc_name}): forbidden potion/charm base '{it}' in Item{i}"
+                    f"TreasureClassEx.txt ({tc_name}): globally forbidden item '{it}' in Item{i}"
                 )
-    checks_passed.append("TreasureClassEx zero-potion & zero-base-charm contract")
+            if not is_chest_tc and it in monster_forbidden_potions:
+                raise AssertionError(
+                    f"TreasureClassEx.txt ({tc_name}): forbidden potion '{it}' in monster TC Item{i}"
+                )
+            if is_chest_tc and any(bad in it for bad in ("Equip", "Weap", "Armo", "Melee", "Bow", "Junk")):
+                raise AssertionError(
+                    f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk TC '{it}' in Chest Item{i}"
+                )
+    _, obj_rows = _read_mod_tsv("objects.txt")
+    for r in obj_rows:
+        if r.get("Lockable") == "1":
+            raise AssertionError(
+                f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Lockable=1 found (keys are removed from mod)"
+            )
+    checks_passed.append("TreasureClassEx & objects.txt chest/potion/charm contracts")
 
     # 3. Verify weapons.txt melee reach, javelin reach tiers, and throwing weapon properties
     _, weap_rows = _read_mod_tsv("weapons.txt")

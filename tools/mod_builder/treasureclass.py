@@ -445,13 +445,48 @@ def build_treasureclass(cfg: dict) -> str:
                         ],
                     )
 
-    # 10. Strip all equipment/gems/potions from Chest TCs (Gold-only fallback)
+    # 10. Configure Chest & Super Chest TCs (Act X Chest A/B/C) to drop ONLY:
+    # Gold, Runes, Jewelry, Gems (via Act X Good), and Act-scaled Modified Potions
+    # (NEVER weapons/armor, rejuvs, keys, or deprecated junk)
+    chest_potions_by_act = {
+        "Act 1": ("hp1", "mp1", "wms", "yps", "vps"),
+        "Act 2": ("hp1", "mp1", "wms", "yps", "vps"),
+        "Act 3": ("hp1", "mp1", "wms", "yps", "vps"),
+        "Act 4": ("hp2", "mp2", "wms", "yps", "vps"),
+        "Act 5": ("hp2", "mp2", "wms", "yps", "vps"),
+        "Act 1 (N)": ("hp3", "mp3", "wm2", "yp2", "vp2"),
+        "Act 2 (N)": ("hp3", "mp3", "wm2", "yp2", "vp2"),
+        "Act 3 (N)": ("hp4", "mp4", "wm2", "yp2", "vp2"),
+        "Act 4 (N)": ("hp4", "mp4", "wm2", "yp2", "vp2"),
+        "Act 5 (N)": ("hp4", "mp4", "wm2", "yp2", "vp2"),
+        "Act 1 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 2 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 3 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 4 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 5 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+    }
     for r in rows:
         tc = r["Treasure Class"]
         if "Chest" in tc:
-            r["Picks"] = "1"
-            r["NoDrop"] = "0"
-            _set_items(r, [(gold_item, "1")])
+            matched_act = next(
+                (act_p for act_p in chest_potions_by_act if tc.startswith(f"{act_p} Chest")),
+                "Act 1",
+            )
+            hp_c, mp_c, wm_c, yp_c, vp_c = chest_potions_by_act[matched_act]
+            r["Picks"] = "4"
+            r["NoDrop"] = "45"
+            _set_items(
+                r,
+                [
+                    (gold_item, "20"),
+                    (f"{matched_act} Good", "18"),
+                    (hp_c, "4"),
+                    (mp_c, "4"),
+                    (wm_c, "1"),
+                    (yp_c, "1"),
+                    (vp_c, "1"),
+                ],
+            )
 
     # TEMPORARY QA BOOST: Make Act 1 Blood Moor monsters drop Horadric Cube + Gems + Runes + Uniques
     if econ.get("qa_blood_moor_boost", False):
@@ -486,15 +521,29 @@ def build_treasureclass(cfg: dict) -> str:
 
 def build_objects(cfg: dict) -> str:
     """
-    Disable generic non-quest loot containers (Chests, Caskets, Urns, Barrels, Crates/Rocks/Logs/Corpses,
-    Armor Stands, Weapon Racks, Bookshelves, Jungle Stashes) in objects.txt while preserving all
-    Quest Chests/Objects, Shrines, Wells, Doors, Portals, and Waypoints.
+    Disable generic non-quest loot containers (Caskets, Urns, Barrels, Crates/Rocks/Logs/Corpses,
+    Armor Stands, Weapon Racks, Bookshelves, Jungle Stashes) and disable random chest scattering
+    (PopulateFn = 0) in objects.txt, while keeping preset Super Chests, Sparkly Chests, and Quest Chests
+    clickable (Selectable0 = 1) and unlocked (Lockable = 0).
     """
     headers, rows = read_excel_tsv("objects.txt")
     generic_container_ops = {"1", "3", "4", "5", "7", "14", "19", "20", "26", "30", "33", "51"}
     preserve_ids = {"383", "384", "385"}  # TrappedSoul / Cain start position
     for r in rows:
-        if r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
+        is_real_chest = (
+            r.get("OperateFn") == "4"
+            and r.get("Lockable") == "1"
+            and r.get("Selectable0") == "1"
+        )
+        # Never allow any chest to spawn locked since keys are removed from the mod
+        if r.get("Lockable") == "1":
+            r["Lockable"] = "0"
+
+        if is_real_chest:
+            # Keep preset/Super/Sparkly chests clickable, but prevent random map scattering
+            r["Selectable0"] = "1"
+            r["PopulateFn"] = "0"
+        elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
             r["Selectable0"] = "0"
             r["PopulateFn"] = "0"
     return write_excel_tsv("objects.txt", headers, rows)

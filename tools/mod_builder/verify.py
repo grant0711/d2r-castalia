@@ -240,4 +240,42 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError("cubemain.txt: QA starter kit recipe active while qa_cube_starter_kit=false")
     checks_passed.append("QA config gate contracts")
 
+    # 7. Verify hireling.txt 9-Aura Act 2 Matrix & skill/icon referential integrity
+    _, hire_rows = _read_mod_tsv("hireling.txt")
+    sdesc_by_name = {r["skilldesc"].lower(): r for r in desc_rows if r.get("skilldesc")}
+    skill_by_name = {r["skill"].lower(): r for r in skill_rows if r.get("skill")}
+    act2_auras_by_diff = {"1": set(), "2": set(), "3": set()}
+    for r in hire_rows:
+        hid = r.get("Id", "").strip()
+        act = r.get("Act", "").strip()
+        diff = r.get("Difficulty", "").strip()
+        if act == "2":
+            act2_auras_by_diff[diff].add(r.get("Skill2", "").strip())
+        for s_idx in range(1, 7):
+            sk = r.get(f"Skill{s_idx}", "").strip()
+            if not sk:
+                continue
+            sk_row = skill_by_name.get(sk.lower())
+            if not sk_row:
+                raise AssertionError(f"hireling.txt (Id={hid}): Skill{s_idx}='{sk}' not found in skills.txt")
+            sd_key = sk_row.get("skilldesc", "").strip().lower()
+            if sd_key in sdesc_by_name and not sdesc_by_name[sd_key].get("HireableIconCel", "").strip():
+                raise AssertionError(
+                    f"hireling.txt (Id={hid}): Skill{s_idx}='{sk}' ({sd_key}) missing HireableIconCel in skilldesc.txt"
+                )
+            if act == "5" and sk in ("Battle Cry", "Taunt"):
+                raise AssertionError(f"hireling.txt (Id={hid}): Act 5 Barbarian still has '{sk}'")
+    expected_act2 = {
+        "1": {"Prayer", "Defiance", "Blessed Aim"},
+        "2": {"Cleansing", "Holy Freeze", "Vigor"},
+        "3": {"Meditation", "Salvation", "Sanctuary"},
+    }
+    for d_key, exp_set in expected_act2.items():
+        if act2_auras_by_diff[d_key] != exp_set:
+            raise AssertionError(
+                f"hireling.txt Act 2 Diff={d_key}: got auras {act2_auras_by_diff[d_key]}, expected {exp_set}"
+            )
+    checks_passed.append("hireling 9-aura matrix & skill/icon referential integrity")
+
+
     return checks_passed

@@ -715,6 +715,40 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     _apply_paladin_skills(by_name)
     _apply_paladin_skilldesc(by_desc)
 
+    # Populate HireableIconCel (0..28 in Spells/Hireables/HrSkillIcon) for custom Mercenary skills
+    # so HireMenuPanelHD & HirelingInventoryPanelHD always render a visible skill icon next to tooltips.
+    merc_hireable_icons = {
+        "cleansing": "6",          # Prayer / Healing aura icon
+        "meditation": "6",         # Prayer / Meditation aura icon
+        "salvation": "7",          # Defiance / Defensive aura icon
+        "vigor": "8",              # Blessed Aim / Utility aura icon
+        "sanctuary": "9",          # Thorns / Radiant aura icon
+        "redemption": "9",         # Thorns / Radiant aura icon
+        "concentration": "11",     # Might / Offensive aura icon
+        "fanaticism": "11",        # Might / Offensive aura icon
+        "holy fire": "15",         # Enchant / Fire aura icon
+        "holy shock": "21",        # Static Field / Lightning aura icon
+        "fire mastery": "14",      # Fire Ball icon
+        "cold mastery": "18",      # Frozen Armor icon
+        "lightning mastery": "20", # Lightning icon
+        "multiple shot": "1",      # Bow arrow icon
+        "strafe": "2",             # Volley arrow icon
+        "critical strike": "0",    # Inner Sight icon
+        "weaken": "24",            # Debuff warcry/curse icon
+        "life tap": "24",          # Debuff warcry/curse icon
+        "lower resist": "24",      # Debuff warcry/curse icon
+        "dim vision": "0",         # Vision debuff icon
+        "slow missiles": "0",      # Missile debuff icon
+        "decrepify": "24",         # Debuff warcry/curse icon
+        "cloak of shadows": "0",   # Shadow debuff icon
+        "amplify damage": "24",    # Debuff warcry/curse icon
+        "battle orders": "24",     # Warcry icon
+        "double swing": "26",      # Frenzy dual-swing icon
+    }
+    for sdesc_key, cel_idx in merc_hireable_icons.items():
+        if sdesc_key in by_desc and not by_desc[sdesc_key].get("HireableIconCel"):
+            by_desc[sdesc_key]["HireableIconCel"] = cel_idx
+
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
     return p_skills, p_desc

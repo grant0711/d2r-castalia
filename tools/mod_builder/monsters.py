@@ -874,92 +874,130 @@ def build_hireling(cfg: dict) -> str:
     def clear_skill(row: dict, idx: int) -> None:
         set_skill(row, idx, "", "", "", "", "", "")
 
-    # Act 2 9-Aura Matrix: (Difficulty, SubType) -> Aura Skill Name
-    act2_auras = {
-        ("1", "Combat"): "Prayer",
-        ("1", "Defensive"): "Defiance",
-        ("1", "Offensive"): "Blessed Aim",
-        ("2", "Combat"): "Cleansing",
-        ("2", "Defensive"): "Holy Freeze",
-        ("2", "Offensive"): "Vigor",
-        ("3", "Combat"): "Meditation",
-        ("3", "Defensive"): "Salvation",
-        ("3", "Offensive"): "Sanctuary",
+    # Act 2 9-Aura Matrix mapped by Hireling Id:
+    #   Normal (Diff 1):    Id 6 = Prayer,     Id 7 = Defiance,    Id 8 = Blessed Aim
+    #   Nightmare (Diff 2): Id 9/30 = Cleansing, Id 10/31 = Holy Freeze, Id 11/32 = Vigor
+    #   Hell (Diff 3):      Id 12/33 = Meditation, Id 13/34 = Salvation, Id 14/35 = Sanctuary
+    act2_by_id = {
+        "6":  ("Prayer",      "skillname99",  "Prayer-Normal"),
+        "7":  ("Defiance",    "skillname104", "Defiance-Normal"),
+        "8":  ("Blessed Aim", "skillname108", "BlessedAim-Normal"),
+        "9":  ("Cleansing",   "skillname109", "Cleansing-Nightmare"),
+        "30": ("Cleansing",   "skillname109", "Cleansing-Nightmare"),
+        "10": ("Holy Freeze", "skillname114", "HolyFreeze-Nightmare"),
+        "31": ("Holy Freeze", "skillname114", "HolyFreeze-Nightmare"),
+        "11": ("Vigor",       "skillname115", "Vigor-Nightmare"),
+        "32": ("Vigor",       "skillname115", "Vigor-Nightmare"),
+        "12": ("Meditation",  "skillname120", "Meditation-Hell"),
+        "33": ("Meditation",  "skillname120", "Meditation-Hell"),
+        "13": ("Salvation",   "skillname125", "Salvation-Hell"),
+        "34": ("Salvation",   "skillname125", "Salvation-Hell"),
+        "14": ("Sanctuary",   "skillname119", "Sanctuary-Hell"),
+        "35": ("Sanctuary",   "skillname119", "Sanctuary-Hell"),
     }
 
     phys_rogue_templates = []
 
     for row in rows:
         hid = row.get("Id", "").strip()
+        ver = row.get("Version", "").strip()
         act = row.get("Act", "").strip()
         diff = row.get("Difficulty", "").strip()
-        sub = row.get("SubType", "").strip()
+        sub = row.get("*SubType", "").strip()
 
-        # Global Mercenary Survivability Buff (+25% HP, +25% Def, stronger Resists)
+        # Global Mercenary Survivability Buff (+25% HP, +25% Def, +15 flat base Resists)
         row["HP"] = scale_int(row["HP"], 1.25)
         row["HP/Lvl"] = scale_int(row["HP/Lvl"], 1.25)
         row["Defense"] = scale_int(row["Defense"], 1.25)
         row["Def/Lvl"] = scale_int(row["Def/Lvl"], 1.25)
-        row["Resist"] = "50"
-        row["Resist/Lvl"] = "8"
+        for res_col in ("ResistFire", "ResistCold", "ResistLightning", "ResistPoison"):
+            row[res_col] = str(parse_int(row.get(res_col, "0")) + 15)
 
         # 1. Act 1 Rogue Scouts: Elemental Arrows + Tactical Curses
         if act == "1":
-            if "Fire" in sub:
+            orig_s1_lvl = row.get("Level1", "1") or "1"
+            orig_s1_lpl = row.get("LvlPerLvl1", "10") or "10"
+            if hid in ("0", "2", "4") or "Fire" in sub:
+                if ver == "100":
+                    phys_rogue_templates.append(dict(row))
                 curse = {"1": "Weaken", "2": "Life Tap", "3": "Lower Resist"}.get(diff, "Weaken")
-                set_skill(row, 4, curse, "4", "14", "0", "1", "1")
-                # Clone Fire Rogue row as template for Physical Bowazon Rogue
-                phys_rogue_templates.append(dict(row))
-            elif "Cold" in sub:
-                curse = {"1": "Dim Vision", "2": "Decrepify", "3": "Decrepify"}.get(diff, "Decrepify")
-                set_skill(row, 4, curse, "4", "14", "0", "1", "1")
+                set_skill(row, 1, curse, "4", "14", "0", orig_s1_lvl, orig_s1_lpl)
+                set_skill(row, 4, "Inner Sight", "4", "10", "0", orig_s1_lvl, orig_s1_lpl)
+            elif hid in ("1", "3", "5") or "Ice" in sub or "Cold" in sub:
+                curse = {"1": "Dim Vision", "2": "Slow Missiles", "3": "Decrepify"}.get(diff, "Decrepify")
+                set_skill(row, 1, curse, "4", "14", "0", orig_s1_lvl, orig_s1_lpl)
+                set_skill(row, 4, "Inner Sight", "4", "10", "0", orig_s1_lvl, orig_s1_lpl)
 
-        # 2. Act 2 Desert Mercenaries: 9 Distinct Utility/Defensive Auras
+        # 2. Act 2 Desert Mercenaries: 9 Distinct Utility/Defensive Auras (3 per Difficulty)
         elif act == "2":
-            aura = act2_auras.get((diff, sub), "Prayer")
-            set_skill(row, 2, aura, "1", "100", "0", "3", "2")
+            aura, hdesc, new_sub = act2_by_id.get(hid, ("Prayer", "skillname99", sub))
+            orig_lvl2 = row.get("Level2", "3") or "3"
+            orig_lpl2 = row.get("LvlPerLvl2", "7") or "7"
+            row["*SubType"] = new_sub
+            row["HireDesc"] = hdesc
+            set_skill(row, 2, aura, "1", "100", "0", orig_lvl2, orig_lpl2)
 
         # 3. Act 3 Iron Wolves: Spells + Elemental Masteries + Low-Level Elemental Pulse Aura
         elif act == "3":
             row["HP"] = scale_int(row["HP"], 1.15)
             row["Defense"] = scale_int(row["Defense"], 1.20)
-            if "Fire" in sub:
-                set_skill(row, 4, "Fire Mastery", "2", "100", "0", "1", "2")
-                set_skill(row, 5, "Holy Fire", "1", "100", "0", "2", "1")
-            elif "Cold" in sub:
-                set_skill(row, 4, "Cold Mastery", "2", "100", "0", "1", "2")
-                set_skill(row, 5, "Holy Freeze", "1", "100", "0", "2", "1")
-            elif "Ltng" in sub:
-                set_skill(row, 4, "Lightning Mastery", "2", "100", "0", "1", "2")
-                set_skill(row, 5, "Holy Shock", "1", "100", "0", "2", "1")
+            s1_lvl = row.get("Level1", "4") or "4"
+            if hid in ("15", "18", "21") or "Fire" in sub:
+                set_skill(row, 4, "Fire Mastery", "5", "0", "0", s1_lvl, "8")
+                set_skill(row, 5, "Holy Fire", "1", "100", "0", "2", "2")
+            elif hid in ("16", "19", "22") or "Cold" in sub:
+                set_skill(row, 4, "Cold Mastery", "5", "0", "0", s1_lvl, "8")
+                set_skill(row, 5, "Holy Freeze", "1", "100", "0", "2", "2")
+            elif hid in ("17", "20", "23") or "Ltng" in sub:
+                set_skill(row, 4, "Lightning Mastery", "5", "0", "0", s1_lvl, "8")
+                set_skill(row, 5, "Holy Shock", "1", "100", "0", "2", "2")
 
         # 4. Act 5 Barbarian Warriors: Remove Battle Cry & Taunt (Never Overwrite Curses!) + Offensive Auras
         elif act == "5":
-            if hid in ("30", "31", "32"):
+            s2_lvl = row.get("Level2", "6") or "6"
+            s1_lvl = row.get("Level1", "8") or "8"
+            if hid in ("24", "25", "26", "27", "28", "29"):
                 # 2H Barbarian: Bash + Stun + Might (N) / Concentration (NM/H) + Battle Orders
-                aura = "Might" if diff == "1" else "Concentration"
-                set_skill(row, 3, aura, "1", "100", "0", "3", "2")
-                set_skill(row, 4, "Battle Orders", "4", "10", "0", "3", "1")
+                aura, hdesc = ("Might", "skillname98") if diff == "1" else ("Concentration", "skillname113")
+                row["HireDesc"] = hdesc
+                set_skill(row, 3, aura, "1", "100", "0", s2_lvl, "6")
+                set_skill(row, 4, "Battle Orders", "4", "15", "0", s2_lvl, "5")
                 clear_skill(row, 5)
-            elif hid in ("33", "34", "35"):
-                # 1H Frenzy Barbarian: Frenzy + Double Swing + Iron Skin + Might (N) / Fanaticism (NM/H)
-                aura = "Might" if diff == "1" else "Fanaticism"
-                set_skill(row, 2, "Double Swing", "14", "40", "0", "3", "2")
-                set_skill(row, 3, "Iron Skin", "2", "100", "0", "2", "2")
-                set_skill(row, 4, aura, "1", "100", "0", "2", "1")
+            elif hid in ("36", "37", "38"):
+                # 1H Frenzy Barbarian: Frenzy + Iron Skin + Might (N) / Fanaticism (NM/H) + Double Swing
+                aura, hdesc = ("Might", "skillname98") if diff == "1" else ("Fanaticism", "skillname122")
+                row["HireDesc"] = hdesc
+                set_skill(row, 3, aura, "1", "100", "0", s2_lvl, "6")
+                set_skill(row, 4, "Double Swing", "4", "35", "0", s1_lvl, "7")
                 clear_skill(row, 5)
 
-    # Append 3 Physical Bowazon Act 1 Rogue Scout rows (Id 36, 37, 38 for N, NM, H)
-    diff_names = {"1": "Normal", "2": "Nightmare", "3": "Hell"}
-    for idx_offset, tmpl in enumerate(phys_rogue_templates):
-        diff = tmpl["Difficulty"]
+    # Append Physical Bowazon Act 1 Rogue Scout rows (Id 39, 40, 41 for N, NM, H across all Version=100 level brackets)
+    diff_info = {
+        "1": ("39", "Normal", "Inner Sight"),
+        "2": ("40", "Nightmare", "Cloak of Shadows"),
+        "3": ("41", "Hell", "Amplify Damage"),
+    }
+    for tmpl in phys_rogue_templates:
+        diff = tmpl["Difficulty"].strip()
+        new_id, diff_name, support_skill = diff_info.get(diff, ("39", "Normal", "Inner Sight"))
         nr = dict(tmpl)
-        nr["Id"] = str(36 + idx_offset)
-        nr["SubType"] = f"Physical Bow - {diff_names.get(diff, 'Normal')}"
-        set_skill(nr, 1, "Multiple Shot", "5", "45", "0", "2", "2")
-        set_skill(nr, 2, "Strafe", "5", "25", "0", "1", "2")
-        set_skill(nr, 3, "Inner Sight", "4", "10", "0", "2", "2")
-        set_skill(nr, 4, "Amplify Damage", "4", "14", "0", "1", "1")
+        nr["Id"] = new_id
+        nr["*SubType"] = f"PhysBow - {diff_name}"
+        nr["HireDesc"] = "skillname12"
+        s1_lvl = tmpl.get("Level1", "1") or "1"
+        s1_lpl = tmpl.get("LvlPerLvl1", "10") or "10"
+        s2_ch = tmpl.get("Chance2", "25") or "25"
+        s2_cpl = tmpl.get("ChancePerLvl2", "5") or "5"
+        s2_lvl = tmpl.get("Level2", "1") or "1"
+        s2_lpl = tmpl.get("LvlPerLvl2", "10") or "10"
+        s3_ch = tmpl.get("Chance3", "0") or "0"
+        s3_cpl = tmpl.get("ChancePerLvl3", "4") or "4"
+        s3_lvl = tmpl.get("Level3", "1") or "1"
+        s3_lpl = tmpl.get("LvlPerLvl3", "5") or "5"
+        set_skill(nr, 1, support_skill, "4", "14", "0", s1_lvl, s1_lpl)
+        set_skill(nr, 2, "Multiple Shot", "4", s2_ch, s2_cpl, s2_lvl, s2_lpl)
+        set_skill(nr, 3, "Strafe", "4", s3_ch, s3_cpl, s3_lvl, s3_lpl)
+        set_skill(nr, 4, "Critical Strike", "5", "0", "0", s3_lvl, s3_lpl)
         clear_skill(nr, 5)
         rows.append(nr)
 

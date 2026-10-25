@@ -40,9 +40,17 @@ def build_gamble(cfg: dict = None) -> str:
         [
             (3398, "gamble", "crafting"),
             (11168, "respec", ""),
+            (3343, "TransactionMenu1f", "Place an Untempered Malus to temper"),
+            (4017, "Upgrade", "Temper Malus"),
         ],
     )
-    return f"{p_gamble}, {p_ui}"
+    p_quests = update_mod_strings_json(
+        "quests.json",
+        [
+            (3757, "qstsa1q32b", "Charsi will temper an Untempered Malus with Horadric power."),
+        ],
+    )
+    return f"{p_gamble}, {p_ui}, {p_quests}"
 
 
 def build_gamble_npc(cfg: dict = None) -> str:

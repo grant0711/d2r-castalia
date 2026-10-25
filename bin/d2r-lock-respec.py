@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 """
 d2r-lock-respec.py
-Sets Quest 3 (w[3] |= 0x0001, "Tools of the Trade / Charsi's Imbue Already Used") and
-Quest 41 (w[41] |= 0x0001, "Den of Evil Respec Already Used") across all 3 difficulties
+Sets Quest 41 (w[41] |= 0x0001, "Den of Evil Respec Already Used") across all 3 difficulties
 (Normal, Nightmare, Hell) in every .d2s character save in SAVED_MOD, and recomputes the .d2s
 32-bit checksum at offset 0x0C.
-This permanently prevents Charsi from offering the Imbue quest/reward and Akara from offering
-the "Reset Stat/Skill Points" menu option.
+This permanently prevents Akara from ever offering the "Reset Stat/Skill Points" menu option.
 """
 import glob
 import os
@@ -32,16 +30,12 @@ def lock_respec_in_d2s(path: str) -> bool:
         return False
 
     changed = False
-    # Quest 3 = Act 1 Tools of the Trade (Charsi's Imbue)
-    # Quest 41 = Act 1 Den of Evil Respec Reward
     for diff_idx in range(3):
-        for q_idx in (3, 41):
-            q_off = woo_idx + 10 + diff_idx * 96 + q_idx * 2
-            val = struct.unpack_from("<H", raw, q_off)[0]
-            new_val = (val | 0x0001) & ~0x0002
-            if val != new_val:
-                struct.pack_into("<H", raw, q_off, new_val)
-                changed = True
+        q41_off = woo_idx + 10 + diff_idx * 96 + 41 * 2
+        val = struct.unpack_from("<H", raw, q41_off)[0]
+        if (val & 0x0001) == 0:
+            struct.pack_into("<H", raw, q41_off, (val | 0x0001) & ~0x0002)
+            changed = True
 
     if changed:
         new_csum = calc_d2s_checksum(raw)
@@ -60,7 +54,7 @@ def main() -> None:
             continue
         for path in sorted(glob.glob(os.path.join(sdir, "*.d2s"))):
             if lock_respec_in_d2s(path):
-                print(f"[d2r-lock-respec] Locked Quests 3 (Imbue) & 41 (Respec) in {os.path.basename(path)}")
+                print(f"[d2r-lock-respec] Locked Quest 41 (Respec Used) in {os.path.basename(path)}")
 
 
 if __name__ == "__main__":

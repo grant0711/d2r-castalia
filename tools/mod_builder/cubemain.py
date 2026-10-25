@@ -338,6 +338,27 @@ def build_cubemain(cfg: dict) -> str:
             "mod 1": "sock", "mod 1 min": "1", "mod 1 max": "2",
         }))
 
+    # 4b. Tempered Malus (um1,rar) Base-Tier Upgrades:
+    # Upgrades ANY quality (Magic, Rare, Set, Unique, or Crafted) Weapon or Armor from
+    # Normal -> Exceptional (with +5 levelreq) or Exceptional -> Elite (with +7 levelreq).
+    # Because um1,rar can ONLY be produced by Charsi's "Temper Malus" (Imbue) quest reward,
+    # a character can only ever perform 3 base-tier upgrades across an entire playthrough!
+    for itype, label in [("weap", "Weapon"), ("armo", "Armor")]:
+        lines.append(_make_row_str(num_cols, col_idx, {
+            "description": f"Normal {label} (Any Quality) + Tempered Malus (um1,rar) -> Exceptional {label}",
+            "enabled": "1", "version": "100", "numinputs": "2",
+            "input 1": f'"{itype},bas"', "input 2": '"um1,rar"',
+            "output": '"useitem,mod,exc"',
+            "mod 1": "levelreq", "mod 1 min": "5", "mod 1 max": "5",
+        }))
+        lines.append(_make_row_str(num_cols, col_idx, {
+            "description": f"Exceptional {label} (Any Quality) + Tempered Malus (um1,rar) -> Elite {label}",
+            "enabled": "1", "version": "100", "numinputs": "2",
+            "input 1": f'"{itype},exc"', "input 2": '"um1,rar"',
+            "output": '"useitem,mod,eli"',
+            "mod 1": "levelreq", "mod 1 min": "7", "mod 1 max": "7",
+        }))
+
     # QA Throwaway Recipe (only when qa_cube_starter_kit is enabled in mod_config.json)
     if cfg.get("economy", {}).get("qa_cube_starter_kit", False):
         for itype, label in [("weap", "Weapon"), ("armo", "Armor")]:

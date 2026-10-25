@@ -185,9 +185,9 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Lockable=1 found"
             )
-        if r.get("OperateFn") == "21" and r.get("Selectable0") != "0":
+        if r.get("OperateFn") == "21" and r.get("Selectable0") != "1":
             raise AssertionError(
-                f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Malus stand OperateFn=21 must have Selectable0=0"
+                f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Malus stand OperateFn=21 must have Selectable0=1"
             )
     checks_passed.append("TreasureClassEx & objects.txt chest/lockbox/potion/charm/malus contracts")
 
@@ -206,13 +206,24 @@ def verify_all(cfg: dict = None) -> List[str]:
         wtype = r.get("type", "")
         if not code or not wtype:
             continue
+        if code == "um1":
+            if (
+                r.get("CharsiMin") != "1"
+                or r.get("CharsiMax") != "1"
+                or r.get("PermStoreItem") != "0"
+                or r.get("cost") != "100000"
+            ):
+                raise AssertionError(
+                    "weapons.txt (um1): Untempered Malus must have CharsiMin=1, CharsiMax=1, PermStoreItem=0, cost=100000"
+                )
+            continue
         if wtype != "tpot":
             for vn in vendor_names:
                 if r.get(f"{vn}Min") or r.get(f"{vn}Max"):
                     raise AssertionError(
-                        f"weapons.txt ({code}): white vendor stock found on {vn} (all weapons except tpot must be Magic-only)"
+                        f"weapons.txt ({code}): white vendor stock found on {vn} (all weapons except tpot/um1 must be Magic-only)"
                     )
-        if r.get("spawnable") != "1" or wtype == "tpot" or code == "bml":
+        if r.get("spawnable") != "1" or wtype == "tpot" or code in ("bml", "um1"):
             continue
         if code == r.get("normcode"):
             exp_nm = r.get("ubercode") if r.get("ubercode") != code else "xxx"
@@ -285,20 +296,20 @@ def verify_all(cfg: dict = None) -> List[str]:
     for entry in hd_list:
         if isinstance(entry, dict):
             hd_codes.update(entry.keys())
-    for req_code in ("wm2", "yp2", "vp2", "bml", "vk1", "sw1", "va1", "ky2", "ky3", "z00"):
+    for req_code in ("wm2", "yp2", "vp2", "bml", "um1", "vk1", "sw1", "va1", "ky2", "ky3", "z00"):
         if req_code not in hd_codes:
             raise AssertionError(f"data/hd/items/items.json: missing '{req_code}' (cross-module overwrite!)")
 
     mod_item_names_path = os.path.join(MOD_STRINGS, "item-names.json")
     with open(mod_item_names_path, "r", encoding="utf-8-sig") as f:
         mod_item_names = {e.get("Key") for e in json.load(f) if isinstance(e, dict)}
-    for req_key in ("wm2", "bml", "opl", "vk1", "ky2", "ky3", "z00"):
+    for req_key in ("wm2", "bml", "um1", "opl", "vk1", "ky2", "ky3", "z00"):
         if req_key not in mod_item_names:
             raise AssertionError(f"item-names.json: missing '{req_key}' (cross-module overwrite!)")
 
     # Verify zero custom string ID (>= 60000) collisions across all JSON string tables
     seen_custom_ids: Dict[int, str] = {}
-    for sfn in ("item-names.json", "item-modifiers.json", "item-nameaffixes.json", "skills.json"):
+    for sfn in ("item-names.json", "item-modifiers.json", "item-nameaffixes.json", "skills.json", "ui.json", "quests.json"):
         sp = os.path.join(MOD_STRINGS, sfn)
         with open(sp, "r", encoding="utf-8-sig") as f:
             for e in json.load(f):

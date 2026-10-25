@@ -40,7 +40,9 @@ def build_itemtypes(cfg: dict) -> str:
             row["AutoStack"] = "0"
 
     # 3. Add dedicated 'malu' item type for Blacksmith's Malus (bml) so it can be gambled in gamble.txt
-    # without inheriting from 'weap' (preventing monsters from ever dropping it in Weap TCs).
+    # without inheriting from 'weap' (preventing monsters from ever dropping it in Weap TCs),
+    # and 'umal' for Untempered Malus (um1), which inherits from 'blun' (-> 'mele' -> 'weap') so Charsi's
+    # "Temper Malus" (Imbue) window accepts it and transforms it into a Rare Tempered Malus (um1,rar)!
     if "malu" not in by_code and "hamm" in by_code:
         malu = dict(by_code["hamm"])
         malu["ItemType"] = "Malus"
@@ -57,6 +59,25 @@ def build_itemtypes(cfg: dict) -> str:
         malu["MaxSockets2"] = "0"
         malu["MaxSockets3"] = "0"
         rows.append(malu)
+
+    if "umal" not in by_code and "hamm" in by_code:
+        umal = dict(by_code["hamm"])
+        umal["ItemType"] = "Untempered Malus"
+        umal["Code"] = "umal"
+        umal["Equiv1"] = "blun"
+        umal["Equiv2"] = ""
+        umal["Body"] = "1"
+        umal["BodyLoc1"] = "rarm"
+        umal["BodyLoc2"] = "larm"
+        umal["Magic"] = ""
+        umal["Rare"] = "1"
+        umal["Normal"] = "0"
+        umal["TreasureClass"] = "0"
+        umal["Rarity"] = "0"
+        umal["MaxSockets1"] = "0"
+        umal["MaxSockets2"] = "0"
+        umal["MaxSockets3"] = "0"
+        rows.append(umal)
 
     # 4. Add Crafting Slot Umbrella ItemTypes ('gljw' for Gloves/Ring/Amulet and 'btbl' for Boots/Belt)
     # so cubemain.txt can evaluate 'gljw' and 'btbl' before the 'armo' catch-all!

@@ -502,6 +502,31 @@ def build_weapons(cfg: dict) -> str:
     _clear_vendors(bml)
     rows.append(bml)
 
+    # 4b. Add Untempered Malus (um1) to weapons.txt:
+    # - Sold ONLY by Charsi as a single depleting White item (CharsiMin=1, CharsiMax=1, PermStoreItem=0)
+    #   for 100,000 Gold in Normal, Nightmare, and Hell.
+    # - Because it is the ONLY White weapon/armor in the entire mod (and type='umal' inherits from 'weap'
+    #   with Rare=1), it is the ONLY item accepted by Charsi's "Temper Malus" (Imbue) quest reward!
+    # - Tempering it at Charsi transforms it into a Rare Malus (um1,rar), which can then be transmuted
+    #   with any Normal or Exceptional Weapon/Armor (Magic, Rare, Set, Unique, or Crafted) to upgrade its
+    #   base tier (Normal -> Exceptional -> Elite), strictly capped at 3 upgrades per character playthrough!
+    um1 = dict(bml)
+    um1["name"] = "Untempered Malus"
+    um1["type"] = "umal"
+    um1["code"] = "um1"
+    um1["namestr"] = "um1"
+    um1["cost"] = "100000"
+    um1["normcode"] = "um1"
+    um1["ubercode"] = "um1"
+    um1["ultracode"] = "um1"
+    um1["PermStoreItem"] = "0"
+    um1["NightmareUpgrade"] = "xxx"
+    um1["HellUpgrade"] = "xxx"
+    _clear_vendors(um1)
+    um1["CharsiMin"] = "1"
+    um1["CharsiMax"] = "1"
+    rows.append(um1)
+
     # 5. Add Dedicated Summon-Only Base Weapons (spawnable=0) for Valkyrie & Shadow Warrior/Master
     summon_weapons = [
         # (new_code, template_code, name)
@@ -707,6 +732,7 @@ def build_missiles(cfg: dict) -> str:
 
 def build_weapons_armor_assets_and_strings(cfg: dict) -> Tuple[str, str]:
     hd_additions = [
+        ("um1", "hammer/horadric_malus"),
         ("vk1", "spear/spear"),
         ("vk2", "spear/spear"),
         ("vk3", "spear/pike"),
@@ -739,6 +765,7 @@ def build_weapons_armor_assets_and_strings(cfg: dict) -> Tuple[str, str]:
     hd_path = update_mod_hd_items_json(hd_additions)
 
     string_updates = [
+        (61995, "um1", "Untempered Malus"),
         (0, "opl", "Minor Concussion Bomb"),
         (0, "opm", "Greater Concussion Bomb"),
         (0, "ops", "Supreme Concussion Bomb"),

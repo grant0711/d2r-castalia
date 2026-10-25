@@ -33,6 +33,7 @@ LOCKBOX_TIER_INFO = {
         "box_display_name": "ÿc4Crude Wooden Lockbox",
         "box_asset": "herb/herb",
         "box_img": "lockbox_normal.jpg",
+        "box_sound": "item_metalshield",
         "key_code": "key",
         "key_name": "Crude Lockbox Key",
         "key_cost": "5000",
@@ -44,6 +45,7 @@ LOCKBOX_TIER_INFO = {
         "box_display_name": "ÿc4Reinforced Iron Lockbox",
         "box_asset": "torch/torch",
         "box_img": "lockbox_nightmare.jpg",
+        "box_sound": "item_metalshield",
         "key_code": "ky2",
         "key_name": "Iron Lockbox Key",
         "key_cost": "25000",
@@ -55,6 +57,7 @@ LOCKBOX_TIER_INFO = {
         "box_display_name": "ÿc4Ornate Gilded Lockbox",
         "box_asset": "quest/scroll_of_self_resurrect",
         "box_img": "lockbox_hell.jpg",
+        "box_sound": "item_metalshield",
         "key_code": "ky3",
         "key_name": "Ornate Lockbox Key",
         "key_cost": "50000",
@@ -93,7 +96,7 @@ def _read_mod_or_vanilla_tsv(filename: str) -> List[Dict[str, str]]:
 def _get_reserved_codes() -> Set[str]:
     reserved: Set[str] = {
         "wm2", "wm3", "yp2", "yp3", "vp2", "vp3",
-        "bml", "bm2", "bm3", "ky2", "ky3",
+        "bml", "bm2", "bm3", "ky0", "ky1", "ky2", "ky3",
         "vk1", "vk2", "vk3", "vk4",
         "sw1", "sw2", "sw3", "sw4",
         "va1", "va2", "va3", "va4",
@@ -214,17 +217,19 @@ def get_lockbox_registry() -> List[Dict[str, object]]:
                 "box_name": tinfo["box_name"],
                 "box_display_name": tinfo["box_display_name"],
                 "box_asset": tinfo["box_asset"],
+                "box_sound": tinfo["box_sound"],
                 "key_code": tinfo["key_code"],
             }
         )
     return registry
 
 
-def _decode_and_remove_black_bg(src_path: str, width: int, height: int) -> bytes:
+def _decode_and_remove_black_bg(src_path: str, width: int, height: int, solid_interior: bool = True) -> bytes:
     """
-    Decode src_path scaled to (width, height) using ffmpeg (lanczos) into RGBA8888,
-    then flood-fill from the 4 edges to make the solid black (#000000) background
-    transparent with soft anti-aliased edge feathering.
+    Decode src_path scaled to (width, height) using ffmpeg (lanczos) into RGBA8888.
+    When solid_interior=True (used for Lockboxes), only pixels outside the outer
+    row/column silhouette boundary of the box are made transparent—guaranteeing 100%
+    opacity (alpha=255) for every pixel inside the box's edges.
     """
     raw = bytearray(
         subprocess.check_output(
@@ -245,35 +250,69 @@ def _decode_and_remove_black_bg(src_path: str, width: int, height: int) -> bytes
         )
     )
     w, h = width, height
-    visited = [[False] * w for _ in range(h)]
-    bg = [[False] * w for _ in range(h)]
-    q: deque = deque()
 
     def _px_brightness(x: int, y: int) -> int:
         idx = (y * w + x) * 4
         return max(raw[idx], raw[idx + 1], raw[idx + 2])
 
-    for x in range(w):
-        for y in (0, h - 1):
-            if _px_brightness(x, y) <= 28:
-                visited[y][x] = True
-                bg[y][x] = True
-                q.append((x, y))
-    for y in range(h):
-        for x in (0, w - 1):
-            if not visited[y][x] and _px_brightness(x, y) <= 28:
-                visited[y][x] = True
-                bg[y][x] = True
-                q.append((x, y))
+    bg = [[False] * w for _ in range(h)]
 
-    while q:
-        cx, cy = q.popleft()
-        for nx, ny in ((cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)):
-            if 0 <= nx < w and 0 <= ny < h and not visited[ny][nx]:
-                visited[ny][nx] = True
-                if _px_brightness(nx, ny) <= 24:
-                    bg[ny][nx] = True
-                    q.append((nx, ny))
+    if solid_interior:
+        # Raycast from left, right, top, and bottom edges to find the exact outer silhouette
+        # of the box. Nothing inside [row_left..row_right] x [col_top..col_bot] can ever be transparent.
+        thresh = 14
+        row_left = [w] * h
+        row_right = [-1] * h
+        for y in range(h):
+            for x in range(w):
+                if _px_brightness(x, y) > thresh:
+                    row_left[y] = x
+                    break
+            for x in range(w - 1, -1, -1):
+                if _px_brightness(x, y) > thresh:
+                    row_right[y] = x
+                    break
+
+        col_top = [h] * w
+        col_bot = [-1] * w
+        for x in range(w):
+            for y in range(h):
+                if _px_brightness(x, y) > thresh:
+                    col_top[x] = y
+                    break
+            for y in range(h - 1, -1, -1):
+                if _px_brightness(x, y) > thresh:
+                    col_bot[x] = y
+                    break
+
+        for y in range(h):
+            for x in range(w):
+                if x < row_left[y] or x > row_right[y] or y < col_top[x] or y > col_bot[x]:
+                    bg[y][x] = True
+    else:
+        visited = [[False] * w for _ in range(h)]
+        q: deque = deque()
+        for x in range(w):
+            for y in (0, h - 1):
+                if _px_brightness(x, y) <= 16:
+                    visited[y][x] = True
+                    bg[y][x] = True
+                    q.append((x, y))
+        for y in range(h):
+            for x in (0, w - 1):
+                if not visited[y][x] and _px_brightness(x, y) <= 16:
+                    visited[y][x] = True
+                    bg[y][x] = True
+                    q.append((x, y))
+
+        while q:
+            cx, cy = q.popleft()
+            for nx, ny in ((cx - 1, cy), (cx + 1, cy), (cx, cy - 1), (cx, cy + 1)):
+                if 0 <= nx < w and 0 <= ny < h and not visited[ny][nx]:
+                    visited[ny][nx] = True
+                    if _px_brightness(nx, ny) <= 14:
+                        bg[ny][nx] = True
+                        q.append((nx, ny))
 
     for y in range(h):
         for x in range(w):
@@ -284,20 +323,21 @@ def _decode_and_remove_black_bg(src_path: str, width: int, height: int) -> bytes
                 raw[idx + 2] = 0
                 raw[idx + 3] = 0
             else:
+                raw[idx + 3] = 255
                 adj_bg = 0
                 for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
                     if 0 <= nx < w and 0 <= ny < h and bg[ny][nx]:
                         adj_bg += 1
-                if adj_bg > 0:
+                if adj_bg >= 2:
                     br = max(raw[idx], raw[idx + 1], raw[idx + 2])
-                    if br < 60:
-                        raw[idx + 3] = max(32, min(255, int(br * 4)))
+                    if br < 40:
+                        raw[idx + 3] = max(140, min(255, int(br * 6)))
     return bytes(raw)
 
 
-def _write_d2r_sprite(src_path: str, out_path: str, width: int, height: int) -> None:
+def _write_d2r_sprite(src_path: str, out_path: str, width: int, height: int, solid_interior: bool = True) -> None:
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
-    raw_bytes = _decode_and_remove_black_bg(src_path, width, height)
+    raw_bytes = _decode_and_remove_black_bg(src_path, width, height, solid_interior=solid_interior)
     stream_size = width * height * 4
     header = struct.pack(
         "<4sHHIIIIIIII",
@@ -328,18 +368,18 @@ def build_lockbox_sprites() -> List[str]:
     written: List[str] = []
 
     for tier, info in LOCKBOX_TIER_INFO.items():
-        # 1. 2x2 Lockbox sprite (196x196 HD, 98x98 lowend)
+        # 1. 2x2 Lockbox sprite (196x196 HD, 98x98 lowend) with strict solid interior
         box_src = os.path.join(ASSETS_DIR, info["box_img"])
         box_base = os.path.join(ui_misc_root, info["box_asset"])
-        _write_d2r_sprite(box_src, f"{box_base}.sprite", 196, 196)
-        _write_d2r_sprite(box_src, f"{box_base}.lowend.sprite", 98, 98)
+        _write_d2r_sprite(box_src, f"{box_base}.sprite", 196, 196, solid_interior=True)
+        _write_d2r_sprite(box_src, f"{box_base}.lowend.sprite", 98, 98, solid_interior=True)
         written.append(f"{box_base}.sprite")
 
         # 2. 1x1 Key sprite (98x98 HD, 49x49 lowend)
         key_src = os.path.join(ASSETS_DIR, info["key_img"])
         key_base = os.path.join(ui_misc_root, info["key_asset"])
-        _write_d2r_sprite(key_src, f"{key_base}.sprite", 98, 98)
-        _write_d2r_sprite(key_src, f"{key_base}.lowend.sprite", 49, 49)
+        _write_d2r_sprite(key_src, f"{key_base}.sprite", 98, 98, solid_interior=False)
+        _write_d2r_sprite(key_src, f"{key_base}.lowend.sprite", 49, 49, solid_interior=False)
         written.append(f"{key_base}.sprite")
 
     return written

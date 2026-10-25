@@ -513,6 +513,7 @@ def build_treasureclass(cfg: dict) -> str:
         "Act 4 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
         "Act 5 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
     }
+    QA_FORCE_CHEST_LOCKBOX = False
     for r in rows:
         tc = r["Treasure Class"]
         if "Chest" in tc:
@@ -522,22 +523,27 @@ def build_treasureclass(cfg: dict) -> str:
             )
             hp_c, mp_c, wm_c, yp_c, vp_c = chest_potions_by_act[matched_act]
             jewelry_tc = "Jewelry A" if matched_act == "Act 1" else "Jewelry C"
-            r["Picks"] = "6"
-            r["NoDrop"] = "20"
-            _set_items(
-                r,
-                [
-                    (gold_item, "28"),
-                    (f"{matched_act} GemRune", "12"),
-                    (jewelry_tc, "10"),
-                    (hp_c, "4"),
-                    (mp_c, "4"),
-                    (wm_c, "1"),
-                    (yp_c, "1"),
-                    (vp_c, "1"),
-                    (f"{matched_act} Lockbox", "2"),
-                ],
-            )
+            if QA_FORCE_CHEST_LOCKBOX:
+                r["Picks"] = "2"
+                r["NoDrop"] = "0"
+                _set_items(r, [(f"{matched_act} Lockbox", "100")])
+            else:
+                r["Picks"] = "6"
+                r["NoDrop"] = "20"
+                _set_items(
+                    r,
+                    [
+                        (gold_item, "28"),
+                        (f"{matched_act} GemRune", "12"),
+                        (jewelry_tc, "10"),
+                        (hp_c, "4"),
+                        (mp_c, "4"),
+                        (wm_c, "1"),
+                        (yp_c, "1"),
+                        (vp_c, "1"),
+                        (f"{matched_act} Lockbox", "2"),
+                    ],
+                )
 
     # TEMPORARY QA BOOST: Make Act 1 Blood Moor monsters drop Horadric Cube + Gems + Runes + Uniques
     if econ.get("qa_blood_moor_boost", False):

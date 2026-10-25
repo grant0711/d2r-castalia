@@ -148,7 +148,7 @@ def verify_all(cfg: dict = None) -> List[str]:
     # 2. Verify treasureclassex.txt & objects.txt drop/chest/lockbox contracts
     _, tc_rows = _read_mod_tsv("treasureclassex.txt")
     globally_forbidden_tc_items = {
-        "key", "ky2", "ky3", "rvs", "rvl", "cm1", "cm2", "cm3", "cs2",
+        "key", "ky0", "ky1", "ky2", "ky3", "rvs", "rvl", "cm1", "cm2", "cm3", "cs2",
     }
     monster_forbidden_potions = {
         "hp1", "hp2", "hp3", "hp4", "hp5",
@@ -233,6 +233,23 @@ def verify_all(cfg: dict = None) -> List[str]:
     for req_key in ("wm2", "bml", "opl", "vk1", "ky2", "ky3", "z00"):
         if req_key not in mod_item_names:
             raise AssertionError(f"item-names.json: missing '{req_key}' (cross-module overwrite!)")
+
+    # Verify zero custom string ID (>= 60000) collisions across all JSON string tables
+    seen_custom_ids: Dict[int, str] = {}
+    for sfn in ("item-names.json", "item-modifiers.json", "item-nameaffixes.json", "skills.json"):
+        sp = os.path.join(MOD_STRINGS, sfn)
+        with open(sp, "r", encoding="utf-8-sig") as f:
+            for e in json.load(f):
+                if isinstance(e, dict):
+                    sid = int(e.get("id") or 0)
+                    skey = str(e.get("Key") or "")
+                    if sid >= 60000:
+                        if sid in seen_custom_ids:
+                            raise AssertionError(
+                                f"Duplicate custom string id={sid}: {sfn}:{skey} collides with {seen_custom_ids[sid]}"
+                            )
+                        seen_custom_ids[sid] = f"{sfn}:{skey}"
+
     for rel_sp in (
         "herb/herb.sprite",
         "torch/torch.sprite",
@@ -246,9 +263,11 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(f"Missing compiled HD sprite: {sp_path}")
     checks_passed.append("shared JSON & HD lockbox/key sprite completeness")
 
-    # 5. Verify misc.txt stat1..stat3 references against itemstatcost.txt
+    # 5. Verify misc.txt stat1..stat3 references against itemstatcost.txt and dropsound/usesound against sounds.txt
     _, isc_rows = read_excel_tsv("itemstatcost.txt")
     valid_stats = {r["Stat"] for r in isc_rows if r.get("Stat")}
+    _, snd_rows = read_excel_tsv("sounds.txt")
+    valid_sounds = {r["Sound"] for r in snd_rows if r.get("Sound")}
     _, misc_rows = _read_mod_tsv("misc.txt")
     for r in misc_rows:
         code = r.get("code", "")
@@ -258,7 +277,13 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"misc.txt ({code}): {scol}='{sval}' is not a valid Stat in itemstatcost.txt"
                 )
-    checks_passed.append("misc.txt stat1..stat3 itemstatcost referential integrity")
+        for snd_col in ("dropsound", "usesound"):
+            snd_val = r.get(snd_col, "").strip()
+            if snd_val and snd_val not in valid_sounds:
+                raise AssertionError(
+                    f"misc.txt ({code}): {snd_col}='{snd_val}' is not a valid Sound in sounds.txt"
+                )
+    checks_passed.append("misc.txt stat & sound referential integrity")
 
     # 6. Verify QA config flags match MonStats.txt and cubemain.txt
     if not cfg.get("qa_blood_moor_boost", False):

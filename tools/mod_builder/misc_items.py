@@ -283,27 +283,50 @@ def build_misc(cfg: dict) -> str:
     _clear_vendors(krow)
     krow["name"] = LOCKBOX_TIER_INFO[1]["key_name"]
     krow["cost"] = LOCKBOX_TIER_INFO[1]["key_cost"]
+    krow["level"] = "1"
     krow["spawnable"] = "1"
     krow["stackable"] = "0"
     krow["minstack"] = ""
     krow["maxstack"] = ""
     krow["spawnstack"] = ""
     krow["multibuy"] = "0"
-    krow["PermStoreItem"] = "1"
+    krow["PermStoreItem"] = "0"
     krow["NightmareUpgrade"] = "xxx"
     krow["HellUpgrade"] = "xxx"
     krow["spelldesc"] = "1"
     krow["spelldescstr"] = "ModKeyDesc1"
     krow["spelldesccolor"] = "8"
+
+    # Slot 1 (key): Crude Lockbox Key in Normal, Nightmare, and Hell (depletes on purchase)
     _set_vendor_stock(krow, key_vendors, "1", "1")
+
+    # Slot 2 (ky0): Crude Lockbox Key in Normal -> upgrades to Iron Lockbox Key (ky2) in Nightmare & Hell
+    ky0 = dict(krow)
+    ky0["code"] = "ky0"
+    ky0["namestr"] = "ky0"
+    ky0["NightmareUpgrade"] = "ky2"
+    ky0["HellUpgrade"] = "ky2"
+    new_rows.append(ky0)
+
+    # Slot 3 (ky1): Crude Lockbox Key in Normal & Nightmare -> upgrades to Ornate Lockbox Key (ky3) in Hell
+    ky1 = dict(krow)
+    ky1["code"] = "ky1"
+    ky1["namestr"] = "ky1"
+    ky1["NightmareUpgrade"] = "xxx"
+    ky1["HellUpgrade"] = "ky3"
+    new_rows.append(ky1)
 
     for ktier in (2, 3):
         ktinfo = LOCKBOX_TIER_INFO[ktier]
         knew = dict(krow)
+        _clear_vendors(knew)
         knew["name"] = ktinfo["key_name"]
         knew["code"] = ktinfo["key_code"]
         knew["namestr"] = ktinfo["key_code"]
         knew["cost"] = ktinfo["key_cost"]
+        knew["PermStoreItem"] = "0"
+        knew["NightmareUpgrade"] = "xxx"
+        knew["HellUpgrade"] = "xxx"
         knew["spelldescstr"] = f"ModKeyDesc{ktier}"
         new_rows.append(knew)
 
@@ -325,9 +348,9 @@ def build_misc(cfg: dict) -> str:
     box_template["flippyfile"] = "flpbox"
     box_template["invfile"] = "invbox"
     box_template["type"] = "ques"
-    box_template["dropsound"] = "item_horadriccube"
+    box_template["dropsound"] = "item_rare"
     box_template["dropsfxframe"] = "12"
-    box_template["usesound"] = "item_horadriccube"
+    box_template["usesound"] = "item_rare"
     box_template["PermStoreItem"] = "0"
     box_template["NightmareUpgrade"] = "xxx"
     box_template["HellUpgrade"] = "xxx"
@@ -337,10 +360,13 @@ def build_misc(cfg: dict) -> str:
     for entry in get_lockbox_registry():
         bcode = str(entry["code"])
         btier = int(entry["tier"])
+        bsound = str(entry["box_sound"])
         brow = dict(box_template)
         brow["name"] = str(entry["box_name"])
         brow["code"] = bcode
         brow["namestr"] = bcode
+        brow["dropsound"] = bsound
+        brow["usesound"] = bsound
         brow["spelldescstr"] = f"ModLockboxDesc{btier}"
         new_rows.append(brow)
 
@@ -376,6 +402,8 @@ def build_hd_items_json(cfg: dict) -> str:
         ("bm2", "hammer/horadric_malus"),
         ("bm3", "hammer/horadric_malus"),
         ("key", LOCKBOX_TIER_INFO[1]["key_asset"]),
+        ("ky0", LOCKBOX_TIER_INFO[1]["key_asset"]),
+        ("ky1", LOCKBOX_TIER_INFO[1]["key_asset"]),
         ("ky2", LOCKBOX_TIER_INFO[2]["key_asset"]),
         ("ky3", LOCKBOX_TIER_INFO[3]["key_asset"]),
     ]
@@ -402,10 +430,12 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (60006, "vp3", "Supreme Stamina Elixir"),
         (60007, "bml", "Blacksmith's Malus"),
         (0, "key", LOCKBOX_TIER_INFO[1]["key_name"]),
+        (61993, "ky0", LOCKBOX_TIER_INFO[1]["key_name"]),
+        (61994, "ky1", LOCKBOX_TIER_INFO[1]["key_name"]),
         (60008, "ky2", LOCKBOX_TIER_INFO[2]["key_name"]),
         (60009, "ky3", LOCKBOX_TIER_INFO[3]["key_name"]),
     ]
-    next_lb_id = 61000
+    next_lb_id = 62000
     for entry in get_lockbox_registry():
         name_updates.append((next_lb_id, str(entry["code"]), str(entry["box_display_name"])))
         next_lb_id += 1
@@ -424,12 +454,12 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (60018, "ModMpPotDesc4", "Restores 1000 Mana over 3 Seconds (3s Cooldown)"),
         (60019, "ModMpPotDesc5", "Restores 2000 Mana over 3 Seconds (3s Cooldown)"),
         (60020, "ModMalusDesc1", "Transmute with Socketable Gear + Perfect Skull to Add 1-2 Sockets"),
-        (60021, "ModKeyDesc1", "Transmute with Crude Wooden Lockbox in Horadric Cube"),
-        (60022, "ModKeyDesc2", "Transmute with Reinforced Iron Lockbox in Horadric Cube"),
-        (60023, "ModKeyDesc3", "Transmute with Ornate Gilded Lockbox in Horadric Cube"),
-        (60024, "ModLockboxDesc1", "Contains a Guaranteed Unique or Set Item (Requires Crude Lockbox Key)"),
-        (60025, "ModLockboxDesc2", "Contains a Guaranteed Nightmare Unique or Set Item (Requires Iron Lockbox Key)"),
-        (60026, "ModLockboxDesc3", "Contains a Guaranteed Hell Unique or Set Item (Requires Ornate Lockbox Key)"),
+        (60021, "ModKeyDesc1", "Unlocks Crude Wooden Lockbox"),
+        (60022, "ModKeyDesc2", "Unlocks Reinforced Iron Lockbox"),
+        (60023, "ModKeyDesc3", "Unlocks Ornate Gilded Lockbox"),
+        (60024, "ModLockboxDesc1", "Requires Crude Lockbox Key"),
+        (61991, "ModLockboxDesc2", "Requires Iron Lockbox Key"),
+        (61992, "ModLockboxDesc3", "Requires Ornate Lockbox Key"),
     ]
     out_mods = update_mod_strings_json("item-modifiers.json", mod_updates)
     return out_names, out_mods

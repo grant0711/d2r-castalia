@@ -236,9 +236,9 @@ def verify_all(cfg: dict = None) -> List[str]:
             if not stocked_vendors:
                 raise AssertionError(f"weapons.txt ({code}): Normal base weapon not stocked at any vendor")
             for vn in stocked_vendors:
-                if r.get(f"{vn}MagicLvl") in ("", "255"):
+                if r.get(f"{vn}MagicLvl") != "1":
                     raise AssertionError(
-                        f"weapons.txt ({code}): {vn}MagicLvl='{r.get(f'{vn}MagicLvl')}' disables Magic vendor generation!"
+                        f"weapons.txt ({code}): {vn}MagicLvl='{r.get(f'{vn}MagicLvl')}' must be '1' so Act 1 Normal (ilvl cap 12) spawns Magic items!"
                     )
         else:
             for vn in vendor_names:
@@ -286,9 +286,9 @@ def verify_all(cfg: dict = None) -> List[str]:
             if not stocked_vendors:
                 raise AssertionError(f"armor.txt ({code}): Normal base armor not stocked at any vendor")
             for vn in stocked_vendors:
-                if r.get(f"{vn}MagicLvl") in ("", "255"):
+                if r.get(f"{vn}MagicLvl") != "1":
                     raise AssertionError(
-                        f"armor.txt ({code}): {vn}MagicLvl='{r.get(f'{vn}MagicLvl')}' disables Magic vendor generation!"
+                        f"armor.txt ({code}): {vn}MagicLvl='{r.get(f'{vn}MagicLvl')}' must be '1' so Act 1 Normal (ilvl cap 12) spawns Magic items!"
                     )
         else:
             for vn in vendor_names:

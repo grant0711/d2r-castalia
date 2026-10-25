@@ -272,11 +272,12 @@ def build_misc(cfg: dict) -> str:
     vp3["HellUpgrade"] = "xxx"
     new_rows.extend([vp2, vp3])
 
-    # Clear 'gamble cost' on all misc items (amu, rin, cm1..3, cs2) so Rings/Amulets
-    # are never injected into the Gamble UI
+    # Set 'gamble cost' on Ring (rin) and Amulet (amu) to 10,000,000 Gold (exceeding the 3.49M
+    # max inventory+stash gold cap in D2R) because the C++ engine hardcodes spawning 1 'rin'
+    # and 1 'amu' into the Gamble UI regardless of gamble.txt.
     for r in rows:
-        if r.get("gamble cost"):
-            r["gamble cost"] = ""
+        if r.get("gamble cost") or r.get("code") in ("amu", "rin"):
+            r["gamble cost"] = "10000000"
 
     # Enable Magic-only affix rolling on Arrows (aqv) and Bolts (cqv) from monster drops,
     # set 255 stack size (8-bit nostalgia), and clear vendor MagicMin/MagicMax so town vendors sell White quivers.

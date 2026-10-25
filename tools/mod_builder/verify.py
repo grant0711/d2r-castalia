@@ -237,7 +237,7 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"weapons.txt ({code}): expected NightmareUpgrade={exp_nm}, HellUpgrade={exp_hell}"
                 )
-            stocked_vendors = [vn for vn in vendor_names if r.get(f"{vn}MagicMax") == "1"]
+            stocked_vendors = [vn for vn in vendor_names if int(r.get(f"{vn}MagicMax") or "0") >= 1]
             if not stocked_vendors:
                 raise AssertionError(f"weapons.txt ({code}): Normal base weapon not stocked at any vendor")
             for vn in stocked_vendors:
@@ -292,7 +292,7 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"armor.txt ({code}): expected NightmareUpgrade={exp_nm}, HellUpgrade={exp_hell}"
                 )
-            stocked_vendors = [vn for vn in vendor_names if r.get(f"{vn}MagicMax") == "1"]
+            stocked_vendors = [vn for vn in vendor_names if int(r.get(f"{vn}MagicMax") or "0") >= 1]
             if not stocked_vendors:
                 raise AssertionError(f"armor.txt ({code}): Normal base armor not stocked at any vendor")
             for vn in stocked_vendors:

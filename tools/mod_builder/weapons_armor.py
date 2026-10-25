@@ -308,12 +308,15 @@ def build_weapons(cfg: dict) -> str:
             row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
             act_num = WEAPON_ACT_BY_CODE.get(code)
             if act_num is not None:
-                v_list = (
-                    CASTER_WEAPON_VENDORS_BY_ACT[act_num]
-                    if wtype in ("staf", "wand", "scep", "orb")
-                    else PHYS_WEAPON_VENDORS_BY_ACT[act_num]
-                )
-                _set_vendor_magic(row, v_list, "0", "1", "1")
+                if wtype in ("staf", "wand", "scep", "orb"):
+                    # Keep each caster base strictly in its single assigned Act, and stock 3..6
+                    # of each base so caster vendors (which only have 3-4 base codes per Act)
+                    # fill out their Weapons tab with ~10-18 items per refresh.
+                    v_list = CASTER_WEAPON_VENDORS_BY_ACT[act_num]
+                    _set_vendor_magic(row, v_list, "3", "6", "1")
+                else:
+                    v_list = PHYS_WEAPON_VENDORS_BY_ACT[act_num]
+                    _set_vendor_magic(row, v_list, "0", "1", "1")
         else:
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"

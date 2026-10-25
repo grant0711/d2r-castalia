@@ -145,13 +145,14 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
     checks_passed.append("skills/states/missiles/skilldesc referential & rollback bounds")
 
-    # 2. Verify treasureclassex.txt zero-potion drop contract
+    # 2. Verify treasureclassex.txt zero-potion & zero-base-charm drop contract
     _, tc_rows = _read_mod_tsv("treasureclassex.txt")
     forbidden_potions = {
         "hp1", "hp2", "hp3", "hp4", "hp5",
         "mp1", "mp2", "mp3", "mp4", "mp5",
         "rvs", "rvl", "vps", "yps", "wms",
         "vp2", "vp3", "yp2", "yp3", "wm2", "wm3",
+        "cm1", "cm2", "cm3", "cs2",
     }
     for r in tc_rows:
         tc_name = r.get("Treasure Class", "")
@@ -159,9 +160,9 @@ def verify_all(cfg: dict = None) -> List[str]:
             it = r.get(f"Item{i}", "").strip()
             if it in forbidden_potions:
                 raise AssertionError(
-                    f"TreasureClassEx.txt ({tc_name}): forbidden potion '{it}' in Item{i}"
+                    f"TreasureClassEx.txt ({tc_name}): forbidden potion/charm base '{it}' in Item{i}"
                 )
-    checks_passed.append("TreasureClassEx zero-potion contract")
+    checks_passed.append("TreasureClassEx zero-potion & zero-base-charm contract")
 
     # 3. Verify weapons.txt melee reach, javelin reach tiers, and throwing weapon properties
     _, weap_rows = _read_mod_tsv("weapons.txt")

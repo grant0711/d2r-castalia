@@ -109,11 +109,12 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         if r.get("spawnable") != "1" or r.get("disabled") == "1":
             continue
 
-        # Convert Gheed's Fortune to 1x1 Small Charm (cm1) at qlvl 32 (Normal Mephisto+) with a focused 4-affix Greed Kiss-Curse identity
+        # Convert Gheed's Fortune to 1x1 Small Charm (cm1) at qlvl 26 (Normal Mephisto+) with a focused 4-affix Greed Kiss-Curse identity
         if idx_name == "Gheed's Fortune":
             r["code"] = "cm1"
             r["carry1"] = "1"
-            r["lvl"] = "32"
+            r["nolimit"] = "1"
+            r["lvl"] = "26"
             r["lvl req"] = "24"
             gheed_props = _get_props(r, 12)[:3]
             gheed_props.append(("damageresist", "", "-6", "-6"))
@@ -382,11 +383,11 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         string_updates.append((next_str_id, name, name))
         next_str_id += 1
 
-    # 6. Add 4 Additional 1x1 (cm1, carry1=1) Act Boss Unique Charms across qlvl 15 / 48 / 66 / 82
-    # (pairing with Gheed's Fortune at qlvl 32 for the full 15 / 32 / 48 / 66 / 82 ladder).
+    # 6. Add 4 Additional 1x1 (cm1, carry1=1, nolimit=1) Act Boss Unique Charms across qlvl 12 / 48 / 63 / 84
+    # (pairing with Gheed's Fortune at qlvl 26 for the full 12 / 26 / 48 / 63 / 84 ladder matching Boss mlvls).
     # Each has a tight 4-affix Kiss-Curse package (2-3 focused bonuses + 1 thematic penalty).
     boss_charms = [
-        ("Signet of the Maiden", "15", "12", [
+        ("Signet of the Maiden", "12", "12", [
             ("res-pois", "", "20", "25"),
             ("swing2", "", "10", "10"),
             ("move2", "", "10", "10"),
@@ -398,13 +399,13 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
             ("gethit-skill", "44", "12", "5"),
             ("move2", "", "-10", "-10"),
         ]),
-        ("Soulstone Shard", "66", "50", [
+        ("Soulstone Shard", "63", "50", [
             ("allskills", "", "1", "1"),
             ("res-all", "", "8", "12"),
             ("cast2", "", "10", "10"),
             ("hp", "", "-35", "-25"),
         ]),
-        ("Eye of Destruction", "82", "64", [
+        ("Eye of Destruction", "84", "64", [
             ("allskills", "", "1", "1"),
             ("dmg%", "", "20", "30"),
             ("pierce", "", "10", "15"),
@@ -418,6 +419,7 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         next_id += 1
         ur["version"] = "100"
         ur["spawnable"] = "1"
+        ur["nolimit"] = "1"
         ur["rarity"] = "1"
         ur["carry1"] = "1"
         ur["lvl"] = lvl

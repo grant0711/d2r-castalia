@@ -169,7 +169,10 @@ def build_treasureclass(cfg: dict) -> str:
                 ],
             )
 
-    # 5. Create custom sub-tables: Act X GemRune & Act Boss Unique Charm
+    # 5. Create custom sub-tables: Act X GemRune & Staged Act Boss Unique Charm 1..5
+    # Like Annihilus in ROP (H), Act Boss Charm TCs reference the exact Unique Charm index names
+    # directly (never the base item code 'cm1'), so it is physically impossible for a Magic Charm
+    # to ever drop. Each has NoDrop=85 and total Unique Charm weight=15 (15% drop chance).
     custom_rows: List[Dict[str, str]] = []
     for act_prefix, g1, g2, r1, r2, _ in ACTS:
         gr_name = f"{act_prefix} GemRune"
@@ -181,18 +184,22 @@ def build_treasureclass(cfg: dict) -> str:
             custom_rows.append(gr_row)
             by_tc[gr_name] = gr_row
 
-    charm_tc_name = "Act Boss Unique Charm"
-    if charm_tc_name not in by_tc:
-        charm_row = _make_blank_row(headers, charm_tc_name)
-        charm_row["Picks"] = "1"
-        charm_row["Unique"] = "1024"
-        charm_row["Set"] = "1024"
-        charm_row["Rare"] = "1024"
-        charm_row["Magic"] = "1024"
-        charm_row["NoDrop"] = "75"
-        _set_items(charm_row, [("cm1", "25")])
-        custom_rows.append(charm_row)
-        by_tc[charm_tc_name] = charm_row
+    boss_charm_tcs = [
+        ("Act Boss Charm 1", [("Signet of the Maiden", "15")]),
+        ("Act Boss Charm 2", [("Signet of the Maiden", "5"), ("Gheed's Fortune", "10")]),
+        ("Act Boss Charm 3", [("Signet of the Maiden", "3"), ("Gheed's Fortune", "5"), ("Carapace of Pain", "7")]),
+        ("Act Boss Charm 4", [("Gheed's Fortune", "3"), ("Carapace of Pain", "5"), ("Soulstone Shard", "7")]),
+        ("Act Boss Charm 5", [("Carapace of Pain", "3"), ("Soulstone Shard", "5"), ("Eye of Destruction", "7")]),
+    ]
+    for ctc_name, ctc_items in boss_charm_tcs:
+        if ctc_name not in by_tc:
+            charm_row = _make_blank_row(headers, ctc_name)
+            charm_row["Picks"] = "1"
+            charm_row["Unique"] = "1024"
+            charm_row["NoDrop"] = "85"
+            _set_items(charm_row, ctc_items)
+            custom_rows.append(charm_row)
+            by_tc[ctc_name] = charm_row
 
     # Insert custom sub-tables right after Runes 17 so they are defined before use!
     runes17_idx = next(i for i, r in enumerate(rows) if r["Treasure Class"] == "Runes 17")
@@ -396,14 +403,14 @@ def build_treasureclass(cfg: dict) -> str:
     # 9. Tier 4 — Act Bosses (Andariel, Duriel, Mephisto, Diablo, Baal + q & Desecrated):
     # 3 Guaranteed Rolls + 1 Bonus (50%) Roll = 3-4 drops (75% Item / 25% GemRune) + 1 Unique Boss Charm roll
     boss_configs = [
-        ("Andariel", ("", "Act 2 Uitem A", "Act 2 Cpot A"), (" (N)", "Act 2 (N) Uitem A", "Act 2 (N) Cpot A"), (" (H)", "Act 2 (H) Uitem A", "Act 2 (H) Cpot A")),
-        ("Duriel", ("", "Act 3 Uitem A", "Act 3 Cpot A"), (" (N)", "Act 3 (N) Uitem A", "Act 3 (N) Cpot A"), (" (H)", "Act 3 (H) Uitem A", "Act 3 (H) Cpot A")),
-        ("Mephisto", ("", "Act 4 Uitem A", "Act 4 Cpot A"), (" (N)", "Act 4 (N) Uitem A", "Act 4 (N) Cpot A"), (" (H)", "Act 4 (H) Uitem A", "Act 4 (H) Cpot A")),
-        ("Diablo", ("", "Act 5 Uitem A", "Act 5 Cpot A"), (" (N)", "Act 5 (N) Uitem A", "Act 5 (N) Cpot A"), (" (H)", "Act 5 (H) Uitem A", "Act 5 (H) Cpot A")),
-        ("Baal", ("", "Act 1 (N) Uitem A", "Act 1 (N) Cpot A"), (" (N)", "Act 1 (H) Uitem A", "Act 1 (H) Cpot A"), (" (H)", "Act 5 (H) Uitem C", "Act 5 (H) Cpot C")),
+        ("Andariel", ("", "Act 2 Uitem A", "Act 2 Cpot A", "Act Boss Charm 1"), (" (N)", "Act 2 (N) Uitem A", "Act 2 (N) Cpot A", "Act Boss Charm 3"), (" (H)", "Act 2 (H) Uitem A", "Act 2 (H) Cpot A", "Act Boss Charm 4")),
+        ("Duriel", ("", "Act 3 Uitem A", "Act 3 Cpot A", "Act Boss Charm 1"), (" (N)", "Act 3 (N) Uitem A", "Act 3 (N) Cpot A", "Act Boss Charm 3"), (" (H)", "Act 3 (H) Uitem A", "Act 3 (H) Cpot A", "Act Boss Charm 5")),
+        ("Mephisto", ("", "Act 4 Uitem A", "Act 4 Cpot A", "Act Boss Charm 2"), (" (N)", "Act 4 (N) Uitem A", "Act 4 (N) Cpot A", "Act Boss Charm 3"), (" (H)", "Act 4 (H) Uitem A", "Act 4 (H) Cpot A", "Act Boss Charm 5")),
+        ("Diablo", ("", "Act 5 Uitem A", "Act 5 Cpot A", "Act Boss Charm 2"), (" (N)", "Act 5 (N) Uitem A", "Act 5 (N) Cpot A", "Act Boss Charm 4"), (" (H)", "Act 5 (H) Uitem A", "Act 5 (H) Cpot A", "Act Boss Charm 5")),
+        ("Baal", ("", "Act 1 (N) Uitem A", "Act 1 (N) Cpot A", "Act Boss Charm 2"), (" (N)", "Act 1 (H) Uitem A", "Act 1 (H) Cpot A", "Act Boss Charm 4"), (" (H)", "Act 5 (H) Uitem C", "Act 5 (H) Cpot C", "Act Boss Charm 5")),
     ]
     for boss, cfg_n, cfg_nm, cfg_h in boss_configs:
-        for diff_suffix, boss_uitem, boss_cpot in (cfg_n, cfg_nm, cfg_h):
+        for diff_suffix, boss_uitem, boss_cpot, boss_charm_tc in (cfg_n, cfg_nm, cfg_h):
             for r in rows:
                 tc = r["Treasure Class"]
                 is_match = (
@@ -426,7 +433,7 @@ def build_treasureclass(cfg: dict) -> str:
                         [
                             (boss_uitem, "3"),
                             (boss_cpot, "1"),
-                            (charm_tc_name, "1"),
+                            (boss_charm_tc, "1"),
                         ],
                     )
 

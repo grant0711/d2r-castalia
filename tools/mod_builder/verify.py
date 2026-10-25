@@ -269,6 +269,11 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"weapons.txt ({code}): throwing weapon must be non-destructible and socketable"
                 )
+        expected_weap_ap = {"staf": "310", "wand": "311", "scep": "312", "orb": "303", "h2h": "315", "h2h2": "315"}
+        if wtype in expected_weap_ap and r.get("auto prefix") != expected_weap_ap[wtype]:
+            raise AssertionError(
+                f"weapons.txt ({code}, type={wtype}): expected auto prefix={expected_weap_ap[wtype]}"
+            )
     for r in arm_rows:
         code = r.get("code", "")
         if not code:
@@ -280,6 +285,12 @@ def verify_all(cfg: dict = None) -> List[str]:
                 )
         if r.get("spawnable") != "1":
             continue
+        expected_arm_ap = {"phlm": "313", "pelt": "314", "head": "305"}
+        atype = r.get("type", "")
+        if atype in expected_arm_ap and r.get("auto prefix") != expected_arm_ap[atype]:
+            raise AssertionError(
+                f"armor.txt ({code}, type={atype}): expected auto prefix={expected_arm_ap[atype]}"
+            )
         acost = int(r.get("cost") or "0")
         if acost < 50 or acost > 50000:
             raise AssertionError(

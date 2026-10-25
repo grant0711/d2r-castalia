@@ -481,7 +481,18 @@ def build_weapons(cfg: dict) -> str:
                 row["spawnstack"] = a_spawn
                 row["auto prefix"] = "307"
 
-        # 3b. Normalize weapon base cost by progression level (1..85) and slot weight
+        # 3b. Attach automagic 'skill-rand' staffmod groups (310=sor, 311=nec, 312=pal, 315=ass)
+        weapon_staffmod_group = {
+            "staf": "310",
+            "wand": "311",
+            "scep": "312",
+            "h2h": "315",
+            "h2h2": "315",
+        }
+        if wtype in weapon_staffmod_group:
+            row["auto prefix"] = weapon_staffmod_group[wtype]
+
+        # 3c. Normalize weapon base cost by progression level (1..85) and slot weight
         w_lvl = int(row.get("level") or "1")
         if wtype in ("jave", "ajav", "tkni", "taxe"):
             s_div = max(1, int(row.get("maxstack") or "25"))
@@ -633,6 +644,12 @@ def build_armor(cfg: dict) -> str:
             row["minac"] = str(max(1, int(round(minac * 0.85))))
             row["maxac"] = str(max(2, int(round(maxac * 0.85))))
             row["speed"] = "0"
+
+        # Attach automagic 'skill-rand' staffmod groups (313=bar Primal Helms, 314=dru Pelts)
+        if atype == "phlm":
+            row["auto prefix"] = "313"
+        elif atype == "pelt":
+            row["auto prefix"] = "314"
 
         # Normalize armor base cost by progression level (1..85) and slot weight
         a_lvl = int(row.get("level") or "1")

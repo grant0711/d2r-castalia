@@ -185,16 +185,51 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Lockable=1 found"
             )
-    checks_passed.append("TreasureClassEx & objects.txt chest/lockbox/potion/charm contracts")
+        if r.get("OperateFn") == "21" and r.get("Selectable0") != "0":
+            raise AssertionError(
+                f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Malus stand OperateFn=21 must have Selectable0=0"
+            )
+    checks_passed.append("TreasureClassEx & objects.txt chest/lockbox/potion/charm/malus contracts")
 
-    # 3. Verify weapons.txt melee reach, javelin reach tiers, and throwing weapon properties
+    # 3. Verify weapons.txt & armor.txt melee reach, javelin reach tiers, throwing properties,
+    #    and strictly partitioned Act 1..5 Magic-only vendor stocking + ubercode/ultracode upgrades
     _, weap_rows = _read_mod_tsv("weapons.txt")
+    _, arm_rows = _read_mod_tsv("armor.txt")
     ranged_only_types = {"bow", "abow", "xbow", "tpot"}
+    vendor_names = (
+        "Charsi", "Gheed", "Akara", "Fara", "Lysander", "Drognan",
+        "Hratli", "Alkor", "Ormus", "Elzix", "Asheara", "Cain",
+        "Halbu", "Malah", "Larzuk", "Anya", "Jamella",
+    )
     for r in weap_rows:
         code = r.get("code", "")
         wtype = r.get("type", "")
-        if not code or not wtype or r.get("spawnable") != "1":
+        if not code or not wtype:
             continue
+        if wtype != "tpot":
+            for vn in vendor_names:
+                if r.get(f"{vn}Min") or r.get(f"{vn}Max"):
+                    raise AssertionError(
+                        f"weapons.txt ({code}): white vendor stock found on {vn} (all weapons except tpot must be Magic-only)"
+                    )
+        if r.get("spawnable") != "1" or wtype == "tpot" or code == "bml":
+            continue
+        if code == r.get("normcode"):
+            exp_nm = r.get("ubercode") if r.get("ubercode") != code else "xxx"
+            exp_hell = r.get("ultracode") if r.get("ultracode") != code else "xxx"
+            if r.get("NightmareUpgrade") != exp_nm or r.get("HellUpgrade") != exp_hell:
+                raise AssertionError(
+                    f"weapons.txt ({code}): expected NightmareUpgrade={exp_nm}, HellUpgrade={exp_hell}"
+                )
+            stocked_vendors = [vn for vn in vendor_names if r.get(f"{vn}MagicMax") == "1"]
+            if not stocked_vendors:
+                raise AssertionError(f"weapons.txt ({code}): Normal base weapon not stocked at any vendor")
+        else:
+            for vn in vendor_names:
+                if r.get(f"{vn}MagicMin") or r.get(f"{vn}MagicMax"):
+                    raise AssertionError(
+                        f"weapons.txt ({code}): non-Normal weapon has direct Magic vendor stock on {vn}"
+                    )
         if wtype not in ranged_only_types:
             ra = int(r.get("rangeadder") or "0")
             if ra < 1:
@@ -213,7 +248,34 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"weapons.txt ({code}): throwing weapon must be non-destructible and socketable"
                 )
-    checks_passed.append("weapons melee/javelin rangeadder & throwing contracts")
+    for r in arm_rows:
+        code = r.get("code", "")
+        if not code:
+            continue
+        for vn in vendor_names:
+            if r.get(f"{vn}Min") or r.get(f"{vn}Max"):
+                raise AssertionError(
+                    f"armor.txt ({code}): white vendor stock found on {vn} (all armors must be Magic-only)"
+                )
+        if r.get("spawnable") != "1":
+            continue
+        if code == r.get("normcode"):
+            exp_nm = r.get("ubercode") if r.get("ubercode") != code else "xxx"
+            exp_hell = r.get("ultracode") if r.get("ultracode") != code else "xxx"
+            if r.get("NightmareUpgrade") != exp_nm or r.get("HellUpgrade") != exp_hell:
+                raise AssertionError(
+                    f"armor.txt ({code}): expected NightmareUpgrade={exp_nm}, HellUpgrade={exp_hell}"
+                )
+            stocked_vendors = [vn for vn in vendor_names if r.get(f"{vn}MagicMax") == "1"]
+            if not stocked_vendors:
+                raise AssertionError(f"armor.txt ({code}): Normal base armor not stocked at any vendor")
+        else:
+            for vn in vendor_names:
+                if r.get(f"{vn}MagicMin") or r.get(f"{vn}MagicMax"):
+                    raise AssertionError(
+                        f"armor.txt ({code}): non-Normal armor has direct Magic vendor stock on {vn}"
+                    )
+    checks_passed.append("weapons/armor melee/javelin/throwing & Act 1..5 Magic-only vendor progression contracts")
 
     # 4. Verify shared JSON files (items.json and item-names.json) contain keys from all modules
     hd_items_path = os.path.join(MOD_ROOT, "data/hd/items/items.json")

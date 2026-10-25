@@ -36,12 +36,155 @@ def _clear_vendors(row: Dict[str, str]) -> None:
             row[f"{v}MagicMin"] = ""
         if f"{v}MagicMax" in row:
             row[f"{v}MagicMax"] = ""
+        if f"{v}MagicLvl" in row:
+            row[f"{v}MagicLvl"] = ""
 
 
 def _set_vendor_stock(row: Dict[str, str], vendor_list: List[str], vmin: str = "1", vmax: str = "1") -> None:
     for v in vendor_list:
         row[f"{v}Min"] = vmin
         row[f"{v}Max"] = vmax
+
+
+def _set_vendor_magic(row: Dict[str, str], vendor_list: List[str], mmin: str = "0", mmax: str = "1", mlvl: str = "255") -> None:
+    for v in vendor_list:
+        if f"{v}MagicMin" in row:
+            row[f"{v}MagicMin"] = mmin
+        if f"{v}MagicMax" in row:
+            row[f"{v}MagicMax"] = mmax
+        if f"{v}MagicLvl" in row:
+            row[f"{v}MagicLvl"] = mlvl
+
+
+# Strictly partitioned Act 1..5 Normal base item codes (code == normcode).
+# Each Act's vendors sell ONLY that Act's progression tier as Magic items (0-1 per refresh, ~50% full tabs),
+# with NightmareUpgrade = ubercode and HellUpgrade = ultracode so Nightmare/Hell vendors upgrade cleanly
+# within their Act's dedicated item slice (e.g., Hell Charsi -> Dusk Shroud/Wyrmhide; NM Larzuk -> Ornate Plate).
+ARMOR_VENDORS_BY_ACT = {
+    1: ["Charsi", "Gheed"],
+    2: ["Fara", "Elzix"],
+    3: ["Hratli", "Asheara"],
+    4: ["Halbu", "Jamella"],
+    5: ["Larzuk", "Anya"],
+}
+
+ARMOR_ACT_BY_CODE = {
+    # Body Armor (tors, 15)
+    "qui": 1, "lea": 1, "hla": 1, "stu": 1,
+    "rng": 2, "scl": 2, "chn": 2, "brs": 2,
+    "spl": 3, "plt": 3, "ltp": 3,
+    "fld": 4, "gth": 4,
+    "ful": 5, "aar": 5,
+    # Helms (helm + circ, 10)
+    "cap": 1, "skp": 1,
+    "hlm": 2, "fhl": 2,
+    "msk": 3, "bhm": 3,
+    "ghm": 4, "ci0": 4,
+    "crn": 5, "ci1": 5,
+    # Shields (shie, 8)
+    "buc": 1, "sml": 1,
+    "lrg": 2, "spk": 2,
+    "kit": 3, "bsh": 3,
+    "tow": 4,
+    "gts": 5,
+    # Gloves (glov, 5)
+    "lgl": 1, "vgl": 2, "mgl": 3, "tgl": 4, "hgl": 5,
+    # Boots (boot, 5)
+    "lbt": 1, "vbt": 2, "mbt": 3, "tbt": 4, "hbt": 5,
+    # Belts (belt, 5)
+    "lbl": 1, "vbl": 2, "mbl": 3, "tbl": 4, "hbl": 5,
+    # Druid Pelts (pelt, 5)
+    "dr1": 1, "dr2": 2, "dr3": 3, "dr4": 4, "dr5": 5,
+    # Barbarian Primal Helms (phlm, 5)
+    "ba1": 1, "ba2": 2, "ba3": 3, "ba4": 4, "ba5": 5,
+    # Paladin Auric Shields (ashd, 5)
+    "pa1": 1, "pa2": 2, "pa3": 3, "pa4": 4, "pa5": 5,
+    # Necromancer Shrunken Heads (head, 5)
+    "ne1": 1, "ne2": 2, "ne3": 3, "ne4": 4, "ne5": 5,
+    # Grimoires (grim, 5)
+    "wa1": 1, "wa2": 2, "wa3": 3, "wa4": 4, "wa5": 5,
+}
+
+PHYS_WEAPON_VENDORS_BY_ACT = {
+    1: ["Charsi", "Gheed"],
+    2: ["Fara", "Elzix"],
+    3: ["Hratli", "Asheara"],
+    4: ["Halbu"],
+    5: ["Larzuk", "Anya"],
+}
+
+CASTER_WEAPON_VENDORS_BY_ACT = {
+    1: ["Akara"],
+    2: ["Drognan"],
+    3: ["Ormus"],
+    4: ["Jamella"],
+    5: ["Malah"],
+}
+
+WEAPON_ACT_BY_CODE = {
+    # Axes (axe, 10: 1x 1H + 1x 2H per Act)
+    "hax": 1, "lax": 1,
+    "axe": 2, "bax": 2,
+    "2ax": 3, "btx": 3,
+    "mpi": 4, "gax": 4,
+    "wax": 5, "gix": 5,
+    # Swords (swor, 14)
+    "ssd": 1, "scm": 1, "sbr": 1,
+    "flc": 2, "crs": 2, "2hs": 2,
+    "bsd": 3, "lsd": 3, "clm": 3,
+    "gis": 4, "bsw": 4, "wsd": 4,
+    "flb": 5, "gsd": 5,
+    # Clubs, Maces & Hammers (club + mace + hamm, 8)
+    "clb": 1, "spc": 1,
+    "mac": 2, "mst": 2,
+    "fla": 3,
+    "mau": 4, "whm": 4,
+    "gma": 5,
+    # Daggers (knif, 4)
+    "dgr": 1, "dir": 2, "kri": 3, "bld": 4,
+    # Spears & Amazon Spears (spea + aspe, 7)
+    "spr": 1,
+    "tri": 2,
+    "brn": 3, "am3": 3,
+    "spt": 4,
+    "pik": 5, "am4": 5,
+    # Polearms (pole, 6)
+    "bar": 1,
+    "vou": 2,
+    "scy": 3,
+    "pax": 4,
+    "hal": 5, "wsc": 5,
+    # Bows & Amazon Bows (bow + abow, 10)
+    "sbw": 1, "hbw": 1,
+    "lbw": 2, "cbw": 2,
+    "sbb": 3, "am1": 3,
+    "lbb": 4, "swb": 4,
+    "lwb": 5, "am2": 5,
+    # Crossbows (xbow, 4)
+    "lxb": 1, "mxb": 2, "hxb": 4, "rxb": 5,
+    # Javelins & Amazon Javelins (jave + ajav, 6)
+    "jav": 1,
+    "pil": 2,
+    "ssp": 3,
+    "glv": 4, "am5": 4,
+    "tsp": 5,
+    # Throwing Knives & Axes (tkni + taxe, 4)
+    "tkf": 1,
+    "tax": 2, "bkf": 2,
+    "bal": 3,
+    # Assassin Claws (h2h, 7)
+    "ktr": 1,
+    "wrb": 2, "axf": 2,
+    "ces": 3, "clw": 3,
+    "btl": 4,
+    "skr": 5,
+    # Caster Weapons: Staves (staf, 5), Wands (wand, 4), Scepters (scep, 3), Sorceress Orbs (orb, 5)
+    "sst": 1, "wnd": 1, "scp": 1, "ob1": 1,
+    "lst": 2, "ywn": 2, "ob2": 2,
+    "cst": 3, "bwn": 3, "gsc": 3, "ob3": 3,
+    "bst": 4, "wsp": 4, "ob4": 4,
+    "wst": 5, "gwn": 5, "ob5": 5,
+}
 
 
 def _spread_bounds(avg: float, low_pct: float, high_pct: float) -> Tuple[str, str]:
@@ -139,7 +282,27 @@ def build_weapons(cfg: dict) -> str:
 
         # Skip quest-only non-spawnable items (Horadric Staff, Khalim's Will, Decoy Gidbinn, etc.)
         if row.get("spawnable") != "1":
+            _clear_vendors(row)
             continue
+
+        # 1b. Strictly partitioned Act 1..5 Magic-only vendor stocking & ubercode/ultracode upgrades
+        _clear_vendors(row)
+        if code == row.get("normcode"):
+            uber = row.get("ubercode", "")
+            ultra = row.get("ultracode", "")
+            row["NightmareUpgrade"] = uber if (uber and uber != code) else "xxx"
+            row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
+            act_num = WEAPON_ACT_BY_CODE.get(code)
+            if act_num is not None:
+                v_list = (
+                    CASTER_WEAPON_VENDORS_BY_ACT[act_num]
+                    if wtype in ("staf", "wand", "scep", "orb")
+                    else PHYS_WEAPON_VENDORS_BY_ACT[act_num]
+                )
+                _set_vendor_magic(row, v_list, "0", "1", "255")
+        else:
+            row["NightmareUpgrade"] = "xxx"
+            row["HellUpgrade"] = "xxx"
 
         # 2. Exaggerate non-zero weapon speed by 1.5x (clamped to [-60, 40])
         if row.get("speed"):
@@ -379,8 +542,22 @@ def build_armor(cfg: dict) -> str:
 
     for row in rows:
         if row.get("spawnable") != "1":
+            _clear_vendors(row)
             continue
+        code = row.get("code", "")
         atype = row.get("type", "")
+        _clear_vendors(row)
+        if code == row.get("normcode"):
+            uber = row.get("ubercode", "")
+            ultra = row.get("ultracode", "")
+            row["NightmareUpgrade"] = uber if (uber and uber != code) else "xxx"
+            row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
+            act_num = ARMOR_ACT_BY_CODE.get(code)
+            if act_num is not None:
+                _set_vendor_magic(row, ARMOR_VENDORS_BY_ACT[act_num], "0", "1", "255")
+        else:
+            row["NightmareUpgrade"] = "xxx"
+            row["HellUpgrade"] = "xxx"
         spd = row.get("speed", "0")
         minac = int(row["minac"]) if row.get("minac") else 0
         maxac = int(row["maxac"]) if row.get("maxac") else 0

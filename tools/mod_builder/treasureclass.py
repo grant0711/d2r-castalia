@@ -579,12 +579,12 @@ def build_treasureclass(cfg: dict) -> str:
 def build_objects(cfg: dict) -> str:
     """
     Disable generic non-quest loot containers (Caskets, Urns, Barrels, Crates/Rocks/Logs/Corpses,
-    Armor Stands, Weapon Racks, Bookshelves, Jungle Stashes) and disable random chest scattering
-    (PopulateFn = 0) in objects.txt, while keeping preset Super Chests, Sparkly Chests, and Quest Chests
-    clickable (Selectable0 = 1) and unlocked (Lockable = 0).
+    Armor Stands, Weapon Racks, Bookshelves, Jungle Stashes), the Horadric Malus stand (OperateFn=21),
+    and random chest scattering (PopulateFn = 0) in objects.txt, while keeping preset Super Chests,
+    Sparkly Chests, and Quest Chests clickable (Selectable0 = 1) and unlocked (Lockable = 0).
     """
     headers, rows = read_excel_tsv("objects.txt")
-    generic_container_ops = {"1", "3", "4", "5", "7", "14", "19", "20", "26", "30", "33", "51"}
+    generic_container_ops = {"1", "3", "4", "5", "7", "14", "19", "20", "21", "26", "30", "33", "51"}
     preserve_ids = {"383", "384", "385"}  # TrappedSoul / Cain start position
     for r in rows:
         is_real_chest = (

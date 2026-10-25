@@ -35,8 +35,14 @@ def build_itemratio(cfg: dict = None) -> str:
         if zero_white:
             # Setting Magic=1, MagicDivisor=1, MagicMin=1 guarantees 100% of items that don't roll
             # Unique/Set/Rare roll Magic (Blue), eliminating White/Superior/Cracked monster drops.
+            # Also set HiQuality=1000000 and Normal=1 so even non-magical vendor slots (e.g. Charsi's
+            # Untempered Malus) always roll Normal (White) rather than Superior (HiQuality).
             row["Magic"] = "1"
             row["MagicDivisor"] = "1"
             row["MagicMin"] = "1"
+            row["HiQuality"] = "1000000"
+            row["HiQualityDivisor"] = "1000000"
+            row["Normal"] = "1"
+            row["NormalDivisor"] = "1"
 
     return write_excel_tsv("itemratio.txt", headers, rows)

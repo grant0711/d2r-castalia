@@ -37,7 +37,7 @@ def _clear_vendors(row: Dict[str, str]) -> None:
         if f"{v}MagicMax" in row:
             row[f"{v}MagicMax"] = ""
         if f"{v}MagicLvl" in row:
-            row[f"{v}MagicLvl"] = ""
+            row[f"{v}MagicLvl"] = "255"
 
 
 def _set_vendor_stock(row: Dict[str, str], vendor_list: List[str], vmin: str = "1", vmax: str = "1") -> None:
@@ -46,7 +46,7 @@ def _set_vendor_stock(row: Dict[str, str], vendor_list: List[str], vmin: str = "
         row[f"{v}Max"] = vmax
 
 
-def _set_vendor_magic(row: Dict[str, str], vendor_list: List[str], mmin: str = "0", mmax: str = "1", mlvl: str = "255") -> None:
+def _set_vendor_magic(row: Dict[str, str], vendor_list: List[str], mmin: str = "0", mmax: str = "1", mlvl: str = "20") -> None:
     for v in vendor_list:
         if f"{v}MagicMin" in row:
             row[f"{v}MagicMin"] = mmin
@@ -299,7 +299,7 @@ def build_weapons(cfg: dict) -> str:
                     if wtype in ("staf", "wand", "scep", "orb")
                     else PHYS_WEAPON_VENDORS_BY_ACT[act_num]
                 )
-                _set_vendor_magic(row, v_list, "0", "1", "255")
+                _set_vendor_magic(row, v_list, "0", "1", "20")
         else:
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"
@@ -505,6 +505,7 @@ def build_weapons(cfg: dict) -> str:
     # 4b. Add Untempered Malus (um1) to weapons.txt:
     # - Sold ONLY by Charsi as a single depleting White item (CharsiMin=1, CharsiMax=1, PermStoreItem=0)
     #   for 100,000 Gold in Normal, Nightmare, and Hell.
+    # - Setting level=50 ensures ilvl < qlvl at Charsi so the vendor generator never rolls Superior (HiQuality)!
     # - Because it is the ONLY White weapon/armor in the entire mod (and type='umal' inherits from 'weap'
     #   with Rare=1), it is the ONLY item accepted by Charsi's "Temper Malus" (Imbue) quest reward!
     # - Tempering it at Charsi transforms it into a Rare Malus (um1,rar), which can then be transmuted
@@ -515,6 +516,7 @@ def build_weapons(cfg: dict) -> str:
     um1["type"] = "umal"
     um1["code"] = "um1"
     um1["namestr"] = "um1"
+    um1["level"] = "50"
     um1["cost"] = "100000"
     um1["normcode"] = "um1"
     um1["ubercode"] = "um1"
@@ -579,7 +581,7 @@ def build_armor(cfg: dict) -> str:
             row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
             act_num = ARMOR_ACT_BY_CODE.get(code)
             if act_num is not None:
-                _set_vendor_magic(row, ARMOR_VENDORS_BY_ACT[act_num], "0", "1", "255")
+                _set_vendor_magic(row, ARMOR_VENDORS_BY_ACT[act_num], "0", "1", "20")
         else:
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"

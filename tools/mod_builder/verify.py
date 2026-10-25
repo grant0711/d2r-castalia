@@ -235,6 +235,11 @@ def verify_all(cfg: dict = None) -> List[str]:
             stocked_vendors = [vn for vn in vendor_names if r.get(f"{vn}MagicMax") == "1"]
             if not stocked_vendors:
                 raise AssertionError(f"weapons.txt ({code}): Normal base weapon not stocked at any vendor")
+            for vn in stocked_vendors:
+                if r.get(f"{vn}MagicLvl") in ("", "255"):
+                    raise AssertionError(
+                        f"weapons.txt ({code}): {vn}MagicLvl='{r.get(f'{vn}MagicLvl')}' disables Magic vendor generation!"
+                    )
         else:
             for vn in vendor_names:
                 if r.get(f"{vn}MagicMin") or r.get(f"{vn}MagicMax"):
@@ -280,6 +285,11 @@ def verify_all(cfg: dict = None) -> List[str]:
             stocked_vendors = [vn for vn in vendor_names if r.get(f"{vn}MagicMax") == "1"]
             if not stocked_vendors:
                 raise AssertionError(f"armor.txt ({code}): Normal base armor not stocked at any vendor")
+            for vn in stocked_vendors:
+                if r.get(f"{vn}MagicLvl") in ("", "255"):
+                    raise AssertionError(
+                        f"armor.txt ({code}): {vn}MagicLvl='{r.get(f'{vn}MagicLvl')}' disables Magic vendor generation!"
+                    )
         else:
             for vn in vendor_names:
                 if r.get(f"{vn}MagicMin") or r.get(f"{vn}MagicMax"):
@@ -292,13 +302,16 @@ def verify_all(cfg: dict = None) -> List[str]:
     hd_items_path = os.path.join(MOD_ROOT, "data/hd/items/items.json")
     with open(hd_items_path, "r", encoding="utf-8") as f:
         hd_list = json.load(f)
-    hd_codes = set()
+    hd_map = {}
     for entry in hd_list:
         if isinstance(entry, dict):
-            hd_codes.update(entry.keys())
+            for k, v in entry.items():
+                hd_map[k] = v.get("asset") if isinstance(v, dict) else None
     for req_code in ("wm2", "yp2", "vp2", "bml", "um1", "vk1", "sw1", "va1", "ky2", "ky3", "z00"):
-        if req_code not in hd_codes:
+        if req_code not in hd_map:
             raise AssertionError(f"data/hd/items/items.json: missing '{req_code}' (cross-module overwrite!)")
+    if hd_map.get("um1") != "hammer/horadric_malus" or hd_map.get("bml") != "hammer/horadric_malus":
+        raise AssertionError(f"data/hd/items/items.json: bml/um1 asset mismatch ({hd_map.get('bml')}, {hd_map.get('um1')})")
 
     mod_item_names_path = os.path.join(MOD_STRINGS, "item-names.json")
     with open(mod_item_names_path, "r", encoding="utf-8-sig") as f:

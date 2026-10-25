@@ -178,22 +178,26 @@ def update_mod_strings_json(filename: str, updates: List[Tuple[int, str, str]]) 
 def update_mod_hd_items_json(additions: List[Tuple[str, str]]) -> str:
     """
     Read data/hd/items/items.json from MOD_ROOT (if already initialized earlier in the build run)
-    or VANILLA_ROOT, append any missing (code, asset) pairs, and write back to MOD_ROOT.
+    or VANILLA_ROOT, upsert any (code, asset) pairs, and write back to MOD_ROOT.
     """
     mod_path = os.path.join(MOD_ROOT, "data/hd/items/items.json")
     src_path = mod_path if os.path.exists(mod_path) else os.path.join(VANILLA_ROOT, "data/hd/items/items.json")
     with open(src_path, "r", encoding="utf-8") as f:
         items_list = json.load(f)
 
-    existing_keys = set()
+    existing_by_code = {}
     for entry in items_list:
         if isinstance(entry, dict):
-            existing_keys.update(entry.keys())
+            for k in entry:
+                existing_by_code[k] = entry
 
     for code, asset in additions:
-        if code not in existing_keys:
-            items_list.append({code: {"asset": asset}})
-            existing_keys.add(code)
+        if code in existing_by_code:
+            existing_by_code[code][code] = {"asset": asset}
+        else:
+            new_entry = {code: {"asset": asset}}
+            items_list.append(new_entry)
+            existing_by_code[code] = new_entry
 
     os.makedirs(os.path.dirname(mod_path), exist_ok=True)
     text = json.dumps(items_list, indent=2)

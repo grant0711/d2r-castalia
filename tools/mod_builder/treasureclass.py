@@ -521,18 +521,21 @@ def build_treasureclass(cfg: dict) -> str:
                 "Act 1",
             )
             hp_c, mp_c, wm_c, yp_c, vp_c = chest_potions_by_act[matched_act]
-            r["Picks"] = "4"
-            r["NoDrop"] = "40"
+            jewelry_tc = "Jewelry A" if matched_act == "Act 1" else "Jewelry C"
+            r["Picks"] = "6"
+            r["NoDrop"] = "20"
             _set_items(
                 r,
                 [
-                    (f"{matched_act} Good", "12"),
-                    (hp_c, "2"),
-                    (mp_c, "2"),
+                    (gold_item, "28"),
+                    (f"{matched_act} GemRune", "12"),
+                    (jewelry_tc, "10"),
+                    (hp_c, "4"),
+                    (mp_c, "4"),
                     (wm_c, "1"),
                     (yp_c, "1"),
                     (vp_c, "1"),
-                    (f"{matched_act} Lockbox", "1"),
+                    (f"{matched_act} Lockbox", "2"),
                 ],
             )
 

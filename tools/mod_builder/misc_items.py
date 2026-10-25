@@ -324,7 +324,7 @@ def build_misc(cfg: dict) -> str:
     box_template["invheight"] = "2"
     box_template["flippyfile"] = "flpbox"
     box_template["invfile"] = "invbox"
-    box_template["type"] = "herb"
+    box_template["type"] = "ques"
     box_template["dropsound"] = "item_horadriccube"
     box_template["dropsfxframe"] = "12"
     box_template["usesound"] = "item_horadriccube"
@@ -332,7 +332,7 @@ def build_misc(cfg: dict) -> str:
     box_template["NightmareUpgrade"] = "xxx"
     box_template["HellUpgrade"] = "xxx"
     box_template["spelldesc"] = "1"
-    box_template["spelldesccolor"] = "8"
+    box_template["spelldesccolor"] = "4"
 
     for entry in get_lockbox_registry():
         bcode = str(entry["code"])
@@ -407,7 +407,7 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
     ]
     next_lb_id = 61000
     for entry in get_lockbox_registry():
-        name_updates.append((next_lb_id, str(entry["code"]), str(entry["box_name"])))
+        name_updates.append((next_lb_id, str(entry["code"]), str(entry["box_display_name"])))
         next_lb_id += 1
     out_names = update_mod_strings_json("item-names.json", name_updates)
 

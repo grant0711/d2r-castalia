@@ -82,12 +82,13 @@ def build_itemtypes(cfg: dict) -> str:
         if c in by_code:
             by_code[c]["Equiv2"] = "btbl"
 
-    # 5. Configure 'herb' (used for 2x2 Lockboxes) with Normal = 1 so Lockboxes always drop as normal items,
-    # and set AutoStack = 0 on 'key' so Lockbox Keys are individual 1x1 items.
-    if "herb" in by_code:
-        by_code["herb"]["Normal"] = "1"
-        by_code["herb"]["Magic"] = ""
-        by_code["herb"]["Rare"] = ""
+    # 5. Configure 'herb' and 'ques' (used for 2x2 Lockboxes) with Normal = 1 so Lockboxes always drop
+    # as normal items, and set AutoStack = 0 on 'key' so Lockbox Keys are individual 1x1 items.
+    for ltype in ("herb", "ques"):
+        if ltype in by_code:
+            by_code[ltype]["Normal"] = "1"
+            by_code[ltype]["Magic"] = ""
+            by_code[ltype]["Rare"] = ""
     if "key" in by_code:
         by_code["key"]["AutoStack"] = "0"
 

@@ -171,9 +171,9 @@ def verify_all(cfg: dict = None) -> List[str]:
                     f"TreasureClassEx.txt ({tc_name}): forbidden potion '{it}' in monster TC Item{i}"
                 )
             if is_chest_tc:
-                if any(bad in it for bad in ("Equip", "Weap", "Armo", "Melee", "Bow", "Junk", "gld")):
+                if any(bad in it for bad in ("Equip", "Weap", "Armo", "Melee", "Bow", "Junk")):
                     raise AssertionError(
-                        f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk/gold '{it}' in Chest Item{i}"
+                        f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk '{it}' in Chest Item{i}"
                     )
                 if "Lockbox" in it:
                     has_lockbox = True

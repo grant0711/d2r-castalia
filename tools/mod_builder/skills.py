@@ -341,8 +341,11 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     baim = by_name["Blessed Aim"]
     baim["aurastatcalc1"] = RAMP34
 
-    # Concentration (Id 113): Ramped active ED %, 25% uninterruptible, passive +1% FHR per hard point
+    # Concentration (Id 113): 60% + 22%/lvl (ramped -> +478% ED at Lvl 20 vs Fanaticism's +373% Self / +248% Party),
+    # 25% uninterruptible, passive +1% FHR per hard point
     conc = by_name["Concentration"]
+    conc["Param3"] = "60"
+    conc["Param4"] = "22"
     conc["Param5"] = "25"
     conc["aurastatcalc1"] = RAMP34
     conc["passivestate"] = "pal_concentration"
@@ -421,18 +424,20 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     pray["passivecalc1"] = "skill('Prayer'.blvl)"
     _curve_lev_brackets(pray, "MinDam", ("MinLevDam1", "MinLevDam2", "MinLevDam3", "MinLevDam4", "MinLevDam5"), 1.50)
 
-    # Resist Fire / Cold / Lightning (Id 100, 105, 110): keep +1% Max Res per 2 blvl AND add +2% Base Res per blvl
-    rfire = by_name["Resist Fire"]
-    rfire["passivestat2"] = "fireresist"
-    rfire["passivecalc2"] = "skill('Resist Fire'.blvl)*2"
-
-    rcold = by_name["Resist Cold"]
-    rcold["passivestat2"] = "coldresist"
-    rcold["passivecalc2"] = "skill('Resist Cold'.blvl)*2"
-
-    rltng = by_name["Resist Lightning"]
-    rltng["passivestat2"] = "lightresist"
-    rltng["passivecalc2"] = "skill('Resist Lightning'.blvl)*2"
+    # Resist Fire / Cold / Lightning (Id 100, 105, 110):
+    # Replace front-loaded dm34 (52% at Lvl 1!) with RAMP34 starting at 25% (Param3=25, Param4=6 -> 25% at Lvl 1, 139% at Lvl 20),
+    # keep +1% Max Res per 2 blvl AND +2% Base Res per blvl
+    for res_name, res_stat in (
+        ("Resist Fire", "fireresist"),
+        ("Resist Cold", "coldresist"),
+        ("Resist Lightning", "lightresist"),
+    ):
+        raura = by_name[res_name]
+        raura["Param3"] = "25"
+        raura["Param4"] = "6"
+        raura["aurastatcalc1"] = RAMP34
+        raura["passivestat2"] = res_stat
+        raura["passivecalc2"] = f"skill('{res_name}'.blvl)*2"
 
     # Defiance (Id 104): 80% + 12%/lvl (ramped) active Defense, passive +3% Defense per hard point
     defi = by_name["Defiance"]
@@ -476,10 +481,14 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     redm["passivestat1"] = "item_healafterkill"
     redm["passivecalc1"] = "skill('Redemption'.blvl)/2"
 
-    # Salvation (Id 125): 60%–135% active All-Res curve, passive +1% All Resistances per hard point
+    # Salvation (Id 125): Ramped 25% + 5%/lvl (25% at Lvl 1 -> 120% All-Res at Lvl 20 instead of 71% at Lvl 1),
+    # passive +1% All Resistances per hard point
     salv = by_name["Salvation"]
-    salv["Param3"] = "60"
-    salv["Param4"] = "135"
+    salv["Param3"] = "25"
+    salv["Param4"] = "5"
+    salv["aurastatcalc1"] = RAMP34
+    salv["aurastatcalc2"] = RAMP34
+    salv["aurastatcalc3"] = RAMP34
     salv["passivestate"] = "pal_salvation"
     salv["passivestat1"] = "fireresist"
     salv["passivecalc1"] = "skill('Salvation'.blvl)"
@@ -628,12 +637,15 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(pray, "dsc2", 1, "74", "ModPassiveLifeRegen", "", "(skill('Prayer'.blvl)<1)?1:skill('Prayer'.blvl)", "")
 
     rfire = by_desc["resist fire"]
+    rfire["desccalca4"] = RAMP34
     _set_dsc_line(rfire, "dsc2", 1, "74", "ModPassiveFireRes", "", "(skill('Resist Fire'.blvl)<1)?2:(skill('Resist Fire'.blvl)*2)", "")
 
     rcold = by_desc["resist cold"]
+    rcold["desccalca4"] = RAMP34
     _set_dsc_line(rcold, "dsc2", 1, "74", "ModPassiveColdRes", "", "(skill('Resist Cold'.blvl)<1)?2:(skill('Resist Cold'.blvl)*2)", "")
 
     rltng = by_desc["resist lightning"]
+    rltng["desccalca4"] = RAMP34
     _set_dsc_line(rltng, "dsc2", 1, "74", "ModPassiveLtngRes", "", "(skill('Resist Lightning'.blvl)<1)?2:(skill('Resist Lightning'.blvl)*2)", "")
 
     defi = by_desc["defiance"]
@@ -657,6 +669,7 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(redm, "dsc2", 1, "74", "ModPassiveLAEK", "", "(skill('Redemption'.blvl)<2)?1:(skill('Redemption'.blvl)/2)", "")
 
     salv = by_desc["salvation"]
+    salv["desccalca2"] = RAMP34
     _set_dsc_line(salv, "dsc2", 1, "74", "ModPassiveAllRes", "", "(skill('Salvation'.blvl)<1)?1:skill('Salvation'.blvl)", "")
 
 

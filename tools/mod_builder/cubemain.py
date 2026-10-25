@@ -353,6 +353,25 @@ def build_cubemain(cfg: dict) -> str:
     distill_lines = _build_distillation_rows(num_cols, col_idx)
     lines.extend(distill_lines)
 
+    # 5b. 3-Tier Lockbox + Paired Lockbox Key -> Guaranteed Unique or Set Item (536 rows)
+    from mod_builder.lockboxes import get_lockbox_registry
+
+    for entry in get_lockbox_registry():
+        bcode = str(entry["code"])
+        kcode = str(entry["key_code"])
+        idx_name = str(entry["index"])
+        bname = str(entry["box_name"])
+        lines.append(_make_row_str(num_cols, col_idx, {
+            "description": f"Unlock {bname} ({bcode}) + {kcode} -> {idx_name}",
+            "enabled": "1",
+            "version": "100",
+            "numinputs": "2",
+            "input 1": bcode,
+            "input 2": kcode,
+            "output": idx_name,
+            "lvl": "99",
+        }))
+
     # 6. Case B Full Cartesian 1-Step Gem Pact + 3-Rune Slot-Specific Crafting (1,145,375 rows):
     # Evaluated top-to-bottom across our 5 Slot Groups:
     #   1) weap (100% Weapon spec)

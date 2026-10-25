@@ -145,10 +145,10 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
     checks_passed.append("skills/states/missiles/skilldesc referential & rollback bounds")
 
-    # 2. Verify treasureclassex.txt & objects.txt drop/chest contracts
+    # 2. Verify treasureclassex.txt & objects.txt drop/chest/lockbox contracts
     _, tc_rows = _read_mod_tsv("treasureclassex.txt")
     globally_forbidden_tc_items = {
-        "key", "rvs", "rvl", "cm1", "cm2", "cm3", "cs2",
+        "key", "ky2", "ky3", "rvs", "rvl", "cm1", "cm2", "cm3", "cs2",
     }
     monster_forbidden_potions = {
         "hp1", "hp2", "hp3", "hp4", "hp5",
@@ -159,6 +159,7 @@ def verify_all(cfg: dict = None) -> List[str]:
     for r in tc_rows:
         tc_name = r.get("Treasure Class", "")
         is_chest_tc = "Chest" in tc_name
+        has_lockbox = False
         for i in range(1, 11):
             it = r.get(f"Item{i}", "").strip()
             if it in globally_forbidden_tc_items:
@@ -169,17 +170,22 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"TreasureClassEx.txt ({tc_name}): forbidden potion '{it}' in monster TC Item{i}"
                 )
-            if is_chest_tc and any(bad in it for bad in ("Equip", "Weap", "Armo", "Melee", "Bow", "Junk")):
-                raise AssertionError(
-                    f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk TC '{it}' in Chest Item{i}"
-                )
+            if is_chest_tc:
+                if any(bad in it for bad in ("Equip", "Weap", "Armo", "Melee", "Bow", "Junk", "gld")):
+                    raise AssertionError(
+                        f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk/gold '{it}' in Chest Item{i}"
+                    )
+                if "Lockbox" in it:
+                    has_lockbox = True
+        if is_chest_tc and not has_lockbox:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Chest TC missing Lockbox entry")
     _, obj_rows = _read_mod_tsv("objects.txt")
     for r in obj_rows:
         if r.get("Lockable") == "1":
             raise AssertionError(
-                f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Lockable=1 found (keys are removed from mod)"
+                f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Lockable=1 found"
             )
-    checks_passed.append("TreasureClassEx & objects.txt chest/potion/charm contracts")
+    checks_passed.append("TreasureClassEx & objects.txt chest/lockbox/potion/charm contracts")
 
     # 3. Verify weapons.txt melee reach, javelin reach tiers, and throwing weapon properties
     _, weap_rows = _read_mod_tsv("weapons.txt")
@@ -217,17 +223,28 @@ def verify_all(cfg: dict = None) -> List[str]:
     for entry in hd_list:
         if isinstance(entry, dict):
             hd_codes.update(entry.keys())
-    for req_code in ("wm2", "yp2", "vp2", "bml", "vk1", "sw1", "va1"):
+    for req_code in ("wm2", "yp2", "vp2", "bml", "vk1", "sw1", "va1", "ky2", "ky3", "z00"):
         if req_code not in hd_codes:
             raise AssertionError(f"data/hd/items/items.json: missing '{req_code}' (cross-module overwrite!)")
 
     mod_item_names_path = os.path.join(MOD_STRINGS, "item-names.json")
     with open(mod_item_names_path, "r", encoding="utf-8-sig") as f:
         mod_item_names = {e.get("Key") for e in json.load(f) if isinstance(e, dict)}
-    for req_key in ("wm2", "bml", "opl", "vk1"):
+    for req_key in ("wm2", "bml", "opl", "vk1", "ky2", "ky3", "z00"):
         if req_key not in mod_item_names:
             raise AssertionError(f"item-names.json: missing '{req_key}' (cross-module overwrite!)")
-    checks_passed.append("shared JSON cross-module completeness")
+    for rel_sp in (
+        "herb/herb.sprite",
+        "torch/torch.sprite",
+        "quest/scroll_of_self_resurrect.sprite",
+        "key/skeleton_key.sprite",
+        "body_part/jawbone.sprite",
+        "body_part/horn.sprite",
+    ):
+        sp_path = os.path.join(MOD_ROOT, "data/hd/global/ui/items/misc", rel_sp)
+        if not os.path.exists(sp_path):
+            raise AssertionError(f"Missing compiled HD sprite: {sp_path}")
+    checks_passed.append("shared JSON & HD lockbox/key sprite completeness")
 
     # 5. Verify misc.txt stat1..stat3 references against itemstatcost.txt
     _, isc_rows = read_excel_tsv("itemstatcost.txt")

@@ -122,6 +122,7 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
             continue
 
         code = r.get("code", "")
+        r["nolimit"] = "1"
         # Do not touch Unique Jewels (Rainbow Facet, etc.) or Quest items (lvl req == 0)
         lvl_req = int(r.get("lvl req") or "0")
         if code in ("jew", "cjw") or lvl_req == 0:
@@ -370,6 +371,7 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         next_id += 1
         ur["version"] = "100"
         ur["spawnable"] = "1"
+        ur["nolimit"] = "1"
         ur["rarity"] = "2"
         ur["lvl"] = lvl
         ur["lvl req"] = lreq

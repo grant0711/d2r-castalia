@@ -202,6 +202,54 @@ def build_treasureclass(cfg: dict) -> str:
             custom_rows.append(charm_row)
             by_tc[ctc_name] = charm_row
 
+    # 5b. Build cascading Lockbox TCs (Act 1 Lockbox .. Act 5 (H) Lockbox) across all 536 Unique/Set Lockboxes:
+    # - Normal (Act 1..5 Lockbox): drops only Tier 1 ("Crude Wooden Lockbox")
+    # - Nightmare (Act 1 (N)..Act 5 (N) Lockbox): cascades across Tier 2 ("Reinforced Iron Lockbox") & Tier 1
+    # - Hell (Act 1 (H)..Act 5 (H) Lockbox): cascades across Tier 3 ("Ornate Gilded Lockbox"), Tier 2, & Tier 1
+    from mod_builder.lockboxes import get_lockbox_registry
+
+    lb_registry = get_lockbox_registry()
+    lb_by_act: Dict[str, List[Tuple[str, int]]] = {act_p: [] for act_p, _, _, _, _, _ in ACTS}
+    for entry in lb_registry:
+        lb_by_act[str(entry["act_prefix"])].append((str(entry["code"]), int(entry["weight"])))
+
+    prev_lockbox_tc = ""
+    for act_idx, (act_p, _, _, _, _, _) in enumerate(ACTS):
+        act_items = lb_by_act[act_p]
+        leaf_entries: List[Tuple[str, str]] = []
+        # Chunk into groups of <= 8 items per leaf TC (since TreasureClassEx has 10 item slots)
+        for chunk_i in range(0, len(act_items), 8):
+            chunk = act_items[chunk_i : chunk_i + 8]
+            leaf_name = f"{act_p} Lockbox Leaf {chunk_i // 8 + 1}"
+            leaf_row = _make_blank_row(headers, leaf_name)
+            leaf_row["Picks"] = "1"
+            leaf_row["NoDrop"] = "0"
+            _set_items(leaf_row, [(c, str(w)) for c, w in chunk])
+            custom_rows.append(leaf_row)
+            by_tc[leaf_name] = leaf_row
+            chunk_weight = sum(w for _, w in chunk)
+            leaf_entries.append((leaf_name, str(chunk_weight)))
+
+        pool_name = f"{act_p} Lockbox Pool"
+        pool_row = _make_blank_row(headers, pool_name)
+        pool_row["Picks"] = "1"
+        pool_row["NoDrop"] = "0"
+        _set_items(pool_row, leaf_entries)
+        custom_rows.append(pool_row)
+        by_tc[pool_name] = pool_row
+
+        lb_tc_name = f"{act_p} Lockbox"
+        lb_row = _make_blank_row(headers, lb_tc_name)
+        lb_row["Picks"] = "1"
+        lb_row["NoDrop"] = "0"
+        if act_idx == 0:
+            _set_items(lb_row, [(pool_name, "100")])
+        else:
+            _set_items(lb_row, [(pool_name, "65"), (prev_lockbox_tc, "35")])
+        custom_rows.append(lb_row)
+        by_tc[lb_tc_name] = lb_row
+        prev_lockbox_tc = lb_tc_name
+
     # Insert custom sub-tables right after Runes 17 so they are defined before use!
     runes17_idx = next(i for i, r in enumerate(rows) if r["Treasure Class"] == "Runes 17")
     for offset, crow in enumerate(custom_rows):
@@ -474,17 +522,17 @@ def build_treasureclass(cfg: dict) -> str:
             )
             hp_c, mp_c, wm_c, yp_c, vp_c = chest_potions_by_act[matched_act]
             r["Picks"] = "4"
-            r["NoDrop"] = "45"
+            r["NoDrop"] = "40"
             _set_items(
                 r,
                 [
-                    (gold_item, "20"),
-                    (f"{matched_act} Good", "18"),
-                    (hp_c, "4"),
-                    (mp_c, "4"),
+                    (f"{matched_act} Good", "12"),
+                    (hp_c, "2"),
+                    (mp_c, "2"),
                     (wm_c, "1"),
                     (yp_c, "1"),
                     (vp_c, "1"),
+                    (f"{matched_act} Lockbox", "1"),
                 ],
             )
 

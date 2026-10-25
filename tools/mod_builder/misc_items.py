@@ -274,14 +274,75 @@ def build_misc(cfg: dict) -> str:
 
     # Preserve vanilla 'gamble cost' on Ring (rin = 50,000g) and Amulet (amu = 63,000g)
     # since the C++ engine hardcodes spawning 1 'rin' and 1 'amu' into the Gamble UI.
-    # Remove Keys (key) from all vendors since locked chests are removed from the mod.
-    if "key" in rows_by_code:
-        krow = rows_by_code["key"]
-        _clear_vendors(krow)
-        krow["PermStoreItem"] = "0"
-        krow["spawnable"] = "0"
-        krow["NightmareUpgrade"] = "xxx"
-        krow["HellUpgrade"] = "xxx"
+    # 6. Configure 3-Tier Lockbox Keys (key = 1,000g, ky2 = 5,000g, ky3 = 10,000g)
+    # and generate all 536 2x2 Lockbox items in misc.txt.
+    from mod_builder.lockboxes import LOCKBOX_TIER_INFO, get_lockbox_registry
+
+    key_vendors = ["Akara", "Gheed", "Lysander", "Drognan", "Elzix", "Ormus", "Alkor", "Jamella", "Malah", "Anya"]
+    krow = rows_by_code["key"]
+    _clear_vendors(krow)
+    krow["name"] = LOCKBOX_TIER_INFO[1]["key_name"]
+    krow["cost"] = LOCKBOX_TIER_INFO[1]["key_cost"]
+    krow["spawnable"] = "1"
+    krow["stackable"] = "0"
+    krow["minstack"] = ""
+    krow["maxstack"] = ""
+    krow["spawnstack"] = ""
+    krow["multibuy"] = "0"
+    krow["PermStoreItem"] = "1"
+    krow["NightmareUpgrade"] = "xxx"
+    krow["HellUpgrade"] = "xxx"
+    krow["spelldesc"] = "1"
+    krow["spelldescstr"] = "ModKeyDesc1"
+    krow["spelldesccolor"] = "8"
+    _set_vendor_stock(krow, key_vendors, "1", "1")
+
+    for ktier in (2, 3):
+        ktinfo = LOCKBOX_TIER_INFO[ktier]
+        knew = dict(krow)
+        knew["name"] = ktinfo["key_name"]
+        knew["code"] = ktinfo["key_code"]
+        knew["namestr"] = ktinfo["key_code"]
+        knew["cost"] = ktinfo["key_cost"]
+        knew["spelldescstr"] = f"ModKeyDesc{ktier}"
+        new_rows.append(knew)
+
+    # Generate the 536 2x2 Lockbox rows (1 per spawnable Unique & Set item)
+    box_template = dict(rows_by_code["hrb"])
+    _clear_vendors(box_template)
+    box_template["version"] = "100"
+    box_template["compactsave"] = "1"
+    box_template["rarity"] = "1"
+    box_template["spawnable"] = "1"
+    box_template["level"] = "1"
+    box_template["levelreq"] = "0"
+    box_template["nodurability"] = "1"
+    box_template["cost"] = "0"
+    box_template["alternategfx"] = "box"
+    box_template["component"] = "16"
+    box_template["invwidth"] = "2"
+    box_template["invheight"] = "2"
+    box_template["flippyfile"] = "flpbox"
+    box_template["invfile"] = "invbox"
+    box_template["type"] = "herb"
+    box_template["dropsound"] = "item_horadriccube"
+    box_template["dropsfxframe"] = "12"
+    box_template["usesound"] = "item_horadriccube"
+    box_template["PermStoreItem"] = "0"
+    box_template["NightmareUpgrade"] = "xxx"
+    box_template["HellUpgrade"] = "xxx"
+    box_template["spelldesc"] = "1"
+    box_template["spelldesccolor"] = "8"
+
+    for entry in get_lockbox_registry():
+        bcode = str(entry["code"])
+        btier = int(entry["tier"])
+        brow = dict(box_template)
+        brow["name"] = str(entry["box_name"])
+        brow["code"] = bcode
+        brow["namestr"] = bcode
+        brow["spelldescstr"] = f"ModLockboxDesc{btier}"
+        new_rows.append(brow)
 
     # Enable Magic-only affix rolling on Arrows (aqv) and Bolts (cqv) from monster drops,
     # set 255 stack size (8-bit nostalgia), and clear vendor MagicMin/MagicMax so town vendors sell White quivers.
@@ -302,6 +363,8 @@ def build_misc(cfg: dict) -> str:
 
 
 def build_hd_items_json(cfg: dict) -> str:
+    from mod_builder.lockboxes import LOCKBOX_TIER_INFO, build_lockbox_sprites, get_lockbox_registry
+
     additions = [
         ("wm2", "potion/thawing_potion"),
         ("wm3", "potion/thawing_potion"),
@@ -312,11 +375,20 @@ def build_hd_items_json(cfg: dict) -> str:
         ("bml", "hammer/horadric_malus"),
         ("bm2", "hammer/horadric_malus"),
         ("bm3", "hammer/horadric_malus"),
+        ("key", LOCKBOX_TIER_INFO[1]["key_asset"]),
+        ("ky2", LOCKBOX_TIER_INFO[2]["key_asset"]),
+        ("ky3", LOCKBOX_TIER_INFO[3]["key_asset"]),
     ]
+    for entry in get_lockbox_registry():
+        additions.append((str(entry["code"]), str(entry["box_asset"])))
+
+    build_lockbox_sprites()
     return update_mod_hd_items_json(additions)
 
 
 def build_misc_strings(cfg: dict) -> Tuple[str, str]:
+    from mod_builder.lockboxes import LOCKBOX_TIER_INFO, get_lockbox_registry
+
     # 1. item-names.json
     name_updates = [
         (0, "wms", "Minor Thawing Elixir"),
@@ -329,7 +401,14 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (60005, "vp2", "Greater Stamina Elixir"),
         (60006, "vp3", "Supreme Stamina Elixir"),
         (60007, "bml", "Blacksmith's Malus"),
+        (0, "key", LOCKBOX_TIER_INFO[1]["key_name"]),
+        (60008, "ky2", LOCKBOX_TIER_INFO[2]["key_name"]),
+        (60009, "ky3", LOCKBOX_TIER_INFO[3]["key_name"]),
     ]
+    next_lb_id = 61000
+    for entry in get_lockbox_registry():
+        name_updates.append((next_lb_id, str(entry["code"]), str(entry["box_name"])))
+        next_lb_id += 1
     out_names = update_mod_strings_json("item-names.json", name_updates)
 
     # 2. item-modifiers.json
@@ -345,6 +424,12 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (60018, "ModMpPotDesc4", "Restores 1000 Mana over 3 Seconds (3s Cooldown)"),
         (60019, "ModMpPotDesc5", "Restores 2000 Mana over 3 Seconds (3s Cooldown)"),
         (60020, "ModMalusDesc1", "Transmute with Socketable Gear + Perfect Skull to Add 1-2 Sockets"),
+        (60021, "ModKeyDesc1", "Transmute with Crude Wooden Lockbox in Horadric Cube"),
+        (60022, "ModKeyDesc2", "Transmute with Reinforced Iron Lockbox in Horadric Cube"),
+        (60023, "ModKeyDesc3", "Transmute with Ornate Gilded Lockbox in Horadric Cube"),
+        (60024, "ModLockboxDesc1", "Contains a Guaranteed Unique or Set Item (Requires Crude Lockbox Key)"),
+        (60025, "ModLockboxDesc2", "Contains a Guaranteed Nightmare Unique or Set Item (Requires Iron Lockbox Key)"),
+        (60026, "ModLockboxDesc3", "Contains a Guaranteed Hell Unique or Set Item (Requires Ornate Lockbox Key)"),
     ]
     out_mods = update_mod_strings_json("item-modifiers.json", mod_updates)
     return out_names, out_mods

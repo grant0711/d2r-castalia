@@ -274,6 +274,14 @@ def build_misc(cfg: dict) -> str:
 
     # Preserve vanilla 'gamble cost' on Ring (rin = 50,000g) and Amulet (amu = 63,000g)
     # since the C++ engine hardcodes spawning 1 'rin' and 1 'amu' into the Gamble UI.
+    # Remove Keys (key) from all vendors since locked chests are removed from the mod.
+    if "key" in rows_by_code:
+        krow = rows_by_code["key"]
+        _clear_vendors(krow)
+        krow["PermStoreItem"] = "0"
+        krow["spawnable"] = "0"
+        krow["NightmareUpgrade"] = "xxx"
+        krow["HellUpgrade"] = "xxx"
 
     # Enable Magic-only affix rolling on Arrows (aqv) and Bolts (cqv) from monster drops,
     # set 255 stack size (8-bit nostalgia), and clear vendor MagicMin/MagicMax so town vendors sell White quivers.

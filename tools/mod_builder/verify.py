@@ -145,9 +145,10 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
     checks_passed.append("skills/states/missiles/skilldesc referential & rollback bounds")
 
-    # 2. Verify treasureclassex.txt zero-potion & zero-base-charm drop contract
+    # 2. Verify treasureclassex.txt zero-potion, zero-key & zero-base-charm drop contract
     _, tc_rows = _read_mod_tsv("treasureclassex.txt")
     forbidden_potions = {
+        "key",
         "hp1", "hp2", "hp3", "hp4", "hp5",
         "mp1", "mp2", "mp3", "mp4", "mp5",
         "rvs", "rvl", "vps", "yps", "wms",

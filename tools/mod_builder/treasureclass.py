@@ -67,10 +67,10 @@ def build_treasureclass(cfg: dict) -> str:
     gold_mult = int(round(256 * float(econ.get("gold_pile_multiplier", 4.8))))
     gold_item = f'"gld,mul={gold_mult}"'
 
-    # 1. Remove random charms (cm1, cm2, cm3) from Jewelry A, B, C
+    # 1. Remove random charms (cm1, cm2, cm3) from Jewelry A, B, C (45% Ring / 30% Amulet / 25% Jewel)
     for jtc in ("Jewelry A", "Jewelry B", "Jewelry C"):
         if jtc in by_tc:
-            _set_items(by_tc[jtc], [("rin", "10"), ("amu", "5"), ("jew", "5")])
+            _set_items(by_tc[jtc], [("rin", "9"), ("amu", "6"), ("jew", "5")])
 
     # Ensure Ammo (aqv / cqv) always rolls Magic-only when dropped by monsters
     if "Ammo" in by_tc:
@@ -87,7 +87,7 @@ def build_treasureclass(cfg: dict) -> str:
     for i in range(3):
         tc = f"Misc {i}"
         if tc in by_tc:
-            _set_items(by_tc[tc], [("key", "2"), ("tsc", "1"), ("isc", "3")])
+            _set_items(by_tc[tc], [(gold_item, "2"), ("tsc", "1"), ("isc", "3")])
 
     # Remove mp1..mp5 and rvs/rvl from Act X Magic A/B/C and Cpot
     for r in rows:
@@ -103,8 +103,9 @@ def build_treasureclass(cfg: dict) -> str:
         if tc.endswith("Junk"):
             _set_items(r, [(gold_item, "19"), ("Ammo", "1")])
 
-    # Catch-all sweep: ensure zero potion item codes exist anywhere in treasureclassex.txt
+    # Catch-all sweep: ensure zero potion or key item codes exist anywhere in treasureclassex.txt
     banned_potions = {
+        "key",
         "rvs", "rvl",
         "hp1", "hp2", "hp3", "hp4", "hp5",
         "mp1", "mp2", "mp3", "mp4", "mp5",
@@ -207,7 +208,8 @@ def build_treasureclass(cfg: dict) -> str:
         rows.insert(runes17_idx + 1 + offset, crow)
 
     # 6. Tier 1 — Normal Monster TCs (H2H, Cast, Miss, Wraith, Quill, Swarm, Cow)
-    # Halve equipment/item drop weights and increase NoDrop by 1.5x so overall item drops are ~1/2
+    # Halve equipment drop weights and increase NoDrop by 1.5x, while preserving full 'Good'
+    # (Jewelry/Gem/Rune) weights so normal monsters periodically drop Rings, Amulets, Gems, and Runes.
     for r in rows:
         grp = r.get("group", "")
         tc = r["Treasure Class"]
@@ -222,7 +224,12 @@ def build_treasureclass(cfg: dict) -> str:
                 prob_val = r.get(f"Prob{i}", "")
                 if item_val == "gld":
                     r[f"Item{i}"] = gold_item
-                elif item_val and not item_val.startswith('"gld') and not item_val.endswith("Junk"):
+                elif (
+                    item_val
+                    and not item_val.startswith('"gld')
+                    and not item_val.endswith("Junk")
+                    and not item_val.endswith("Good")
+                ):
                     if prob_val:
                         try:
                             r[f"Prob{i}"] = str(max(1, int(int(prob_val) * 0.5)))
@@ -230,11 +237,12 @@ def build_treasureclass(cfg: dict) -> str:
                             pass
 
     # 7. Tier 2 — Zone Uniques (Act X Unique A/B/C) & Champions (Act X Champ A/B/C)
-    # Configure Uitem (Guaranteed 100% roll: 75% Equip / 25% GemRune),
-    # Citem (Champion Guaranteed 100% roll: 75% Equip / 25% GemRune),
-    # and Cpot (50% Bonus roll: NoDrop=4, 75% Equip / 25% GemRune when it hits).
+    # Configure Uitem (Guaranteed 100% roll: 65% Equip / 25% GemRune / 10% Jewelry),
+    # Citem (Champion Guaranteed 100% roll: 65% Equip / 25% GemRune / 10% Jewelry),
+    # and Cpot (50% Bonus roll: NoDrop=20, 65% Equip / 25% GemRune / 10% Jewelry when it hits).
     for act_prefix, _, _, _, _, equip_fallback in ACTS:
         gr_name = f"{act_prefix} GemRune"
+        j_tc = "Jewelry A" if act_prefix == "Act 1" else "Jewelry C"
         for letter in ("A", "B", "C"):
             eq_tc = f"{act_prefix} Equip {letter}"
             if eq_tc not in by_tc:
@@ -249,7 +257,7 @@ def build_treasureclass(cfg: dict) -> str:
                 r["Rare"] = "950"
                 r["Magic"] = "1024"
                 r["NoDrop"] = "0"
-                _set_items(r, [(eq_tc, "3"), (gr_name, "1")])
+                _set_items(r, [(eq_tc, "13"), (gr_name, "5"), (j_tc, "2")])
 
             citem = f"{act_prefix} Citem {letter}"
             if citem in by_tc:
@@ -260,7 +268,7 @@ def build_treasureclass(cfg: dict) -> str:
                 r["Rare"] = "920"
                 r["Magic"] = "1024"
                 r["NoDrop"] = "0"
-                _set_items(r, [(eq_tc, "3"), (gr_name, "1")])
+                _set_items(r, [(eq_tc, "13"), (gr_name, "5"), (j_tc, "2")])
 
             cpot = f"{act_prefix} Cpot {letter}"
             if cpot in by_tc:
@@ -270,8 +278,8 @@ def build_treasureclass(cfg: dict) -> str:
                 r["Set"] = "850"
                 r["Rare"] = "950"
                 r["Magic"] = "1024"
-                r["NoDrop"] = "4"  # 4 / (3 + 1 + 4) = 50% chance for bonus drop
-                _set_items(r, [(eq_tc, "3"), (gr_name, "1")])
+                r["NoDrop"] = "20"  # 20 / (13 + 5 + 2 + 20) = 50% chance for bonus drop
+                _set_items(r, [(eq_tc, "13"), (gr_name, "5"), (j_tc, "2")])
 
     # Also update any Shard Uitem/Citem rows
     for tc_shard, eq_shard, gr_shard in [
@@ -286,7 +294,7 @@ def build_treasureclass(cfg: dict) -> str:
             r["Rare"] = "950"
             r["Magic"] = "1024"
             r["NoDrop"] = "0"
-            _set_items(r, [(eq_shard, "3"), (gr_shard, "1")])
+            _set_items(r, [(eq_shard, "13"), (gr_shard, "5"), ("Jewelry C", "2")])
 
     # Wire Tier 2 (Uniques & Champions): 1 Guaranteed Roll + 1 Bonus (50%) Roll = 1-2 drops (75% Item / 25% GemRune)
     for act_prefix, _, _, _, _, _ in ACTS:

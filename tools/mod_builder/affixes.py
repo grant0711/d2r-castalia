@@ -47,12 +47,37 @@ def build_itemstatcost(cfg: dict) -> str:
         "strength", "energy", "dexterity", "vitality",
         "maxhp", "maxmana", "maxstamina", "hpregen", "manarecovery",
     }
+    # Normalize vendor transaction cost multipliers (Multiply / 1024 of base cost + Add)
+    # so that against our normalized 50,000g Elite base cost (weapons.txt / armor.txt):
+    # - Jeweler's Sacred Armor of the Whale (4 sockets + 133 Life) -> ~256,000g
+    # - Godly Sacred Armor of the Whale (+266% ED + 133 Life)      -> ~310,000g
+    # - Cruel Colossus Blade of Quickness (+400% ED + 40% IAS)     -> ~314,000g
+    # - +2 Class Skills / +3 Skill Tab + Staffmods                 -> ~275,000g - 315,000g
+    cost_tuning = {
+        "item_numsockets": ("512", "2000"),          # 4 sockets = +200% of base cost (+100,000g on 50k base)
+        "maxhp": ("16", "50"),                       # +133 Life = +208% of base cost (+104,000g on 50k base)
+        "maxmana": ("16", "50"),                     # +160 Mana = +250% of base cost
+        "item_armor_percent": ("12", "45"),          # +266% Defense = +312% of base cost (+156,000g on 50k base)
+        "item_maxdamage_percent": ("5", "25"),       # Applied alongside item_mindamage_percent (5+5=10 combined)
+        "item_mindamage_percent": ("5", "25"),       # +400% Weapon ED = +390% of base cost (+195,000g on 50k base)
+        "item_fasterattackrate": ("32", "500"),      # +40% IAS = +125% of base cost (+62,500g on 50k base)
+        "item_fastermovevelocity": ("32", "500"),    # +40% FRW = +125% of base cost
+        "item_fastercastrate": ("48", "500"),        # +20% FCR = +94% of base cost
+        "item_addclassskills": ("1024", "15000"),    # +2 Class Skills = +200% of base cost + 15,000g
+        "item_addskill_tab": ("512", "8000"),        # +3 Skill Tab = +150% of base cost + 8,000g
+        "item_maxhp_percent": ("128", "4000"),       # Replaces vanilla's 32,093 flat Add
+        "item_maxmana_percent": ("128", "4000"),     # Replaces vanilla's 56,452 flat Add
+    }
     for r in rows:
         st = r.get("Stat", "")
         if st in signed_stats:
             r["Signed"] = "1"
         if st in ("hpregen", "manarecovery"):
             r["Send Bits"] = "16"
+        if st in cost_tuning:
+            mult_val, add_val = cost_tuning[st]
+            r["Multiply"] = mult_val
+            r["Add"] = add_val
     return write_excel_tsv("itemstatcost.txt", headers, rows)
 
 

@@ -215,6 +215,20 @@ def _scale_axe_pair(row: Dict[str, str], min_col: str, max_col: str, mult: float
     row[max_col] = str(hi)
 
 
+def _compute_normalized_base_cost(level: int, slot_weight: float, stack_divisor: int = 1) -> str:
+    """
+    Smoothly curve weapon and armor base cost by qlvl (1..85) and slot_weight (1.0 for 2H/Body Armor,
+    0.75 for 1H/Helm/Shield/Class, 0.60 for Gloves/Boots/Belt) so Normal -> Exceptional -> Elite
+    Magic vendor items progress cleanly and apex Hell vendor rolls top out around ~300,000 Gold.
+    """
+    lvl = max(1, min(85, level))
+    t = (lvl - 1) / 84.0
+    raw = (160.0 + 6200.0 * t + 43640.0 * (t ** 2.35)) * slot_weight
+    if stack_divisor > 1:
+        return str(max(2, int(round(raw / stack_divisor))))
+    return str(max(25, int(round(raw))))
+
+
 def build_weapons(cfg: dict) -> str:
     headers, rows = read_excel_tsv("weapons.txt")
     rows_by_code = {r["code"]: r for r in rows if r.get("code")}
@@ -464,6 +478,15 @@ def build_weapons(cfg: dict) -> str:
                 row["spawnstack"] = a_spawn
                 row["auto prefix"] = "307"
 
+        # 3b. Normalize weapon base cost by progression level (1..85) and slot weight
+        w_lvl = int(row.get("level") or "1")
+        if wtype in ("jave", "ajav", "tkni", "taxe"):
+            s_div = max(1, int(row.get("maxstack") or "25"))
+            row["cost"] = _compute_normalized_base_cost(w_lvl, 0.75, stack_divisor=s_div)
+        else:
+            w_slot_weight = 1.0 if (is_2h or is_1or2h) else 0.75
+            row["cost"] = _compute_normalized_base_cost(w_lvl, w_slot_weight)
+
     # 4. Add Blacksmith's Malus (bml) to weapons.txt so gamble.txt finds normcode/ubercode/ultracode
     # and D2R HD graphics resolves weapon/hammer/horadric_malus cleanly!
     bml = dict(rows_by_code["whm"])
@@ -607,6 +630,16 @@ def build_armor(cfg: dict) -> str:
             row["minac"] = str(max(1, int(round(minac * 0.85))))
             row["maxac"] = str(max(2, int(round(maxac * 0.85))))
             row["speed"] = "0"
+
+        # Normalize armor base cost by progression level (1..85) and slot weight
+        a_lvl = int(row.get("level") or "1")
+        if atype == "tors":
+            a_slot_weight = 1.0
+        elif atype in ("glov", "boot", "belt"):
+            a_slot_weight = 0.60
+        else:
+            a_slot_weight = 0.75
+        row["cost"] = _compute_normalized_base_cost(a_lvl, a_slot_weight)
 
     # Add Dedicated Summon-Only Base Armors (spawnable=0) for Valkyrie & Shadow Warrior/Master
     summon_armors = [

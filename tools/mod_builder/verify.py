@@ -225,6 +225,11 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
         if r.get("spawnable") != "1" or wtype == "tpot" or code in ("bml", "um1"):
             continue
+        wcost = int(r.get("cost") or "0")
+        if wcost < 2 or wcost > 50000:
+            raise AssertionError(
+                f"weapons.txt ({code}): normalized base cost={wcost} out of expected 2..50000 range"
+            )
         if code == r.get("normcode"):
             exp_nm = r.get("ubercode") if r.get("ubercode") != code else "xxx"
             exp_hell = r.get("ultracode") if r.get("ultracode") != code else "xxx"
@@ -275,6 +280,11 @@ def verify_all(cfg: dict = None) -> List[str]:
                 )
         if r.get("spawnable") != "1":
             continue
+        acost = int(r.get("cost") or "0")
+        if acost < 50 or acost > 50000:
+            raise AssertionError(
+                f"armor.txt ({code}): normalized base cost={acost} out of expected 50..50000 range"
+            )
         if code == r.get("normcode"):
             exp_nm = r.get("ubercode") if r.get("ubercode") != code else "xxx"
             exp_hell = r.get("ultracode") if r.get("ultracode") != code else "xxx"

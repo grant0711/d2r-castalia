@@ -34,7 +34,7 @@ run_proton() {
     export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
     export STEAM_COMPAT_CLIENT_INSTALL_PATH="${D2R_ROOT}/runtime"
     if [ "$(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null || echo 0)" = "0" ]; then
-        exec "${UMU_RUN}" "$@"
+        "${UMU_RUN}" "$@"
     else
         # Append steamrt4 64-bit and 32-bit libraries (libfreetype, libfontconfig, libpulse, libXrandr, etc.)
         # AFTER host libraries so host glibc/NVIDIA drivers take precedence while missing 32-bit libs resolve cleanly
@@ -50,7 +50,7 @@ run_proton() {
             local srt_libs="${srt_dir}/files/lib/x86_64-linux-gnu:${srt_dir}/files/lib/i386-linux-gnu:${srt_dir}/files/lib/i386-linux-gnu/pulseaudio:${srt_dir}/files/lib/x86_64-linux-gnu/pulseaudio"
             export LD_LIBRARY_PATH="/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/lib/i386-linux-gnu:/usr/lib/i386-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}:${srt_libs}"
         fi
-        exec "${PROTON_DIR}/proton" run "$@"
+        "${PROTON_DIR}/proton" run "$@"
     fi
 }
 ensure_proton() {

@@ -514,45 +514,69 @@ def build_treasureclass(cfg: dict) -> str:
         "Act 5 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
     }
     QA_FORCE_CHEST_LOCKBOX = False
+    chest_anchor_idx = next(
+        i for i, r in enumerate(rows) if r["Treasure Class"] == "Act 1 Chest A"
+    )
+    for act_p, (hp_c, mp_c, wm_c, yp_c, vp_c) in chest_potions_by_act.items():
+        jewelry_tc = "Jewelry A" if act_p == "Act 1" else "Jewelry C"
+        chest_Pool = [
+            (gold_item, "160"),
+            (f"{act_p} GemRune", "30"),
+            (jewelry_tc, "20"),
+            (hp_c, "7"),
+            (mp_c, "7"),
+            (wm_c, "2"),
+            (yp_c, "2"),
+            (vp_c, "2"),
+            (f"{act_p} Lockbox", "10"),
+        ]
+        roll_tc_name = f"{act_p} Chest Roll"
+        if roll_tc_name not in by_tc:
+            roll_row = _make_blank_row(headers, roll_tc_name)
+            roll_row["Picks"] = "1"
+            roll_row["NoDrop"] = "0"
+            _set_items(roll_row, chest_Pool)
+            rows.insert(chest_anchor_idx, roll_row)
+            by_tc[roll_tc_name] = roll_row
+            chest_anchor_idx += 1
+
+        pair_tc_name = f"{act_p} Chest Pair"
+        if pair_tc_name not in by_tc:
+            pair_row = _make_blank_row(headers, pair_tc_name)
+            pair_row["Picks"] = "2"
+            pair_row["NoDrop"] = "240"
+            _set_items(pair_row, chest_Pool)
+            rows.insert(chest_anchor_idx, pair_row)
+            by_tc[pair_tc_name] = pair_row
+            chest_anchor_idx += 1
+
     for r in rows:
         tc = r["Treasure Class"]
-        if "Chest" in tc:
+        if "Chest" in tc and not tc.endswith(("Chest Roll", "Chest Pair")):
             matched_act = next(
                 (act_p for act_p in chest_potions_by_act if tc.startswith(f"{act_p} Chest")),
                 "Act 1",
             )
-            hp_c, mp_c, wm_c, yp_c, vp_c = chest_potions_by_act[matched_act]
-            jewelry_tc = "Jewelry A" if matched_act == "Act 1" else "Jewelry C"
             if QA_FORCE_CHEST_LOCKBOX:
                 r["Picks"] = "2"
                 r["NoDrop"] = "0"
                 _set_items(r, [(f"{matched_act} Lockbox", "100")])
             else:
-                # Note: In objpreset.txt we map all Sparkly/Super Chest presets (PlaceUniqueChest,
-                # ConsolationChest, SpecialChest100, PlaceRandomTreasureChest) to each Act's standard
-                # InitFn=3 Large Chest so D2Game NEVER runs the hardcoded C++ ConsolationChest script
-                # (which forcibly spawns 5 Gold + 2 hp3 + 2 mp3 = 9 hardcoded items in Act 3 Normal!)
-                # and instead invokes 'Act X Chest A/B/C' exactly 1 time per chest!
-                # Setting Picks = 6 and NoDrop = 0 with total weight = 240 yields 6 total items per chest:
+                # Picks = -6 with 3x 'Act X Chest Roll' (1 guaranteed drop each = 3 floor)
+                # + 3x 'Act X Chest Pair' (2 picks at 50% NoDrop each = 0..6 bonus drops, mean 3.0)
+                # yields strictly 3..9 total drops per chest (mean = 6.00 drops):
                 #   - 4.00 Gold piles (weight 160 / 240 = 66.67%)
                 #   - 0.75 Gems / Runes (weight 30 / 240 = 12.50%)
                 #   - 0.50 Act-scaled Potions / Elixirs (weight 7+7+2+2+2 = 20 / 240 = 8.33%)
                 #   - 0.50 Rings / Amulets / Jewels (weight 20 / 240 = 8.33%)
-                #   - 0.25 Lockboxes (weight 10 / 240 = 4.17% per pick)
-                r["Picks"] = "6"
+                #   - 0.25 Lockboxes (weight 10 / 240 = 4.17% per item dropped)
+                r["Picks"] = "-6"
                 r["NoDrop"] = "0"
                 _set_items(
                     r,
                     [
-                        (gold_item, "160"),
-                        (f"{matched_act} GemRune", "30"),
-                        (jewelry_tc, "20"),
-                        (hp_c, "7"),
-                        (mp_c, "7"),
-                        (wm_c, "2"),
-                        (yp_c, "2"),
-                        (vp_c, "2"),
-                        (f"{matched_act} Lockbox", "10"),
+                        (f"{matched_act} Chest Roll", "3"),
+                        (f"{matched_act} Chest Pair", "3"),
                     ],
                 )
 
@@ -608,12 +632,16 @@ def build_objects(cfg: dict) -> str:
             r["Lockable"] = "0"
 
         if is_real_chest:
-            # Keep preset chests clickable, but prevent random map scattering.
-            # Also replace InitFn=57 (SparklyChest C++ handler on IDs 397/455) with InitFn=3.
+            # Keep preset chests clickable, prevent random map scattering (PopulateFn=0),
+            # and switch OperateFn=4 -> OperateFn=1 with InitFn=0, Damage=0 so chests:
+            #   1) Have a 100% chance of calling 'Act X Chest A/B/C' (no 25% empty roll),
+            #   2) Never spawn traps (InitFn=0, Damage=0),
+            #   3) Never invoke hardcoded SUnit_SparklyChest (0 unscaled hp3/mp3 potions).
             r["Selectable0"] = "1"
             r["PopulateFn"] = "0"
-            if r.get("InitFn") == "57":
-                r["InitFn"] = "3"
+            r["OperateFn"] = "1"
+            r["InitFn"] = "0"
+            r["Damage"] = "0"
         elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
             r["Selectable0"] = "0"
             r["PopulateFn"] = "0"

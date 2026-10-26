@@ -26,10 +26,10 @@ SAVE_WATCH_PID=$!
 trap 'kill "${SAVE_WATCH_PID}" 2>/dev/null || true' EXIT
 
 D2R_WIN_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2R.exe'
-echo "[d2r-mod] Launching D2R in Offline Mode with '-uid osi -mod custom -txt'..."
+echo "[d2r-mod] Launching D2R in Offline Mode with '-uid osi -mod custom -txt -resetofflinemaps'..."
 echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
 export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
 cd "${GAME_DIR}"
-run_proton "${D2R_WIN_EXE}" -uid osi -mod custom -txt "$@"
+run_proton "${D2R_WIN_EXE}" -uid osi -mod custom -txt -resetofflinemaps "$@"
 kill "${SAVE_WATCH_PID}" 2>/dev/null || true
 python3 "${D2R_ROOT}/bin/d2r-lock-respec.py" "${SAVED_MOD}"

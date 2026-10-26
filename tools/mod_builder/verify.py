@@ -175,7 +175,7 @@ def verify_all(cfg: dict = None) -> List[str]:
                     raise AssertionError(
                         f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk '{it}' in Chest Item{i}"
                     )
-                if "Lockbox" in it:
+                if "Lockbox" in it or "Chest Roll" in it or "Chest Pair" in it:
                     has_lockbox = True
         if is_chest_tc and not has_lockbox:
             raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Chest TC missing Lockbox entry")

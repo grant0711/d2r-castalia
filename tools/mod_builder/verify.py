@@ -189,7 +189,19 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Malus stand OperateFn=21 must have Selectable0=1"
             )
-    checks_passed.append("TreasureClassEx & objects.txt chest/lockbox/potion/charm/malus contracts")
+    _, preset_rows = _read_mod_tsv("objpreset.txt")
+    forbidden_preset_chests = {
+        "PlaceUniqueChest",
+        "ConsolationChest",
+        "SpecialChest100",
+        "PlaceRandomTreasureChest",
+    }
+    for pr in preset_rows:
+        if pr.get("ObjectClass") in forbidden_preset_chests:
+            raise AssertionError(
+                f"objpreset.txt (Act={pr.get('Act')} Index={pr.get('Index')}): forbidden Sparkly/Super Chest spawner '{pr.get('ObjectClass')}' still present"
+            )
+    checks_passed.append("TreasureClassEx, objects.txt & objpreset.txt chest/lockbox/potion/charm/malus contracts")
 
     # 3. Verify weapons.txt & armor.txt melee reach, javelin reach tiers, throwing properties,
     #    and strictly partitioned Act 1..5 Magic-only vendor stocking + ubercode/ultracode upgrades

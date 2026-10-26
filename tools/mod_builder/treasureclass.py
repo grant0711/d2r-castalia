@@ -528,18 +528,19 @@ def build_treasureclass(cfg: dict) -> str:
                 r["NoDrop"] = "0"
                 _set_items(r, [(f"{matched_act} Lockbox", "100")])
             else:
-                # Note: D2Game's Super Chest / Sparkly Chest C++ handler invokes 'Act X Chest A/B/C'
-                # up to 10 times in a consolation loop when most chest items are non-magic (Gold,
-                # Gems, Runes, Potions, Lockboxes).
-                # Setting Picks = 1 and NoDrop = 28 (with item weight sum = 65 -> 70% drop rate per call)
-                # caps total drops at 10 max and yields 10 * 1 * 0.70 = ~7.0 total items per chest:
-                #   - ~2.15 Gold piles (weight 20)
-                #   - ~1.72 Gems / Runes (weight 16)
-                #   - ~1.72 Act-scaled Potions / Elixirs (weight 5+5+2+2+2 = 16)
-                #   - ~1.08 Rings / Amulets / Jewels (weight 10)
-                #   - ~0.32 Lockboxes (~28% chance per chest at a 2x2 Lockbox, weight 3)
-                r["Picks"] = "1"
-                r["NoDrop"] = "28"
+                # Note: In objpreset.txt we map all Sparkly/Super Chest presets (PlaceUniqueChest,
+                # ConsolationChest, SpecialChest100, PlaceRandomTreasureChest) to each Act's standard
+                # InitFn=3 Large Chest so D2Game NEVER runs the hardcoded C++ ConsolationChest script
+                # (which forcibly spawns 5 Gold + 2 hp3 + 2 mp3 = 9 hardcoded items in Act 3 Normal!)
+                # and Instead invokes 'Act X Chest A/B/C' exactly 1 time per chest!
+                # Setting Picks = 6 and NoDrop = 0 yields 6 total items per chest with a clean spread:
+                #   - ~1.85 Gold piles (weight 20 / 65 = 30.8%)
+                #   - ~1.48 Gems / Runes (weight 16 / 65 = 24.6%)
+                #   - ~1.48 Act-scaled Potions / Elixirs (weight 5+5+2+2+2 = 16 / 65 = 24.6%)
+                #   - ~0.92 Rings / Amulets / Jewels (weight 10 / 65 = 15.4%)
+                #   - ~0.28 Lockboxes (~25% chance per chest at a 2x2 Lockbox, weight 3 / 65 = 4.6%)
+                r["Picks"] = "6"
+                r["NoDrop"] = "0"
                 _set_items(
                     r,
                     [
@@ -607,11 +608,8 @@ def build_objects(cfg: dict) -> str:
             r["Lockable"] = "0"
 
         if is_real_chest:
-            # Keep preset/Super/Sparkly chests clickable, but prevent random map scattering.
-            # Also replace InitFn=57 (SparklyChest C++ handler on IDs 397/455, which loops up to 10x
-            # and hardcodes dropping unscaled 'hp3' Regular Healing Potions in Act 3 Normal!) with
-            # InitFn=3 (standard Super Chest init) so golden chests keep their visuals and strictly
-            # roll our 'Act X Chest A/B/C' TreasureClass!
+            # Keep preset chests clickable, but prevent random map scattering.
+            # Also replace InitFn=57 (SparklyChest C++ handler on IDs 397/455) with InitFn=3.
             r["Selectable0"] = "1"
             r["PopulateFn"] = "0"
             if r.get("InitFn") == "57":
@@ -619,4 +617,32 @@ def build_objects(cfg: dict) -> str:
         elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
             r["Selectable0"] = "0"
             r["PopulateFn"] = "0"
-    return write_excel_tsv("objects.txt", headers, rows)
+    obj_out = write_excel_tsv("objects.txt", headers, rows)
+
+    # Also rewrite objpreset.txt so that DS1 map presets that reference Sparkly / Super Chest
+    # spawners (PlaceUniqueChest ID=584, ConsolationChest ID=397, SpecialChest100 ID=455,
+    # PlaceRandomTreasureChest ID=585) instead spawn each Act's standard InitFn=3 Large Chest!
+    # Why? Because D2Game.dll hardcodes Object IDs 397/455/584 to run SUnit_SparklyChest
+    # (which forcibly drops 5 Gold piles + 2 hp3 + 2 mp3 = 9 hardcoded items in Act 3 Normal
+    # on top of 4 calls to Act X Chest!). Mapping them to the Act's standard Large Chest
+    # guarantees 1 clean call to 'Act X Chest A/B/C' (6 items total) and 0 hardcoded hp3/mp3 drops.
+    preset_headers, preset_rows = read_excel_tsv("objpreset.txt")
+    act_standard_chest = {
+        "1": "LargeChestR",
+        "2": "TombChest1",
+        "3": "SewerChestLargeLeft",
+        "4": "ArcaneChest1",
+        "5": "WoodChestL",
+    }
+    sparkly_or_super_classes = {
+        "PlaceUniqueChest",
+        "ConsolationChest",
+        "SpecialChest100",
+        "PlaceRandomTreasureChest",
+    }
+    for pr in preset_rows:
+        if pr.get("ObjectClass") in sparkly_or_super_classes:
+            act_num = pr.get("Act", "1").strip()
+            pr["ObjectClass"] = act_standard_chest.get(act_num, "LargeChestR")
+    preset_out = write_excel_tsv("objpreset.txt", preset_headers, preset_rows)
+    return f"{obj_out}, {preset_out}"

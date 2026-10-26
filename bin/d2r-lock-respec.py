@@ -176,24 +176,28 @@ def watch_loop(save_dirs: list[str]) -> None:
             if not os.path.isdir(sdir):
                 continue
             for d2s_path in glob.glob(os.path.join(sdir, "*.d2s")):
+                base, _ = os.path.splitext(d2s_path)
+                ctl_path = base + ".ctl"
                 try:
                     mtime_ns = os.stat(d2s_path).st_mtime_ns
+                    ctl_mtime_ns = os.stat(ctl_path).st_mtime_ns if os.path.exists(ctl_path) else 0
                 except OSError:
                     continue
-                base, _ = os.path.splitext(d2s_path)
-                has_automap = any(
-                    os.path.exists(base + ext) for ext in (".map", ".ma0", ".ma1", ".ma2", ".ma3")
-                )
-                if seen_d2s.get(d2s_path) != mtime_ns or has_automap:
-                    # Wait 40ms for D2R.exe to finish flushing .d2s and .ma* on Save & Exit
-                    time.sleep(0.04)
-                    if os.path.isfile(d2s_path):
-                        respec_ch, seed_ch, corpse_ch = process_d2s(d2s_path, reroll_map_seed=True)
-                        if corpse_ch:
-                            print(
-                                f"[d2r-save-guard] Wiped unclaimed corpse on Save & Exit for {os.path.basename(d2s_path)}",
-                                flush=True,
-                            )
+                # ONLY modify .d2s when D2R writes .ctl (which happens exclusively on 'Save and Exit'
+                # to the Character Select screen) or on final exit — NEVER during in-game periodic autosaves!
+                ctl_key = ctl_path + ":ctl"
+                if ctl_mtime_ns > 0 and seen_d2s.get(ctl_key) != ctl_mtime_ns:
+                    if seen_d2s.get(ctl_key) is not None:
+                        # Wait 60ms for D2R.exe to finish flushing .d2s and .ctl on Save & Exit
+                        time.sleep(0.06)
+                        if os.path.isfile(d2s_path):
+                            respec_ch, seed_ch, corpse_ch = process_d2s(d2s_path, reroll_map_seed=True)
+                            if corpse_ch:
+                                print(
+                                    f"[d2r-save-guard] Wiped unclaimed corpse on Save & Exit for {os.path.basename(d2s_path)}",
+                                    flush=True,
+                                )
+                    seen_d2s[ctl_key] = ctl_mtime_ns
                     try:
                         seen_d2s[d2s_path] = os.stat(d2s_path).st_mtime_ns
                     except OSError:

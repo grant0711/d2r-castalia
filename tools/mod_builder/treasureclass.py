@@ -633,15 +633,15 @@ def build_objects(cfg: dict) -> str:
 
         if is_real_chest:
             # Keep preset chests clickable, prevent random map scattering (PopulateFn=0),
-            # and switch OperateFn=4 -> OperateFn=1 with InitFn=0, Damage=0 so chests:
+            # and switch OperateFn=4 -> OperateFn=1 with InitFn=3, Damage=100 so chests:
             #   1) Have a 100% chance of calling 'Act X Chest A/B/C' (no 25% empty roll),
-            #   2) Never spawn traps (InitFn=0, Damage=0),
+            #   2) Roll a ~20-25% chance to be trapped on room load (InitFn=3, Damage=100),
             #   3) Never invoke hardcoded SUnit_SparklyChest (0 unscaled hp3/mp3 potions).
             r["Selectable0"] = "1"
             r["PopulateFn"] = "0"
             r["OperateFn"] = "1"
-            r["InitFn"] = "0"
-            r["Damage"] = "0"
+            r["InitFn"] = "3"
+            r["Damage"] = "100"
         elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
             r["Selectable0"] = "0"
             r["PopulateFn"] = "0"

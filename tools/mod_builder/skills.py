@@ -701,6 +701,119 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         fohb["MaxELev5"] = "65"
         fohb["EDmgSymPerCalc"] = "(skill('Holy Bolt'.blvl)+skill('Sanctuary'.blvl))*12"
 
+    # 3. Chest & Environmental Trap Missiles:
+    #    Scale raw pre-resistance trap damage to ~100% of expected character Life across Normal,
+    #    Nightmare, and Hell (so a character with ~50% resistance loses ~50% of their Life total,
+    #    while wide min-max roll variance makes opening chests with low resistances genuinely dangerous).
+    #    Note: D2Game.dll evaluates chest trap missiles at sLvl = max(1, AreaLevel // 4) (sLvl 1..21).
+    if "trapnova" in rows_by_name:
+        tn = rows_by_name["trapnova"]
+        tn["HitShift"] = "8"
+        tn["EType"] = "ltng"
+        tn["EMin"] = "40"
+        tn["MinELev1"] = "35"
+        tn["MinELev2"] = "45"
+        tn["MinELev3"] = "60"
+        tn["MinELev4"] = "70"
+        tn["MinELev5"] = "80"
+        tn["EMax"] = "180"
+        tn["MaxELev1"] = "105"
+        tn["MaxELev2"] = "135"
+        tn["MaxELev3"] = "180"
+        tn["MaxELev4"] = "210"
+        tn["MaxELev5"] = "240"
+
+    if "trapfirebolt" in rows_by_name:
+        tfb = rows_by_name["trapfirebolt"]
+        tfb["HitShift"] = "8"
+        tfb["EType"] = "fire"
+        # Fires a burst of 3-4 bolts; each bolt hits for ~30-35% of single-hit trap damage
+        tfb["EMin"] = "20"
+        tfb["MinELev1"] = "14"
+        tfb["MinELev2"] = "18"
+        tfb["MinELev3"] = "24"
+        tfb["MinELev4"] = "28"
+        tfb["MinELev5"] = "32"
+        tfb["EMax"] = "65"
+        tfb["MaxELev1"] = "36"
+        tfb["MaxELev2"] = "48"
+        tfb["MaxELev3"] = "64"
+        tfb["MaxELev4"] = "75"
+        tfb["MaxELev5"] = "85"
+
+    if "fireexplosion" in rows_by_name:
+        fe = rows_by_name["fireexplosion"]
+        fe["HitShift"] = "8"
+        fe["EType"] = "fire"
+        fe["EMin"] = "55"
+        fe["MinELev1"] = "35"
+        fe["MinELev2"] = "45"
+        fe["MinELev3"] = "60"
+        fe["MinELev4"] = "70"
+        fe["MinELev5"] = "80"
+        fe["EMax"] = "165"
+        fe["MaxELev1"] = "95"
+        fe["MaxELev2"] = "125"
+        fe["MaxELev3"] = "165"
+        fe["MaxELev4"] = "195"
+        fe["MaxELev5"] = "225"
+
+    if "trappoisonjavcloud" in rows_by_name:
+        tpj = rows_by_name["trappoisonjavcloud"]
+        tpj["EType"] = "pois"
+        tpj["ELen"] = "200"  # 8 seconds (down from 20s so the poison bite is felt urgently)
+        tpj["EMin"] = "45"
+        tpj["MinELev1"] = "28"
+        tpj["MinELev2"] = "36"
+        tpj["MinELev3"] = "48"
+        tpj["MinELev4"] = "56"
+        tpj["MinELev5"] = "64"
+        tpj["EMax"] = "95"
+        tpj["MaxELev1"] = "52"
+        tpj["MaxELev2"] = "68"
+        tpj["MaxELev3"] = "88"
+        tpj["MaxELev4"] = "104"
+        tpj["MaxELev5"] = "120"
+
+    if "primepoisoncloud" in rows_by_name:
+        ppc = rows_by_name["primepoisoncloud"]
+        ppc["EType"] = "pois"
+        ppc["ELen"] = "200"
+        ppc["EMin"] = "45"
+        ppc["MinELev1"] = "28"
+        ppc["MinELev2"] = "36"
+        ppc["MinELev3"] = "48"
+        ppc["MinELev4"] = "56"
+        ppc["MinELev5"] = "64"
+        ppc["EMax"] = "95"
+        ppc["MaxELev1"] = "52"
+        ppc["MaxELev2"] = "68"
+        ppc["MaxELev3"] = "88"
+        ppc["MaxELev4"] = "104"
+        ppc["MaxELev5"] = "120"
+
+    for gas_name, gmin, gmax in (
+        ("rancidgascloud", "140", "240"),
+        ("chokinggascloud", "320", "540"),
+        ("stranglinggascloud", "600", "980"),
+    ):
+        if gas_name in rows_by_name:
+            gc = rows_by_name[gas_name]
+            gc["EType"] = "pois"
+            gc["ELen"] = "100"  # 4 seconds
+            gc["EMin"] = gmin
+            gc["EMax"] = gmax
+            gc["MinELev1"] = "24"
+            gc["MinELev2"] = "32"
+            gc["MinELev3"] = "42"
+            gc["MinELev4"] = "50"
+            gc["MinELev5"] = "58"
+            gc["MaxELev1"] = "42"
+            gc["MaxELev2"] = "56"
+            gc["MaxELev3"] = "74"
+            gc["MaxELev4"] = "88"
+            gc["MaxELev5"] = "102"
+
 
 def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     s_headers, s_rows = read_excel_tsv("skills.txt")
@@ -734,6 +847,24 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
 
     _apply_paladin_skills(by_name)
     _apply_paladin_skilldesc(by_desc)
+
+    # Scale Monster/Object Trap Skills (PoisonBallTrap, CursedBallTrapRight/Left, Trap Nova, PrimePoisonNova)
+    for t_skill in ("PoisonBallTrap", "CursedBallTrapRight", "CursedBallTrapLeft"):
+        if t_skill in by_name:
+            ts = by_name[t_skill]
+            ts["HitShift"] = "8"
+            ts["MinDam"] = "55"
+            ts["MinLevDam1"] = "35"
+            ts["MinLevDam2"] = "45"
+            ts["MinLevDam3"] = "60"
+            ts["MinLevDam4"] = "70"
+            ts["MinLevDam5"] = "80"
+            ts["MaxDam"] = "165"
+            ts["MaxLevDam1"] = "95"
+            ts["MaxLevDam2"] = "125"
+            ts["MaxLevDam3"] = "165"
+            ts["MaxLevDam4"] = "195"
+            ts["MaxLevDam5"] = "225"
 
     # Populate HireableIconCel (0..28 in Spells/Hireables/HrSkillIcon) for custom Mercenary skills
     # so HireMenuPanelHD & HirelingInventoryPanelHD always render a visible skill icon next to tooltips.

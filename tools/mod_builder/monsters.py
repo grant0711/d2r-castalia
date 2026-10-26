@@ -589,6 +589,43 @@ def _configure_player_summons(row: dict, mon_id: str) -> bool:
     return False
 
 
+def _configure_trap_entities(row: dict, mon_id: str) -> bool:
+    """
+    Configure stationary chest/environmental trap entities ('a trap' in monstats.txt)
+    so their Level, attack damage, and skill scaling progress across Normal, Nightmare, and Hell
+    with high min-max roll variance (hitting ~50% of expected character Life at 50% resistance).
+    """
+    if mon_id not in (
+        "trap-firebolt",
+        "trap-horzmissile",
+        "trap-vertmissile",
+        "trap-poisoncloud",
+        "trap-lightning",
+        "trap-melee",
+        "trap-nova",
+    ):
+        return False
+
+    row["Level"], row["Level(N)"], row["Level(H)"] = "18", "48", "78"
+    if row.get("Skill1"):
+        row["Sk1lvl"] = "4"
+    if row.get("Skill2"):
+        row["Sk2lvl"] = "4"
+
+    if mon_id in ("trap-horzmissile", "trap-vertmissile", "trap-melee"):
+        row["A1MinD"], row["A1MaxD"] = "95", "300"
+        row["A1MinD(N)"], row["A1MaxD(N)"] = "360", "980"
+        row["A1MinD(H)"], row["A1MaxD(H)"] = "680", "1750"
+        row["A1TH"], row["A1TH(N)"], row["A1TH(H)"] = "3500", "6500", "9500"
+
+    if mon_id in ("trap-horzmissile", "trap-vertmissile") and row.get("El1Type") == "pois":
+        row["El1MinD"], row["El1MaxD"], row["El1Dur"] = "60", "140", "150"
+        row["El1MinD(N)"], row["El1MaxD(N)"], row["El1Dur(N)"] = "180", "380", "150"
+        row["El1MinD(H)"], row["El1MaxD(H)"], row["El1Dur(H)"] = "340", "680", "150"
+
+    return True
+
+
 def build_monstats(cfg: dict) -> str:
     headers, rows = read_tsv("monstats.txt")
     for row in rows:
@@ -606,6 +643,10 @@ def build_monstats(cfg: dict) -> str:
 
         # 3. Player Summons
         if _configure_player_summons(row, mon_id):
+            continue
+
+        # 3b. Stationary Chest & Environmental Trap Entities
+        if _configure_trap_entities(row, mon_id):
             continue
 
         # 4. Regular Spawnable Enemy Monsters

@@ -151,12 +151,14 @@ ARMOR_VENDOR_BY_CODE: Dict[str, List[Tuple[str, str, str]]] = {
     "wa5": [("Anya", "1", "2")],
 
     # === 12-ACT ARCANE CIRCLET PROGRESSION (Starting in Act 4 Normal across all 5 Arcane Vendors) ===
-    # - ci0 (Circlet, qlvl=24 -> NightmareUpgrade=ci1 Coronet, HellUpgrade=ci2 Tiara):
-    #     * Normal Act 1-3 (clvl < 19 -> ilvl < 24): 0 Circlets (blocked by qlvl=24!)
-    #     * Normal Act 4 Jamella (ilvl cap 36 >= 24): 0..1 Circlet (Entry point: max 1!)
-    #     * Normal Act 5 Malah (no ilvl cap):         0..1 Circlet (+ 0..1 Coronet below = 0..2 total)
-    #     * Nightmare Akara/Drognan/Ormus/Jamella/Malah: upgrades to 0..1 / 1..2 Coronet (ci1)
-    #     * Hell Akara/Drognan/Ormus/Jamella/Malah:      upgrades to 0..1 / 1..2 Tiara (ci2)
+    # Note on D2Game.dll Normal shop ilvl caps:
+    #   Act 1 = 12, Act 2 = 20, Act 3 = 28, Act 4 = 36, Act 5 = uncapped (clvl + 5).
+    # - ci0 (Circlet, qlvl=30 -> NightmareUpgrade=ci1 Coronet, HellUpgrade=ci2 Tiara):
+    #     * Normal Act 1-3 (shop ilvl cap <= 28 < 30): 0 Circlets (strictly blocked in Normal Act 1-3!)
+    #     * Normal Act 4 Jamella (shop ilvl cap 36 >= 30): 0..1 Circlet (Entry point: max 1!)
+    #     * Normal Act 5 Malah (clvl >= 25 -> ilvl >= 30): 0..1 Circlet (+ 0..1 Coronet below = 0..2 total)
+    #     * Nightmare Akara/Drognan/Ormus/Jamella/Malah:   upgrades to Coronet (ci1, qlvl=39)
+    #     * Hell Akara/Drognan/Ormus/Jamella/Malah:        upgrades to Tiara (ci2, qlvl=60)
     "ci0": [
         ("Akara", "0", "1"),
         ("Drognan", "0", "1"),
@@ -165,9 +167,9 @@ ARMOR_VENDOR_BY_CODE: Dict[str, List[Tuple[str, str, str]]] = {
         ("Malah", "0", "1"),
     ],
     # - ci1 (Coronet, qlvl=39 -> NightmareUpgrade=ci2 Tiara, HellUpgrade=ci3 Diadem):
-    #     * Normal Act 1-4 (ilvl cap 12/20/28/36 < 39): 0 Coronets (blocked by qlvl=39!)
-    #     * Normal Act 5 Malah (no ilvl cap, clvl >= 34): 0..1 Coronet (combined with ci0 -> 0..2 total)
-    #     * Nightmare Act 1-5 Arcane Vendors (clvl >= 34): upgrades to Tiara (ci2), scaling total to 1..3
+    #     * Normal Act 1-4 (shop ilvl cap <= 36 < 39): 0 Coronets (strictly blocked in Normal Act 1-4!)
+    #     * Normal Act 5 Malah (clvl >= 34 -> ilvl >= 39): 0..1 Coronet (combined with ci0 -> 0..2 total)
+    #     * Nightmare Act 1-5 Arcane Vendors: upgrades to Tiara (ci2, qlvl=52), scaling total to 1..3
     #     * Hell Act 1-5 Arcane Vendors: upgrades to Diadem (ci3), scaling total to 2..4 in Act 4/5 Hell!
     "ci1": [
         ("Akara", "0", "1"),
@@ -176,9 +178,9 @@ ARMOR_VENDOR_BY_CODE: Dict[str, List[Tuple[str, str, str]]] = {
         ("Jamella", "1", "2"),
         ("Malah", "0", "1"),
     ],
-    # - ci2 (Tiara, qlvl=60 -> NightmareUpgrade=xxx, HellUpgrade=ci3 Diadem):
-    #     * Normal & Early/Mid Nightmare (clvl < 55): 0 Tiaras (blocked by qlvl=60!)
-    #     * Late Nightmare & Hell Jamella/Malah (clvl >= 55): adds +0..1 Tiara (NM) / +0..1 Diadem (Hell),
+    # - ci2 (Tiara, qlvl=52 -> NightmareUpgrade=xxx, HellUpgrade=ci3 Diadem):
+    #     * Normal & Early Nightmare (clvl < 47 -> ilvl < 52): 0 Tiaras
+    #     * Mid/Late Nightmare & Hell Jamella/Malah (clvl >= 47): adds +0..1 Tiara (NM) / +0..1 Diadem (Hell),
     #       bringing Jamella & Malah up to 1..4 (up to 4 max) Circlet-family items in late NM & Hell!
     "ci2": [
         ("Jamella", "0", "1"),
@@ -342,8 +344,8 @@ def build_weapons(cfg: dict) -> str:
     headers, rows = read_excel_tsv("weapons.txt")
     rows_by_code = {r["code"]: r for r in rows if r.get("code")}
 
-    # Alchemical Grenades stocked exclusively at each Act's Alchemist/Mystic
-    alchemists = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
+    # Alchemical Grenades stocked at each Act's Alchemist/Mystic
+    alchemists = ["Akara", "Lysander", "Alkor", "Ormus", "Jamella", "Malah"]
 
     for row in rows:
         code = row.get("code", "")
@@ -715,21 +717,33 @@ def build_armor(cfg: dict) -> str:
         code = row.get("code", "")
         atype = row.get("type", "")
         _clear_vendors(row)
-        if code == "ci0":
-            # Circlet (qlvl=24 -> first spawns in Act 4 Normal; upgrades to Coronet in NM and Tiara in Hell)
-            row["level"] = "24"
+        if code == "bhm":
+            # Lower Bone Helm qlvl from 22 -> 18 so Drognan in Act 2 Normal (shop ilvl cap = 20) can spawn it!
+            row["level"] = "18"
+            row["NightmareUpgrade"] = "xh9"
+            row["HellUpgrade"] = "uh9"
+        elif code == "ci0":
+            # Circlet (qlvl=30 -> blocked in Act 1-3 Normal [cap<=28], first spawns in Act 4 Normal [cap=36];
+            # upgrades to Coronet in NM and Tiara in Hell)
+            row["level"] = "30"
             row["NightmareUpgrade"] = "ci1"
             row["HellUpgrade"] = "ci2"
         elif code == "ci1":
-            # Coronet (qlvl=39 -> first spawns in Act 5 Normal; upgrades to Tiara in NM and Diadem in Hell)
+            # Coronet (qlvl=39 -> blocked in Act 1-4 Normal [cap<=36], first spawns in Act 5 Normal;
+            # upgrades to Tiara in NM and Diadem in Hell)
             row["level"] = "39"
             row["NightmareUpgrade"] = "ci2"
             row["HellUpgrade"] = "ci3"
         elif code == "ci2":
-            # Tiara (qlvl=60 -> first spawns as extra slot in late NM Act 4/5; upgrades to Diadem in Hell)
-            row["level"] = "60"
+            # Tiara (qlvl=52 -> first spawns as extra slot in Mid/Late NM Act 4/5; upgrades to Diadem in Hell)
+            row["level"] = "52"
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "ci3"
+        elif code == "ci3":
+            # Diadem (qlvl=64 -> spawns via HellUpgrade on ci1/ci2 in Hell Act 1-5)
+            row["level"] = "64"
+            row["NightmareUpgrade"] = "xxx"
+            row["HellUpgrade"] = "xxx"
         elif code == row.get("normcode"):
             uber = row.get("ubercode", "")
             ultra = row.get("ultracode", "")

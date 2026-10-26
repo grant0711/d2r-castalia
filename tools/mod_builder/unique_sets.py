@@ -16,13 +16,18 @@ Step 8: Build runes.txt, uniqueitems.txt, setitems.txt, sets.txt (and item-names
 - 28 Non-Spawnable (spawnable=0, nolimit=1) 4-Tier Valkyrie & Shadow Warrior/Master Uniques for monequip.txt
 """
 import hashlib
+import os
+import shutil
 from typing import Dict, List, Tuple
 
 from mod_builder.common import (
+    MOD_EXCEL,
     read_excel_tsv,
     update_mod_strings_json,
     write_excel_tsv,
 )
+
+LOCKED_TABLES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locked_tables")
 
 SUNDER_NAMES = {
     "Bone Break",
@@ -65,7 +70,7 @@ def _set_props(row: Dict[str, str], props: List[Tuple[str, str, str, str]], max_
 
 def _detect_theme(props: List[Tuple[str, str, str, str]]) -> str:
     codes = {p[0] for p in props}
-    if codes & {"dmg-fire", "fire-min", "fire-max", "res-fire", "pierce-fire", "extra-fire"}:
+    if codes & {"dmg-fire", "fire-min", "fire-max", "res-fire", "pierce-fire", "extra-fire", "fireskill"}:
         return "fire"
     if codes & {"dmg-cold", "cold-min", "cold-max", "res-cold", "pierce-cold", "extra-cold", "freeze"}:
         return "cold"
@@ -78,6 +83,86 @@ def _detect_theme(props: List[Tuple[str, str, str, str]]) -> str:
     if codes & {"crush", "openwounds", "deadly", "lifesteal", "dmg%", "att"}:
         return "phys"
     return "tank"
+
+
+# Hand-curated, lore-matched additions for selected <=5-prop Uniques.
+# Design invariants:
+# - ZERO duplicate added oskills across the entire Unique item pool
+# - ZERO duplicate added auras within the same equipment slot, and at most 2 items globally per aura (>=25 levels apart)
+# - ZERO duplicate added procs within the same equipment slot & level bracket
+# - Early utility/MF/mana rings (e.g. Nagelring, Manald Heal) and complete endgame items are left untouched
+CURATED_UNIQUE_ADDITIONS: Dict[str, List[Tuple[str, str, str, str]]] = {
+    # --- Curated Oskills (18 distinct skills, 1 item each + 2 distinct on new Javelins = 20 distinct oskills total) ---
+    "Stoutnail": [("oskill", "Sacrifice", "4", "6")],
+    "Dimoaks Hew": [("oskill", "Jab", "4", "6"), ("light", "", "-2", "-2")],
+    "Deathspade": [("oskill", "Cleave", "4", "6"), ("light", "", "-2", "-2")],
+    "Rimeraven": [("oskill", "Exploding Arrow", "5", "7"), ("ease", "", "20", "20")],
+    "Bloodthief": [("oskill", "Feral Rage", "5", "7"), ("damageresist", "", "-8", "-5")],
+    "Soulflay": [("oskill", "Zeal", "5", "7"), ("light", "", "-2", "-2")],
+    "Lance of Yaggai": [("oskill", "Charged Strike", "6", "8"), ("balance2", "", "-10", "-10")],
+    "Irices Shard": [("oskill", "Frozen Armor", "6", "8")],
+    "Goldskin": [("oskill", "Natural Resistance", "3", "5"), ("ease", "", "20", "20")],
+    "The Spirit Shroud": [("oskill", "Psychic Ward", "6", "8")],
+    "Blastbark": [("oskill", "Multiple Shot", "6", "8"), ("ease", "", "20", "20")],
+    "Frostburn": [("oskill", "Chilling Armor", "7", "9"), ("balance2", "", "-10", "-10")],
+    "Valkiry Wing": [("oskill", "Valkyrie", "4", "6"), ("light", "", "-2", "-2")],
+    "Bloodmoon": [("oskill", "Blood Boil", "8", "11"), ("damageresist", "", "-8", "-5")],
+    "Steelshade": [("oskill", "Enchant", "10", "13"), ("ease", "", "20", "20")],
+    "Deathcleaver": [("oskill", "Berserk", "9", "12"), ("light", "", "-2", "-2")],
+    "Gutsiphon": [("oskill", "Strafe", "9", "12"), ("balance2", "", "-10", "-10")],
+    "Boneflame": [("oskill", "Bone Armor", "12", "15"), ("light", "", "-2", "-2")],
+
+    # --- Curated Auras (13 items across 11 distinct Paladin auras; zero same-slot duplicates, >=25 lvl spacing) ---
+    "Lenyms Cord": [("aura", "99", "2", "4")],                                              # Prayer
+    "The Dragon Chang": [("aura", "102", "2", "4")],                                        # Holy Fire
+    "Nokozan Relic": [("aura", "100", "3", "5")],                                           # Resist Fire
+    "Goreshovel": [("aura", "98", "2", "4"), ("damageresist", "", "-8", "-5")],             # Might (Normal Weapon)
+    "The Chieftan": [("aura", "110", "3", "5")],                                            # Resist Lightning
+    "Venomsward": [("aura", "109", "3", "5")],                                              # Cleansing
+    "Rockfleece": [("aura", "104", "4", "6"), ("balance2", "", "-10", "-10")],              # Defiance (Normal Armor)
+    "Skullcollector": [("aura", "120", "5", "8"), ("balance2", "", "-10", "-10")],          # Meditation
+    "Gravepalm": [("aura", "119", "4", "6"), ("light", "", "-2", "-2")],                    # Sanctuary
+    "Silkweave": [("aura", "115", "4", "6"), ("damageresist", "", "-8", "-5")],             # Vigor
+    "Stoneraven": [("aura", "104", "8", "11"), ("ease", "", "20", "20")],                   # Defiance (Elite Spear)
+    "Giantskull": [("aura", "98", "7", "10"), ("balance2", "", "-10", "-10")],              # Might (Elite Helm)
+    "Kira's Guardian": [("aura", "125", "5", "8")],                                         # Salvation
+
+    # --- Curated Procs (19 items across 15 distinct skills; zero same-slot/tier collisions) ---
+    "The Gnasher": [("att-skill", "66", "8", "1")],                                         # Amplify Damage
+    "Fechmars Axe": [("att-skill", "45", "12", "3")],                                       # Ice Blast
+    "Coif of Glory": [("gethit-skill", "71", "12", "3")],                                   # Dim Vision
+    "Hawkmail": [("gethit-skill", "44", "12", "3")],                                        # Frost Nova
+    "Sparking Mail": [("gethit-skill", "38", "15", "5")],                                   # Charged Bolt
+    "The Battlebranch": [("att-skill", "396", "10", "3")],                                  # Sigil Rancor
+    "The Jade Tan Do": [("att-skill", "83", "12", "5")],                                    # Poison Explosion
+    "The Face of Horror": [("gethit-skill", "77", "12", "4")],                              # Terror
+    "Wormskull": [("gethit-skill", "72", "12", "4")],                                       # Weaken
+    "Iceblink": [("gethit-skill", "55", "12", "4")],                                        # Glacial Spike
+    "Boneflesh": [("gethit-skill", "130", "12", "4")],                                      # Howl
+    "Ripsaw": [("att-skill", "375", "10", "4")],                                            # Death Mark
+    "Doomspittle": [("att-skill", "16", "12", "5")],                                        # Exploding Arrow
+    "Visceratuant": [("gethit-skill", "48", "12", "5")],                                    # Nova
+    "Ghoulhide": [("att-skill", "101", "12", "7")],                                         # Holy Bolt
+    "Stormspike": [("att-skill", "53", "12", "7")],                                         # Chain Lightning
+    "Razoredge": [("att-skill", "87", "10", "3")],                                          # Decrepify
+    "Gargoyle's Bite": [("att-skill", "92", "12", "10")],                                   # Poison Nova
+    "Wraithflight": [("att-skill", "93", "12", "10")],                                      # Bone Spirit
+}
+
+CURATED_HIGH_CB_PENALTIES: Dict[str, Tuple[str, str, str, str]] = {
+    "Rixots Keen": ("light", "", "-2", "-2"),
+    "Knell Striker": ("balance2", "", "-10", "-10"),
+    "Crushflange": ("ease", "", "20", "20"),
+    "Goblin Toe": ("move2", "", "-10", "-10"),
+    "Bonesob": ("ease", "", "20", "20"),
+    "Rattlecage": ("light", "", "-2", "-2"),
+    "The Humongous": ("balance2", "", "-10", "-10"),
+    "Hone Sundan": ("light", "", "-2", "-2"),
+    "Windhammer": ("ease", "", "20", "20"),
+    "Stone Crusher": ("move2", "", "-10", "-10"),
+    "Steelpillar": ("ease", "", "20", "20"),
+    "Executioner's Justice": ("light", "", "-2", "-2"),
+}
 
 
 def build_runes(cfg: dict) -> str:
@@ -161,102 +246,22 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
                     except ValueError:
                         pass
 
-        # 3. Strict 4-6 Affix Curation: ONLY consider items with <= 4 props (or <= 5 props)
-        prop_codes = {p[0] for p in props}
-        roll = _det_int(idx_name + "_spice", 100)
-        added_strong = False
+        # 3. Strict 4-6 Affix Curation: Apply hand-curated, zero-duplicate oskills, auras, and procs
+        if idx_name in CURATED_UNIQUE_ADDITIONS:
+            for add_p in CURATED_UNIQUE_ADDITIONS[idx_name]:
+                props.append(add_p)
+                if add_p[0] == "oskill":
+                    oskill_added += 1
+                elif add_p[0] == "aura":
+                    aura_added += 1
+                elif add_p[0] in ("att-skill", "gethit-skill", "hit-skill"):
+                    proc_added += 1
+                elif add_p[0] in ("light", "ease", "balance2", "damageresist", "move2"):
+                    kisscurse_added += 1
 
-        if len(props) <= 5 and "oskill" not in prop_codes and "aura" not in prop_codes:
-            # ~32% of <=5-prop Uniques (~8% of all 403 Uniques = ~33 items) get a thematic oskill (lvl 4..14)
-            if roll < 32:
-                os_lvl = max(4, min(14, 3 + lvl_req // 5))
-                if wtype in ("bow", "abow", "xbow", "jave", "ajav", "tkni", "taxe"):
-                    os_skill = "Strafe" if _det_int(idx_name, 2) == 0 else "Guided Arrow"
-                elif wtype:
-                    if theme == "fire":
-                        os_skill = "Vengeance" if _det_int(idx_name, 2) == 0 else "Fire Claws"
-                    elif theme == "cold":
-                        os_skill = "Vengeance" if _det_int(idx_name, 2) == 0 else "Glacial Spike"
-                    elif theme == "ltng":
-                        os_skill = "Charged Strike" if wtype in ("spea", "aspe", "jave", "ajav") else "Vengeance"
-                    elif theme == "caster":
-                        os_skill = "Bone Armor" if _det_int(idx_name, 2) == 0 else "Cyclone Armor"
-                    else:
-                        phys_os = ["Zeal", "Feral Rage", "Berserk", "Concentrate"]
-                        os_skill = phys_os[_det_int(idx_name, len(phys_os))]
-                else:
-                    # Armor / Helm / Shield / Boot / Glove / Belt / Jewelry thematic oskills
-                    armor_os = {
-                        "fire": "Enchant",
-                        "cold": "Chilling Armor",
-                        "ltng": "Thunder Storm",
-                        "pois": "Venom",
-                        "caster": "Cyclone Armor",
-                        "phys": "Heart of Wolverine",
-                        "tank": "Bone Armor",
-                    }
-                    os_skill = armor_os.get(theme, "Bone Armor")
-                props.append(("oskill", os_skill, str(os_lvl), str(os_lvl + 2)))
-                oskill_added += 1
-                added_strong = True
-
-            # ~18% of <=5-prop Uniques get a thematic aura scaling with equip level (rolling a min..max range up to 10-14)
-            elif 32 <= roll < 50:
-                base_a = max(2, min(12, 1 + lvl_req // 6))
-                spread_lo = 2 if base_a >= 9 else 1
-                spread_hi = 2 if base_a >= 5 else 1
-                aura_min = str(max(1, base_a - spread_lo))
-                aura_max = str(base_a + spread_hi)
-                theme_auras = {
-                    "fire": "99",      # Resist Fire
-                    "cold": "105",     # Resist Cold
-                    "ltng": "109",     # Resist Lightning
-                    "pois": "113",     # Cleansing
-                    "caster": "120",   # Meditation
-                    "phys": "98",      # Might
-                    "tank": "104",     # Defiance
-                }
-                aura_id = theme_auras.get(theme, "99")
-                props.append(("aura", aura_id, aura_min, aura_max))
-                aura_added += 1
-                added_strong = True
-
-            # ~20% of <=5-prop Uniques (~5% of all 403 Uniques = ~20 items) get a thematic proc
-            elif 50 <= roll < 70:
-                proc_lvl = str(max(2, min(12, 1 + lvl_req // 6)))
-                if wtype:
-                    theme_procs = {
-                        "fire": ("att-skill", "47", "10", proc_lvl),   # Fire Ball
-                        "cold": ("att-skill", "55", "10", proc_lvl),   # Glacial Spike
-                        "ltng": ("att-skill", "53", "10", proc_lvl),   # Chain Lightning
-                        "pois": ("att-skill", "92", "10", proc_lvl),   # Poison Nova
-                        "phys": ("att-skill", "66", "8", "1"),         # Amplify Damage
-                        "caster": ("att-skill", "84", "10", proc_lvl), # Bone Spear
-                        "tank": ("att-skill", "81", "10", "3"),        # Dim Vision
-                    }
-                else:
-                    theme_procs = {
-                        "fire": ("gethit-skill", "44", "12", proc_lvl),   # Frost Nova
-                        "cold": ("gethit-skill", "44", "15", proc_lvl),   # Frost Nova
-                        "ltng": ("gethit-skill", "48", "12", proc_lvl),   # Nova
-                        "pois": ("gethit-skill", "92", "10", proc_lvl),   # Poison Nova
-                        "phys": ("gethit-skill", "130", "10", "3"),       # Howl
-                        "caster": ("gethit-skill", "81", "12", "4"),      # Dim Vision
-                        "tank": ("gethit-skill", "71", "12", "3"),        # Terror
-                    }
-                props.append(theme_procs.get(theme, ("gethit-skill", "44", "12", proc_lvl)))
-                proc_added += 1
-
-        # 4. Kiss-Curse tradeoffs on items that gained an oskill/aura or already have strong crushing/skill packages
-        has_high_cb = any(p == "crush" and (int(mx or "0") >= 25) for p, _, _, mx in props)
-        if (added_strong or has_high_cb) and len(props) <= 6:
-            penalties = [
-                ("light", "", "-2", "-2"),
-                ("ease", "", "20", "20"),
-                ("balance2", "", "-10", "-10"),
-                ("damageresist", "", "-8", "-5"),
-            ]
-            pen = penalties[_det_int(idx_name + "_pen", len(penalties))]
+        # 4. Kiss-Curse tradeoffs on high Crushing Blow items
+        if idx_name in CURATED_HIGH_CB_PENALTIES and len(props) <= 6:
+            pen = CURATED_HIGH_CB_PENALTIES[idx_name]
             if pen[0] not in {p[0] for p in props}:
                 props.append(pen)
                 kisscurse_added += 1
@@ -308,7 +313,7 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         ("Atalanta's Dart", "am5", "26", "19", [
             ("ama", "", "1", "1"),
             ("dmg%", "", "85", "110"),
-            ("oskill", "Strafe", "4", "6"),
+            ("oskill", "Guided Arrow", "4", "6"),
             ("move2", "", "20", "20"),
             ("rep-quant", "8", "", ""),
         ]),
@@ -344,7 +349,7 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
             ("dmg%", "", "140", "175"),
             ("openwounds", "", "35", "35"),
             ("lifesteal", "", "6", "8"),
-            ("oskill", "Strafe", "6", "9"),
+            ("oskill", "Impale", "6", "9"),
             ("rep-quant", "8", "", ""),
         ]),
         ("Pelian Ash", "7ja", "62", "46", [
@@ -568,11 +573,83 @@ def build_sets(cfg: dict) -> str:
     return write_excel_tsv("sets.txt", headers, rows)
 
 
+def _custom_unique_string_updates() -> List[Tuple[int, str, str]]:
+    names = [
+        # 13 New Historical & Mythological Unique Javelins
+        "Mesankylon",
+        "Verutum",
+        "Akontion",
+        "Rhomphaia",
+        "Soliferrum",
+        "Atalanta's Dart",
+        "Xyston",
+        "Angon",
+        "Lancea",
+        "Sarissa",
+        "Harpago",
+        "Pelian Ash",
+        "Ares-Piercer",
+        # 4 Additional Act Boss 1x1 Unique Charms
+        "Signet of the Maiden",
+        "Carapace of Pain",
+        "Soulstone Shard",
+        "Eye of Destruction",
+        # 28 Non-Spawnable 4-Tier Valkyrie & Shadow Uniques
+        "Valkyrie Spear I",
+        "Valkyrie Spear II",
+        "Valkyrie Spear III",
+        "Valkyrie Spear IV",
+        "Valkyrie Armor I",
+        "Valkyrie Armor II",
+        "Valkyrie Armor III",
+        "Valkyrie Armor IV",
+        "Valkyrie Helm I",
+        "Valkyrie Helm II",
+        "Valkyrie Helm III",
+        "Valkyrie Helm IV",
+        "Shadow Claw I",
+        "Shadow Claw II",
+        "Shadow Claw III",
+        "Shadow Claw IV",
+        "Shadow Off-Claw I",
+        "Shadow Off-Claw II",
+        "Shadow Off-Claw III",
+        "Shadow Off-Claw IV",
+        "Shadow Armor I",
+        "Shadow Armor II",
+        "Shadow Armor III",
+        "Shadow Armor IV",
+        "Shadow Helm I",
+        "Shadow Helm II",
+        "Shadow Helm III",
+        "Shadow Helm IV",
+    ]
+    return [(60100 + i, n, n) for i, n in enumerate(names)]
+
+
 def build_unique_sets_all(cfg: dict) -> str:
     p1 = build_runes(cfg)
+    locked_files = ("uniqueitems.txt", "setitems.txt", "sets.txt")
+    if not cfg.get("regenerate_unique_sets", False) and all(
+        os.path.exists(os.path.join(LOCKED_TABLES_DIR, fn)) for fn in locked_files
+    ):
+        os.makedirs(MOD_EXCEL, exist_ok=True)
+        out_paths = []
+        for fn in locked_files:
+            src = os.path.join(LOCKED_TABLES_DIR, fn)
+            dst = os.path.join(MOD_EXCEL, fn)
+            shutil.copyfile(src, dst)
+            out_paths.append(dst)
+        p5 = update_mod_strings_json("item-names.json", _custom_unique_string_updates())
+        print("[unique_sets] Copied locked uniqueitems.txt, setitems.txt, and sets.txt from locked_tables/")
+        return f"{p1}, {', '.join(out_paths)}, {p5}"
+
     p2, str_updates = build_uniqueitems(cfg)
     p3 = build_setitems(cfg)
     p4 = build_sets(cfg)
+    os.makedirs(LOCKED_TABLES_DIR, exist_ok=True)
+    for fn in locked_files:
+        shutil.copyfile(os.path.join(MOD_EXCEL, fn), os.path.join(LOCKED_TABLES_DIR, fn))
     p5 = update_mod_strings_json("item-names.json", str_updates)
     return f"{p1}, {p2}, {p3}, {p4}, {p5}"
 
@@ -619,67 +696,53 @@ def print_anonymized_summary(cfg: dict) -> str:
     procs = []
     curses = []
 
+    pen_labels = {
+        "light": "-2 Light Radius",
+        "ease": "+20% Requirements",
+        "balance2": "-10% FHR",
+        "damageresist": "-8% to -5% Phys DR",
+        "move2": "-10% FRW",
+    }
+
     for r in v_rows:
         idx_name = r.get("index", "")
         if any(sname in idx_name for sname in SUNDER_NAMES) or r.get("spawnable") != "1" or r.get("disabled") == "1":
             continue
         code = "cm1" if idx_name == "Gheed's Fortune" else r.get("code", "")
-        lvl_req = 15 if idx_name == "Gheed's Fortune" else int(r.get("lvl req") or "0")
+        lvl_req = 24 if idx_name == "Gheed's Fortune" else int(r.get("lvl req") or "0")
         if code in ("jew", "cjw") or lvl_req == 0:
             continue
         slot_lbl = _broad_slot_label(code, weap_types, armor_types)
-        wtype = weap_types.get(code, "")
-        props = _get_props(r, 12)
-        theme = _detect_theme(props)
-        props = [p for p in props if p[0] != "nofreeze"]
-        prop_codes = {p[0] for p in props}
-        roll = _det_int(idx_name + "_spice", 100)
-        added_strong = False
 
-        if len(props) <= 5 and "oskill" not in prop_codes and "aura" not in prop_codes:
-            if roll < 32:
-                os_lvl = max(4, min(14, 3 + lvl_req // 5))
-                oskills.append((lvl_req, slot_lbl, f"+{os_lvl} to +{os_lvl + 2}"))
-                added_strong = True
-            elif 32 <= roll < 50:
-                base_a = max(2, min(12, 1 + lvl_req // 6))
-                spread_lo = 2 if base_a >= 9 else 1
-                spread_hi = 2 if base_a >= 5 else 1
-                a_min = max(1, base_a - spread_lo)
-                a_max = base_a + spread_hi
-                auras.append((lvl_req, slot_lbl, f"Lvl {a_min} to {a_max}"))
-                added_strong = True
-            elif 50 <= roll < 70:
-                proc_lvl = max(2, min(12, 1 + lvl_req // 6))
-                if wtype:
-                    ch = "8%" if theme == "phys" else "10%"
-                    sl = 1 if theme == "phys" else (3 if theme == "tank" else proc_lvl)
-                    trig = "On Attack"
-                else:
-                    ch = "15%" if theme == "cold" else ("10%" if theme in ("pois", "phys") else "12%")
-                    sl = 3 if theme in ("phys", "tank") else (4 if theme == "caster" else proc_lvl)
-                    trig = "When Struck"
-                procs.append((lvl_req, slot_lbl, trig, ch, f"Lvl {sl}"))
+        if idx_name in CURATED_UNIQUE_ADDITIONS:
+            for p, par, mn, mx in CURATED_UNIQUE_ADDITIONS[idx_name]:
+                if p == "oskill":
+                    oskills.append((lvl_req, slot_lbl, f"+{mn} to +{mx}"))
+                elif p == "aura":
+                    auras.append((lvl_req, slot_lbl, f"Lvl {mn} to {mx}"))
+                elif p in ("att-skill", "gethit-skill", "hit-skill"):
+                    trig = "On Attack" if p == "att-skill" else ("When Struck" if p == "gethit-skill" else "On Striking")
+                    procs.append((lvl_req, slot_lbl, trig, f"{mn}%", f"Lvl {mx}"))
+                elif p in pen_labels:
+                    curses.append((lvl_req, slot_lbl, pen_labels[p]))
 
-        has_high_cb = any(p == "crush" and (int(mx or "0") >= 25) for p, _, _, mx in props)
-        if (added_strong or has_high_cb) and len(props) <= 6:
-            pen_names = ["-2 Light Radius", "+20% Requirements", "-10% FHR", "-8% to -5% Phys DR"]
-            pen_lbl = pen_names[_det_int(idx_name + "_pen", 4)]
-            curses.append((lvl_req, slot_lbl, pen_lbl))
+        if idx_name in CURATED_HIGH_CB_PENALTIES:
+            pen = CURATED_HIGH_CB_PENALTIES[idx_name]
+            curses.append((lvl_req, slot_lbl, pen_labels.get(pen[0], pen[0])))
 
-    print("\n=== ADDED OSKILLS (23 Vanilla Uniques + 2 New Javelins = 25 Total) ===")
+    print(f"\n=== ADDED OSKILLS ({len(oskills)} Vanilla Uniques + 2 New Javelins = {len(oskills) + 2} Total, 100% Distinct Skills) ===")
     for lr, sl, st in sorted(oskills + [(19, "Ranged/Thrown Weapon", "+4 to +6"), (41, "Ranged/Thrown Weapon", "+6 to +9")]):
         print(f"  LvlReq {lr:2d} | {sl:<22} | Oskill Level: {st}")
 
-    print("\n=== ADDED AURAS (30 Vanilla Uniques) ===")
+    print(f"\n=== ADDED AURAS ({len(auras)} Vanilla Uniques Across 11 Distinct Auras) ===")
     for lr, sl, st in sorted(auras):
         print(f"  LvlReq {lr:2d} | {sl:<22} | Aura Level:   {st}")
 
-    print("\n=== ADDED PROCS (25 Vanilla Uniques + 2 New Javelins = 27 Total) ===")
     extra_procs = [
         (33, "Ranged/Thrown Weapon", "On Attack", "12%", "Lvl 8"),
         (52, "Ranged/Thrown Weapon", "On Attack", "10%", "Lvl 3"),
     ]
+    print(f"\n=== ADDED PROCS ({len(procs)} Vanilla Uniques + 2 New Javelins = {len(procs) + 2} Total) ===")
     for lr, sl, trig, ch, st in sorted(procs + extra_procs):
         print(f"  LvlReq {lr:2d} | {sl:<22} | {trig:<11} | {ch:<4} Chance | {st}")
 

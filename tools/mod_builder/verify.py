@@ -483,5 +483,66 @@ def verify_all(cfg: dict = None) -> List[str]:
             )
     checks_passed.append("hireling 9-aura matrix & skill/icon referential integrity")
 
+    # 8. Verify uniqueitems.txt, setitems.txt, sets.txt locked table parity & zero duplicate added oskills/auras
+    locked_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locked_tables")
+    for lfn in ("uniqueitems.txt", "setitems.txt", "sets.txt"):
+        lpath = os.path.join(locked_dir, lfn)
+        mpath = os.path.join(MOD_EXCEL, lfn)
+        if not os.path.exists(lpath):
+            raise AssertionError(f"locked_tables/{lfn} is missing; unique/set tables must be locked in source control")
+        with open(lpath, "rb") as f1, open(mpath, "rb") as f2:
+            if f1.read() != f2.read():
+                raise AssertionError(f"MOD_EXCEL/{lfn} diverges from locked_tables/{lfn}")
+
+    _, van_u_rows = read_excel_tsv("uniqueitems.txt")
+    van_u_by_idx = {r["index"]: r for r in van_u_rows if r.get("index")}
+    _, mod_u_rows = _read_mod_tsv("uniqueitems.txt")
+    skill_by_id = {r["*Id"]: r for r in skill_rows if r.get("*Id")}
+    weap_type_by_code = {r["code"]: r.get("type", "") for r in weap_rows if r.get("code")}
+    arm_type_by_code = {r["code"]: r.get("type", "") for r in arm_rows if r.get("code")}
+
+    def _slot_bucket(code: str) -> str:
+        if code in weap_type_by_code:
+            return "weapon"
+        if code in arm_type_by_code:
+            return arm_type_by_code[code]
+        return code
+
+    seen_added_oskills: Dict[str, str] = {}
+    seen_added_auras_by_slot: Dict[Tuple[str, str], str] = {}
+
+    for r in mod_u_rows:
+        if r.get("spawnable") != "1" or r.get("disabled") == "1":
+            continue
+        idx = r.get("index", "")
+        code = r.get("code", "")
+        sb = _slot_bucket(code)
+        van_r = van_u_by_idx.get(idx)
+        van_props = {van_r.get(f"prop{i}", "").strip() for i in range(1, 13)} if van_r else set()
+        for i in range(1, 13):
+            p = r.get(f"prop{i}", "").strip()
+            par = r.get(f"par{i}", "").strip()
+            if p == "nofreeze":
+                raise AssertionError(f"uniqueitems.txt ({idx}): forbidden nofreeze still present")
+            if p == "oskill" and "oskill" not in van_props:
+                if par.lower() not in skill_by_name:
+                    raise AssertionError(f"uniqueitems.txt ({idx}): invalid oskill '{par}'")
+                if skill_by_name[par.lower()].get("aura") == "1":
+                    raise AssertionError(f"uniqueitems.txt ({idx}): oskill '{par}' is a Paladin aura (use aura prop instead)")
+                if par in seen_added_oskills:
+                    raise AssertionError(
+                        f"uniqueitems.txt ({idx}): duplicate added oskill '{par}' (already on {seen_added_oskills[par]})"
+                    )
+                seen_added_oskills[par] = idx
+            elif p == "aura" and "aura" not in van_props:
+                arow = skill_by_id.get(par) or skill_by_name.get(par.lower())
+                if not arow or arow.get("aura") != "1":
+                    raise AssertionError(f"uniqueitems.txt ({idx}): invalid aura reference '{par}'")
+                if (sb, par) in seen_added_auras_by_slot:
+                    raise AssertionError(
+                        f"uniqueitems.txt ({idx}): duplicate added aura '{par}' in slot '{sb}' (already on {seen_added_auras_by_slot[(sb, par)]})"
+                    )
+                seen_added_auras_by_slot[(sb, par)] = idx
+    checks_passed.append("locked unique/set table parity & zero duplicate oskill/aura curation contracts")
 
     return checks_passed

@@ -344,8 +344,8 @@ def build_weapons(cfg: dict) -> str:
     headers, rows = read_excel_tsv("weapons.txt")
     rows_by_code = {r["code"]: r for r in rows if r.get("code")}
 
-    # Alchemical Grenades stocked at each Act's Alchemist/Mystic
-    alchemists = ["Akara", "Lysander", "Alkor", "Ormus", "Jamella", "Malah"]
+    # Alchemical Grenades stocked exclusively at each Act's Alchemist/Mystic
+    alchemists = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
 
     for row in rows:
         code = row.get("code", "")

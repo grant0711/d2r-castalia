@@ -51,11 +51,11 @@ def build_misc(cfg: dict) -> str:
     # 1. 3-Second Burst Health & Mana Potions with 3-Second Cooldown Lockout (hp1..hp5, mp1..mp5)
     # In Act 2, Lysander is the dedicated Alchemist/Apothecary (Health + Mana Potions & Elixirs),
     # while Drognan is the Vizjerei Sage (Caster Weapons, Tomes/Scrolls & Mana Potions only).
-    # In Act 3, Ormus and Alkor both stock Potions, Elixirs, Grenades & Lockbox Keys (note: in D2Game.dll
-    # Alkor only opens the Gamble UI and has no Trade UI, while Hratli has a Misc tab for Lockbox Keys!).
+    # In Act 3, Alkor is the Kurast Alchemist (Health + Mana Potions, Elixirs, Grenades & Lockbox Keys),
+    # while Ormus is the Skatsimi Mage (Caster Weapons, Caster Armor, Tomes/Scrolls, Mana Potions & Lockbox Keys).
     hp_caps = [250, 500, 750, 1000, 2000]
     pot_costs = [500, 1500, 3500, 7500, 16000]
-    act1_3_hp_vendors = ["Akara", "Lysander", "Alkor", "Ormus"]
+    act1_3_hp_vendors = ["Akara", "Lysander", "Alkor"]
     act1_3_mp_vendors = ["Akara", "Lysander", "Drognan", "Alkor", "Ormus"]
     act4_5_pot_vendors = ["Jamella", "Malah"]
 
@@ -170,8 +170,8 @@ def build_misc(cfg: dict) -> str:
         rows_by_code[rcode]["levelreq"] = lreq
 
     # 5. 3-Tier 5-Minute (7500 frames) Preparation Elixirs
-    # Stocked exclusively at each Act's Alchemist/Mystic (Akara, Lysander, Alkor, Ormus, Jamella, Malah)
-    elixir_vendors = ["Akara", "Lysander", "Alkor", "Ormus", "Jamella", "Malah"]
+    # Stocked exclusively at each Act's Alchemist/Mystic (Akara, Lysander, Alkor, Jamella, Malah)
+    elixir_vendors = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
     new_rows: List[Dict[str, str]] = []
 
     # 5a. Thawing Elixir (wms -> wm2 -> wm3)
@@ -296,14 +296,16 @@ def build_misc(cfg: dict) -> str:
     # Preserve vanilla 'gamble cost' on Ring (rin = 50,000g) and Amulet (amu = 63,000g)
     # since the C++ engine hardcodes spawning 1 'rin' and 1 'amu' into the Gamble UI.
     # 6. Configure 3-Tier Lockbox Keys (key = 1,000g, ky2 = 5,000g, ky3 = 10,000g)
-    # Stocked at 1 Broker/Mystic per Act (and both Ormus & Hratli in Act 3):
-    # Act 1: Gheed, Act 2: Elzix, Act 3: Ormus & Hratli, Act 4: Jamella, Act 5: Anya.
+    # Stocked at 1 Broker/Mystic per Act (and Alkor + Ormus + Hratli in Act 3):
+    # Note: Setting type='spot' (instead of 'key') allows ALL Misc-tab vendors (including Ormus & Alkor,
+    # whose D2Game.dll shop filters reject item type 'key') to display Lockbox Keys in their Misc tab!
     from mod_builder.lockboxes import LOCKBOX_TIER_INFO, get_lockbox_registry
 
-    key_vendors = ["Gheed", "Elzix", "Ormus", "Hratli", "Jamella", "Anya"]
+    key_vendors = ["Gheed", "Elzix", "Alkor", "Ormus", "Hratli", "Jamella", "Anya"]
     krow = rows_by_code["key"]
     _clear_vendors(krow)
     krow["name"] = LOCKBOX_TIER_INFO[1]["key_name"]
+    krow["type"] = "spot"
     krow["cost"] = LOCKBOX_TIER_INFO[1]["key_cost"]
     krow["level"] = "1"
     krow["spawnable"] = "1"

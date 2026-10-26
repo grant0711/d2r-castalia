@@ -56,103 +56,134 @@ def _set_vendor_magic(row: Dict[str, str], vendor_list: List[str], mmin: str = "
             row[f"{v}MagicLvl"] = mlvl
 
 
-# Strictly partitioned Act 1..5 Normal base item codes (code == normcode) with ZERO intra-Act
-# vendor overlap: every single Normal base code is assigned to ONE exclusive vendor in its Act!
-# Each tuple is (vendor_name, magic_min, magic_max) so each vendor's Armor and Weapons tabs
-# spawn a rich 10..18 Magic items per refresh, upgrading cleanly to Exceptional (NM) and Elite (Hell).
-ARMOR_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
+# Strictly partitioned Act 1..5 Normal base item codes (code == normcode), plus curated
+# Caster Attire & 12-Act Circlet Progression across Akara, Drognan, Ormus, Jamella & Malah.
+# Each entry maps base_code -> List[(vendor_name, magic_min, magic_max)].
+ARMOR_VENDOR_BY_CODE: Dict[str, List[Tuple[str, str, str]]] = {
     # === ACT 1: Charsi (Convent Blacksmith) vs. Gheed (Caravaneer, Outlaw & Class Broker) ===
-    # Charsi: Forged/Standard Armor, Caps & Shields (6 bases x 1..2 = ~9 items)
-    "qui": ("Charsi", "1", "2"),
-    "hla": ("Charsi", "1", "2"),
-    "cap": ("Charsi", "1", "2"),
-    "skp": ("Charsi", "1", "2"),
-    "buc": ("Charsi", "1", "2"),
-    "sml": ("Charsi", "1", "2"),
+    # Note: Akara has NO armor in Act 1 Normal (she unlocks Circlets starting in Nightmare!).
+    # Charsi: Standard Armor, Caps & Shields (6 bases x 1..2 = ~9 items)
+    "qui": [("Charsi", "1", "2")],
+    "hla": [("Charsi", "1", "2")],
+    "cap": [("Charsi", "1", "2")],
+    "skp": [("Charsi", "1", "2")],
+    "buc": [("Charsi", "1", "2")],
+    "sml": [("Charsi", "1", "2")],
     # Gheed: Rogue Leather/Studded Gear, Gloves/Boots/Belts & All Act 1 Class-Specific Armor (10 bases x 1..2 = ~15 items)
-    "lea": ("Gheed", "1", "2"),
-    "stu": ("Gheed", "1", "2"),
-    "lgl": ("Gheed", "1", "2"),
-    "lbt": ("Gheed", "1", "2"),
-    "lbl": ("Gheed", "1", "2"),
-    "dr1": ("Gheed", "1", "2"),
-    "ba1": ("Gheed", "1", "2"),
-    "pa1": ("Gheed", "1", "2"),
-    "ne1": ("Gheed", "1", "2"),
-    "wa1": ("Gheed", "1", "2"),
+    "lea": [("Gheed", "1", "2")],
+    "stu": [("Gheed", "1", "2")],
+    "lgl": [("Gheed", "1", "2")],
+    "lbt": [("Gheed", "1", "2")],
+    "lbl": [("Gheed", "1", "2")],
+    "dr1": [("Gheed", "1", "2")],
+    "ba1": [("Gheed", "1", "2")],
+    "pa1": [("Gheed", "1", "2")],
+    "ne1": [("Gheed", "1", "2")],
+    "wa1": [("Gheed", "1", "2")],
 
-    # === ACT 2: Fara (Paladin Templar Armorer) vs. Elzix (Desert Outlaw & Exotic Broker) ===
-    # Fara: Heavy/Medium Armor, Helms, Shields, Heavy Gloves/Boots/Belt & Paladin Rondache (12 bases x 1..2 = ~18 items)
-    "rng": ("Fara", "1", "2"),
-    "scl": ("Fara", "1", "2"),
-    "chn": ("Fara", "1", "2"),
-    "brs": ("Fara", "1", "2"),
-    "hlm": ("Fara", "1", "2"),
-    "fhl": ("Fara", "1", "2"),
-    "lrg": ("Fara", "1", "2"),
-    "spk": ("Fara", "1", "2"),
-    "vgl": ("Fara", "1", "2"),
-    "vbt": ("Fara", "1", "2"),
-    "vbl": ("Fara", "1", "2"),
-    "pa2": ("Fara", "1", "2"),
-    # Elzix: Outlaw & Exotic Class-Specific Relics/Totems (4 bases x 2..3 = ~10 items)
-    "dr2": ("Elzix", "2", "3"),
-    "ba2": ("Elzix", "2", "3"),
-    "ne2": ("Elzix", "2", "3"),
-    "wa2": ("Elzix", "2", "3"),
+    # === ACT 2: Fara (Templar Armorer) | Elzix (Outlaw & Class Broker) | Drognan (Bone Helms & Bone Shields) ===
+    "rng": [("Fara", "1", "2")],
+    "scl": [("Fara", "1", "2")],
+    "chn": [("Fara", "1", "2")],
+    "brs": [("Fara", "1", "2")],
+    "hlm": [("Fara", "1", "2")],
+    "fhl": [("Fara", "1", "2")],
+    "lrg": [("Fara", "1", "2")],
+    "spk": [("Fara", "1", "2")],
+    "vgl": [("Fara", "1", "2")],
+    "vbt": [("Fara", "1", "2")],
+    "vbl": [("Fara", "1", "2")],
+    "pa2": [("Fara", "1", "2")],
+    # Elzix: Outlaw & Exotic Class-Specific Relics/Totems (4 bases x 1..2 = ~6 items)
+    "dr2": [("Elzix", "1", "2")],
+    "ba2": [("Elzix", "1", "2")],
+    "ne2": [("Elzix", "1", "2")],
+    "wa2": [("Elzix", "1", "2")],
+    # Drognan: Exclusively Bone Helms & Bone Shields (2..3 of each -> Grim Helm / Grim Shield -> Bone Visage / Troll Nest)
+    "bhm": [("Drognan", "2", "3")],
 
-    # === ACT 3: Hratli (Enchanter-Blacksmith) vs. Asheara (Iron Wolves & Class Commander) ===
-    # Hratli: Forged Splint/Plate/Light Plate, Helms, Shields, Chain Gloves/Boots/Belt (10 bases x 1..2 = ~15 items)
-    "spl": ("Hratli", "1", "2"),
-    "plt": ("Hratli", "1", "2"),
-    "ltp": ("Hratli", "1", "2"),
-    "msk": ("Hratli", "1", "2"),
-    "bhm": ("Hratli", "1", "2"),
-    "kit": ("Hratli", "1", "2"),
-    "bsh": ("Hratli", "1", "2"),
-    "mgl": ("Hratli", "1", "2"),
-    "mbt": ("Hratli", "1", "2"),
-    "mbl": ("Hratli", "1", "2"),
-    # Asheara: All Act 3 Class-Specific Armor & Totems (5 bases x 2..3 = ~12 items)
-    "dr3": ("Asheara", "2", "3"),
-    "ba3": ("Asheara", "2", "3"),
-    "pa3": ("Asheara", "2", "3"),
-    "ne3": ("Asheara", "2", "3"),
-    "wa3": ("Asheara", "2", "3"),
+    # === ACT 3: Hratli (Forged Plate) | Asheara (Class Commander) | Ormus (Masks & Bone Shields) ===
+    "spl": [("Hratli", "1", "2")],
+    "plt": [("Hratli", "1", "2")],
+    "kit": [("Hratli", "1", "2")],
+    "mgl": [("Hratli", "1", "2")],
+    "mbt": [("Hratli", "1", "2")],
+    "mbl": [("Hratli", "1", "2")],
+    # Asheara: Act 3 Class-Specific Armor & Totems (5 bases x 1..2 = ~7-8 items, down from 20!)
+    "dr3": [("Asheara", "1", "2")],
+    "ba3": [("Asheara", "1", "2")],
+    "pa3": [("Asheara", "1", "2")],
+    "ne3": [("Asheara", "1", "2")],
+    "wa3": [("Asheara", "1", "2")],
+    # Bone Shield (bsh): Drognan (2..3) & Ormus (2..3)
+    "bsh": [("Drognan", "2", "3"), ("Ormus", "2", "3")],
+    # Mask (msk): Ormus (2..3) & Jamella (1..2)
+    "msk": [("Ormus", "2", "3"), ("Jamella", "1", "2")],
 
-    # === ACT 4: Halbu (Fortress Weaponsmith) vs. Jamella (Celestial Archivist) ===
-    # Halbu: Heavy Plate, Great Helm, Tower Shield, Gauntlets/Boots/Belt, Barbarian & Paladin Gear (9 bases x 1..2 = ~14 items)
-    "fld": ("Halbu", "1", "2"),
-    "gth": ("Halbu", "1", "2"),
-    "ghm": ("Halbu", "1", "2"),
-    "tow": ("Halbu", "1", "2"),
-    "tgl": ("Halbu", "1", "2"),
-    "tbt": ("Halbu", "1", "2"),
-    "tbl": ("Halbu", "1", "2"),
-    "ba4": ("Halbu", "1", "2"),
-    "pa4": ("Halbu", "1", "2"),
-    # Jamella: Circlets & Esoteric Class Relics (Falcon Mask, Gargoyle Head, Compendium) (4 bases x 2..4 = ~12 items)
-    "ci0": ("Jamella", "2", "4"),
-    "dr4": ("Jamella", "2", "4"),
-    "ne4": ("Jamella", "2", "4"),
-    "wa4": ("Jamella", "2", "4"),
+    # === ACT 4: Halbu (Fortress Weaponsmith) | Jamella (Light Plates, Masks, Circlets & Esoteric Relics) ===
+    "fld": [("Halbu", "1", "2")],
+    "gth": [("Halbu", "1", "2")],
+    "ghm": [("Halbu", "1", "2")],
+    "tow": [("Halbu", "1", "2")],
+    "tgl": [("Halbu", "1", "2")],
+    "tbt": [("Halbu", "1", "2")],
+    "tbl": [("Halbu", "1", "2")],
+    "ba4": [("Halbu", "1", "2")],
+    "pa4": [("Halbu", "1", "2")],
+    # Light Plate (ltp): Jamella (1..2) & Malah (1..2) -> Mage Plate -> Archon Plate
+    "ltp": [("Jamella", "1", "2"), ("Malah", "1", "2")],
+    "dr4": [("Jamella", "1", "2")],
+    "ne4": [("Jamella", "1", "2")],
+    "wa4": [("Jamella", "1", "2")],
 
-    # === ACT 5: Larzuk (Siege Master Blacksmith) vs. Anya (Noble Curio & Class Broker) ===
-    # Larzuk: Full Plate/Ancient Armor, Crown, Gothic Shield, Gauntlets/Greaves/Belt, Barbarian & Paladin Gear (9 bases x 1..2 = ~14 items)
-    "ful": ("Larzuk", "1", "2"),
-    "aar": ("Larzuk", "1", "2"),
-    "crn": ("Larzuk", "1", "2"),
-    "gts": ("Larzuk", "1", "2"),
-    "hgl": ("Larzuk", "1", "2"),
-    "hbt": ("Larzuk", "1", "2"),
-    "hbl": ("Larzuk", "1", "2"),
-    "ba5": ("Larzuk", "1", "2"),
-    "pa5": ("Larzuk", "1", "2"),
-    # Anya: Coronets & Esoteric Class Relics (Spirit Mask, Demon Head, Grimoire) (4 bases x 2..4 = ~12 items)
-    "ci1": ("Anya", "2", "4"),
-    "dr5": ("Anya", "2", "4"),
-    "ne5": ("Anya", "2", "4"),
-    "wa5": ("Anya", "2", "4"),
+    # === ACT 5: Larzuk (Siege Blacksmith) | Anya (Exotic Class Broker) | Malah (Light Plates & Circlets) ===
+    "ful": [("Larzuk", "1", "2")],
+    "aar": [("Larzuk", "1", "2")],
+    "crn": [("Larzuk", "1", "2")],
+    "gts": [("Larzuk", "1", "2")],
+    "hgl": [("Larzuk", "1", "2")],
+    "hbt": [("Larzuk", "1", "2")],
+    "hbl": [("Larzuk", "1", "2")],
+    "ba5": [("Larzuk", "1", "2")],
+    "pa5": [("Larzuk", "1", "2")],
+    "dr5": [("Anya", "1", "2")],
+    "ne5": [("Anya", "1", "2")],
+    "wa5": [("Anya", "1", "2")],
+
+    # === 12-ACT ARCANE CIRCLET PROGRESSION (Starting in Act 4 Normal across all 5 Arcane Vendors) ===
+    # - ci0 (Circlet, qlvl=24 -> NightmareUpgrade=ci1 Coronet, HellUpgrade=ci2 Tiara):
+    #     * Normal Act 1-3 (clvl < 19 -> ilvl < 24): 0 Circlets (blocked by qlvl=24!)
+    #     * Normal Act 4 Jamella (ilvl cap 36 >= 24): 0..1 Circlet (Entry point: max 1!)
+    #     * Normal Act 5 Malah (no ilvl cap):         0..1 Circlet (+ 0..1 Coronet below = 0..2 total)
+    #     * Nightmare Akara/Drognan/Ormus/Jamella/Malah: upgrades to 0..1 / 1..2 Coronet (ci1)
+    #     * Hell Akara/Drognan/Ormus/Jamella/Malah:      upgrades to 0..1 / 1..2 Tiara (ci2)
+    "ci0": [
+        ("Akara", "0", "1"),
+        ("Drognan", "0", "1"),
+        ("Ormus", "1", "2"),
+        ("Jamella", "0", "1"),
+        ("Malah", "0", "1"),
+    ],
+    # - ci1 (Coronet, qlvl=39 -> NightmareUpgrade=ci2 Tiara, HellUpgrade=ci3 Diadem):
+    #     * Normal Act 1-4 (ilvl cap 12/20/28/36 < 39): 0 Coronets (blocked by qlvl=39!)
+    #     * Normal Act 5 Malah (no ilvl cap, clvl >= 34): 0..1 Coronet (combined with ci0 -> 0..2 total)
+    #     * Nightmare Act 1-5 Arcane Vendors (clvl >= 34): upgrades to Tiara (ci2), scaling total to 1..3
+    #     * Hell Act 1-5 Arcane Vendors: upgrades to Diadem (ci3), scaling total to 2..4 in Act 4/5 Hell!
+    "ci1": [
+        ("Akara", "0", "1"),
+        ("Drognan", "1", "1"),
+        ("Ormus", "0", "1"),
+        ("Jamella", "1", "2"),
+        ("Malah", "0", "1"),
+    ],
+    # - ci2 (Tiara, qlvl=60 -> NightmareUpgrade=xxx, HellUpgrade=ci3 Diadem):
+    #     * Normal & Early/Mid Nightmare (clvl < 55): 0 Tiaras (blocked by qlvl=60!)
+    #     * Late Nightmare & Hell Jamella/Malah (clvl >= 55): adds +0..1 Tiara (NM) / +0..1 Diadem (Hell),
+    #       bringing Jamella & Malah up to 1..4 (up to 4 max) Circlet-family items in late NM & Hell!
+    "ci2": [
+        ("Jamella", "0", "1"),
+        ("Malah", "0", "1"),
+    ],
 }
 
 WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
@@ -172,7 +203,7 @@ WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
     "lxb": ("Gheed", "1", "2"),
     "jav": ("Gheed", "1", "2"),
     "tkf": ("Gheed", "1", "2"),
-    "ktr": ("Gheed", "2", "3"),
+    "ktr": ("Gheed", "1", "2"),
     "sst": ("Akara", "3", "6"),
     "wnd": ("Akara", "3", "6"),
     "scp": ("Akara", "3", "6"),
@@ -195,8 +226,8 @@ WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
     "pil": ("Elzix", "1", "2"),
     "tax": ("Elzix", "1", "2"),
     "bkf": ("Elzix", "1", "2"),
-    "wrb": ("Elzix", "2", "3"),
-    "axf": ("Elzix", "2", "3"),
+    "wrb": ("Elzix", "1", "2"),
+    "axf": ("Elzix", "1", "2"),
     "lst": ("Drognan", "3", "6"),
     "ywn": ("Drognan", "3", "6"),
     "ob2": ("Drognan", "3", "6"),
@@ -212,12 +243,12 @@ WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
     "scy": ("Hratli", "1", "2"),
     "kri": ("Asheara", "1", "2"),
     "sbb": ("Asheara", "1", "2"),
-    "am1": ("Asheara", "2", "3"),
-    "am3": ("Asheara", "2", "3"),
+    "am1": ("Asheara", "1", "2"),
+    "am3": ("Asheara", "1", "2"),
     "ssp": ("Asheara", "1", "2"),
     "bal": ("Asheara", "1", "2"),
-    "ces": ("Asheara", "2", "3"),
-    "clw": ("Asheara", "2", "3"),
+    "ces": ("Asheara", "1", "2"),
+    "clw": ("Asheara", "1", "2"),
     "cst": ("Ormus", "3", "6"),
     "bwn": ("Ormus", "3", "6"),
     "gsc": ("Ormus", "3", "6"),
@@ -238,8 +269,8 @@ WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
     "swb": ("Halbu", "1", "2"),
     "hxb": ("Halbu", "1", "2"),
     "glv": ("Halbu", "1", "2"),
-    "am5": ("Jamella", "2", "4"),
-    "btl": ("Jamella", "2", "4"),
+    "am5": ("Jamella", "1", "2"),
+    "btl": ("Jamella", "1", "2"),
     "bst": ("Jamella", "3", "6"),
     "wsp": ("Jamella", "3", "6"),
     "ob4": ("Jamella", "3", "6"),
@@ -253,12 +284,12 @@ WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
     "pik": ("Larzuk", "1", "2"),
     "hal": ("Larzuk", "1", "2"),
     "wsc": ("Larzuk", "1", "2"),
-    "lwb": ("Anya", "2", "3"),
-    "am2": ("Anya", "2", "3"),
-    "am4": ("Anya", "2", "3"),
-    "rxb": ("Anya", "2", "3"),
-    "tsp": ("Anya", "2", "3"),
-    "skr": ("Anya", "2", "3"),
+    "lwb": ("Anya", "1", "2"),
+    "am2": ("Anya", "1", "2"),
+    "am4": ("Anya", "1", "2"),
+    "rxb": ("Anya", "1", "2"),
+    "tsp": ("Anya", "1", "2"),
+    "skr": ("Anya", "1", "2"),
     "wst": ("Malah", "3", "6"),
     "gwn": ("Malah", "3", "6"),
     "ob5": ("Malah", "3", "6"),
@@ -312,7 +343,7 @@ def build_weapons(cfg: dict) -> str:
     rows_by_code = {r["code"]: r for r in rows if r.get("code")}
 
     # Alchemical Grenades stocked exclusively at each Act's Alchemist/Mystic
-    alchemists = ["Akara", "Lysander", "Ormus", "Jamella", "Malah"]
+    alchemists = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
 
     for row in rows:
         code = row.get("code", "")
@@ -684,18 +715,34 @@ def build_armor(cfg: dict) -> str:
         code = row.get("code", "")
         atype = row.get("type", "")
         _clear_vendors(row)
-        if code == row.get("normcode"):
+        if code == "ci0":
+            # Circlet (qlvl=24 -> first spawns in Act 4 Normal; upgrades to Coronet in NM and Tiara in Hell)
+            row["level"] = "24"
+            row["NightmareUpgrade"] = "ci1"
+            row["HellUpgrade"] = "ci2"
+        elif code == "ci1":
+            # Coronet (qlvl=39 -> first spawns in Act 5 Normal; upgrades to Tiara in NM and Diadem in Hell)
+            row["level"] = "39"
+            row["NightmareUpgrade"] = "ci2"
+            row["HellUpgrade"] = "ci3"
+        elif code == "ci2":
+            # Tiara (qlvl=60 -> first spawns as extra slot in late NM Act 4/5; upgrades to Diadem in Hell)
+            row["level"] = "60"
+            row["NightmareUpgrade"] = "xxx"
+            row["HellUpgrade"] = "ci3"
+        elif code == row.get("normcode"):
             uber = row.get("ubercode", "")
             ultra = row.get("ultracode", "")
             row["NightmareUpgrade"] = uber if (uber and uber != code) else "xxx"
             row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
-            v_spec = ARMOR_VENDOR_BY_CODE.get(code)
-            if v_spec is not None:
-                v_name, m_min, m_max = v_spec
-                _set_vendor_magic(row, [v_name], m_min, m_max, "1")
         else:
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"
+
+        v_specs = ARMOR_VENDOR_BY_CODE.get(code)
+        if v_specs is not None:
+            for v_name, m_min, m_max in v_specs:
+                _set_vendor_magic(row, [v_name], m_min, m_max, "1")
         spd = row.get("speed", "0")
         minac = int(row["minac"]) if row.get("minac") else 0
         maxac = int(row["maxac"]) if row.get("maxac") else 0

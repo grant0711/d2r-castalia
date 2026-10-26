@@ -51,10 +51,12 @@ def build_misc(cfg: dict) -> str:
     # 1. 3-Second Burst Health & Mana Potions with 3-Second Cooldown Lockout (hp1..hp5, mp1..mp5)
     # In Act 2, Lysander is the dedicated Alchemist/Apothecary (Health + Mana Potions & Elixirs),
     # while Drognan is the Vizjerei Sage (Caster Weapons, Tomes/Scrolls & Mana Potions only).
+    # In Act 3, Alkor is the Kurast Alchemist (Health + Mana Potions, Elixirs, Grenades & Lockbox Keys),
+    # while Ormus is the Skatsimi Mage (Caster Weapons, Caster Armor, Tomes/Scrolls & Mana Potions).
     hp_caps = [250, 500, 750, 1000, 2000]
     pot_costs = [500, 1500, 3500, 7500, 16000]
-    act1_3_hp_vendors = ["Akara", "Lysander", "Ormus"]
-    act1_3_mp_vendors = ["Akara", "Lysander", "Drognan", "Ormus"]
+    act1_3_hp_vendors = ["Akara", "Lysander", "Alkor"]
+    act1_3_mp_vendors = ["Akara", "Lysander", "Drognan", "Alkor", "Ormus"]
     act4_5_pot_vendors = ["Jamella", "Malah"]
 
     for idx in range(5):
@@ -168,8 +170,8 @@ def build_misc(cfg: dict) -> str:
         rows_by_code[rcode]["levelreq"] = lreq
 
     # 5. 3-Tier 5-Minute (7500 frames) Preparation Elixirs
-    # Stocked exclusively at each Act's Alchemist/Mystic (Akara, Lysander, Ormus, Jamella, Malah)
-    elixir_vendors = ["Akara", "Lysander", "Ormus", "Jamella", "Malah"]
+    # Stocked exclusively at each Act's Alchemist/Mystic (Akara, Lysander, Alkor, Jamella, Malah)
+    elixir_vendors = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
     new_rows: List[Dict[str, str]] = []
 
     # 5a. Thawing Elixir (wms -> wm2 -> wm3)
@@ -294,11 +296,12 @@ def build_misc(cfg: dict) -> str:
     # Preserve vanilla 'gamble cost' on Ring (rin = 50,000g) and Amulet (amu = 63,000g)
     # since the C++ engine hardcodes spawning 1 'rin' and 1 'amu' into the Gamble UI.
     # 6. Configure 3-Tier Lockbox Keys (key = 1,000g, ky2 = 5,000g, ky3 = 10,000g)
-    # Stocked exclusively at each Act's Gambler/Broker (Gheed, Elzix, Asheara, Jamella, Anya),
-    # giving them an exclusive monopoly on Lockbox Keys alongside Class-Specific & Ranged gear!
+    # Stocked exclusively at 1 Broker/Alchemist per Act who has a Misc tab:
+    # Act 1: Gheed, Act 2: Elzix, Act 3: Alkor (since Asheara has no Misc tab in D2Game.dll!),
+    # Act 4: Jamella, Act 5: Anya.
     from mod_builder.lockboxes import LOCKBOX_TIER_INFO, get_lockbox_registry
 
-    key_vendors = ["Gheed", "Elzix", "Asheara", "Jamella", "Anya"]
+    key_vendors = ["Gheed", "Elzix", "Alkor", "Jamella", "Anya"]
     krow = rows_by_code["key"]
     _clear_vendors(krow)
     krow["name"] = LOCKBOX_TIER_INFO[1]["key_name"]

@@ -315,7 +315,16 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"armor.txt ({code}): normalized base cost={acost} out of expected 50..50000 range"
             )
-        if code == r.get("normcode"):
+        if code == "ci0":
+            if r.get("NightmareUpgrade") != "ci1" or r.get("HellUpgrade") != "ci2":
+                raise AssertionError("armor.txt (ci0): expected NightmareUpgrade=ci1, HellUpgrade=ci2")
+        elif code == "ci1":
+            if r.get("NightmareUpgrade") != "ci2" or r.get("HellUpgrade") != "ci3":
+                raise AssertionError("armor.txt (ci1): expected NightmareUpgrade=ci2, HellUpgrade=ci3")
+        elif code == "ci2":
+            if r.get("NightmareUpgrade") != "xxx" or r.get("HellUpgrade") != "ci3":
+                raise AssertionError("armor.txt (ci2): expected NightmareUpgrade=xxx, HellUpgrade=ci3")
+        elif code == r.get("normcode"):
             exp_nm = r.get("ubercode") if r.get("ubercode") != code else "xxx"
             exp_hell = r.get("ultracode") if r.get("ultracode") != code else "xxx"
             if r.get("NightmareUpgrade") != exp_nm or r.get("HellUpgrade") != exp_hell:
@@ -323,9 +332,10 @@ def verify_all(cfg: dict = None) -> List[str]:
                     f"armor.txt ({code}): expected NightmareUpgrade={exp_nm}, HellUpgrade={exp_hell}"
                 )
             stocked_vendors = [vn for vn in vendor_names if int(r.get(f"{vn}MagicMax") or "0") >= 1]
-            if len(stocked_vendors) != 1:
+            expected_v_count = 2 if code in ("bsh", "msk", "ltp") else 1
+            if len(stocked_vendors) != expected_v_count:
                 raise AssertionError(
-                    f"armor.txt ({code}): Normal base armor must be stocked at exactly 1 exclusive vendor, found {stocked_vendors}"
+                    f"armor.txt ({code}): expected {expected_v_count} vendor(s), found {stocked_vendors}"
                 )
             for vn in stocked_vendors:
                 if r.get(f"{vn}MagicLvl") != "1":

@@ -100,6 +100,12 @@ def process_d2s(path: str, reroll_map_seed: bool = True) -> tuple[bool, bool, bo
             respec_changed = True
 
     corpse_wiped = _wipe_unclaimed_corpse(raw)
+    # In D2R v105 .d2s, character status byte is at offset 20 (0x14); bit 3 (0x08) is the
+    # CHARSTAT_DEAD flag ("has died / corpse pending"). Always clear bit 3 when wiping an
+    # unclaimed corpse (or if bit 3 is still set) so D2R does not spawn an empty phantom corpse!
+    if len(raw) > 20 and (raw[20] & 0x08) != 0:
+        raw[20] &= ~0x08
+        corpse_wiped = True
 
     seed_changed = False
     if reroll_map_seed and woo_idx >= 248:

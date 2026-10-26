@@ -705,97 +705,100 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     #    Scale raw pre-resistance trap damage to ~100% of expected character Life across Normal,
     #    Nightmare, and Hell (so a character with ~50% resistance loses ~50% of their Life total,
     #    while wide min-max roll variance makes opening chests with low resistances genuinely dangerous).
-    #    Note: D2Game.dll evaluates chest trap missiles at sLvl = max(1, AreaLevel // 4) (sLvl 1..21).
+    #    Note: For trap entities (trap-firebolt, trap-nova, trap-poisoncloud), D2Game.dll spawns the
+    #    missile via MONAI_TrapMissile / Skill1 at sLvl = max(1, mLvl / 6) (sLvl=3 in Normal at mLvl=18,
+    #    sLvl=8 in Nightmare at mLvl=48, sLvl=13 in Hell at mLvl=78).
     if "trapnova" in rows_by_name:
         tn = rows_by_name["trapnova"]
         tn["HitShift"] = "8"
         tn["EType"] = "ltng"
-        tn["EMin"] = "40"
-        tn["MinELev1"] = "35"
-        tn["MinELev2"] = "45"
-        tn["MinELev3"] = "60"
-        tn["MinELev4"] = "70"
-        tn["MinELev5"] = "80"
-        tn["EMax"] = "180"
-        tn["MaxELev1"] = "105"
-        tn["MaxELev2"] = "135"
-        tn["MaxELev3"] = "180"
-        tn["MaxELev4"] = "210"
-        tn["MaxELev5"] = "240"
+        tn["EMin"] = "60"
+        tn["MinELev1"] = "60"
+        tn["MinELev2"] = "110"
+        tn["MinELev3"] = "160"
+        tn["MinELev4"] = "180"
+        tn["MinELev5"] = "200"
+        tn["EMax"] = "200"
+        tn["MaxELev1"] = "180"
+        tn["MaxELev2"] = "330"
+        tn["MaxELev3"] = "480"
+        tn["MaxELev4"] = "540"
+        tn["MaxELev5"] = "600"
 
     if "trapfirebolt" in rows_by_name:
         tfb = rows_by_name["trapfirebolt"]
         tfb["HitShift"] = "8"
         tfb["EType"] = "fire"
-        # Fires a burst of 3-4 bolts; each bolt hits for ~30-35% of single-hit trap damage
-        tfb["EMin"] = "20"
-        tfb["MinELev1"] = "14"
-        tfb["MinELev2"] = "18"
-        tfb["MinELev3"] = "24"
-        tfb["MinELev4"] = "28"
-        tfb["MinELev5"] = "32"
-        tfb["EMax"] = "65"
-        tfb["MaxELev1"] = "36"
-        tfb["MaxELev2"] = "48"
-        tfb["MaxELev3"] = "64"
-        tfb["MaxELev4"] = "75"
-        tfb["MaxELev5"] = "85"
+        # Ensure a SINGLE Fire Bolt hit deals full chest trap damage (~150-500 raw in Normal,
+        # ~500-1,600 raw in Nightmare, ~950-3,000 raw in Hell) since the player only gets hit by 1 bolt
+        tfb["EMin"] = "70"
+        tfb["MinELev1"] = "55"
+        tfb["MinELev2"] = "105"
+        tfb["MinELev3"] = "155"
+        tfb["MinELev4"] = "175"
+        tfb["MinELev5"] = "195"
+        tfb["EMax"] = "200"
+        tfb["MaxELev1"] = "170"
+        tfb["MaxELev2"] = "320"
+        tfb["MaxELev3"] = "470"
+        tfb["MaxELev4"] = "530"
+        tfb["MaxELev5"] = "590"
 
     if "fireexplosion" in rows_by_name:
         fe = rows_by_name["fireexplosion"]
         fe["HitShift"] = "8"
         fe["EType"] = "fire"
-        fe["EMin"] = "55"
-        fe["MinELev1"] = "35"
-        fe["MinELev2"] = "45"
-        fe["MinELev3"] = "60"
-        fe["MinELev4"] = "70"
-        fe["MinELev5"] = "80"
-        fe["EMax"] = "165"
-        fe["MaxELev1"] = "95"
-        fe["MaxELev2"] = "125"
-        fe["MaxELev3"] = "165"
-        fe["MaxELev4"] = "195"
-        fe["MaxELev5"] = "225"
+        fe["EMin"] = "70"
+        fe["MinELev1"] = "55"
+        fe["MinELev2"] = "105"
+        fe["MinELev3"] = "155"
+        fe["MinELev4"] = "175"
+        fe["MinELev5"] = "195"
+        fe["EMax"] = "200"
+        fe["MaxELev1"] = "170"
+        fe["MaxELev2"] = "320"
+        fe["MaxELev3"] = "470"
+        fe["MaxELev4"] = "530"
+        fe["MaxELev5"] = "590"
 
     if "trappoisonjavcloud" in rows_by_name:
         tpj = rows_by_name["trappoisonjavcloud"]
         tpj["EType"] = "pois"
-        tpj["ELen"] = "200"  # 8 seconds (down from 20s so the poison bite is felt urgently)
-        tpj["EMin"] = "45"
-        tpj["MinELev1"] = "28"
-        tpj["MinELev2"] = "36"
-        tpj["MinELev3"] = "48"
-        tpj["MinELev4"] = "56"
-        tpj["MinELev5"] = "64"
-        tpj["EMax"] = "95"
-        tpj["MaxELev1"] = "52"
-        tpj["MaxELev2"] = "68"
-        tpj["MaxELev3"] = "88"
-        tpj["MaxELev4"] = "104"
-        tpj["MaxELev5"] = "120"
+        tpj["ELen"] = "150"  # 6 seconds (fast, urgent poison drain)
+        tpj["EMin"] = "75"
+        tpj["MinELev1"] = "55"
+        tpj["MinELev2"] = "105"
+        tpj["MinELev3"] = "155"
+        tpj["MinELev4"] = "175"
+        tpj["MinELev5"] = "195"
+        tpj["EMax"] = "160"
+        tpj["MaxELev1"] = "115"
+        tpj["MaxELev2"] = "215"
+        tpj["MaxELev3"] = "315"
+        tpj["MaxELev4"] = "355"
+        tpj["MaxELev5"] = "395"
 
     if "primepoisoncloud" in rows_by_name:
         ppc = rows_by_name["primepoisoncloud"]
         ppc["EType"] = "pois"
-        ppc["ELen"] = "200"
-        ppc["EMin"] = "45"
-        ppc["MinELev1"] = "28"
-        ppc["MinELev2"] = "36"
-        ppc["MinELev3"] = "48"
-        ppc["MinELev4"] = "56"
-        ppc["MinELev5"] = "64"
-        ppc["EMax"] = "95"
-        ppc["MaxELev1"] = "52"
-        ppc["MaxELev2"] = "68"
-        ppc["MaxELev3"] = "88"
-        ppc["MaxELev4"] = "104"
-        ppc["MaxELev5"] = "120"
+        ppc["ELen"] = "150"  # 6 seconds
+        ppc["EMin"] = "75"
+        ppc["MinELev1"] = "55"
+        ppc["MinELev2"] = "105"
+        ppc["MinELev3"] = "155"
+        ppc["MinELev4"] = "175"
+        ppc["MinELev5"] = "195"
+        ppc["EMax"] = "160"
+        ppc["MaxELev1"] = "115"
+        ppc["MaxELev2"] = "215"
+        ppc["MaxELev3"] = "315"
+        ppc["MaxELev4"] = "355"
+        ppc["MaxELev5"] = "395"
 
     for gas_name, gmin, gmax in (
-        ("rancidgascloud", "140", "240"),
-        ("chokinggascloud", "320", "540"),
-        ("stranglinggascloud", "600", "980"),
+        ("rancidgascloud", "240", "480"),
+        ("chokinggascloud", "540", "1080"),
+        ("stranglinggascloud", "960", "1920"),
     ):
         if gas_name in rows_by_name:
             gc = rows_by_name[gas_name]
@@ -803,16 +806,16 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
             gc["ELen"] = "100"  # 4 seconds
             gc["EMin"] = gmin
             gc["EMax"] = gmax
-            gc["MinELev1"] = "24"
-            gc["MinELev2"] = "32"
-            gc["MinELev3"] = "42"
-            gc["MinELev4"] = "50"
-            gc["MinELev5"] = "58"
-            gc["MaxELev1"] = "42"
-            gc["MaxELev2"] = "56"
-            gc["MaxELev3"] = "74"
-            gc["MaxELev4"] = "88"
-            gc["MaxELev5"] = "102"
+            gc["MinELev1"] = "50"
+            gc["MinELev2"] = "95"
+            gc["MinELev3"] = "140"
+            gc["MinELev4"] = "160"
+            gc["MinELev5"] = "180"
+            gc["MaxELev1"] = "100"
+            gc["MaxELev2"] = "190"
+            gc["MaxELev3"] = "280"
+            gc["MaxELev4"] = "320"
+            gc["MaxELev5"] = "360"
 
 
 def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
@@ -853,18 +856,18 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         if t_skill in by_name:
             ts = by_name[t_skill]
             ts["HitShift"] = "8"
-            ts["MinDam"] = "55"
-            ts["MinLevDam1"] = "35"
-            ts["MinLevDam2"] = "45"
-            ts["MinLevDam3"] = "60"
-            ts["MinLevDam4"] = "70"
-            ts["MinLevDam5"] = "80"
-            ts["MaxDam"] = "165"
-            ts["MaxLevDam1"] = "95"
-            ts["MaxLevDam2"] = "125"
-            ts["MaxLevDam3"] = "165"
-            ts["MaxLevDam4"] = "195"
-            ts["MaxLevDam5"] = "225"
+            ts["MinDam"] = "70"
+            ts["MinLevDam1"] = "55"
+            ts["MinLevDam2"] = "105"
+            ts["MinLevDam3"] = "155"
+            ts["MinLevDam4"] = "175"
+            ts["MinLevDam5"] = "195"
+            ts["MaxDam"] = "200"
+            ts["MaxLevDam1"] = "170"
+            ts["MaxLevDam2"] = "320"
+            ts["MaxLevDam3"] = "470"
+            ts["MaxLevDam4"] = "530"
+            ts["MaxLevDam5"] = "590"
 
     # Populate HireableIconCel (0..28 in Spells/Hireables/HrSkillIcon) for custom Mercenary skills
     # so HireMenuPanelHD & HirelingInventoryPanelHD always render a visible skill icon next to tooltips.

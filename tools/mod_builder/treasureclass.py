@@ -528,22 +528,24 @@ def build_treasureclass(cfg: dict) -> str:
                 r["NoDrop"] = "0"
                 _set_items(r, [(f"{matched_act} Lockbox", "100")])
             else:
-                # Note: D2Game's Super Chest C++ handler invokes 'Act X Chest A/B/C' 4 times in a loop!
-                # Setting Picks = 2 and NoDrop = 15 (with item weight sum = 65 -> 81.25% drop rate per pick)
-                # yields 4 * 2 * 0.8125 = ~6.5 total items per Super Chest:
-                #   - ~2.2 Gold piles (weight 22)
-                #   - ~1.6 Gems / Runes (weight 16)
-                #   - ~1.6 Act-scaled Potions / Elixirs (weight 5+5+2+2+2 = 16)
-                #   - ~0.8 Rings / Amulets / Jewels (weight 8)
-                #   - ~26% chance per Super Chest at a 2x2 Lockbox (weight 3)
-                r["Picks"] = "2"
-                r["NoDrop"] = "15"
+                # Note: D2Game's Super Chest / Sparkly Chest C++ handler invokes 'Act X Chest A/B/C'
+                # up to 10 times in a consolation loop when most chest items are non-magic (Gold,
+                # Gems, Runes, Potions, Lockboxes).
+                # Setting Picks = 1 and NoDrop = 28 (with item weight sum = 65 -> 70% drop rate per call)
+                # caps total drops at 10 max and yields 10 * 1 * 0.70 = ~7.0 total items per chest:
+                #   - ~2.15 Gold piles (weight 20)
+                #   - ~1.72 Gems / Runes (weight 16)
+                #   - ~1.72 Act-scaled Potions / Elixirs (weight 5+5+2+2+2 = 16)
+                #   - ~1.08 Rings / Amulets / Jewels (weight 10)
+                #   - ~0.32 Lockboxes (~28% chance per chest at a 2x2 Lockbox, weight 3)
+                r["Picks"] = "1"
+                r["NoDrop"] = "28"
                 _set_items(
                     r,
                     [
-                        (gold_item, "22"),
+                        (gold_item, "20"),
                         (f"{matched_act} GemRune", "16"),
-                        (jewelry_tc, "8"),
+                        (jewelry_tc, "10"),
                         (hp_c, "5"),
                         (mp_c, "5"),
                         (wm_c, "2"),

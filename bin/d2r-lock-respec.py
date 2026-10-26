@@ -96,40 +96,47 @@ def run_once(save_dirs: list[str]) -> None:
 
 def watch_loop(save_dirs: list[str]) -> None:
     """
-    Poll SAVED_MOD for .ctl writes (which D2R writes ~4ms after .d2s whenever the player clicks
-    'Save and Exit' to leave a game) and immediately reroll that character's .d2s Map Seed
-    and wipe .map/.ma* so the next game entered from Character Select generates a fresh map.
+    Poll SAVED_MOD for .d2s / .ma* / .map writes (which D2R writes whenever the player clicks
+    'Save and Exit' to return to the Character Select screen) and immediately reroll that
+    character's .d2s Map Seed and wipe .map/.ma* so the next game entered from Character Select
+    generates a fresh map. Automatically exits when the parent launcher (d2r-mod/proton) exits.
     """
-    seen_ctl: dict[str, int] = {}
+    parent_pid = os.getppid()
+    seen_d2s: dict[str, int] = {}
     for sdir in save_dirs:
         if not os.path.isdir(sdir):
             continue
-        for ctl_path in glob.glob(os.path.join(sdir, "*.ctl")):
+        for d2s_path in glob.glob(os.path.join(sdir, "*.d2s")):
             try:
-                seen_ctl[ctl_path] = os.stat(ctl_path).st_mtime_ns
+                seen_d2s[d2s_path] = os.stat(d2s_path).st_mtime_ns
             except OSError:
                 pass
 
     while True:
         time.sleep(0.05)
+        if os.getppid() != parent_pid:
+            # Parent d2r-mod / proton process exited; do one final cleanup and terminate
+            run_once(save_dirs)
+            break
         for sdir in save_dirs:
             if not os.path.isdir(sdir):
                 continue
-            for ctl_path in glob.glob(os.path.join(sdir, "*.ctl")):
+            for d2s_path in glob.glob(os.path.join(sdir, "*.d2s")):
                 try:
-                    mtime_ns = os.stat(ctl_path).st_mtime_ns
+                    mtime_ns = os.stat(d2s_path).st_mtime_ns
                 except OSError:
                     continue
-                if seen_ctl.get(ctl_path) != mtime_ns:
-                    seen_ctl[ctl_path] = mtime_ns
-                    # .ctl is written ~4ms AFTER .d2s on Save & Exit; wait 25ms to be certain
-                    time.sleep(0.025)
-                    base, _ = os.path.splitext(ctl_path)
-                    d2s_path = base + ".d2s"
+                base, _ = os.path.splitext(d2s_path)
+                has_automap = any(
+                    os.path.exists(base + ext) for ext in (".map", ".ma0", ".ma1", ".ma2", ".ma3")
+                )
+                if seen_d2s.get(d2s_path) != mtime_ns or has_automap:
+                    # Wait 40ms for D2R.exe to finish flushing .d2s and .ma* on Save & Exit
+                    time.sleep(0.04)
                     if os.path.isfile(d2s_path):
                         process_d2s(d2s_path, reroll_map_seed=True)
                     try:
-                        seen_ctl[ctl_path] = os.stat(ctl_path).st_mtime_ns
+                        seen_d2s[d2s_path] = os.stat(d2s_path).st_mtime_ns
                     except OSError:
                         pass
 

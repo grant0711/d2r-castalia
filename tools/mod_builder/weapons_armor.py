@@ -56,134 +56,212 @@ def _set_vendor_magic(row: Dict[str, str], vendor_list: List[str], mmin: str = "
             row[f"{v}MagicLvl"] = mlvl
 
 
-# Strictly partitioned Act 1..5 Normal base item codes (code == normcode).
-# Each Act's vendors sell ONLY that Act's progression tier as Magic items (0-1 per refresh, ~50% full tabs),
-# with NightmareUpgrade = ubercode and HellUpgrade = ultracode so Nightmare/Hell vendors upgrade cleanly
-# within their Act's dedicated item slice (e.g., Hell Charsi -> Dusk Shroud/Wyrmhide; NM Larzuk -> Ornate Plate).
-ARMOR_VENDORS_BY_ACT = {
-    1: ["Charsi", "Gheed"],
-    2: ["Fara", "Elzix"],
-    3: ["Hratli", "Asheara"],
-    4: ["Halbu", "Jamella"],
-    5: ["Larzuk", "Anya"],
+# Strictly partitioned Act 1..5 Normal base item codes (code == normcode) with ZERO intra-Act
+# vendor overlap: every single Normal base code is assigned to ONE exclusive vendor in its Act!
+# Each tuple is (vendor_name, magic_min, magic_max) so each vendor's Armor and Weapons tabs
+# spawn a rich 10..18 Magic items per refresh, upgrading cleanly to Exceptional (NM) and Elite (Hell).
+ARMOR_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
+    # === ACT 1: Charsi (Convent Blacksmith) vs. Gheed (Caravaneer, Outlaw & Class Broker) ===
+    # Charsi: Forged/Standard Armor, Caps & Shields (6 bases x 1..2 = ~9 items)
+    "qui": ("Charsi", "1", "2"),
+    "hla": ("Charsi", "1", "2"),
+    "cap": ("Charsi", "1", "2"),
+    "skp": ("Charsi", "1", "2"),
+    "buc": ("Charsi", "1", "2"),
+    "sml": ("Charsi", "1", "2"),
+    # Gheed: Rogue Leather/Studded Gear, Gloves/Boots/Belts & All Act 1 Class-Specific Armor (10 bases x 1..2 = ~15 items)
+    "lea": ("Gheed", "1", "2"),
+    "stu": ("Gheed", "1", "2"),
+    "lgl": ("Gheed", "1", "2"),
+    "lbt": ("Gheed", "1", "2"),
+    "lbl": ("Gheed", "1", "2"),
+    "dr1": ("Gheed", "1", "2"),
+    "ba1": ("Gheed", "1", "2"),
+    "pa1": ("Gheed", "1", "2"),
+    "ne1": ("Gheed", "1", "2"),
+    "wa1": ("Gheed", "1", "2"),
+
+    # === ACT 2: Fara (Paladin Templar Armorer) vs. Elzix (Desert Outlaw & Exotic Broker) ===
+    # Fara: Heavy/Medium Armor, Helms, Shields, Heavy Gloves/Boots/Belt & Paladin Rondache (12 bases x 1..2 = ~18 items)
+    "rng": ("Fara", "1", "2"),
+    "scl": ("Fara", "1", "2"),
+    "chn": ("Fara", "1", "2"),
+    "brs": ("Fara", "1", "2"),
+    "hlm": ("Fara", "1", "2"),
+    "fhl": ("Fara", "1", "2"),
+    "lrg": ("Fara", "1", "2"),
+    "spk": ("Fara", "1", "2"),
+    "vgl": ("Fara", "1", "2"),
+    "vbt": ("Fara", "1", "2"),
+    "vbl": ("Fara", "1", "2"),
+    "pa2": ("Fara", "1", "2"),
+    # Elzix: Outlaw & Exotic Class-Specific Relics/Totems (4 bases x 2..3 = ~10 items)
+    "dr2": ("Elzix", "2", "3"),
+    "ba2": ("Elzix", "2", "3"),
+    "ne2": ("Elzix", "2", "3"),
+    "wa2": ("Elzix", "2", "3"),
+
+    # === ACT 3: Hratli (Enchanter-Blacksmith) vs. Asheara (Iron Wolves & Class Commander) ===
+    # Hratli: Forged Splint/Plate/Light Plate, Helms, Shields, Chain Gloves/Boots/Belt (10 bases x 1..2 = ~15 items)
+    "spl": ("Hratli", "1", "2"),
+    "plt": ("Hratli", "1", "2"),
+    "ltp": ("Hratli", "1", "2"),
+    "msk": ("Hratli", "1", "2"),
+    "bhm": ("Hratli", "1", "2"),
+    "kit": ("Hratli", "1", "2"),
+    "bsh": ("Hratli", "1", "2"),
+    "mgl": ("Hratli", "1", "2"),
+    "mbt": ("Hratli", "1", "2"),
+    "mbl": ("Hratli", "1", "2"),
+    # Asheara: All Act 3 Class-Specific Armor & Totems (5 bases x 2..3 = ~12 items)
+    "dr3": ("Asheara", "2", "3"),
+    "ba3": ("Asheara", "2", "3"),
+    "pa3": ("Asheara", "2", "3"),
+    "ne3": ("Asheara", "2", "3"),
+    "wa3": ("Asheara", "2", "3"),
+
+    # === ACT 4: Halbu (Fortress Weaponsmith) vs. Jamella (Celestial Archivist) ===
+    # Halbu: Heavy Plate, Great Helm, Tower Shield, Gauntlets/Boots/Belt, Barbarian & Paladin Gear (9 bases x 1..2 = ~14 items)
+    "fld": ("Halbu", "1", "2"),
+    "gth": ("Halbu", "1", "2"),
+    "ghm": ("Halbu", "1", "2"),
+    "tow": ("Halbu", "1", "2"),
+    "tgl": ("Halbu", "1", "2"),
+    "tbt": ("Halbu", "1", "2"),
+    "tbl": ("Halbu", "1", "2"),
+    "ba4": ("Halbu", "1", "2"),
+    "pa4": ("Halbu", "1", "2"),
+    # Jamella: Circlets & Esoteric Class Relics (Falcon Mask, Gargoyle Head, Compendium) (4 bases x 2..4 = ~12 items)
+    "ci0": ("Jamella", "2", "4"),
+    "dr4": ("Jamella", "2", "4"),
+    "ne4": ("Jamella", "2", "4"),
+    "wa4": ("Jamella", "2", "4"),
+
+    # === ACT 5: Larzuk (Siege Master Blacksmith) vs. Anya (Noble Curio & Class Broker) ===
+    # Larzuk: Full Plate/Ancient Armor, Crown, Gothic Shield, Gauntlets/Greaves/Belt, Barbarian & Paladin Gear (9 bases x 1..2 = ~14 items)
+    "ful": ("Larzuk", "1", "2"),
+    "aar": ("Larzuk", "1", "2"),
+    "crn": ("Larzuk", "1", "2"),
+    "gts": ("Larzuk", "1", "2"),
+    "hgl": ("Larzuk", "1", "2"),
+    "hbt": ("Larzuk", "1", "2"),
+    "hbl": ("Larzuk", "1", "2"),
+    "ba5": ("Larzuk", "1", "2"),
+    "pa5": ("Larzuk", "1", "2"),
+    # Anya: Coronets & Esoteric Class Relics (Spirit Mask, Demon Head, Grimoire) (4 bases x 2..4 = ~12 items)
+    "ci1": ("Anya", "2", "4"),
+    "dr5": ("Anya", "2", "4"),
+    "ne5": ("Anya", "2", "4"),
+    "wa5": ("Anya", "2", "4"),
 }
 
-ARMOR_ACT_BY_CODE = {
-    # Body Armor (tors, 15)
-    "qui": 1, "lea": 1, "hla": 1, "stu": 1,
-    "rng": 2, "scl": 2, "chn": 2, "brs": 2,
-    "spl": 3, "plt": 3, "ltp": 3,
-    "fld": 4, "gth": 4,
-    "ful": 5, "aar": 5,
-    # Helms (helm + circ, 10)
-    "cap": 1, "skp": 1,
-    "hlm": 2, "fhl": 2,
-    "msk": 3, "bhm": 3,
-    "ghm": 4, "ci0": 4,
-    "crn": 5, "ci1": 5,
-    # Shields (shie, 8)
-    "buc": 1, "sml": 1,
-    "lrg": 2, "spk": 2,
-    "kit": 3, "bsh": 3,
-    "tow": 4,
-    "gts": 5,
-    # Gloves (glov, 5)
-    "lgl": 1, "vgl": 2, "mgl": 3, "tgl": 4, "hgl": 5,
-    # Boots (boot, 5)
-    "lbt": 1, "vbt": 2, "mbt": 3, "tbt": 4, "hbt": 5,
-    # Belts (belt, 5)
-    "lbl": 1, "vbl": 2, "mbl": 3, "tbl": 4, "hbl": 5,
-    # Druid Pelts (pelt, 5)
-    "dr1": 1, "dr2": 2, "dr3": 3, "dr4": 4, "dr5": 5,
-    # Barbarian Primal Helms (phlm, 5)
-    "ba1": 1, "ba2": 2, "ba3": 3, "ba4": 4, "ba5": 5,
-    # Paladin Auric Shields (ashd, 5)
-    "pa1": 1, "pa2": 2, "pa3": 3, "pa4": 4, "pa5": 5,
-    # Necromancer Shrunken Heads (head, 5)
-    "ne1": 1, "ne2": 2, "ne3": 3, "ne4": 4, "ne5": 5,
-    # Grimoires (grim, 5)
-    "wa1": 1, "wa2": 2, "wa3": 3, "wa4": 4, "wa5": 5,
-}
+WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
+    # === ACT 1: Charsi (Martial Melee) | Gheed (Ranged, Thrown, Rogue & Claws) | Akara (Caster) ===
+    "hax": ("Charsi", "1", "2"),
+    "lax": ("Charsi", "1", "2"),
+    "ssd": ("Charsi", "1", "2"),
+    "scm": ("Charsi", "1", "2"),
+    "sbr": ("Charsi", "1", "2"),
+    "clb": ("Charsi", "1", "2"),
+    "spc": ("Charsi", "1", "2"),
+    "spr": ("Charsi", "1", "2"),
+    "bar": ("Charsi", "1", "2"),
+    "dgr": ("Gheed", "1", "2"),
+    "sbw": ("Gheed", "1", "2"),
+    "hbw": ("Gheed", "1", "2"),
+    "lxb": ("Gheed", "1", "2"),
+    "jav": ("Gheed", "1", "2"),
+    "tkf": ("Gheed", "1", "2"),
+    "ktr": ("Gheed", "2", "3"),
+    "sst": ("Akara", "3", "6"),
+    "wnd": ("Akara", "3", "6"),
+    "scp": ("Akara", "3", "6"),
+    "ob1": ("Akara", "3", "6"),
 
-PHYS_WEAPON_VENDORS_BY_ACT = {
-    1: ["Charsi", "Gheed"],
-    2: ["Fara", "Elzix"],
-    3: ["Hratli", "Asheara"],
-    4: ["Halbu"],
-    5: ["Larzuk", "Anya"],
-}
+    # === ACT 2: Fara (Templar Melee) | Elzix (Ranged, Thrown, Outlaw & Claws) | Drognan (Caster) ===
+    "axe": ("Fara", "1", "2"),
+    "bax": ("Fara", "1", "2"),
+    "flc": ("Fara", "1", "2"),
+    "crs": ("Fara", "1", "2"),
+    "2hs": ("Fara", "1", "2"),
+    "mac": ("Fara", "1", "2"),
+    "mst": ("Fara", "1", "2"),
+    "tri": ("Fara", "1", "2"),
+    "vou": ("Fara", "1", "2"),
+    "dir": ("Elzix", "1", "2"),
+    "lbw": ("Elzix", "1", "2"),
+    "cbw": ("Elzix", "1", "2"),
+    "mxb": ("Elzix", "1", "2"),
+    "pil": ("Elzix", "1", "2"),
+    "tax": ("Elzix", "1", "2"),
+    "bkf": ("Elzix", "1", "2"),
+    "wrb": ("Elzix", "2", "3"),
+    "axf": ("Elzix", "2", "3"),
+    "lst": ("Drognan", "3", "6"),
+    "ywn": ("Drognan", "3", "6"),
+    "ob2": ("Drognan", "3", "6"),
 
-CASTER_WEAPON_VENDORS_BY_ACT = {
-    1: ["Akara"],
-    2: ["Drognan"],
-    3: ["Ormus"],
-    4: ["Jamella"],
-    5: ["Malah"],
-}
+    # === ACT 3: Hratli (Forged Melee) | Asheara (Ranged, Thrown, Amazon & Claws) | Ormus (Caster) ===
+    "2ax": ("Hratli", "1", "2"),
+    "btx": ("Hratli", "1", "2"),
+    "bsd": ("Hratli", "1", "2"),
+    "lsd": ("Hratli", "1", "2"),
+    "clm": ("Hratli", "1", "2"),
+    "fla": ("Hratli", "1", "2"),
+    "brn": ("Hratli", "1", "2"),
+    "scy": ("Hratli", "1", "2"),
+    "kri": ("Asheara", "1", "2"),
+    "sbb": ("Asheara", "1", "2"),
+    "am1": ("Asheara", "2", "3"),
+    "am3": ("Asheara", "2", "3"),
+    "ssp": ("Asheara", "1", "2"),
+    "bal": ("Asheara", "1", "2"),
+    "ces": ("Asheara", "2", "3"),
+    "clw": ("Asheara", "2", "3"),
+    "cst": ("Ormus", "3", "6"),
+    "bwn": ("Ormus", "3", "6"),
+    "gsc": ("Ormus", "3", "6"),
+    "ob3": ("Ormus", "3", "6"),
 
-WEAPON_ACT_BY_CODE = {
-    # Axes (axe, 10: 1x 1H + 1x 2H per Act)
-    "hax": 1, "lax": 1,
-    "axe": 2, "bax": 2,
-    "2ax": 3, "btx": 3,
-    "mpi": 4, "gax": 4,
-    "wax": 5, "gix": 5,
-    # Swords (swor, 14)
-    "ssd": 1, "scm": 1, "sbr": 1,
-    "flc": 2, "crs": 2, "2hs": 2,
-    "bsd": 3, "lsd": 3, "clm": 3,
-    "gis": 4, "bsw": 4, "wsd": 4,
-    "flb": 5, "gsd": 5,
-    # Clubs, Maces & Hammers (club + mace + hamm, 8)
-    "clb": 1, "spc": 1,
-    "mac": 2, "mst": 2,
-    "fla": 3,
-    "mau": 4, "whm": 4,
-    "gma": 5,
-    # Daggers (knif, 4)
-    "dgr": 1, "dir": 2, "kri": 3, "bld": 4,
-    # Spears & Amazon Spears (spea + aspe, 7)
-    "spr": 1,
-    "tri": 2,
-    "brn": 3, "am3": 3,
-    "spt": 4,
-    "pik": 5, "am4": 5,
-    # Polearms (pole, 6)
-    "bar": 1,
-    "vou": 2,
-    "scy": 3,
-    "pax": 4,
-    "hal": 5, "wsc": 5,
-    # Bows & Amazon Bows (bow + abow, 10)
-    "sbw": 1, "hbw": 1,
-    "lbw": 2, "cbw": 2,
-    "sbb": 3, "am1": 3,
-    "lbb": 4, "swb": 4,
-    "lwb": 5, "am2": 5,
-    # Crossbows (xbow, 4)
-    "lxb": 1, "mxb": 2, "hxb": 4, "rxb": 5,
-    # Javelins & Amazon Javelins (jave + ajav, 6)
-    "jav": 1,
-    "pil": 2,
-    "ssp": 3,
-    "glv": 4, "am5": 4,
-    "tsp": 5,
-    # Throwing Knives & Axes (tkni + taxe, 4)
-    "tkf": 1,
-    "tax": 2, "bkf": 2,
-    "bal": 3,
-    # Assassin Claws (h2h, 7)
-    "ktr": 1,
-    "wrb": 2, "axf": 2,
-    "ces": 3, "clw": 3,
-    "btl": 4,
-    "skr": 5,
-    # Caster Weapons: Staves (staf, 5), Wands (wand, 4), Scepters (scep, 3), Sorceress Orbs (orb, 5)
-    "sst": 1, "wnd": 1, "scp": 1, "ob1": 1,
-    "lst": 2, "ywn": 2, "ob2": 2,
-    "cst": 3, "bwn": 3, "gsc": 3, "ob3": 3,
-    "bst": 4, "wsp": 4, "ob4": 4,
-    "wst": 5, "gwn": 5, "ob5": 5,
+    # === ACT 4: Halbu (Martial Melee, Bows & Thrown) | Jamella (Caster, Claws & Amazon Javelins) ===
+    "mpi": ("Halbu", "1", "2"),
+    "gax": ("Halbu", "1", "2"),
+    "gis": ("Halbu", "1", "2"),
+    "bsw": ("Halbu", "1", "2"),
+    "wsd": ("Halbu", "1", "2"),
+    "mau": ("Halbu", "1", "2"),
+    "whm": ("Halbu", "1", "2"),
+    "bld": ("Halbu", "1", "2"),
+    "spt": ("Halbu", "1", "2"),
+    "pax": ("Halbu", "1", "2"),
+    "lbb": ("Halbu", "1", "2"),
+    "swb": ("Halbu", "1", "2"),
+    "hxb": ("Halbu", "1", "2"),
+    "glv": ("Halbu", "1", "2"),
+    "am5": ("Jamella", "2", "4"),
+    "btl": ("Jamella", "2", "4"),
+    "bst": ("Jamella", "3", "6"),
+    "wsp": ("Jamella", "3", "6"),
+    "ob4": ("Jamella", "3", "6"),
+
+    # === ACT 5: Larzuk (Siege Melee) | Anya (Ranged, Thrown, Amazon & Claws) | Malah (Caster) ===
+    "wax": ("Larzuk", "1", "2"),
+    "gix": ("Larzuk", "1", "2"),
+    "flb": ("Larzuk", "1", "2"),
+    "gsd": ("Larzuk", "1", "2"),
+    "gma": ("Larzuk", "1", "2"),
+    "pik": ("Larzuk", "1", "2"),
+    "hal": ("Larzuk", "1", "2"),
+    "wsc": ("Larzuk", "1", "2"),
+    "lwb": ("Anya", "2", "3"),
+    "am2": ("Anya", "2", "3"),
+    "am4": ("Anya", "2", "3"),
+    "rxb": ("Anya", "2", "3"),
+    "tsp": ("Anya", "2", "3"),
+    "skr": ("Anya", "2", "3"),
+    "wst": ("Malah", "3", "6"),
+    "gwn": ("Malah", "3", "6"),
+    "ob5": ("Malah", "3", "6"),
 }
 
 
@@ -233,7 +311,8 @@ def build_weapons(cfg: dict) -> str:
     headers, rows = read_excel_tsv("weapons.txt")
     rows_by_code = {r["code"]: r for r in rows if r.get("code")}
 
-    alchemists = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
+    # Alchemical Grenades stocked exclusively at each Act's Alchemist/Mystic
+    alchemists = ["Akara", "Lysander", "Ormus", "Jamella", "Malah"]
 
     for row in rows:
         code = row.get("code", "")
@@ -306,17 +385,10 @@ def build_weapons(cfg: dict) -> str:
             ultra = row.get("ultracode", "")
             row["NightmareUpgrade"] = uber if (uber and uber != code) else "xxx"
             row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
-            act_num = WEAPON_ACT_BY_CODE.get(code)
-            if act_num is not None:
-                if wtype in ("staf", "wand", "scep", "orb"):
-                    # Keep each caster base strictly in its single assigned Act, and stock 3..6
-                    # of each base so caster vendors (which only have 3-4 base codes per Act)
-                    # fill out their Weapons tab with ~10-18 items per refresh.
-                    v_list = CASTER_WEAPON_VENDORS_BY_ACT[act_num]
-                    _set_vendor_magic(row, v_list, "3", "6", "1")
-                else:
-                    v_list = PHYS_WEAPON_VENDORS_BY_ACT[act_num]
-                    _set_vendor_magic(row, v_list, "0", "1", "1")
+            v_spec = WEAPON_VENDOR_BY_CODE.get(code)
+            if v_spec is not None:
+                v_name, m_min, m_max = v_spec
+                _set_vendor_magic(row, [v_name], m_min, m_max, "1")
         else:
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"
@@ -617,9 +689,10 @@ def build_armor(cfg: dict) -> str:
             ultra = row.get("ultracode", "")
             row["NightmareUpgrade"] = uber if (uber and uber != code) else "xxx"
             row["HellUpgrade"] = ultra if (ultra and ultra != code) else "xxx"
-            act_num = ARMOR_ACT_BY_CODE.get(code)
-            if act_num is not None:
-                _set_vendor_magic(row, ARMOR_VENDORS_BY_ACT[act_num], "0", "1", "1")
+            v_spec = ARMOR_VENDOR_BY_CODE.get(code)
+            if v_spec is not None:
+                v_name, m_min, m_max = v_spec
+                _set_vendor_magic(row, [v_name], m_min, m_max, "1")
         else:
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"

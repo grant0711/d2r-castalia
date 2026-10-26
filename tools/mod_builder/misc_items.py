@@ -49,9 +49,12 @@ def build_misc(cfg: dict) -> str:
     rows_by_code = {r["code"]: r for r in rows if r.get("code")}
 
     # 1. 3-Second Burst Health & Mana Potions with 3-Second Cooldown Lockout (hp1..hp5, mp1..mp5)
+    # In Act 2, Lysander is the dedicated Alchemist/Apothecary (Health + Mana Potions & Elixirs),
+    # while Drognan is the Vizjerei Sage (Caster Weapons, Tomes/Scrolls & Mana Potions only).
     hp_caps = [250, 500, 750, 1000, 2000]
     pot_costs = [500, 1500, 3500, 7500, 16000]
-    act1_3_pot_vendors = ["Akara", "Lysander", "Drognan", "Ormus"]
+    act1_3_hp_vendors = ["Akara", "Lysander", "Ormus"]
+    act1_3_mp_vendors = ["Akara", "Lysander", "Drognan", "Ormus"]
     act4_5_pot_vendors = ["Jamella", "Malah"]
 
     for idx in range(5):
@@ -78,7 +81,7 @@ def build_misc(cfg: dict) -> str:
         hrow["UsageConditionCalc"] = "(stat('hpregen'.accr)<500)"
         _clear_vendors(hrow)
         if tier == 1:
-            _set_vendor_stock(hrow, act1_3_pot_vendors, "1", "1")
+            _set_vendor_stock(hrow, act1_3_hp_vendors, "1", "1")
             hrow["NightmareUpgrade"] = "hp3"
             hrow["HellUpgrade"] = "hp5"
         elif tier == 2:
@@ -106,7 +109,7 @@ def build_misc(cfg: dict) -> str:
         mrow["UsageConditionCalc"] = "(stat('manarecovery'.accr)<500)"
         _clear_vendors(mrow)
         if tier == 1:
-            _set_vendor_stock(mrow, act1_3_pot_vendors, "1", "1")
+            _set_vendor_stock(mrow, act1_3_mp_vendors, "1", "1")
             mrow["NightmareUpgrade"] = "mp3"
             mrow["HellUpgrade"] = "mp5"
         elif tier == 2:
@@ -117,22 +120,31 @@ def build_misc(cfg: dict) -> str:
             mrow["NightmareUpgrade"] = "xxx"
             mrow["HellUpgrade"] = "xxx"
 
-    # 2. Strategic Town Portal & Identify Scrolls/Tomes
+    # 2. Strategic Town Portal & Identify Scrolls/Tomes (sold exclusively by each Act's Mystic/Sage)
+    scroll_vendors = ["Akara", "Drognan", "Ormus", "Jamella", "Malah"]
     tsc = rows_by_code["tsc"]
     tsc["cost"] = "400"
+    _clear_vendors(tsc)
+    _set_vendor_stock(tsc, scroll_vendors, "1", "1")
 
     tbk = rows_by_code["tbk"]
     tbk["cost"] = "600"
     tbk["maxstack"] = "5"
     tbk["spawnstack"] = "2"
+    _clear_vendors(tbk)
+    _set_vendor_stock(tbk, scroll_vendors, "1", "1")
 
     isc = rows_by_code["isc"]
     isc["cost"] = "80"
+    _clear_vendors(isc)
+    _set_vendor_stock(isc, scroll_vendors, "1", "1")
 
     ibk = rows_by_code["ibk"]
     ibk["cost"] = "200"
     ibk["maxstack"] = "50"
     ibk["spawnstack"] = "10"
+    _clear_vendors(ibk)
+    _set_vendor_stock(ibk, scroll_vendors, "1", "1")
 
     # 3. Gem & Skull levelreq (6 / 12 / 18 / 30 / 45)
     gem_families = [
@@ -156,7 +168,8 @@ def build_misc(cfg: dict) -> str:
         rows_by_code[rcode]["levelreq"] = lreq
 
     # 5. 3-Tier 5-Minute (7500 frames) Preparation Elixirs
-    # Remove any Existing custom codes if re-running on already modified list (though we read vanilla)
+    # Stocked exclusively at each Act's Alchemist/Mystic (Akara, Lysander, Ormus, Jamella, Malah)
+    elixir_vendors = ["Akara", "Lysander", "Ormus", "Jamella", "Malah"]
     new_rows: List[Dict[str, str]] = []
 
     # 5a. Thawing Elixir (wms -> wm2 -> wm3)
@@ -168,6 +181,8 @@ def build_misc(cfg: dict) -> str:
     wms["calc1"] = "25"
     wms["stat2"] = "maxcoldresist"
     wms["calc2"] = "4"
+    _clear_vendors(wms)
+    _set_vendor_stock(wms, elixir_vendors, "1", "1")
     wms["NightmareUpgrade"] = "wm2"
     wms["HellUpgrade"] = "wm3"
 
@@ -203,6 +218,8 @@ def build_misc(cfg: dict) -> str:
     yps["calc1"] = "25"
     yps["stat2"] = "maxpoisonresist"
     yps["calc2"] = "4"
+    _clear_vendors(yps)
+    _set_vendor_stock(yps, elixir_vendors, "1", "1")
     yps["NightmareUpgrade"] = "yp2"
     yps["HellUpgrade"] = "yp3"
 
@@ -244,6 +261,8 @@ def build_misc(cfg: dict) -> str:
     vps["calc2"] = "60"
     vps["stat3"] = "skill_staminapercent"
     vps["calc3"] = "50"
+    _clear_vendors(vps)
+    _set_vendor_stock(vps, elixir_vendors, "1", "1")
     vps["NightmareUpgrade"] = "vp2"
     vps["HellUpgrade"] = "vp3"
 
@@ -275,10 +294,11 @@ def build_misc(cfg: dict) -> str:
     # Preserve vanilla 'gamble cost' on Ring (rin = 50,000g) and Amulet (amu = 63,000g)
     # since the C++ engine hardcodes spawning 1 'rin' and 1 'amu' into the Gamble UI.
     # 6. Configure 3-Tier Lockbox Keys (key = 1,000g, ky2 = 5,000g, ky3 = 10,000g)
-    # and generate all 536 2x2 Lockbox items in misc.txt.
+    # Stocked exclusively at each Act's Gambler/Broker (Gheed, Elzix, Asheara, Jamella, Anya),
+    # giving them an exclusive monopoly on Lockbox Keys alongside Class-Specific & Ranged gear!
     from mod_builder.lockboxes import LOCKBOX_TIER_INFO, get_lockbox_registry
 
-    key_vendors = ["Akara", "Gheed", "Lysander", "Drognan", "Elzix", "Ormus", "Alkor", "Jamella", "Malah", "Anya"]
+    key_vendors = ["Gheed", "Elzix", "Asheara", "Jamella", "Anya"]
     krow = rows_by_code["key"]
     _clear_vendors(krow)
     krow["name"] = LOCKBOX_TIER_INFO[1]["key_name"]
@@ -371,7 +391,9 @@ def build_misc(cfg: dict) -> str:
         new_rows.append(brow)
 
     # Enable Magic-only affix rolling on Arrows (aqv) and Bolts (cqv) from monster drops,
-    # set 255 stack size (8-bit nostalgia), and clear vendor MagicMin/MagicMax so town vendors sell White quivers.
+    # set 255 stack size (8-bit nostalgia), and stock White quivers exclusively on each Act's
+    # Ranged/Broker vendor (Gheed, Elzix, Asheara, Halbu, Anya).
+    quiver_vendors = ["Gheed", "Elzix", "Asheara", "Halbu", "Anya"]
     for qcode in ("aqv", "cqv"):
         qrow = rows_by_code[qcode]
         qrow["level"] = "1"
@@ -380,9 +402,8 @@ def build_misc(cfg: dict) -> str:
         qrow["minstack"] = "255"
         qrow["spawnstack"] = "255"
         qrow["maxstack"] = "255"
-        for v in VENDORS:
-            qrow[f"{v}MagicMin"] = ""
-            qrow[f"{v}MagicMax"] = ""
+        _clear_vendors(qrow)
+        _set_vendor_stock(qrow, quiver_vendors, "1", "2")
 
     rows.extend(new_rows)
     return write_excel_tsv("misc.txt", headers, rows)

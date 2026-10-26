@@ -360,7 +360,7 @@ def verify_all(cfg: dict = None) -> List[str]:
     for rel_sp in (
         "herb/herb.sprite",
         "torch/torch.sprite",
-        "quest/scroll_of_self_resurrect.sprite",
+        "body_part/tail.sprite",
         "key/skeleton_key.sprite",
         "body_part/jawbone.sprite",
         "body_part/horn.sprite",

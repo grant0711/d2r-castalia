@@ -55,7 +55,7 @@ LOCKBOX_TIER_INFO = {
     3: {
         "box_name": "Ornate Gilded Lockbox",
         "box_display_name": "ÿc4Ornate Gilded Lockbox",
-        "box_asset": "quest/scroll_of_self_resurrect",
+        "box_asset": "body_part/tail",
         "box_img": "lockbox_hell.jpg",
         "box_sound": "item_metalshield",
         "key_code": "ky3",

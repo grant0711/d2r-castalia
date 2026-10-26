@@ -41,55 +41,15 @@ def _clear_automap_files(d2s_path: str) -> int:
 
 
 def _wipe_unclaimed_corpse(raw: bytearray) -> bool:
-    """
-    Detect an unclaimed player corpse in a D2R .d2s buffer and wipe it (setting wCorpseCount = 0).
-    In D2R .d2s format:
-      - The Mercenary section starts with b'jf' (followed by Mercenary items if a Mercenary is hired,
-        then b'kf' for the Iron Golem section).
-      - Immediately preceding b'jf' is the Player Corpse header:
-          * When alive / no corpse: b'JM\\x00\\x00' right before b'jf'
-          * When dead with an unclaimed corpse: b'JM\\x01\\x00' + <12-byte corpse info> + b'JM' + <2-byte item count> + <corpse items> right before b'jf'
-    By locating b'JM\\x01\\x00' whose inner corpse item header is b'JM' at offset +16 (and precedes b'jf'),
-    we replace the entire corpse block [corpse_off : jf_off] with b'JM\\x00\\x00' (0 corpses).
-    """
-    # Find the Mercenary section marker b'jf' directly preceding the Golem marker b'kf'
-    kf_off = raw.rfind(b"kf")
-    if kf_off == -1:
-        return False
-    jf_off = raw.rfind(b"jf", 0, kf_off)
-    if jf_off == -1 or jf_off < 20:
-        return False
-
-    # Case 1: Already 0 corpses (b'JM\x00\x00' immediately before b'jf')
-    if raw[jf_off - 4 : jf_off] == b"JM\x00\x00":
-        return False
-
-    # Case 2: Search backward from jf_off for the Corpse Header b'JM\x01\x00' (or b'JM\x02\x00' etc.)
-    # where offset +16 also starts with the corpse item list's b'JM' tag
-    if_off = raw.find(b"if", 780)
-    search_start = (if_off + 34) if if_off != -1 else 900
-    pos = search_start
-    while pos <= jf_off - 20:
-        idx = raw.find(b"JM", pos, jf_off - 16)
-        if idx == -1:
-            break
-        corpse_cnt = struct.unpack_from("<H", raw, idx + 2)[0]
-        if 1 <= corpse_cnt <= 16 and raw[idx + 16 : idx + 18] == b"JM":
-            # Found the unclaimed Corpse Header at idx!
-            # Replace [idx : jf_off] with b'JM\x00\x00' (0 corpses)
-            raw[idx:jf_off] = b"JM\x00\x00"
-            return True
-        pos = idx + 1
-
     return False
 
 
-def process_d2s(path: str, reroll_map_seed: bool = True) -> tuple[bool, bool, bool]:
+def process_d2s(path: str, reroll_map_seed: bool = True) -> tuple[bool, bool]:
     with open(path, "rb") as f:
         raw = bytearray(f.read())
     woo_idx = raw.find(b"Woo!")
     if woo_idx == -1 or len(raw) < woo_idx + 10 + 3 * 96:
-        return False, False, False
+        return False, False
 
     respec_changed = False
     for diff_idx in range(3):
@@ -98,14 +58,6 @@ def process_d2s(path: str, reroll_map_seed: bool = True) -> tuple[bool, bool, bo
         if (val & 0x0001) == 0:
             struct.pack_into("<H", raw, q41_off, (val | 0x0001) & ~0x0002)
             respec_changed = True
-
-    corpse_wiped = _wipe_unclaimed_corpse(raw)
-    # In D2R v105 .d2s, character status byte is at offset 20 (0x14); bit 3 (0x08) is the
-    # CHARSTAT_DEAD flag ("has died / corpse pending"). Always clear bit 3 when wiping an
-    # unclaimed corpse (or if bit 3 is still set) so D2R does not spawn an empty phantom corpse!
-    if len(raw) > 20 and (raw[20] & 0x08) != 0:
-        raw[20] &= ~0x08
-        corpse_wiped = True
 
     seed_changed = False
     if reroll_map_seed and woo_idx >= 248:
@@ -118,8 +70,7 @@ def process_d2s(path: str, reroll_map_seed: bool = True) -> tuple[bool, bool, bo
         struct.pack_into("<I", raw, seed_off, new_seed)
         seed_changed = True
 
-    if respec_changed or seed_changed or corpse_wiped:
-        # Always update the total file size in the .d2s header (offset 8, uint32 LE) before checksumming!
+    if respec_changed or seed_changed:
         struct.pack_into("<I", raw, 8, len(raw))
         new_csum = calc_d2s_checksum(raw)
         struct.pack_into("<I", raw, 12, new_csum)
@@ -131,7 +82,7 @@ def process_d2s(path: str, reroll_map_seed: bool = True) -> tuple[bool, bool, bo
     if seed_changed:
         _clear_automap_files(path)
 
-    return respec_changed, seed_changed, corpse_wiped
+    return respec_changed, seed_changed
 
 
 def run_once(save_dirs: list[str]) -> None:
@@ -139,11 +90,11 @@ def run_once(save_dirs: list[str]) -> None:
         if not os.path.isdir(sdir):
             continue
         for path in sorted(glob.glob(os.path.join(sdir, "*.d2s"))):
-            respec_ch, seed_ch, corpse_ch = process_d2s(path, reroll_map_seed=True)
-            if respec_ch or seed_ch or corpse_ch:
+            respec_ch, seed_ch = process_d2s(path, reroll_map_seed=True)
+            if respec_ch or seed_ch:
                 print(
                     f"[d2r-save-guard] Updated {os.path.basename(path)} "
-                    f"(respec_locked={respec_ch}, map_seed_rerolled={seed_ch}, corpse_wiped={corpse_ch})",
+                    f"(respec_locked={respec_ch}, map_seed_rerolled={seed_ch})",
                     flush=True,
                 )
 
@@ -194,12 +145,7 @@ def watch_loop(save_dirs: list[str]) -> None:
                     # Wait 60ms for D2R.exe to finish flushing .d2s and .ctl on Save & Exit
                     time.sleep(0.06)
                     if os.path.isfile(d2s_path):
-                        respec_ch, seed_ch, corpse_ch = process_d2s(d2s_path, reroll_map_seed=True)
-                        if corpse_ch:
-                            print(
-                                f"[d2r-save-guard] Wiped unclaimed corpse on Save & Exit for {os.path.basename(d2s_path)}",
-                                flush=True,
-                            )
+                        process_d2s(d2s_path, reroll_map_seed=True)
                     seen_d2s[ctl_key] = ctl_mtime_ns
                     try:
                         seen_d2s[d2s_path] = os.stat(d2s_path).st_mtime_ns

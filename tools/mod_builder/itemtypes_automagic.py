@@ -295,19 +295,26 @@ def build_automagic(cfg: dict) -> str:
 
     # Filter out vanilla groups 303 (Orb hp/mana) and 305 (Head poison) so we can rebuild them
     # with both their innate mod1 stat AND 1-2 'skill-rand' staffmods in mod2/mod3!
+    # Also clone group 302 into group 308 (with mod2code = rep-quant) exclusivamente for Amazon Javelins (ajav),
+    # while leaving group 302 untouched for Amazon Spears (aspe) so Maiden/Ceremonial/Matriarchal Spears
+    # NEVER roll 'Replenishes Quantity'!
     kept_rows: List[Dict[str, str]] = []
+    ajav_rows: List[Dict[str, str]] = []
     for r in rows:
         grp = r.get("group", "")
         if grp in ("303", "305"):
             continue
-        if grp == "302":
-            r["mod2code"] = "rep-quant"
-            r["mod2param"] = "10"
-            r["mod2min"] = ""
-            r["mod2max"] = ""
         kept_rows.append(r)
+        if grp == "302":
+            ajav_r = dict(r)
+            ajav_r["group"] = "308"
+            ajav_r["mod2code"] = "rep-quant"
+            ajav_r["mod2param"] = "10"
+            ajav_r["mod2min"] = ""
+            ajav_r["mod2max"] = ""
+            ajav_rows.append(ajav_r)
 
-    rows = kept_rows
+    rows = kept_rows + ajav_rows
 
     # 2. Add group 307 row for generic Throwing Weapons (jave, tkni, taxe)
     rows.append(

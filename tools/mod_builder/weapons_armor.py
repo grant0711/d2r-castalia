@@ -569,6 +569,8 @@ def build_weapons(cfg: dict) -> str:
                 row["spawnstack"] = j_spawn
                 if wtype == "jave":
                     row["auto prefix"] = "307"
+                elif wtype == "ajav":
+                    row["auto prefix"] = "308"
             elif wtype == "tkni":
                 row["StrBonus"] = "25"
                 row["DexBonus"] = "225"

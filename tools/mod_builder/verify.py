@@ -288,7 +288,16 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"weapons.txt ({code}): throwing weapon must be non-destructible and socketable"
                 )
-        expected_weap_ap = {"staf": "310", "wand": "311", "scep": "312", "orb": "303", "h2h": "315", "h2h2": "315"}
+        expected_weap_ap = {
+            "staf": "310",
+            "wand": "311",
+            "scep": "312",
+            "orb": "303",
+            "h2h": "315",
+            "h2h2": "315",
+            "aspe": "302",
+            "ajav": "308",
+        }
         if wtype in expected_weap_ap and r.get("auto prefix") != expected_weap_ap[wtype]:
             raise AssertionError(
                 f"weapons.txt ({code}, type={wtype}): expected auto prefix={expected_weap_ap[wtype]}"

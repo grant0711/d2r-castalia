@@ -528,20 +528,28 @@ def build_treasureclass(cfg: dict) -> str:
                 r["NoDrop"] = "0"
                 _set_items(r, [(f"{matched_act} Lockbox", "100")])
             else:
-                r["Picks"] = "6"
-                r["NoDrop"] = "20"
+                # Note: D2Game's Super Chest C++ handler invokes 'Act X Chest A/B/C' 4 times in a loop!
+                # Setting Picks = 2 and NoDrop = 15 (with item weight sum = 65 -> 81.25% drop rate per pick)
+                # yields 4 * 2 * 0.8125 = ~6.5 total items per Super Chest:
+                #   - ~2.2 Gold piles (weight 22)
+                #   - ~1.6 Gems / Runes (weight 16)
+                #   - ~1.6 Act-scaled Potions / Elixirs (weight 5+5+2+2+2 = 16)
+                #   - ~0.8 Rings / Amulets / Jewels (weight 8)
+                #   - ~26% chance per Super Chest at a 2x2 Lockbox (weight 3)
+                r["Picks"] = "2"
+                r["NoDrop"] = "15"
                 _set_items(
                     r,
                     [
-                        (gold_item, "28"),
-                        (f"{matched_act} GemRune", "12"),
-                        (jewelry_tc, "10"),
-                        (hp_c, "4"),
-                        (mp_c, "4"),
-                        (wm_c, "1"),
-                        (yp_c, "1"),
-                        (vp_c, "1"),
-                        (f"{matched_act} Lockbox", "2"),
+                        (gold_item, "22"),
+                        (f"{matched_act} GemRune", "16"),
+                        (jewelry_tc, "8"),
+                        (hp_c, "5"),
+                        (mp_c, "5"),
+                        (wm_c, "2"),
+                        (yp_c, "2"),
+                        (vp_c, "2"),
+                        (f"{matched_act} Lockbox", "3"),
                     ],
                 )
 
@@ -597,9 +605,15 @@ def build_objects(cfg: dict) -> str:
             r["Lockable"] = "0"
 
         if is_real_chest:
-            # Keep preset/Super/Sparkly chests clickable, but prevent random map scattering
+            # Keep preset/Super/Sparkly chests clickable, but prevent random map scattering.
+            # Also replace InitFn=57 (SparklyChest C++ handler on IDs 397/455, which loops up to 10x
+            # and hardcodes dropping unscaled 'hp3' Regular Healing Potions in Act 3 Normal!) with
+            # InitFn=3 (standard Super Chest init) so golden chests keep their visuals and strictly
+            # roll our 'Act X Chest A/B/C' TreasureClass!
             r["Selectable0"] = "1"
             r["PopulateFn"] = "0"
+            if r.get("InitFn") == "57":
+                r["InitFn"] = "3"
         elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
             r["Selectable0"] = "0"
             r["PopulateFn"] = "0"

@@ -111,7 +111,7 @@ def watch_loop(save_dirs: list[str]) -> None:
                 pass
 
     while True:
-        time.sleep(0.2)
+        time.sleep(0.05)
         for sdir in save_dirs:
             if not os.path.isdir(sdir):
                 continue
@@ -122,8 +122,8 @@ def watch_loop(save_dirs: list[str]) -> None:
                     continue
                 if seen_ctl.get(ctl_path) != mtime_ns:
                     seen_ctl[ctl_path] = mtime_ns
-                    # Wait briefly for D2R.exe to finish flushing .d2s/.ma* on Save & Exit
-                    time.sleep(0.15)
+                    # .ctl is written ~4ms AFTER .d2s on Save & Exit; wait 25ms to be certain
+                    time.sleep(0.025)
                     base, _ = os.path.splitext(ctl_path)
                     d2s_path = base + ".d2s"
                     if os.path.isfile(d2s_path):

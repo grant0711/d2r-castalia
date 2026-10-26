@@ -532,27 +532,27 @@ def build_treasureclass(cfg: dict) -> str:
                 # ConsolationChest, SpecialChest100, PlaceRandomTreasureChest) to each Act's standard
                 # InitFn=3 Large Chest so D2Game NEVER runs the hardcoded C++ ConsolationChest script
                 # (which forcibly spawns 5 Gold + 2 hp3 + 2 mp3 = 9 hardcoded items in Act 3 Normal!)
-                # and Instead invokes 'Act X Chest A/B/C' exactly 1 time per chest!
-                # Setting Picks = 6 and NoDrop = 0 yields 6 total items per chest with a clean spread:
-                #   - ~1.85 Gold piles (weight 20 / 65 = 30.8%)
-                #   - ~1.48 Gems / Runes (weight 16 / 65 = 24.6%)
-                #   - ~1.48 Act-scaled Potions / Elixirs (weight 5+5+2+2+2 = 16 / 65 = 24.6%)
-                #   - ~0.92 Rings / Amulets / Jewels (weight 10 / 65 = 15.4%)
-                #   - ~0.28 Lockboxes (~25% chance per chest at a 2x2 Lockbox, weight 3 / 65 = 4.6%)
+                # and instead invokes 'Act X Chest A/B/C' exactly 1 time per chest!
+                # Setting Picks = 6 and NoDrop = 0 with total weight = 240 yields 6 total items per chest:
+                #   - 4.00 Gold piles (weight 160 / 240 = 66.67%)
+                #   - 0.75 Gems / Runes (weight 30 / 240 = 12.50%)
+                #   - 0.50 Act-scaled Potions / Elixirs (weight 7+7+2+2+2 = 20 / 240 = 8.33%)
+                #   - 0.50 Rings / Amulets / Jewels (weight 20 / 240 = 8.33%)
+                #   - 0.25 Lockboxes (weight 10 / 240 = 4.17% per pick)
                 r["Picks"] = "6"
                 r["NoDrop"] = "0"
                 _set_items(
                     r,
                     [
-                        (gold_item, "20"),
-                        (f"{matched_act} GemRune", "16"),
-                        (jewelry_tc, "10"),
-                        (hp_c, "5"),
-                        (mp_c, "5"),
+                        (gold_item, "160"),
+                        (f"{matched_act} GemRune", "30"),
+                        (jewelry_tc, "20"),
+                        (hp_c, "7"),
+                        (mp_c, "7"),
                         (wm_c, "2"),
                         (yp_c, "2"),
                         (vp_c, "2"),
-                        (f"{matched_act} Lockbox", "3"),
+                        (f"{matched_act} Lockbox", "10"),
                     ],
                 )
 

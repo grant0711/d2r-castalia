@@ -18,8 +18,12 @@ if [ -f "${SAVED_BASE}/TESTER.d2s" ] && [ ! -f "${SAVED_MOD}/TESTER.d2s" ]; then
     cp -a "${SAVED_BASE}/"TESTER.* "${SAVED_MOD}/" 2>/dev/null || true
 fi
 
-# Lock Quest 41 (Den of Evil Respec Used) in all mod .d2s character saves so Akara never offers respec
+# Lock Quest 41 (Den of Evil Respec Used) and reroll Map Seed on launch, on every in-game
+# 'Save and Exit' (.ctl write), and on exit so Single Player maps regenerate every game
 python3 "${D2R_ROOT}/bin/d2r-lock-respec.py" "${SAVED_MOD}"
+python3 "${D2R_ROOT}/bin/d2r-lock-respec.py" --watch "${SAVED_MOD}" &
+SAVE_WATCH_PID=$!
+trap 'kill "${SAVE_WATCH_PID}" 2>/dev/null || true' EXIT
 
 D2R_WIN_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2R.exe'
 echo "[d2r-mod] Launching D2R in Offline Mode with '-uid osi -mod custom -txt'..."
@@ -27,4 +31,5 @@ echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
 export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
 cd "${GAME_DIR}"
 run_proton "${D2R_WIN_EXE}" -uid osi -mod custom -txt "$@"
+kill "${SAVE_WATCH_PID}" 2>/dev/null || true
 python3 "${D2R_ROOT}/bin/d2r-lock-respec.py" "${SAVED_MOD}"

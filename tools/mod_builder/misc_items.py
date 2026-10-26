@@ -296,16 +296,15 @@ def build_misc(cfg: dict) -> str:
     # Preserve vanilla 'gamble cost' on Ring (rin = 50,000g) and Amulet (amu = 63,000g)
     # since the C++ engine hardcodes spawning 1 'rin' and 1 'amu' into the Gamble UI.
     # 6. Configure 3-Tier Lockbox Keys (key = 1,000g, ky2 = 5,000g, ky3 = 10,000g)
-    # Stocked at 1 Broker/Mystic per Act (and Alkor + Ormus + Hratli in Act 3):
-    # Note: Setting type='spot' (instead of 'key') allows ALL Misc-tab vendors (including Ormus & Alkor,
-    # whose D2Game.dll shop filters reject item type 'key') to display Lockbox Keys in their Misc tab!
+    # Stocked at 1 vendor per Act:
+    # Act 1: Gheed, Act 2: Elzix, Act 3: Hratli, Act 4: Jamella, Act 5: Anya.
     from mod_builder.lockboxes import LOCKBOX_TIER_INFO, get_lockbox_registry
 
-    key_vendors = ["Gheed", "Elzix", "Alkor", "Ormus", "Hratli", "Jamella", "Anya"]
+    key_vendors = ["Gheed", "Elzix", "Hratli", "Jamella", "Anya"]
     krow = rows_by_code["key"]
     _clear_vendors(krow)
     krow["name"] = LOCKBOX_TIER_INFO[1]["key_name"]
-    krow["type"] = "spot"
+    krow["type"] = "key"
     krow["cost"] = LOCKBOX_TIER_INFO[1]["key_cost"]
     krow["level"] = "1"
     krow["spawnable"] = "1"

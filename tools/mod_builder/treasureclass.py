@@ -633,13 +633,14 @@ def build_objects(cfg: dict) -> str:
 
         if is_real_chest:
             # Keep preset chests clickable, prevent random map scattering (PopulateFn=0),
-            # and switch OperateFn=4 -> OperateFn=1 with InitFn=3, Damage=100 so chests:
-            #   1) Have a 100% chance of calling 'Act X Chest A/B/C' (no 25% empty roll),
-            #   2) Roll a ~20-25% chance to be trapped on room load (InitFn=3, Damage=100),
-            #   3) Never invoke hardcoded SUnit_SparklyChest (0 unscaled hp3/mp3 potions).
+            # and keep native OperateFn=4 with InitFn=3, Damage=100 so chests:
+            #   1) Properly execute D2Game.dll's chest trap handler on open (OperateFn=4 + InitFn=3),
+            #   2) Roll a ~20-25% chance to be trapped on room load (freshly re-seeded via -resetofflinemaps),
+            #   3) Roll a 75% chance of calling 'Act X Chest A/B/C' (25% empty chest roll),
+            #   4) Never invoke hardcoded SUnit_SparklyChest (0 unscaled hp3/mp3 potions).
             r["Selectable0"] = "1"
             r["PopulateFn"] = "0"
-            r["OperateFn"] = "1"
+            r["OperateFn"] = "4"
             r["InitFn"] = "3"
             r["Damage"] = "100"
         elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:

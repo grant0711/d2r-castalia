@@ -190,9 +190,9 @@ def verify_all(cfg: dict = None) -> List[str]:
                 f"objects.txt ({r.get('Class')} ID={r.get('*ID')}): Malus stand OperateFn=21 must have Selectable0=1"
             )
         if r.get("Class") in ("LargeChestR", "TombChest1", "SewerChestLargeLeft", "ArcaneChest1", "WoodChestL"):
-            if r.get("OperateFn") != "1" or r.get("InitFn") != "3" or r.get("Damage") != "100":
+            if r.get("OperateFn") != "4" or r.get("InitFn") != "3" or r.get("Damage") != "100":
                 raise AssertionError(
-                    f"objects.txt ({r.get('Class')}): expected OperateFn=1, InitFn=3, Damage=100 for trapped 100%-drop chests"
+                    f"objects.txt ({r.get('Class')}): expected OperateFn=4, InitFn=3, Damage=100 for trapped chests"
                 )
     _, preset_rows = _read_mod_tsv("objpreset.txt")
     forbidden_preset_chests = {

@@ -17,13 +17,13 @@ def build_npc(cfg: dict = None) -> str:
         cfg = load_config()
     econ = cfg.get("economy", {})
     cap_n = int(econ.get("vendor_sell_cap_normal", 500))
-    cap_nm = int(econ.get("vendor_sell_cap_nm", 1000))
-    cap_h = int(econ.get("vendor_sell_cap_hell", 1500))
+    cap_nm = int(econ.get("vendor_sell_cap_nm", 1500))
+    cap_h = int(econ.get("vendor_sell_cap_hell", 3500))
 
     headers, rows = read_excel_tsv("npc.txt")
     for row in rows:
         row["buy mult"] = "128"
-        row["rep mult"] = "192"
+        row["rep mult"] = "96"
         row["max buy"] = str(cap_n)
         row["max buy (N)"] = str(cap_nm)
         row["max buy (H)"] = str(cap_h)

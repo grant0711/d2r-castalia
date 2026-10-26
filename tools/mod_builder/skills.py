@@ -837,13 +837,13 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             rl = r.get("reqlevel", "")
             if rl in tier_reqlevel_map:
                 r["reqlevel"] = tier_reqlevel_map[rl]
-        # Scale down staffmod / skill cost multipliers (0.28x) and flat cost additions (0.22x)
-        # so multi-staffmod Wands, Staves, Scepters, Orbs, Pelts & Helms cap near ~300,000g
-        # instead of vanilla's 800,000g - 1,800,000g.
+        # Scale down staffmod / skill cost multipliers (0.20x) and flat cost additions (0.12x)
+        # so multi-staffmod Wands/Staves/Scepters/Orbs cap near ~300,000g AND charged skill
+        # repairs (Teleport, Life Tap, Lower Resist, etc.) cost a tactical ~600g-1,500g per charge.
         if r.get("cost mult"):
-            r["cost mult"] = scale_int(r["cost mult"], 0.28, min_val=1)
+            r["cost mult"] = scale_int(r["cost mult"], 0.20, min_val=1)
         if r.get("cost add"):
-            r["cost add"] = scale_int(r["cost add"], 0.22, min_val=1)
+            r["cost add"] = scale_int(r["cost add"], 0.12, min_val=1)
 
     d_headers, d_rows = read_excel_tsv("skilldesc.txt")
     by_desc = {r["skilldesc"]: r for r in d_rows if r.get("skilldesc")}

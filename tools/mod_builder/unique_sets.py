@@ -201,7 +201,12 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
             r["nolimit"] = "1"
             r["lvl"] = "26"
             r["lvl req"] = "24"
-            gheed_props = _get_props(r, 12)[:3]
+            gheed_props = []
+            for p, par, mn, mx in _get_props(r, 12)[:3]:
+                if p == "gold%":
+                    gheed_props.append((p, par, "35", "65"))
+                else:
+                    gheed_props.append((p, par, mn, mx))
             gheed_props.append(("damageresist", "", "-6", "-6"))
             _set_props(r, gheed_props, 12)
             continue
@@ -216,13 +221,20 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         props = _get_props(r, 12)
         theme = _detect_theme(props)
 
-        # 1. Remove nofreeze (only replacing with res-cold if cold-themed or < 3 props left)
+        # 1. Remove nofreeze & compress % Extra Gold (gold%) by 0.45x so Gold Find cannot trivialize the economy
         new_props = []
         for p, par, mn, mx in props:
             if p == "nofreeze":
                 nofreeze_removed += 1
                 if theme == "cold" or len(props) <= 3:
                     new_props.append(("res-cold", "", "20", "30"))
+            elif p == "gold%" and mn and mx:
+                try:
+                    g_min = max(10, int(round(int(mn) * 0.45)))
+                    g_max = max(g_min, int(round(int(mx) * 0.45)))
+                    new_props.append((p, par, str(g_min), str(g_max)))
+                except ValueError:
+                    new_props.append((p, par, mn, mx))
             else:
                 new_props.append((p, par, mn, mx))
         props = new_props

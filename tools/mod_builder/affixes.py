@@ -67,6 +67,7 @@ def build_itemstatcost(cfg: dict) -> str:
         "item_addskill_tab": ("512", "8000"),        # +3 Skill Tab = +150% of base cost + 8,000g
         "item_maxhp_percent": ("128", "4000"),       # Replaces vanilla's 32,093 flat Add
         "item_maxmana_percent": ("128", "4000"),     # Replaces vanilla's 56,452 flat Add
+        "item_charged_skill": ("64", "100"),         # Compress charged skill base cost & recharge multiplier
     }
     for r in rows:
         st = r.get("Stat", "")
@@ -230,7 +231,7 @@ def build_magicsuffix(cfg: dict) -> str:
     scalable_mods = {
         "red-dmg", "red-mag", "thorns", "dmg-min", "dmg-max",
         "dex", "str", "hp", "mana", "lifesteal", "manasteal",
-        "gold%", "mag%", "regen",
+        "mag%", "regen",
     }
     # Expansion (version >= 1) core suffix groups for low/mid-tier maxlevel cutoffs
     cutoff_groups = {
@@ -255,6 +256,12 @@ def build_magicsuffix(cfg: dict) -> str:
                 if mcode in scalable_mods:
                     r[f"mod{m_idx}min"] = _scale_mod_val(r.get(f"mod{m_idx}min", ""), 1.33)
                     r[f"mod{m_idx}max"] = _scale_mod_val(r.get(f"mod{m_idx}max", ""), 1.33)
+
+        # 1b. Compress % Extra Gold (gold%) suffixes by 0.50x so Gold Find cannot trivialize late-game economy
+        for m_idx in (1, 2, 3):
+            if r.get(f"mod{m_idx}code", "") == "gold%":
+                r[f"mod{m_idx}min"] = _scale_mod_val(r.get(f"mod{m_idx}min", ""), 0.50)
+                r[f"mod{m_idx}max"] = _scale_mod_val(r.get(f"mod{m_idx}max", ""), 0.50)
 
         # 2. Enforce progressive maxlevel cutoffs on low/mid-tier Rare-eligible suffixes (lvl <= 28 -> lvl + 26)
         if r.get("rare") == "1" and grp in cutoff_groups and not r.get("maxlevel") and not is_charm_or_jewel:

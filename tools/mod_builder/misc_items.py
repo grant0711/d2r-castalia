@@ -54,7 +54,7 @@ def build_misc(cfg: dict) -> str:
     # In Act 3, Alkor is the Kurast Alchemist (Health + Mana Potions, Elixirs, Grenades & Lockbox Keys),
     # while Ormus is the Skatsimi Mage (Caster Weapons, Caster Armor, Tomes/Scrolls, Mana Potions & Lockbox Keys).
     hp_caps = [250, 500, 750, 1000, 2000]
-    pot_costs = [500, 1500, 3500, 7500, 16000]
+    pot_costs = [500, 1200, 2500, 5000, 9000]
     act1_3_hp_vendors = ["Akara", "Lysander", "Alkor"]
     act1_3_mp_vendors = ["Akara", "Lysander", "Drognan", "Alkor", "Ormus"]
     act4_5_pot_vendors = ["Jamella", "Malah"]
@@ -192,7 +192,7 @@ def build_misc(cfg: dict) -> str:
     wm2["name"] = "Greater Thawing Elixir"
     wm2["code"] = "wm2"
     wm2["namestr"] = "wm2"
-    wm2["cost"] = "2500"
+    wm2["cost"] = "2000"
     wm2["calc1"] = "40"
     wm2["calc2"] = "7"
     _clear_vendors(wm2)
@@ -203,7 +203,7 @@ def build_misc(cfg: dict) -> str:
     wm3["name"] = "Supreme Thawing Elixir"
     wm3["code"] = "wm3"
     wm3["namestr"] = "wm3"
-    wm3["cost"] = "8000"
+    wm3["cost"] = "5000"
     wm3["calc1"] = "50"
     wm3["calc2"] = "10"
     _clear_vendors(wm3)
@@ -229,7 +229,7 @@ def build_misc(cfg: dict) -> str:
     yp2["name"] = "Greater Antidote Elixir"
     yp2["code"] = "yp2"
     yp2["namestr"] = "yp2"
-    yp2["cost"] = "2500"
+    yp2["cost"] = "2000"
     yp2["calc1"] = "40"
     yp2["calc2"] = "7"
     _clear_vendors(yp2)
@@ -240,7 +240,7 @@ def build_misc(cfg: dict) -> str:
     yp3["name"] = "Supreme Antidote Elixir"
     yp3["code"] = "yp3"
     yp3["namestr"] = "yp3"
-    yp3["cost"] = "8000"
+    yp3["cost"] = "5000"
     yp3["calc1"] = "50"
     yp3["calc2"] = "10"
     _clear_vendors(yp3)
@@ -272,7 +272,7 @@ def build_misc(cfg: dict) -> str:
     vp2["name"] = "Greater Stamina Elixir"
     vp2["code"] = "vp2"
     vp2["namestr"] = "vp2"
-    vp2["cost"] = "2500"
+    vp2["cost"] = "2000"
     vp2["calc1"] = "110"
     vp2["calc2"] = "70"
     vp2["calc3"] = "75"
@@ -284,7 +284,7 @@ def build_misc(cfg: dict) -> str:
     vp3["name"] = "Supreme Stamina Elixir"
     vp3["code"] = "vp3"
     vp3["namestr"] = "vp3"
-    vp3["cost"] = "8000"
+    vp3["cost"] = "5000"
     vp3["calc1"] = "150"
     vp3["calc2"] = "80"
     vp3["calc3"] = "100"

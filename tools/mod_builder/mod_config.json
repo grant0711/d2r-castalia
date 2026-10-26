@@ -6,9 +6,11 @@
     "set_ratio_scale": 0.65,
     "rare_ratio_scale": 0.75,
     "gold_pile_multiplier": 4.8,
+    "gold_pile_multiplier_nm": 8.0,
+    "gold_pile_multiplier_hell": 14.0,
     "vendor_sell_cap_normal": 500,
-    "vendor_sell_cap_nm": 1000,
-    "vendor_sell_cap_hell": 1500,
+    "vendor_sell_cap_nm": 1500,
+    "vendor_sell_cap_hell": 3500,
     "rune_drop_boost": 3.5,
     "qa_blood_moor_boost": false,
     "qa_cube_starter_kit": false

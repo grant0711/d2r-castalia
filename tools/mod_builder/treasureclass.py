@@ -65,7 +65,18 @@ def build_treasureclass(cfg: dict) -> str:
 
     econ = cfg.get("economy", {})
     gold_mult = int(round(256 * float(econ.get("gold_pile_multiplier", 4.8))))
+    gold_mult_nm = int(round(256 * float(econ.get("gold_pile_multiplier_nm", 8.0))))
+    gold_mult_h = int(round(256 * float(econ.get("gold_pile_multiplier_hell", 14.0))))
     gold_item = f'"gld,mul={gold_mult}"'
+    gold_item_nm = f'"gld,mul={gold_mult_nm}"'
+    gold_item_h = f'"gld,mul={gold_mult_h}"'
+
+    def _gold_for_tc(tc_str: str) -> str:
+        if "(H)" in tc_str:
+            return gold_item_h
+        if "(N)" in tc_str:
+            return gold_item_nm
+        return gold_item
 
     # 1. Remove random charms (cm1, cm2, cm3) from Jewelry A, B, C (45% Ring / 30% Amulet / 25% Jewel)
     for jtc in ("Jewelry A", "Jewelry B", "Jewelry C"):
@@ -95,13 +106,13 @@ def build_treasureclass(cfg: dict) -> str:
         if "Magic " in tc and r.get("group") == "4":
             _set_items(r, [("tsc", "1"), ("isc", "3")])
         elif r.get("group") == "12":  # Cpot
-            _set_items(r, [(gold_item, "1")])
+            _set_items(r, [(_gold_for_tc(tc), "1")])
 
     # Update Act X Junk to clean gold/ammo only (zero potions, 5% Ammo / 95% Gold)
     for r in rows:
         tc = r["Treasure Class"]
         if tc.endswith("Junk"):
-            _set_items(r, [(gold_item, "19"), ("Ammo", "1")])
+            _set_items(r, [(_gold_for_tc(tc), "19"), ("Ammo", "1")])
 
     # Catch-all sweep: ensure zero potion or key item codes exist anywhere in treasureclassex.txt
     banned_potions = {
@@ -113,9 +124,10 @@ def build_treasureclass(cfg: dict) -> str:
         "opl", "opm", "ops", "gpl", "gpm", "gps",
     }
     for r in rows:
+        tc = r["Treasure Class"]
         for i in range(1, 11):
             if r.get(f"Item{i}") in banned_potions:
-                r[f"Item{i}"] = gold_item
+                r[f"Item{i}"] = _gold_for_tc(tc)
 
     # 3. Disable Sunder Charms & remove references
     if "Sunder Charms" in by_tc:
@@ -123,9 +135,10 @@ def build_treasureclass(cfg: dict) -> str:
         by_tc["Sunder Charms"]["ConditionCalc"] = "0"
 
     for r in rows:
+        tc = r["Treasure Class"]
         for i in range(1, 11):
             if r.get(f"Item{i}") in ("Sunder Charms", "pk1", "pk2", "pk3"):
-                r[f"Item{i}"] = gold_item
+                r[f"Item{i}"] = _gold_for_tc(tc)
 
     # 4. Flatten Runes 1..17 cascade
     cascade_probs = {
@@ -270,8 +283,8 @@ def build_treasureclass(cfg: dict) -> str:
             for i in range(1, 11):
                 item_val = r.get(f"Item{i}", "")
                 prob_val = r.get(f"Prob{i}", "")
-                if item_val == "gld":
-                    r[f"Item{i}"] = gold_item
+                if item_val == "gld" or item_val.startswith('"gld'):
+                    r[f"Item{i}"] = _gold_for_tc(tc)
                 elif (
                     item_val
                     and not item_val.startswith('"gld')
@@ -344,8 +357,9 @@ def build_treasureclass(cfg: dict) -> str:
             r["NoDrop"] = "0"
             _set_items(r, [(eq_shard, "13"), (gr_shard, "5"), ("Jewelry C", "2")])
 
-    # Wire Tier 2 (Uniques & Champions): 1 Guaranteed Roll + 1 Bonus (50%) Roll = 1-2 drops (75% Item / 25% GemRune)
+    # Wire Tier 2 (Uniques & Champions): 1 Guaranteed Roll + 1 Bonus (50%) Roll + 1 Guaranteed Gold Pile
     for act_prefix, _, _, _, _, _ in ACTS:
+        act_gold = _gold_for_tc(act_prefix)
         for letter in ("A", "B", "C"):
             uitem = f"{act_prefix} Uitem {letter}"
             if uitem not in by_tc:
@@ -360,27 +374,28 @@ def build_treasureclass(cfg: dict) -> str:
             utc = f"{act_prefix} Unique {letter}"
             if utc in by_tc:
                 row = by_tc[utc]
-                row["Picks"] = "-2"
+                row["Picks"] = "-3"
                 row["Unique"] = "850"
                 row["Set"] = "850"
                 row["Rare"] = "950"
                 row["Magic"] = "1024"
                 row["NoDrop"] = "0"
-                _set_items(row, [(uitem, "1"), (cpot, "1")])
+                _set_items(row, [(uitem, "1"), (cpot, "1"), (act_gold, "1")])
 
             ctc = f"{act_prefix} Champ {letter}"
             if ctc in by_tc:
                 row = by_tc[ctc]
-                row["Picks"] = "-2"
+                row["Picks"] = "-3"
                 row["Unique"] = "820"
                 row["Set"] = "820"
                 row["Rare"] = "920"
                 row["Magic"] = "1024"
                 row["NoDrop"] = "0"
-                _set_items(row, [(citem, "1"), (cpot, "1")])
+                _set_items(row, [(citem, "1"), (cpot, "1"), (act_gold, "1")])
 
-    # 8. Tier 3 — SuperUniques: 2 Guaranteed Rolls + 1 Bonus (50%) Roll = 2-3 drops (75% Item / 25% GemRune)
+    # 8. Tier 3 — SuperUniques: 2 Guaranteed Rolls + 1 Bonus (50%) Roll + 1 Guaranteed Gold Pile
     for act_prefix, _, _, _, _, _ in ACTS:
+        act_gold = _gold_for_tc(act_prefix)
         for suffix in ("A", "B", "C", "Ax", "Bx", "Cx"):
             stc = f"{act_prefix} Super {suffix}"
             letter = suffix[0]
@@ -392,13 +407,13 @@ def build_treasureclass(cfg: dict) -> str:
                 cpot = f"{act_prefix} Cpot B"
             if stc in by_tc:
                 row = by_tc[stc]
-                row["Picks"] = "-3"
+                row["Picks"] = "-4"
                 row["Unique"] = "920"
                 row["Set"] = "920"
                 row["Rare"] = "980"
                 row["Magic"] = "1024"
                 row["NoDrop"] = "0"
-                _set_items(row, [(uitem, "2"), (cpot, "1")])
+                _set_items(row, [(uitem, "2"), (cpot, "1"), (act_gold, "1")])
 
     # Named SuperUniques: Blood Raven, Griswold, Smith, Radament, Summoner, Council, Izual, Haphesto, Nihlathak, Cow King
     named_supers = [
@@ -416,6 +431,7 @@ def build_treasureclass(cfg: dict) -> str:
     for base_name, base_act in named_supers:
         for diff_suffix in ("", " (N)", " (H)"):
             act_key = f"{base_act}{diff_suffix}"
+            act_gold = _gold_for_tc(act_key)
             uitem = f"{act_key} Uitem C" if f"{act_key} Uitem C" in by_tc else f"{act_key} Uitem B"
             cpot = f"{act_key} Cpot C" if f"{act_key} Cpot C" in by_tc else f"{act_key} Cpot B"
             for r in rows:
@@ -424,13 +440,13 @@ def build_treasureclass(cfg: dict) -> str:
                     tc.startswith(f"{base_name}{diff_suffix} Desecrated")
                     and r.get("Picks") != "-1"
                 ) or tc.startswith(f"{base_name} Item{diff_suffix}"):
-                    r["Picks"] = "-3"
+                    r["Picks"] = "-4"
                     r["Unique"] = "920"
                     r["Set"] = "920"
                     r["Rare"] = "980"
                     r["Magic"] = "1024"
                     r["NoDrop"] = "0"
-                    _set_items(r, [(uitem, "2"), (cpot, "1")])
+                    _set_items(r, [(uitem, "2"), (cpot, "1"), (act_gold, "1")])
 
     # Countess: 1 Guaranteed Rune + 1-2 Drops (75% Item / 25% GemRune) = 2-3 total drops
     for diff_suffix, rune_tc, act_key in [
@@ -445,19 +461,20 @@ def build_treasureclass(cfg: dict) -> str:
             _set_items(by_tc[cr_tc], [(rune_tc, "1")])
         uitem = f"{act_key} Uitem C"
         cpot = f"{act_key} Cpot C"
+        act_gold = _gold_for_tc(act_key)
         for r in rows:
             tc = r["Treasure Class"]
             if tc == f"Countess Item{diff_suffix}" or tc.startswith(f"Countess Item{diff_suffix} Desecrated"):
-                r["Picks"] = "-2"
+                r["Picks"] = "-3"
                 r["Unique"] = "920"
                 r["Set"] = "920"
                 r["Rare"] = "980"
                 r["Magic"] = "1024"
                 r["NoDrop"] = "0"
-                _set_items(r, [(uitem, "1"), (cpot, "1")])
+                _set_items(r, [(uitem, "1"), (cpot, "1"), (act_gold, "1")])
 
     # 9. Tier 4 — Act Bosses (Andariel, Duriel, Mephisto, Diablo, Baal + q & Desecrated):
-    # 3 Guaranteed Rolls + 1 Bonus (50%) Roll = 3-4 drops (75% Item / 25% GemRune) + 1 Unique Boss Charm roll
+    # 3 Guaranteed Rolls + 1 Bonus (50%) Roll + 1 Unique Boss Charm roll + 1 Guaranteed Gold Pile
     boss_configs = [
         ("Andariel", ("", "Act 2 Uitem A", "Act 2 Cpot A", "Act Boss Charm 1"), (" (N)", "Act 2 (N) Uitem A", "Act 2 (N) Cpot A", "Act Boss Charm 3"), (" (H)", "Act 2 (H) Uitem A", "Act 2 (H) Cpot A", "Act Boss Charm 4")),
         ("Duriel", ("", "Act 3 Uitem A", "Act 3 Cpot A", "Act Boss Charm 1"), (" (N)", "Act 3 (N) Uitem A", "Act 3 (N) Cpot A", "Act Boss Charm 3"), (" (H)", "Act 3 (H) Uitem A", "Act 3 (H) Cpot A", "Act Boss Charm 5")),
@@ -467,6 +484,7 @@ def build_treasureclass(cfg: dict) -> str:
     ]
     for boss, cfg_n, cfg_nm, cfg_h in boss_configs:
         for diff_suffix, boss_uitem, boss_cpot, boss_charm_tc in (cfg_n, cfg_nm, cfg_h):
+            act_gold = _gold_for_tc(diff_suffix)
             for r in rows:
                 tc = r["Treasure Class"]
                 is_match = (
@@ -478,7 +496,7 @@ def build_treasureclass(cfg: dict) -> str:
                     or tc.startswith(f"{boss}{diff_suffix} - Base Desecrated")
                 )
                 if is_match:
-                    r["Picks"] = "-5"
+                    r["Picks"] = "-6"
                     r["Unique"] = "985"
                     r["Set"] = "985"
                     r["Rare"] = "1024"
@@ -490,6 +508,7 @@ def build_treasureclass(cfg: dict) -> str:
                             (boss_uitem, "3"),
                             (boss_cpot, "1"),
                             (boss_charm_tc, "1"),
+                            (act_gold, "1"),
                         ],
                     )
 
@@ -520,7 +539,7 @@ def build_treasureclass(cfg: dict) -> str:
     for act_p, (hp_c, mp_c, wm_c, yp_c, vp_c) in chest_potions_by_act.items():
         jewelry_tc = "Jewelry A" if act_p == "Act 1" else "Jewelry C"
         chest_Pool = [
-            (gold_item, "160"),
+            (_gold_for_tc(act_p), "160"),
             (f"{act_p} GemRune", "30"),
             (jewelry_tc, "20"),
             (hp_c, "7"),

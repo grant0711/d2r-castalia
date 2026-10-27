@@ -204,11 +204,13 @@ def _build_distillation_rows(
     col_idx: Dict[str, int],
 ) -> List[str]:
     """
-    Generate Unique, Set & Unique Charm -> Jewel Distillation recipes:
-    input 1 = Specific Unique or Set item (by index name)
-    input 2 = bml (Blacksmith's Malus)
-    output  = "jew,nor" (lvl=0, plvl=0, ilvl=0 -> zero random affixes)
-    mod 1..5 = Top 5 distillable properties scaled by 0.50 * (lvl / 100)
+    Generate Unique, Set & Unique Charm -> Crafted Jewel Distillation recipes:
+    - Supports both 3-input (Unique/Set + Blacksmith's Malus bml + Jewel jew)
+      and 2-input (Unique/Set + Blacksmith's Malus bml)
+    - Also emits base-code fallback ("<code>,uni" / "<code>,set") for all single-item base codes
+    - output  = "jew,crf" with lvl=1 (below minimum jewel affix level=2 -> zero random magic affixes!)
+    - mod 1..4 = Top 4 distillable properties scaled by 0.50 * (lvl / 100)
+    - mod 5    = levelreq set from the Unique/Set item's lvl req
     """
     out_lines: List[str] = []
 
@@ -216,10 +218,15 @@ def _build_distillation_rows(
     u_path = os.path.join(MOD_ROOT, "data/global/excel/uniqueitems.txt")
     s_path = os.path.join(MOD_ROOT, "data/global/excel/setitems.txt")
 
-    for path, max_p in [(u_path, 12), (s_path, 9)]:
+    for path, max_p, code_col, qual_tag in [
+        (u_path, 12, "code", "uni"),
+        (s_path, 9, "item", "set"),
+    ]:
         with open(path, "r", encoding="utf-8") as f:
             raw_lines = [line.rstrip("\r\n") for line in f if line.strip()]
         hdr = raw_lines[0].split("\t")
+        parsed_rows: List[Dict[str, str]] = []
+        code_counts: Dict[str, int] = {}
         for line in raw_lines[1:]:
             parts = line.split("\t")
             row = {hdr[i]: (parts[i] if i < len(parts) else "") for i in range(len(hdr))}
@@ -228,7 +235,18 @@ def _build_distillation_rows(
                 continue
             if row.get("disabled") == "1" or row.get("spawnable") == "0":
                 continue
+            if qual_tag == "set" and int(row.get("lvl") or "1") >= 100:
+                continue
+            bcode = row.get(code_col, "").strip()
+            if bcode:
+                code_counts[bcode] = code_counts.get(bcode, 0) + 1
+            parsed_rows.append(row)
+
+        for row in parsed_rows:
+            idx_name = row.get("index", "").strip()
+            bcode = row.get(code_col, "").strip()
             lvl = max(1, int(row.get("lvl") or "1"))
+            lvl_req = max(1, int(row.get("lvl req") or str(lvl)))
             distilled_mods: List[Tuple[str, str, str, str, str]] = []  # (code, chance, param, min, max)
 
             for i in range(1, max_p + 1):
@@ -259,32 +277,43 @@ def _build_distillation_rows(
                 else:
                     val_str = str(max(1, int(round(scaled))))
                     distilled_mods.append((pcode, "100", ppar, val_str, val_str))
-                if len(distilled_mods) >= 5:
+                if len(distilled_mods) >= 4:
                     break
 
             if not distilled_mods:
                 continue
 
-            fields = {
-                "description": f"Distill {idx_name} -> Jewel",
-                "enabled": "1",
-                "version": "100",
-                "numinputs": "2",
-                "input 1": f'"{idx_name}"' if (" " in idx_name or "," in idx_name) else idx_name,
-                "input 2": "bml",
-                "output": '"jew,nor"',
-                "lvl": "0",
-                "plvl": "0",
-                "ilvl": "0",
-            }
-            for m_idx, (mc, mch, mpar, mmn, mmx) in enumerate(distilled_mods, start=1):
-                fields[f"mod {m_idx}"] = mc
-                fields[f"mod {m_idx} chance"] = mch
-                fields[f"mod {m_idx} param"] = mpar
-                fields[f"mod {m_idx} min"] = mmn
-                fields[f"mod {m_idx} max"] = mmx
+            # Append explicit levelreq modifier based on the Unique/Set item's lvl req
+            distilled_mods.append(("levelreq", "100", "", str(lvl_req), str(lvl_req)))
 
-            out_lines.append(_make_row_str(num_cols, col_idx, fields))
+            input_specs: List[Tuple[str, str]] = [
+                (f'"{idx_name}"' if "," in idx_name else idx_name, idx_name),
+            ]
+            if bcode and code_counts.get(bcode, 0) == 1:
+                input_specs.append((f'"{bcode},{qual_tag}"', f"{idx_name} ({bcode},{qual_tag})"))
+
+            for in1_val, desc_lbl in input_specs:
+                for with_jewel in (True, False):
+                    fields = {
+                        "description": f"Distill {desc_lbl}{' + Jewel' if with_jewel else ''} -> Crafted Jewel",
+                        "enabled": "1",
+                        "version": "100",
+                        "numinputs": "3" if with_jewel else "2",
+                        "input 1": in1_val,
+                        "input 2": "bml",
+                        "output": '"jew,crf"',
+                        "lvl": "1",
+                    }
+                    if with_jewel:
+                        fields["input 3"] = "jew"
+                    for m_idx, (mc, mch, mpar, mmn, mmx) in enumerate(distilled_mods, start=1):
+                        fields[f"mod {m_idx}"] = mc
+                        fields[f"mod {m_idx} chance"] = mch
+                        fields[f"mod {m_idx} param"] = mpar
+                        fields[f"mod {m_idx} min"] = mmn
+                        fields[f"mod {m_idx} max"] = mmx
+
+                    out_lines.append(_make_row_str(num_cols, col_idx, fields))
 
     return out_lines
 

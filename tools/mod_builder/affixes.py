@@ -105,7 +105,13 @@ def build_magicprefix(cfg: dict) -> str:
             continue
         grp = r.get("group", "")
         it1 = r.get("itype1", "")
-        is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl")
+        itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}
+        is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all
+
+        # Ensure all Jewel (jewl) prefixes have level >= 2 so lvl=1 Crafted Jewels ("jew,crf")
+        # produced by Unique/Set Distillation roll zero random magic affixes.
+        if "jewl" in itypes_all and int(r.get("level") or "1") <= 1:
+            r["level"] = "2"
 
         # 1. Scale Magic-only (rare != "1") numeric apex prefixes by 1.33x
         if r.get("rare") != "1":
@@ -247,7 +253,13 @@ def build_magicsuffix(cfg: dict) -> str:
             continue
         grp = r.get("group", "")
         it1 = r.get("itype1", "")
-        is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl")
+        itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}
+        is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all
+
+        # Ensure all Jewel (jewl) prefixes have level >= 2 so lvl=1 Crafted Jewels ("jew,crf")
+        # produced by Unique/Set Distillation roll zero random magic affixes.
+        if "jewl" in itypes_all and int(r.get("level") or "1") <= 1:
+            r["level"] = "2"
 
         # 1. Scale Magic-only (rare != "1") numeric apex suffixes by 1.33x
         if r.get("rare") != "1":

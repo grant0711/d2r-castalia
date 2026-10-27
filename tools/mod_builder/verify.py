@@ -472,11 +472,32 @@ def verify_all(cfg: dict = None) -> List[str]:
     if not (umod_consts.get("7", 0) < umod_consts.get("8", 0) < umod_consts.get("9", 0)):
         raise AssertionError("monumod.txt: Unique HP % bonus (id 7..9) must increase progressively across N < NM < H")
     if not cfg.get("qa_cube_starter_kit", False):
-        _, cube_rows = _read_mod_tsv("cubemain.txt", max_rows=200)
+        _, cube_rows = _read_mod_tsv("cubemain.txt", max_rows=3000)
+        distill_count = 0
         for r in cube_rows:
             if r.get("numinputs") == "1" and r.get("input 1") in ("isc", "tsc"):
                 raise AssertionError("cubemain.txt: QA starter kit recipe active while qa_cube_starter_kit=false")
-    checks_passed.append("QA config gates, progressive off-screen aidist, monprop & monumod contracts")
+            if r.get("description", "").startswith("Distill "):
+                distill_count += 1
+                if r.get("output") != '"jew,crf"' or r.get("lvl") != "1":
+                    raise AssertionError(
+                        f"cubemain.txt ({r.get('description')}): expected output='\"jew,crf\"' and lvl='1'"
+                    )
+                if "levelreq" not in (r.get(f"mod {i}", "") for i in range(1, 6)):
+                    raise AssertionError(
+                        f"cubemain.txt ({r.get('description')}): missing levelreq modifier"
+                    )
+        if distill_count < 1000:
+            raise AssertionError(f"cubemain.txt: expected >= 1000 distillation rows, found {distill_count}")
+    for afx_fn in ("magicprefix.txt", "magicsuffix.txt"):
+        _, afx_rows = _read_mod_tsv(afx_fn)
+        for r in afx_rows:
+            if r.get("spawnable") == "1" and "jewl" in {r.get(f"itype{i}", "").strip() for i in range(1, 8)}:
+                if int(r.get("level") or "1") < 2:
+                    raise AssertionError(
+                        f"{afx_fn} ({r.get('Name')}): jewl affix has level < 2 (would pollute lvl=1 distilled Crafted Jewels)"
+                    )
+    checks_passed.append("QA config gates, progressive off-screen aidist, monprop, monumod & lvl=1 crafted jewel distillation contracts")
 
     # 7. Verify hireling.txt 9-Aura Act 2 Matrix & skill/icon referential integrity
     _, hire_rows = _read_mod_tsv("hireling.txt")

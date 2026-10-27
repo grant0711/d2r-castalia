@@ -42,6 +42,7 @@ def scale_int(val: str, mult: float, min_val: int = 1) -> str:
 # ============================================================================
 
 # Curated rosters for Act 2 Open Desert (Zero Poison, Zero Maggots, Zero Zombies in open desert)
+# and Act 5 Bloody Foothills (Classic 1.09 Enslaved + Death Mauler physical siege onslaught)
 CURATED_ZONE_ROSTERS = {
     "Act 2 - Desert 1": ["sandleaper1", "pantherwoman1", "scarab1", "vulture1", "slinger1"],  # Rocky Waste
     "Act 2 - Desert 2": ["sandleaper2", "pantherwoman2", "vulture2", "slinger5"],             # Dry Hills
@@ -49,6 +50,7 @@ CURATED_ZONE_ROSTERS = {
     "Act 2 - Desert 4": ["sandraider2", "sandleaper3", "pantherwoman3", "slinger6"],          # Lost City (no zombie5)
     "Act 2 - Valley of the Kings": ["brute4", "pantherwoman4", "scarab4", "slinger4"],        # Canyon of the Magi (no sandmaggot3)
     "Act 2 - Sewer 1 B": ["skeleton4", "sandraider1", "mummy1", "sk_archer4", "zombie5"],     # Sewers 2 (+Plague Bearer)
+    "Act 5 - Siege 1": ["minion1", "deathmauler1"],                                           # Bloody Foothills (1.09 pair)
 }
 
 # Stationary nest/spawner -> mobile counterpart for umon1..3 (since nests can't spawn as Uniques)
@@ -204,9 +206,9 @@ def build_levels(cfg: dict) -> str:
         if not name or name == "Expansion" or zid in FIXED_SKIP_ZONE_IDS:
             continue
 
-        # Strictly 1 Random Unique Boss Pack per combat zone (including preset floors like Swampy Pit 3)
+        # Strictly 1 Random Unique Boss Pack per combat zone (including preset floors & Bloody Foothills)
         for u_col in ("MonUMin", "MonUMax", "MonUMin(N)", "MonUMax(N)", "MonUMin(H)", "MonUMax(H)"):
-            if parse_int(row.get(u_col, "")) > 0:
+            if parse_int(row.get(u_col, "")) > 0 or name == "Act 5 - Siege 1":
                 row[u_col] = "1"
 
         monden_n = parse_int(row.get("MonDen(N)", ""))
@@ -269,10 +271,13 @@ def build_levels(cfg: dict) -> str:
                         row[f"umon{i}"] = ""
 
         # 2. Scale Monster Density by 4-Tier Matrix (1.00x / 0.75x / 0.66x / 0.50x, never exceeding vanilla)
+        #    For Bloody Foothills (Act 5 - Siege 1), also enable its 650 Tier 1 Swarm density in Normal
         for d_col in ("MonDen", "MonDen(N)", "MonDen(H)"):
             val = parse_int(row.get(d_col, ""))
             if val > 0:
                 row[d_col] = str(max(1, int(round(val * tier_mult))))
+            elif d_col == "MonDen" and name == "Act 5 - Siege 1":
+                row[d_col] = "650"
 
         # 3. Strictly 1 Random Unique Boss Pack per combat zone
         for u_col in ("MonUMin", "MonUMax", "MonUMin(N)", "MonUMax(N)", "MonUMin(H)", "MonUMax(H)"):

@@ -472,13 +472,22 @@ def verify_all(cfg: dict = None) -> List[str]:
     if not (umod_consts.get("7", 0) < umod_consts.get("8", 0) < umod_consts.get("9", 0)):
         raise AssertionError("monumod.txt: Unique HP % bonus (id 7..9) must increase progressively across N < NM < H")
     if not cfg.get("qa_cube_starter_kit", False):
+        from mod_builder.cubemain import BINARY_OR_SKILL_PROPS, DISTILL_AFFIX_CAPS, PER_LEVEL_PROPS
         _, cube_rows = _read_mod_tsv("cubemain.txt", max_rows=3000)
         distill_count = 0
+        quest_names = {
+            "Amulet of the Viper", "Staff of Kings", "Horadric Staff",
+            "Hell Forge Hammer", "KhalimFlail", "SuperKhalimFlail",
+        }
         for r in cube_rows:
             if r.get("numinputs") == "1" and r.get("input 1") in ("isc", "tsc"):
                 raise AssertionError("cubemain.txt: QA starter kit recipe active while qa_cube_starter_kit=false")
-            if r.get("description", "").startswith("Distill "):
+            desc = r.get("description", "")
+            if desc.startswith("Distill "):
                 distill_count += 1
+                in1 = r.get("input 1", "").strip()
+                if in1 in quest_names:
+                    raise AssertionError(f"cubemain.txt ({desc}): Quest item '{in1}' must not have a distillation recipe")
                 if (
                     r.get("numinputs") != "3"
                     or r.get("input 2") != "bml"
@@ -487,12 +496,37 @@ def verify_all(cfg: dict = None) -> List[str]:
                     or r.get("lvl") != "1"
                 ):
                     raise AssertionError(
-                        f"cubemain.txt ({r.get('description')}): expected numinputs=3, input 2=bml, input 3='\"jew,mag\"', output='\"jew,crf\"', lvl='1'"
+                        f"cubemain.txt ({desc}): expected numinputs=3, input 2=bml, input 3='\"jew,mag\"', output='\"jew,crf\"', lvl='1'"
                     )
                 if "levelreq" not in (r.get(f"mod {i}", "") for i in range(1, 6)):
                     raise AssertionError(
-                        f"cubemain.txt ({r.get('description')}): missing levelreq modifier"
+                        f"cubemain.txt ({desc}): missing levelreq modifier"
                     )
+                for m_i in range(1, 6):
+                    mcode = r.get(f"mod {m_i}", "").strip()
+                    if not mcode or mcode == "levelreq":
+                        continue
+                    if mcode in ("nofreeze", "cannotbefrozen"):
+                        raise AssertionError(f"cubemain.txt ({desc}): forbidden {mcode} present on distilled jewel")
+                    mch = r.get(f"mod {m_i} chance", "").strip()
+                    mpar = r.get(f"mod {m_i} param", "").strip()
+                    mmn = r.get(f"mod {m_i} min", "").strip()
+                    mmx = r.get(f"mod {m_i} max", "").strip()
+                    if mcode not in BINARY_OR_SKILL_PROPS:
+                        if mch != "100":
+                            raise AssertionError(f"cubemain.txt ({desc}): numeric mod {mcode} has chance={mch} != 100")
+                        if mcode not in DISTILL_AFFIX_CAPS:
+                            raise AssertionError(f"cubemain.txt ({desc}): mod {mcode} missing from DISTILL_AFFIX_CAPS")
+                        c_min, c_max = DISTILL_AFFIX_CAPS[mcode]
+                        if mcode in PER_LEVEL_PROPS:
+                            v = int(mpar)
+                            if not (c_min <= v <= c_max):
+                                raise AssertionError(f"cubemain.txt ({desc}): {mcode} param={v} outside [{c_min}, {c_max}]")
+                        else:
+                            v_lo = int(mmn)
+                            v_hi = int(mmx)
+                            if not (c_min <= v_lo <= v_hi <= c_max):
+                                raise AssertionError(f"cubemain.txt ({desc}): {mcode} [{v_lo}, {v_hi}] outside [{c_min}, {c_max}]")
         if distill_count < 800:
             raise AssertionError(f"cubemain.txt: expected >= 800 distillation rows, found {distill_count}")
     for afx_fn in ("magicprefix.txt", "magicsuffix.txt"):

@@ -93,17 +93,245 @@ GEM_UPGRADE_CHAINS = [
 ]
 
 NON_DISTILLABLE_PROPS = {
-    "aura", "oskill", "charged", "hit-skill", "gethit-skill", "att-skill",
-    "kill-skill", "death-skill", "levelup-skill", "sock", "indestruct",
-    "ethereal", "rep-dur", "rep-quant", "stack", "light", "ease",
+    "aura", "oskill", "charged", "*charged", "hit-skill", "gethit-skill", "Gethit-skill",
+    "att-skill", "kill-skill", "death-skill", "levelup-skill", "reanimate",
+    "sock", "indestruct", "ethereal", "rep-dur", "rep-quant", "stack", "dur",
+    "pierce-immunity-cold", "pierce-immunity-fire", "pierce-immunity-light",
+    "pierce-immunity-poison", "pierce-immunity-damage", "pierce-immunity-magic",
+    "cannotbefrozen", "nofreeze", "*enr", "*hp",
+}
+
+PER_LEVEL_PROPS = {
+    "gold%/lvl", "deadly/lvl", "mag%/lvl", "dmg%/lvl", "dmg/lvl", "ac/lvl",
+    "abs-fire/lvl", "abs-cold/lvl", "res-ltng/lvl", "att%/lvl", "att/lvl",
+    "dmg-dem/lvl", "dmg-und/lvl", "att-dem/lvl", "att-und/lvl", "hp/lvl",
+    "mana/lvl", "str/lvl", "dex/lvl", "vit/lvl", "thorns/lvl", "stam/lvl",
+    "regen-stam/lvl",
+}
+
+RANGE_DAMAGE_PROPS = {
+    "dmg-norm", "dmg-fire", "dmg-ltng", "dmg-cold", "dmg-pois", "dmg-mag", "dmg-elem",
 }
 
 BINARY_OR_SKILL_PROPS = {
-    "allskills", "ama", "pal", "nec", "sor", "bar", "dru", "ass", "war",
-    "fireskill", "skill", "skilltab", "knock", "ignore-ac", "noheal",
-    "half-freeze", "rip", "pierce-immunity-cold", "pierce-immunity-fire",
-    "pierce-immunity-light", "pierce-immunity-poison", "pierce-immunity-damage",
-    "pierce-immunity-magic",
+    "allskills", "randclassskill", "ama", "pal", "nec", "sor", "bar", "dru", "ass", "war",
+    "fireskill", "skill", "skill-rand", "skilltab", "skilltab-war",
+    "knock", "ignore-ac", "noheal", "half-freeze", "rip",
+    "roguesbow-affix1",
+}
+
+# Explicit hardcoded (min_cap, max_cap) bounds for every non-binary distillable property
+DISTILL_AFFIX_CAPS: Dict[str, Tuple[int, int]] = {
+    # Tier 1: Gold Find, Combat Mechanics, Pierce & Skill Damage
+    "gold%": (5, 30),
+    "gold%/lvl": (1, 6),
+    "crush": (2, 12),
+    "deadly": (2, 15),
+    "deadly/lvl": (1, 3),
+    "openwounds": (3, 15),
+    "pierce-fire": (1, 6),
+    "pierce-ltng": (1, 6),
+    "pierce-cold": (1, 6),
+    "pierce-pois": (1, 6),
+    "pierce-mag": (1, 6),
+    "pierce-dmg": (1, 6),
+    "extra-fire": (1, 6),
+    "extra-ltng": (1, 6),
+    "extra-cold": (1, 6),
+    "extra-pois": (1, 6),
+    "extra-mag": (1, 6),
+    "pierce": (3, 15),
+    "slow": (3, 12),
+    "freeze": (1, 2),
+    "stupidity": (1, 2),
+    "howl": (5, 20),
+    "magicarrow": (1, 5),
+    "explosivearrow": (1, 5),
+    # Tier 2: Experience, Magic Find & Vendor Economy
+    "addxp": (1, 3),
+    "mag%": (3, 20),
+    "mag%/lvl": (1, 3),
+    "cheap": (2, 5),
+    # Tier 3: Primary Offense, Speed Breakpoints & Damage Reduction %
+    "dmg%": (5, 45),
+    "dmg%/lvl": (1, 4),
+    "dmg": (1, 15),
+    "dmg/lvl": (1, 4),
+    "dmg-norm": (1, 20),
+    "dmg-max": (2, 20),
+    "dmg-min": (1, 12),
+    "red-dmg%": (1, 8),
+    "damageresist": (1, 8),
+    "swing1": (2, 15),
+    "swing2": (2, 15),
+    "swing3": (2, 15),
+    "cast1": (2, 10),
+    "cast2": (2, 10),
+    "cast3": (2, 10),
+    "move1": (2, 10),
+    "move2": (2, 10),
+    "move3": (2, 10),
+    "reduce-ac": (3, 12),
+    "dmg-ac": (-35, -5),
+    "lifesteal": (1, 5),
+    "manasteal": (1, 5),
+    "balance1": (2, 10),
+    "balance2": (2, 10),
+    "balance3": (2, 10),
+    "block": (2, 10),
+    "block2": (2, 12),
+    "block3": (2, 12),
+    # Tier 4: Resistances, Absorb & Enhanced Defense
+    "res-all": (2, 15),
+    "res-all-max": (1, 4),
+    "res-fire-max": (1, 4),
+    "res-ltng-max": (1, 4),
+    "res-cold-max": (1, 4),
+    "res-pois-max": (1, 4),
+    "abs-fire%": (1, 5),
+    "abs-ltng%": (1, 5),
+    "abs-cold%": (1, 5),
+    "absorb-fire%": (1, 5),
+    "abs-fire": (1, 6),
+    "abs-ltng": (1, 6),
+    "abs-cold": (1, 6),
+    "abs-fire/lvl": (1, 2),
+    "abs-cold/lvl": (1, 2),
+    "ac%": (5, 50),
+    "ac/lvl": (1, 6),
+    "res-fire": (3, 25),
+    "res-ltng": (3, 25),
+    "res-cold": (3, 25),
+    "res-pois": (3, 25),
+    "res-mag": (3, 25),
+    "res-ltng/lvl": (1, 3),
+    "red-dmg": (1, 7),
+    "red-mag": (1, 7),
+    "res-pois-len": (5, 25),
+    # Tier 5: Elemental Attack Damage, Sustain & Attack Rating
+    "dmg-elem": (1, 90),
+    "dmg-mag": (1, 90),
+    "magdam-rand": (1, 1),
+    "dmg-fire": (1, 90),
+    "dmg-ltng": (1, 90),
+    "dmg-cold": (1, 90),
+    "dmg-pois": (5, 160),
+    "heal-kill": (1, 5),
+    "demon-heal": (1, 5),
+    "mana-kill": (1, 5),
+    "dmg-to-mana": (2, 15),
+    "att%": (3, 25),
+    "att%/lvl": (1, 2),
+    "att": (8, 100),
+    "att/lvl": (1, 6),
+    "dmg-demon": (10, 60),
+    "dmg-dem/lvl": (1, 6),
+    "dmg-undead": (10, 60),
+    "dmg-und/lvl": (1, 6),
+    "att-demon": (10, 80),
+    "att-dem/lvl": (1, 6),
+    "att-undead": (10, 80),
+    "att-und/lvl": (1, 6),
+    # Tier 6: Attributes, Life/Mana, Regeneration & Requirements
+    "all-stats": (1, 5),
+    "hp%": (2, 8),
+    "mana%": (2, 8),
+    "hp": (3, 30),
+    "hp/lvl": (1, 4),
+    "mana": (3, 30),
+    "mana/lvl": (1, 4),
+    "str": (1, 10),
+    "str/lvl": (1, 2),
+    "dex": (1, 10),
+    "dex/lvl": (1, 2),
+    "vit": (1, 10),
+    "vit/lvl": (1, 2),
+    "enr": (1, 10),
+    "regen": (1, 7),
+    "regen-mana": (3, 15),
+    "ease": (-25, -5),
+    # Tier 8: Low-Priority Flat Defense, Thorns, Stamina & Flavor
+    "ac": (3, 60),
+    "ac-miss": (5, 60),
+    "ac-hth": (5, 60),
+    "thorns": (1, 20),
+    "thorns/lvl": (1, 3),
+    "light-thorns": (1, 20),
+    "stam": (5, 30),
+    "stam/lvl": (1, 3),
+    "regen-stam": (5, 20),
+    "regen-stam/lvl": (1, 3),
+    "stamdrain": (5, 20),
+    "light": (1, 3),
+    "bloody": (1, 3),
+}
+
+# Explicit 50-rank Affix Priority Table (Tier 1 = Highest Priority -> Tier 8 = Lowest Priority)
+_AFFIX_PRIORITY_TIERS: List[Tuple[int, List[str]]] = [
+    # Tier 1: Signature Combat Mechanics, Pierce & Gold Find (Ranks 1-13)
+    (1, ["gold%", "gold%/lvl"]),
+    (2, ["crush"]),
+    (3, ["deadly", "deadly/lvl"]),
+    (4, ["openwounds"]),
+    (5, ["pierce-fire", "pierce-ltng", "pierce-cold", "pierce-pois", "pierce-mag", "pierce-dmg"]),
+    (6, ["extra-fire", "extra-ltng", "extra-cold", "extra-pois", "extra-mag"]),
+    (7, ["ignore-ac"]),
+    (8, ["pierce"]),
+    (9, ["slow"]),
+    (10, ["freeze"]),
+    (11, ["half-freeze"]),
+    (12, ["noheal", "rip"]),
+    (13, ["knock", "stupidity", "howl", "magicarrow", "explosivearrow", "roguesbow-affix1"]),
+    # Tier 2: Experience, Magic Find & Vendor Economy (Ranks 14-16)
+    (14, ["addxp"]),
+    (15, ["mag%", "mag%/lvl"]),
+    (16, ["cheap"]),
+    # Tier 3: Primary Offense, Speed Breakpoints & Damage Reduction % (Ranks 17-25)
+    (17, ["dmg%", "dmg%/lvl"]),
+    (18, ["dmg", "dmg/lvl", "dmg-norm", "dmg-max", "dmg-min"]),
+    (19, ["red-dmg%", "damageresist"]),
+    (20, ["swing1", "swing2", "swing3"]),
+    (21, ["cast1", "cast2", "cast3"]),
+    (22, ["move1", "move2", "move3"]),
+    (23, ["reduce-ac", "dmg-ac"]),
+    (24, ["lifesteal", "manasteal"]),
+    (25, ["balance1", "balance2", "balance3", "block", "block2", "block3"]),
+    # Tier 4: Resistances, Absorb & Enhanced Defense (Ranks 26-32)
+    (26, ["res-all"]),
+    (27, ["res-all-max", "res-fire-max", "res-ltng-max", "res-cold-max", "res-pois-max"]),
+    (28, ["abs-fire%", "abs-ltng%", "abs-cold%", "absorb-fire%", "abs-fire", "abs-ltng", "abs-cold", "abs-fire/lvl", "abs-cold/lvl"]),
+    (29, ["ac%", "ac/lvl"]),
+    (30, ["res-fire", "res-ltng", "res-cold", "res-pois", "res-mag", "res-ltng/lvl"]),
+    (31, ["red-dmg", "red-mag"]),
+    (32, ["res-pois-len"]),
+    # Tier 5: Elemental Attack Damage, Sustain & Attack Rating (Ranks 33-37)
+    (33, ["dmg-elem", "dmg-mag", "magdam-rand", "dmg-fire", "dmg-ltng", "dmg-cold", "dmg-pois"]),
+    (34, ["heal-kill", "demon-heal", "mana-kill", "dmg-to-mana"]),
+    (35, ["att%", "att%/lvl", "att", "att/lvl"]),
+    (36, ["dmg-demon", "dmg-dem/lvl", "dmg-undead", "dmg-und/lvl"]),
+    (37, ["att-demon", "att-dem/lvl", "att-undead", "att-und/lvl"]),
+    # Tier 6: Attributes, Life/Mana, Regeneration & Requirements (Ranks 38-42)
+    (38, ["all-stats"]),
+    (39, ["hp%", "mana%", "hp", "hp/lvl", "mana", "mana/lvl"]),
+    (40, ["str", "str/lvl", "dex", "dex/lvl", "vit", "vit/lvl", "enr"]),
+    (41, ["regen", "regen-mana"]),
+    (42, ["ease"]),
+    # Tier 7: Skill Levels (Ranks 43-45)
+    (43, ["allskills", "randclassskill"]),
+    (44, ["ama", "pal", "nec", "sor", "bar", "dru", "ass", "war", "skilltab", "skilltab-war", "fireskill"]),
+    (45, ["skill", "skill-rand"]),
+    # Tier 8: Low-Priority Flat Defense, Thorns, Stamina & Flavor (Ranks 46-50)
+    (46, ["ac", "ac-miss", "ac-hth"]),
+    (47, ["thorns", "thorns/lvl", "light-thorns"]),
+    (48, ["stam", "stam/lvl", "regen-stam", "regen-stam/lvl", "stamdrain"]),
+    (49, ["light"]),
+    (50, ["bloody"]),
+]
+
+AFFIX_PRIORITY_RANK: Dict[str, int] = {
+    code: rank
+    for rank, codes in _AFFIX_PRIORITY_TIERS
+    for code in codes
 }
 
 
@@ -199,17 +427,141 @@ def _make_row_str(
     return "\t".join(arr)
 
 
+def _extract_and_consolidate_props(
+    row: Dict[str, str],
+    max_p: int,
+) -> List[Tuple[int, int, str, str, float, float]]:
+    """
+    Extract raw properties from prop1..prop{max_p}, consolidate split damage columns
+    (fire-min/max -> dmg-fire, ltng-min/max -> dmg-ltng, cold-min/max/len -> dmg-cold,
+    pois-min/max/len -> dmg-pois, dmg-min+dmg-max -> dmg-norm), merge duplicate (pcode, ppar)
+    entries, filter out non-distillable or penalty stats, and return sorted candidate list:
+      [(priority_rank, first_col_idx, pcode, ppar, v_min, v_max), ...]
+    """
+    split_parts: Dict[str, Tuple[int, float, float]] = {}
+    raw_entries: List[Tuple[int, str, str, float, float]] = []
+
+    SPLIT_KEYS = {
+        "fire-min", "fire-max",
+        "ltng-min", "ltng-max",
+        "cold-min", "cold-max", "cold-len",
+        "pois-min", "pois-max", "pois-len",
+    }
+
+    has_dmg_min = any(row.get(f"prop{i}", "").strip() == "dmg-min" for i in range(1, max_p + 1))
+    has_dmg_max = any(row.get(f"prop{i}", "").strip() == "dmg-max" for i in range(1, max_p + 1))
+    consolidate_phys = has_dmg_min and has_dmg_max
+
+    for i in range(1, max_p + 1):
+        pcode = row.get(f"prop{i}", "").strip()
+        if not pcode or pcode in NON_DISTILLABLE_PROPS:
+            continue
+        if pcode.endswith("-Affix1") or pcode.endswith("-Affix2") or pcode.endswith("-Affix3") or pcode.endswith("-Affix4") or pcode.endswith("-Affix5") or pcode.endswith("-Affix6"):
+            continue
+        ppar = row.get(f"par{i}", "").strip()
+        pmin = row.get(f"min{i}", "").strip()
+        pmax = row.get(f"max{i}", "").strip()
+
+        if pcode in PER_LEVEL_PROPS:
+            try:
+                par_v = float(ppar) if ppar else float(pmin)
+            except ValueError:
+                continue
+            if par_v <= 0:
+                continue
+            raw_entries.append((i, pcode, "", par_v, par_v))
+            continue
+
+        try:
+            v_min = float(pmin) if pmin else 0.0
+            v_max = float(pmax) if pmax else v_min
+        except ValueError:
+            continue
+
+        if pcode in SPLIT_KEYS or (consolidate_phys and pcode in ("dmg-min", "dmg-max")):
+            if pcode in split_parts:
+                old_idx, old_mn, old_mx = split_parts[pcode]
+                split_parts[pcode] = (old_idx, old_mn + v_min, old_mx + v_max)
+            else:
+                split_parts[pcode] = (i, v_min, v_max)
+            continue
+
+        if pcode in ("dmg%", "ignore-ac"):
+            ppar = ""
+
+        raw_entries.append((i, pcode, ppar, v_min, v_max))
+
+    # Consolidate split elemental & physical damage components
+    if "fire-min" in split_parts or "fire-max" in split_parts:
+        idx = min(split_parts[k][0] for k in ("fire-min", "fire-max") if k in split_parts)
+        mn = (split_parts["fire-min"][1] + split_parts["fire-min"][2]) / 2.0 if "fire-min" in split_parts else 1.0
+        mx = (split_parts["fire-max"][1] + split_parts["fire-max"][2]) / 2.0 if "fire-max" in split_parts else mn
+        raw_entries.append((idx, "dmg-fire", "", mn, max(mn, mx)))
+
+    if "ltng-min" in split_parts or "ltng-max" in split_parts:
+        idx = min(split_parts[k][0] for k in ("ltng-min", "ltng-max") if k in split_parts)
+        mn = (split_parts["ltng-min"][1] + split_parts["ltng-min"][2]) / 2.0 if "ltng-min" in split_parts else 1.0
+        mx = (split_parts["ltng-max"][1] + split_parts["ltng-max"][2]) / 2.0 if "ltng-max" in split_parts else mn
+        raw_entries.append((idx, "dmg-ltng", "", mn, max(mn, mx)))
+
+    if "cold-min" in split_parts or "cold-max" in split_parts:
+        idx = min(split_parts[k][0] for k in ("cold-min", "cold-max") if k in split_parts)
+        mn = (split_parts["cold-min"][1] + split_parts["cold-min"][2]) / 2.0 if "cold-min" in split_parts else 1.0
+        mx = (split_parts["cold-max"][1] + split_parts["cold-max"][2]) / 2.0 if "cold-max" in split_parts else mn
+        clen = str(max(25, int(round((split_parts["cold-len"][1] + split_parts["cold-len"][2]) / 2.0)))) if "cold-len" in split_parts else "50"
+        raw_entries.append((idx, "dmg-cold", clen, mn, max(mn, mx)))
+
+    if "pois-min" in split_parts or "pois-max" in split_parts:
+        idx = min(split_parts[k][0] for k in ("pois-min", "pois-max") if k in split_parts)
+        mn = (split_parts["pois-min"][1] + split_parts["pois-min"][2]) / 2.0 if "pois-min" in split_parts else 1.0
+        mx = (split_parts["pois-max"][1] + split_parts["pois-max"][2]) / 2.0 if "pois-max" in split_parts else mn
+        plen = str(max(25, int(round((split_parts["pois-len"][1] + split_parts["pois-len"][2]) / 2.0)))) if "pois-len" in split_parts else "50"
+        raw_entries.append((idx, "dmg-pois", plen, mn, max(mn, mx)))
+
+    if consolidate_phys and ("dmg-min" in split_parts or "dmg-max" in split_parts):
+        idx = min(split_parts[k][0] for k in ("dmg-min", "dmg-max") if k in split_parts)
+        mn = (split_parts["dmg-min"][1] + split_parts["dmg-min"][2]) / 2.0
+        mx = (split_parts["dmg-max"][1] + split_parts["dmg-max"][2]) / 2.0
+        raw_entries.append((idx, "dmg-norm", "", mn, max(mn, mx)))
+
+    # Merge duplicate (pcode, ppar) on the same item
+    merged: Dict[Tuple[str, str], Tuple[int, float, float]] = {}
+    for idx, pcode, ppar, v_min, v_max in raw_entries:
+        key = (pcode, ppar)
+        if key in merged:
+            old_idx, old_mn, old_mx = merged[key]
+            merged[key] = (min(old_idx, idx), old_mn + v_min, old_mx + v_max)
+        else:
+            merged[key] = (idx, v_min, v_max)
+
+    candidates: List[Tuple[int, int, str, str, float, float]] = []
+    for (pcode, ppar), (idx, v_min, v_max) in merged.items():
+        stat_val = (v_min + v_max) / 2.0
+        if pcode in ("ease", "dmg-ac"):
+            # Negative values are beneficial for ease (Requirements -%) and dmg-ac (-Monster Defense per Hit)
+            if stat_val >= 0:
+                continue
+        else:
+            if stat_val <= 0:
+                continue
+
+        rank = AFFIX_PRIORITY_RANK.get(pcode, 99)
+        candidates.append((rank, idx, pcode, ppar, v_min, v_max))
+
+    candidates.sort(key=lambda x: (x[0], x[1]))
+    return candidates
+
+
 def _build_distillation_rows(
     num_cols: int,
     col_idx: Dict[str, int],
 ) -> List[str]:
     """
     Generate Unique, Set & Unique Charm -> Crafted Jewel Distillation recipes:
-    - Supports both 3-input (Unique/Set + Blacksmith's Malus bml + Jewel jew)
-      and 2-input (Unique/Set + Blacksmith's Malus bml)
+    - Strictly requires 3 inputs: Unique/Set item + Blacksmith's Malus (bml) + Magic Jewel ("jew,mag")
     - Also emits base-code fallback ("<code>,uni" / "<code>,set") for all single-item base codes
     - output  = "jew,crf" with lvl=1 (below minimum jewel affix level=2 -> zero random magic affixes!)
-    - mod 1..4 = Top 4 distillable properties scaled by 0.50 * (lvl / 100)
+    - mod 1..4 = Top 4 priority distillable properties scaled by 0.50 * (lvl / 100)
     - mod 5    = levelreq set from the Unique/Set item's lvl req
     """
     out_lines: List[str] = []
@@ -235,7 +587,11 @@ def _build_distillation_rows(
                 continue
             if row.get("disabled") == "1" or row.get("spawnable") == "0":
                 continue
-            if qual_tag == "set" and int(row.get("lvl") or "1") >= 100:
+            raw_lvl = int(row.get("lvl") or "0")
+            if raw_lvl <= 0:
+                # Exclude Act Quest items (lvl=0) from distillation
+                continue
+            if qual_tag == "set" and raw_lvl >= 100:
                 continue
             bcode = row.get(code_col, "").strip()
             if bcode:
@@ -247,38 +603,45 @@ def _build_distillation_rows(
             bcode = row.get(code_col, "").strip()
             lvl = max(1, int(row.get("lvl") or "1"))
             lvl_req = max(1, int(row.get("lvl req") or str(lvl)))
+            eff_lvl = min(100, max(lvl, lvl_req))
+            # Flatter scaling curve (20% at eff_lvl=0 -> 40% at eff_lvl=100) clamped by DISTILL_AFFIX_CAPS
+            scale_factor = 0.20 + 0.20 * (eff_lvl / 100.0)
+            binary_scale = 0.50 * (eff_lvl / 100.0)
             distilled_mods: List[Tuple[str, str, str, str, str]] = []  # (code, chance, param, min, max)
 
-            for i in range(1, max_p + 1):
-                pcode = row.get(f"prop{i}", "").strip()
-                if not pcode or pcode in NON_DISTILLABLE_PROPS:
-                    continue
-                ppar = row.get(f"par{i}", "").strip()
-                pmin = row.get(f"min{i}", "").strip()
-                pmax = row.get(f"max{i}", "").strip()
-                try:
-                    v_min = int(pmin) if pmin else 0
-                    v_max = int(pmax) if pmax else v_min
-                except ValueError:
-                    continue
+            candidates = _extract_and_consolidate_props(row, max_p)
+            for _rank, _idx, pcode, ppar, v_min, v_max in candidates[:4]:
                 stat_val = (v_min + v_max) / 2.0
-                if stat_val <= 0:
-                    continue
-                scaled = stat_val * 0.50 * (lvl / 100.0)
-                if pcode in BINARY_OR_SKILL_PROPS or scaled < 1.0:
-                    chance = max(1, int(round(scaled * 100)))
+                c_min, c_max = DISTILL_AFFIX_CAPS.get(pcode, (1, 100))
+
+                if pcode in BINARY_OR_SKILL_PROPS:
+                    chance = max(1, int(round(stat_val * binary_scale * 100)))
                     if pcode == "allskills":
                         chance = min(8, chance)
-                    elif pcode in BINARY_OR_SKILL_PROPS:
-                        chance = min(15, chance)
                     else:
-                        chance = min(95, chance)
+                        chance = min(15, chance)
                     distilled_mods.append((pcode, str(chance), ppar, "1", "1"))
+                elif pcode in PER_LEVEL_PROPS:
+                    scaled_par = int(round(stat_val * scale_factor))
+                    clamped_par = max(c_min, min(c_max, scaled_par))
+                    distilled_mods.append((pcode, "100", str(clamped_par), "", ""))
+                elif pcode in ("ease", "dmg-ac"):
+                    neg_val = -max(1, int(round(abs(stat_val) * scale_factor)))
+                    clamped_neg = max(c_min, min(c_max, neg_val))
+                    distilled_mods.append((pcode, "100", ppar, str(clamped_neg), str(clamped_neg)))
+                elif pcode in RANGE_DAMAGE_PROPS:
+                    if pcode == "dmg-ltng" and int(round(v_min)) == 1:
+                        s_min = 1
+                    else:
+                        s_min = max(c_min, min(c_max, int(round(v_min * scale_factor))))
+                    s_max = max(s_min, min(c_max, int(round(v_max * scale_factor))))
+                    if pcode in ("dmg-cold", "dmg-pois", "dmg-elem") and not ppar:
+                        ppar = "50"
+                    distilled_mods.append((pcode, "100", ppar, str(s_min), str(s_max)))
                 else:
-                    val_str = str(max(1, int(round(scaled))))
-                    distilled_mods.append((pcode, "100", ppar, val_str, val_str))
-                if len(distilled_mods) >= 4:
-                    break
+                    raw_scaled = int(round(stat_val * scale_factor))
+                    clamped_val = max(c_min, min(c_max, raw_scaled))
+                    distilled_mods.append((pcode, "100", ppar, str(clamped_val), str(clamped_val)))
 
             if not distilled_mods:
                 continue

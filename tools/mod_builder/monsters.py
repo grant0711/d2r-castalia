@@ -75,6 +75,126 @@ UMON_REPLACEMENTS = {
 
 FIXED_SKIP_ZONE_IDS = {"0", "1", "40", "75", "103", "109", "120", "133", "134", "135", "136"}
 
+# 4-Tier Zone Density Matrix (Strictly <= 1.0x Vanilla MonDen)
+# Tier 1 (1.00x Vanilla): High-density swarm jungles, bug tunnels & siege battlefields
+ZONE_DENSITY_TIER_1_SWARM = {
+    # Act 1
+    "Act 1 - Wilderness 3",         # Stony Field
+    "Act 1 - Cave 3",               # Underground Passage Level 1
+    "Act 1 - Cave 3 Treasure",      # Underground Passage Level 2
+    "Act 1 - Cave 5",               # Pit Level 1
+    "Act 1 - Cave 5 Treasure",      # Pit Level 2
+    # Act 2
+    "Act 2 - Desert 3",             # Far Oasis
+    "Act 2 - Lair 1 A",             # Maggot Lair Level 1
+    "Act 2 - Lair 1 B",             # Maggot Lair Level 2
+    "Act 2 - Lair 1 Treasure",      # Maggot Lair Level 3
+    # Act 3
+    "Act 3 - Jungle 1",             # Spider Forest
+    "Act 3 - Jungle 2",             # Great Marsh
+    "Act 3 - Jungle 3",             # Flayer Jungle
+    "Act 3 - Spider 1",             # Arachnid Lair
+    "Act 3 - Spider 2",             # Spider Cavern
+    "Act 3 - Dungeon 1 A",          # Swampy Pit Level 1
+    "Act 3 - Dungeon 1 B",          # Swampy Pit Level 2
+    "Act 3 - Dungeon 1 Treasure",   # Swampy Pit Level 3
+    "Act 3 - Dungeon 2 A",          # Flayer Dungeon Level 1
+    "Act 3 - Dungeon 2 B",          # Flayer Dungeon Level 2
+    "Act 3 - Dungeon 2 Treasure",   # Flayer Dungeon Level 3
+    # Act 5
+    "Act 5 - Siege 1",              # Bloody Foothills
+    "Act 5 - Barricade 1",          # Frigid Highlands
+    "Act 5 - Barricade 2",          # Arreat Plateau
+}
+
+# Tier 2 (0.75x Vanilla): Standard tactical wilderness, barracks, deserts, Kurast & WSK
+ZONE_DENSITY_TIER_2_TACTICAL = {
+    # Act 1
+    "Act 1 - Wilderness 1",         # Blood Moor
+    "Act 1 - Wilderness 4",         # Dark Wood
+    "Act 1 - Wilderness 5",         # Black Marsh
+    "Act 1 - Wilderness 6",         # Tamoe Highland
+    "Act 1 - Barracks",             # Barracks
+    "Act 1 - Jail 1",               # Jail Level 1
+    "Act 1 - Jail 2",               # Jail Level 2
+    "Act 1 - Jail 3",               # Jail Level 3
+    "Act 1 - Catacombs 1",          # Catacombs Level 1
+    "Act 1 - Catacombs 2",          # Catacombs Level 2
+    "Act 1 - Catacombs 3",          # Catacombs Level 3
+    "Act 1 - Tristram",             # Tristram
+    # Act 2
+    "Act 2 - Desert 1",             # Rocky Waste
+    "Act 2 - Desert 2",             # Dry Hills
+    "Act 2 - Desert 4",             # Lost City
+    "Act 2 - Desert 5",             # Valley of Snakes
+    "Act 2 - Valley of the Kings",  # Canyon of the Magi
+    "Act 2 - Arcane",               # Arcane Sanctuary
+    # Act 3
+    "Act 3 - Kurast 1",             # Lower Kurast
+    "Act 3 - Kurast 2",             # Kurast Bazaar
+    "Act 3 - Kurast 3",             # Upper Kurast
+    "Act 3 - Kurast 4",             # Kurast Causeway
+    "Act 3 - Travincal",            # Travincal
+    # Act 4
+    "Act 4 - Mesa 1",               # Outer Steppes
+    "Act 4 - Mesa 3",               # City of the Damned
+    "Act 4 - Lava 1",               # River of Flame
+    # Act 5
+    "Act 5 - Barricade Snow",       # Frozen Tundra
+    "Act 5 - Ice Cave 1",           # Crystalline Passage
+    "Act 5 - Ice Cave 1A",          # Frozen River
+    "Act 5 - Ice Cave 2",           # Glacial Trail
+    "Act 5 - Ice Cave 3",           # The Ancients' Way
+    "Act 5 - Baal Temple 1",        # Worldstone Keep Level 1
+    "Act 5 - Baal Temple 2",        # Worldstone Keep Level 2
+    "Act 5 - Baal Temple 3",        # Worldstone Keep Level 3
+    "Act 5 - Throne Room",          # Throne of Destruction
+}
+
+# Tier 3 (0.66x Vanilla): Dense tomb chambers, cellars & viper temples
+ZONE_DENSITY_TIER_3_TOMB = {
+    # Act 1
+    "Act 1 - Crypt 3 A",            # Tower Cellar Level 1
+    "Act 1 - Crypt 3 B",            # Tower Cellar Level 2
+    "Act 1 - Crypt 3 C",            # Tower Cellar Level 3
+    "Act 1 - Crypt 3 D",            # Tower Cellar Level 4
+    "Act 1 - Crypt 3 E",            # Tower Cellar Level 5
+    # Act 2
+    "Act 2 - Corrupt Harem 1",      # Harem Level 2
+    "Act 2 - Basement 1",           # Palace Cellar Level 1
+    "Act 2 - Basement 2",           # Palace Cellar Level 2
+    "Act 2 - Basement 3",           # Palace Cellar Level 3
+    "Act 2 - Tomb 1 A",             # Stony Tomb Level 1
+    "Act 2 - Tomb 1 Treasure",      # Stony Tomb Level 2
+    "Act 2 - Tomb 2 A",             # Halls of the Dead Level 1
+    "Act 2 - Tomb 2 B",             # Halls of the Dead Level 2
+    "Act 2 - Tomb 2 Treasure",      # Halls of the Dead Level 3
+    "Act 2 - Tomb 3 A",             # Claw Viper Temple Level 1
+    "Act 2 - Tomb 3 Treasure",      # Claw Viper Temple Level 2
+    "Act 2 - Tomb Tal 1",           # Tal Rasha's Tomb 1
+    "Act 2 - Tomb Tal 2",           # Tal Rasha's Tomb 2
+    "Act 2 - Tomb Tal 3",           # Tal Rasha's Tomb 3
+    "Act 2 - Tomb Tal 4",           # Tal Rasha's Tomb 4
+    "Act 2 - Tomb Tal 5",           # Tal Rasha's Tomb 5
+    "Act 2 - Tomb Tal 6",           # Tal Rasha's Tomb 6
+    "Act 2 - Tomb Tal 7",           # Tal Rasha's Tomb 7
+    # Act 3
+    "Act 3 - Sewer 1",              # Kurast Sewers Level 1
+    "Act 3 - Sewer 2",              # Kurast Sewers Level 2
+}
+
+
+def get_zone_density_multiplier(zone_name: str) -> float:
+    if zone_name in ZONE_DENSITY_TIER_1_SWARM:
+        return 1.00
+    if zone_name in ZONE_DENSITY_TIER_2_TACTICAL:
+        return 0.75
+    if zone_name in ZONE_DENSITY_TIER_3_TOMB:
+        return 0.66
+    # Tier 4 (0.50x Vanilla): Sparse Dread / Juggernaut zones (Mausoleum, Crypt, Cold Plains,
+    # Durance of Hate, Kurast Temples, Chaos Sanctuary, Nihlathak Halls, Abaddon/Acheron/Infernal Pit, etc.)
+    return 0.50
+
 
 def build_levels(cfg: dict) -> str:
     headers, rows = read_tsv("levels.txt")
@@ -84,19 +204,27 @@ def build_levels(cfg: dict) -> str:
         if not name or name == "Expansion" or zid in FIXED_SKIP_ZONE_IDS:
             continue
 
+        # Strictly 1 Random Unique Boss Pack per combat zone (including preset floors like Swampy Pit 3)
+        for u_col in ("MonUMin", "MonUMax", "MonUMin(N)", "MonUMax(N)", "MonUMin(H)", "MonUMax(H)"):
+            if parse_int(row.get(u_col, "")) > 0:
+                row[u_col] = "1"
+
         monden_n = parse_int(row.get("MonDen(N)", ""))
-        if monden_n <= 0:
+        if monden_n <= 0 and not row.get("mon1", "").strip():
             continue
 
-        # Special handling for Moo Moo Farm (keep 1 monster: hellbovine)
+        tier_mult = get_zone_density_multiplier(name)
+
+        # Special handling for Moo Moo Farm (keep 1 monster: hellbovine, Tier 4 0.50x density)
         if name == "Act 1 - Moo Moo Farm":
             row["NumMon"] = "1"
             for d_col in ("MonDen", "MonDen(N)", "MonDen(H)"):
                 val = parse_int(row.get(d_col, ""))
                 if val > 0:
-                    row[d_col] = str(max(240, int(round(val * 0.45))))
+                    row[d_col] = str(max(1, int(round(val * tier_mult))))
             for u_col in ("MonUMin", "MonUMax", "MonUMin(N)", "MonUMax(N)", "MonUMin(H)", "MonUMax(H)"):
-                row[u_col] = "1"
+                if parse_int(row.get(u_col, "")) > 0:
+                    row[u_col] = "1"
             continue
 
         # 1. Deterministic 3-monster roster across Normal, Nightmare, and Hell (No Guest Soup)
@@ -130,17 +258,15 @@ def build_levels(cfg: dict) -> str:
                     row[f"nmon{i}"] = ""
                     row[f"umon{i}"] = ""
 
-        # 2. Scale Monster Density (~0.42x) for tactical solo pacing
+        # 2. Scale Monster Density by 4-Tier Matrix (1.00x / 0.75x / 0.66x / 0.50x, never exceeding vanilla)
         for d_col in ("MonDen", "MonDen(N)", "MonDen(H)"):
             val = parse_int(row.get(d_col, ""))
             if val > 0:
-                row[d_col] = str(max(180, int(round(val * 0.42))))
-            elif d_col == "MonDen" and name == "Act 5 - Siege 1":
-                row[d_col] = "270"
+                row[d_col] = str(max(1, int(round(val * tier_mult))))
 
         # 3. Strictly 1 Random Unique Boss Pack per combat zone
         for u_col in ("MonUMin", "MonUMax", "MonUMin(N)", "MonUMax(N)", "MonUMin(H)", "MonUMax(H)"):
-            if parse_int(row.get(u_col, "")) > 0 or name == "Act 5 - Siege 1":
+            if parse_int(row.get(u_col, "")) > 0:
                 row[u_col] = "1"
 
     return write_tsv("levels.txt", headers, rows)
@@ -151,8 +277,9 @@ def build_levels(cfg: dict) -> str:
 # ============================================================================
 
 HEAVY_BRUTE_BASES = {
-    "brute2", "blunderbore1", "thornhulk1", "regurgitator1",
-    "megademon1", "siegebeast1", "snowyeti1", "frozenhorror1", "hellbovine",
+    "zombie1", "brute2", "mummy1", "blunderbore1", "thornhulk1",
+    "regurgitator1", "megademon1", "reanimatedhorde1", "siegebeast1",
+    "snowyeti1", "frozenhorror1", "bloodlord1", "hellbovine",
 }
 
 SWARMER_BASES = {
@@ -850,36 +977,53 @@ def build_monstats(cfg: dict) -> str:
             ):
                 row[c] = ""
 
-        # Classify into 4 Archetypes
+        # Classify into 4 Archetypes (strictly clamping group/party sizes to never exceed vanilla)
+        van_min_grp = parse_int(row.get("MinGrp", ""), 1)
+        van_max_grp = parse_int(row.get("MaxGrp", ""), 1)
+        van_p_min = parse_int(row.get("PartyMin", ""), 0)
+        van_p_max = parse_int(row.get("PartyMax", ""), 0)
+
         if base_id in HEAVY_BRUTE_BASES:
-            row["MinGrp"], row["MaxGrp"] = "1", "2"
-            if parse_int(row.get("PartyMin", "")) > 0:
-                row["PartyMin"], row["PartyMax"] = "1", "1"
+            if row.get("MinGrp", ""):
+                row["MinGrp"] = str(min(van_min_grp, 1))
+            if row.get("MaxGrp", ""):
+                row["MaxGrp"] = str(min(van_max_grp, 2))
+            if van_p_min > 0:
+                row["PartyMin"] = str(min(van_p_min, 1))
+                row["PartyMax"] = str(min(van_p_max, 1))
             row["Velocity"] = str(max(3, vel - 1))
-            row["Crit"] = "12"
-            hp_mult, dmg_mult, ar_mult = 2.80, 1.50, 1.35
+            row["Crit"] = "15"
+            hp_mult, dmg_mult, ar_mult = 3.40, 1.70, 1.50
         elif base_id in SWARMER_BASES:
-            row["MinGrp"], row["MaxGrp"] = "3", "5"
-            if parse_int(row.get("PartyMin", "")) > 0:
-                row["PartyMin"], row["PartyMax"] = "2", "3"
-            row["Velocity"] = str(min(15, vel + 1))
+            # Preserve 100% vanilla MinGrp, MaxGrp, PartyMin, PartyMax so swarm packs match vanilla count
+            row["Velocity"] = str(min(15, vel + 2))
             if parse_int(row.get("Run", "")) > 0:
-                row["Run"] = str(min(18, parse_int(row["Run"]) + 1))
+                row["Run"] = str(min(18, parse_int(row["Run"]) + 2))
             row["Crit"] = "10"
-            hp_mult, dmg_mult, ar_mult = 1.85, 1.30, 1.30
+            hp_mult, dmg_mult, ar_mult = 1.30, 1.20, 1.25
         elif base_id in ARCANE_CASTER_BASES:
-            row["MinGrp"], row["MaxGrp"] = "1", "2"
-            if parse_int(row.get("PartyMin", "")) > 0:
-                row["PartyMin"], row["PartyMax"] = "2", "3"
-            row["Crit"] = "10"
-            hp_mult, dmg_mult, ar_mult = 2.10, 1.45, 1.35
+            # Preserve full vanilla Shaman minion retinues on Fallen/Fetish Shamans; cap other casters
+            if base_id not in ("fallenshaman1", "fetishshaman1"):
+                if row.get("MinGrp", ""):
+                    row["MinGrp"] = str(min(van_min_grp, 2))
+                if row.get("MaxGrp", ""):
+                    row["MaxGrp"] = str(min(van_max_grp, 3))
+                if van_p_min > 0:
+                    row["PartyMin"] = str(min(van_p_min, 2))
+                    row["PartyMax"] = str(min(van_p_max, 3))
+            row["Crit"] = "12"
+            hp_mult, dmg_mult, ar_mult = 2.15, 1.50, 1.35
         else:
             # Elite Infantry
-            row["MinGrp"], row["MaxGrp"] = "2", "3"
-            if parse_int(row.get("PartyMin", "")) > 0:
-                row["PartyMin"], row["PartyMax"] = "1", "2"
+            if row.get("MinGrp", ""):
+                row["MinGrp"] = str(min(van_min_grp, 2))
+            if row.get("MaxGrp", ""):
+                row["MaxGrp"] = str(min(van_max_grp, 4))
+            if van_p_min > 0:
+                row["PartyMin"] = str(min(van_p_min, 1))
+                row["PartyMax"] = str(min(van_p_max, 2))
             row["Crit"] = "12"
-            hp_mult, dmg_mult, ar_mult = 2.40, 1.40, 1.40
+            hp_mult, dmg_mult, ar_mult = 2.50, 1.45, 1.40
 
         # Dedicated SuperUnique monster classes (Council Members, Infector/Seis/Vizier,
         # Shenk, Pindleskin, Frozenstein, etc.) get heightened Crit, off-screen aggro, and skill levels

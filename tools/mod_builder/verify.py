@@ -463,6 +463,69 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"monstats.txt ({mid}): expected progressive off-screen aidist (28 <= {ad_n} < {ad_nm} < {ad_h})"
                 )
+    _, van_mon_rows = read_excel_tsv("monstats.txt")
+    van_mon_by_id = {r["Id"]: r for r in van_mon_rows if r.get("Id")}
+    for r in mon_rows:
+        mid = r.get("Id", "").strip()
+        if (
+            r.get("isSpawn") != "1"
+            or r.get("killable") != "1"
+            or r.get("Align") != ""
+            or r.get("boss") == "1"
+            or r.get("primeevil") == "1"
+            or int(r.get("Velocity") or "0") <= 0
+        ):
+            continue
+        vr = van_mon_by_id.get(mid)
+        if not vr:
+            continue
+        for gcol in ("MinGrp", "MaxGrp", "PartyMin", "PartyMax"):
+            mv = int(r.get(gcol) or "0")
+            vv = int(vr.get(gcol) or "0")
+            if mv > vv:
+                raise AssertionError(
+                    f"monstats.txt ({mid}): {gcol}={mv} exceeds vanilla {vv} (group sizes must never exceed vanilla)"
+                )
+        for hcol in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
+            mh = int(r.get(hcol) or "0")
+            vh = int(vr.get(hcol) or "0")
+            if vh > 0 and mh <= vh:
+                raise AssertionError(
+                    f"monstats.txt ({mid}): {hcol}={mh} is not strictly greater than vanilla {vh}"
+                )
+        if int(r.get("Crit") or "0") < 10:
+            raise AssertionError(f"monstats.txt ({mid}): Crit={r.get('Crit')} must be >= 10")
+
+    from mod_builder.monsters import FIXED_SKIP_ZONE_IDS
+    _, van_lvl_rows = read_excel_tsv("levels.txt")
+    van_lvl_by_name = {r["Name"]: r for r in van_lvl_rows if r.get("Name")}
+    _, mod_lvl_rows = _read_mod_tsv("levels.txt")
+    mod_lvl_by_name = {r["Name"]: r for r in mod_lvl_rows if r.get("Name")}
+    for r in mod_lvl_rows:
+        lname = r.get("Name", "")
+        zid = r.get("Id", "")
+        if not lname or lname == "Expansion" or zid in FIXED_SKIP_ZONE_IDS:
+            continue
+        vr = van_lvl_by_name.get(lname)
+        if not vr:
+            continue
+        for dcol in ("MonDen", "MonDen(N)", "MonDen(H)"):
+            md = int(r.get(dcol) or "0")
+            vd = int(vr.get(dcol) or "0")
+            if md > vd:
+                raise AssertionError(
+                    f"levels.txt ({lname}): {dcol}={md} exceeds vanilla {vd} (zone density must never exceed vanilla)"
+                )
+        for ucol in ("MonUMin", "MonUMax", "MonUMin(N)", "MonUMax(N)", "MonUMin(H)", "MonUMax(H)"):
+            mu = int(r.get(ucol) or "0")
+            if mu > 1:
+                raise AssertionError(f"levels.txt ({lname}): {ucol}={mu} must be <= 1")
+    if int(mod_lvl_by_name["Act 1 - Crypt 2 A"].get("MonDen") or "0") < 260:
+        raise AssertionError("levels.txt (Act 1 - Crypt 2 A / Mausoleum): MonDen decreased below 260")
+    if mod_lvl_by_name["Act 1 - Wilderness 1"].get("MonDen") != str(int(round(int(van_lvl_by_name["Act 1 - Wilderness 1"]["MonDen"]) * 0.75))):
+        raise AssertionError("levels.txt (Act 1 - Wilderness 1 / Blood Moor): expected Tier 2 (0.75x vanilla) MonDen")
+    if mod_lvl_by_name["Act 3 - Jungle 3"].get("MonDen") != van_lvl_by_name["Act 3 - Jungle 3"]["MonDen"]:
+        raise AssertionError("levels.txt (Act 3 - Jungle 3 / Flayer Jungle): expected Tier 1 (1.00x vanilla) MonDen")
     _, umod_rows = _read_mod_tsv("monumod.txt")
     umod_consts = {r.get("id", "").strip(): int(r.get("constants") or "0") for r in umod_rows if r.get("id")}
     if not (umod_consts.get("1", 0) < umod_consts.get("2", 0) < umod_consts.get("3", 0)):

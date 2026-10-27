@@ -41,14 +41,14 @@ def scale_int(val: str, mult: float, min_val: int = 1) -> str:
 # 1. LEVELS.TXT — Deterministic 3-Monster Rosters, Density & Boss Packs
 # ============================================================================
 
-# Curated 3-monster rosters for Act 2 Open Desert (Zero Poison, Zero Maggots, Zero Zombies)
+# Curated rosters for Act 2 Open Desert (Zero Poison, Zero Maggots, Zero Zombies in open desert)
 CURATED_ZONE_ROSTERS = {
-    "Act 2 - Desert 1": ["vulture1", "sandleaper1", "slinger1"],          # Rocky Waste
-    "Act 2 - Desert 2": ["vulture2", "pantherwoman1", "slinger5"],        # Dry Hills
-    "Act 2 - Desert 3": ["swarm1", "vulture2", "scarab2"],                # Far Oasis
-    "Act 2 - Desert 4": ["sandraider2", "pantherwoman3", "slinger2"],     # Lost City
-    "Act 2 - Desert 5": ["sandleaper3", "scarab4", "pantherwoman4"],      # Canyon of the Magi
-    "Act 2 - Sewer 1 B": ["skeleton5", "mummy2", "zombie5"],              # Move Plague Bearer into Sewers
+    "Act 2 - Desert 1": ["sandleaper1", "pantherwoman1", "scarab1", "vulture1", "slinger1"],  # Rocky Waste
+    "Act 2 - Desert 2": ["sandleaper2", "pantherwoman2", "vulture2", "slinger5"],             # Dry Hills
+    "Act 2 - Desert 3": ["crownest3", "swarm1", "scarab2", "vulture2"],                       # Far Oasis (no sandmaggot1)
+    "Act 2 - Desert 4": ["sandraider2", "sandleaper3", "pantherwoman3", "slinger6"],          # Lost City (no zombie5)
+    "Act 2 - Valley of the Kings": ["brute4", "pantherwoman4", "scarab4", "slinger4"],        # Canyon of the Magi (no sandmaggot3)
+    "Act 2 - Sewer 1 B": ["skeleton4", "sandraider1", "mummy1", "sk_archer4", "zombie5"],     # Sewers 2 (+Plague Bearer)
 }
 
 # Stationary nest/spawner -> mobile counterpart for umon1..3 (since nests can't spawn as Uniques)
@@ -227,26 +227,15 @@ def build_levels(cfg: dict) -> str:
                     row[u_col] = "1"
             continue
 
-        # 1. Deterministic 3-monster roster across Normal, Nightmare, and Hell (No Guest Soup)
+        # 1. Zone Monster Rosters:
+        #    - Act 2 Open Desert: Curated zero-poison / zero-maggot / zero-zombie desert rosters
+        #    - Act 5: Remove all Nightmare/Hell "Guest" monsters so Act 5 spawns the exact same
+        #      native Act 5 monsters across Normal, Nightmare, and Hell
+        #    - All other Act 1-4 zones: Preserve full vanilla monster rosters (mon, nmon, umon, NumMon)
         if name in CURATED_ZONE_ROSTERS:
             roster = list(CURATED_ZONE_ROSTERS[name])
-        else:
-            seen = []
-            for i in range(1, 26):
-                m = row.get(f"mon{i}", "").strip()
-                if m and m not in seen:
-                    seen.append(m)
-            # If fewer than 3 in mon, pull from nmon
-            for i in range(1, 26):
-                if len(seen) >= 3:
-                    break
-                m = row.get(f"nmon{i}", "").strip()
-                if m and m not in seen:
-                    seen.append(m)
-            roster = seen[:3]
-
-        if roster:
-            row["NumMon"] = str(len(roster))
+            orig_num = parse_int(row.get("NumMon", "3"), 3)
+            row["NumMon"] = str(min(orig_num, len(roster)))
             for i in range(1, 26):
                 if i <= len(roster):
                     m = roster[i - 1]
@@ -257,6 +246,27 @@ def build_levels(cfg: dict) -> str:
                     row[f"mon{i}"] = ""
                     row[f"nmon{i}"] = ""
                     row[f"umon{i}"] = ""
+        elif name.startswith("Act 5 -"):
+            # Strip Act 1 guest monsters from Bloody Foothills (Act 5 - Siege 1) and sync mon -> nmon/umon
+            act5_guest_exclude = {"sk_archer6", "quillrat6", "bighead6"}
+            seen = []
+            for i in range(1, 26):
+                m = row.get(f"mon{i}", "").strip()
+                if m and m not in act5_guest_exclude and m not in seen:
+                    seen.append(m)
+            if seen:
+                orig_num = parse_int(row.get("NumMon", "3"), 3)
+                row["NumMon"] = str(min(orig_num, len(seen)))
+                for i in range(1, 26):
+                    if i <= len(seen):
+                        m = seen[i - 1]
+                        row[f"mon{i}"] = m
+                        row[f"nmon{i}"] = m
+                        row[f"umon{i}"] = UMON_REPLACEMENTS.get(m, m)
+                    else:
+                        row[f"mon{i}"] = ""
+                        row[f"nmon{i}"] = ""
+                        row[f"umon{i}"] = ""
 
         # 2. Scale Monster Density by 4-Tier Matrix (1.00x / 0.75x / 0.66x / 0.50x, never exceeding vanilla)
         for d_col in ("MonDen", "MonDen(N)", "MonDen(H)"):

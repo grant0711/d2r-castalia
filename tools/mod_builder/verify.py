@@ -527,6 +527,13 @@ def verify_all(cfg: dict = None) -> List[str]:
             mu = int(r.get(ucol) or "0")
             if mu > 1:
                 raise AssertionError(f"levels.txt ({lname}): {ucol}={mu} must be <= 1")
+        if lname.startswith("Act 5 -") and int(r.get("MonDen(N)") or "0") > 0:
+            mons = [r.get(f"mon{i}", "") for i in range(1, 26) if r.get(f"mon{i}", "")]
+            nmons = [r.get(f"nmon{i}", "") for i in range(1, 26) if r.get(f"nmon{i}", "")]
+            if mons != nmons:
+                raise AssertionError(f"levels.txt ({lname}): Act 5 mon={mons} != nmon={nmons} (Guest monsters still present)")
+    if "willowisp1" not in {mod_lvl_by_name["Act 3 - Jungle 2"].get(f"mon{i}", "") for i in range(1, 26)}:
+        raise AssertionError("levels.txt (Act 3 - Jungle 2 / Great Marsh): willowisp1 (Gloam) missing from monster roster")
     if int(mod_lvl_by_name["Act 1 - Crypt 2 A"].get("MonDen") or "0") < 260:
         raise AssertionError("levels.txt (Act 1 - Crypt 2 A / Mausoleum): MonDen decreased below 260")
     if mod_lvl_by_name["Act 1 - Wilderness 1"].get("MonDen") != str(int(round(int(van_lvl_by_name["Act 1 - Wilderness 1"]["MonDen"]) * 0.75))):

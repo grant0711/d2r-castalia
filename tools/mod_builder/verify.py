@@ -459,10 +459,11 @@ def verify_all(cfg: dict = None) -> List[str]:
             ad_n = int(r.get("aidist") or "0")
             ad_nm = int(r.get("aidist(N)") or "0")
             ad_h = int(r.get("aidist(H)") or "0")
-            if not (28 <= ad_n < ad_nm < ad_h):
+            if not (42 <= ad_n < ad_nm < ad_h):
                 raise AssertionError(
-                    f"monstats.txt ({mid}): expected progressive off-screen aidist (28 <= {ad_n} < {ad_nm} < {ad_h})"
+                    f"monstats.txt ({mid}): expected progressive off-screen aidist (42 <= {ad_n} < {ad_nm} < {ad_h})"
                 )
+    from mod_builder.monsters import FIXED_SKIP_ZONE_IDS, HEAVY_BRUTE_BASES
     _, van_mon_rows = read_excel_tsv("monstats.txt")
     van_mon_by_id = {r["Id"]: r for r in van_mon_rows if r.get("Id")}
     for r in mon_rows:
@@ -479,6 +480,24 @@ def verify_all(cfg: dict = None) -> List[str]:
         vr = van_mon_by_id.get(mid)
         if not vr:
             continue
+        ad_n = int(r.get("aidist") or "0")
+        ad_nm = int(r.get("aidist(N)") or "0")
+        ad_h = int(r.get("aidist(H)") or "0")
+        if not (38 <= ad_n < ad_nm < ad_h):
+            raise AssertionError(
+                f"monstats.txt ({mid}): aidist ({ad_n}/{ad_nm}/{ad_h}) must be >= 38 (above vanilla's 35-subtile default)"
+            )
+        if r.get("BaseId", "").strip() in HEAVY_BRUTE_BASES and mid not in ("cowking", "darkelder"):
+            m_vel = int(r.get("Velocity") or "0")
+            v_vel = int(vr.get("Velocity") or "0")
+            if m_vel > v_vel:
+                raise AssertionError(
+                    f"monstats.txt ({mid}): Heavy Brute Velocity={m_vel} exceeds vanilla {v_vel}"
+                )
+            if r.get("BaseId", "").strip() == "zombie1" and (m_vel != 1 or int(r.get("Run") or "0") > 2):
+                raise AssertionError(
+                    f"monstats.txt ({mid}): Zombie must remain slow and clunky (Velocity=1, Run<=2)"
+                )
         for gcol in ("MinGrp", "MaxGrp", "PartyMin", "PartyMax"):
             mv = int(r.get(gcol) or "0")
             vv = int(vr.get(gcol) or "0")

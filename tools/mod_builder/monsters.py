@@ -516,7 +516,7 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
     if mon_id == "andariel":
         row["Level"], row["Level(N)"], row["Level(H)"] = "14", "49", "76"
         row["Velocity"], row["Run"] = "9", "9"
-        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "32", "36", "42"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "45", "50", "55"
         row["Crit"] = "25"
         row["Sk1lvl"], row["Sk2lvl"] = "4", "4"
         row["MonProp"] = "andariel"
@@ -550,7 +550,7 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
         row["Level"], row["Level(N)"], row["Level(H)"] = "22", "55", "85"
         # Relentless arena pursuit (Velocity 9 / Run 13) + higher Charge/Jab/Smite/HolyFreeze levels
         row["Velocity"], row["Run"] = "9", "13"
-        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "32", "36", "42"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "45", "50", "55"
         row["Crit"] = "25"
         row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"] = "7", "18", "10", "5"
         row["MonProp"] = "duriel"
@@ -584,7 +584,7 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
     if mon_id == "mephisto":
         row["Level"], row["Level(N)"], row["Level(H)"] = "26", "59", "87"
         row["Velocity"], row["Run"] = "9", "10"
-        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "36", "40", "46"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "45", "50", "55"
         row["Crit"] = "25"
         row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"], row["Sk5lvl"], row["Sk6lvl"] = "8", "8", "9", "8", "4", "8"
         row["MonProp"] = "mephisto"
@@ -613,7 +613,7 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
     if mon_id == "diablo":
         row["Level"], row["Level(N)"], row["Level(H)"] = "32", "63", "92"
         row["Velocity"], row["Run"] = "9", "12"
-        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "34", "38", "44"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "45", "50", "55"
         row["Crit"] = "28"
         row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"], row["Sk5lvl"], row["Sk6lvl"] = "6", "6", "7", "5", "7", "10"
         row["MonProp"] = "diablo"
@@ -647,7 +647,7 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
     if mon_id == "baalcrab":
         row["Level"], row["Level(N)"], row["Level(H)"] = "42", "75", "99"
         row["Velocity"], row["Run"] = "8", "10"
-        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "34", "38", "44"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "45", "50", "55"
         row["Crit"] = "30"
         row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"], row["Sk6lvl"], row["Sk7lvl"] = "4", "4", "4", "4", "5", "5"
         row["MonProp"] = "baalcrab"
@@ -685,7 +685,7 @@ def _configure_baal_wave_monsters(row: dict, mon_id: str) -> bool:
     if mon_id not in ("unraveler5", "baalhighpriest", "venomlord", "baalminion1", "baalminion2", "baalminion3"):
         return False
 
-    row["aidist"], row["aidist(N)"], row["aidist(H)"] = "30", "33", "36"
+    row["aidist"], row["aidist(N)"], row["aidist(H)"] = "42", "46", "50"
     row["Crit"] = "20"
     for col, mult in (("minHP", 2.40), ("maxHP", 2.40), ("MinHP(N)", 2.75), ("MaxHP(N)", 2.75), ("MinHP(H)", 3.10), ("MaxHP(H)", 3.10)):
         row[col] = scale_int(row[col], mult)
@@ -753,7 +753,7 @@ def _configure_quest_superuniques(row: dict, mon_id: str) -> bool:
     if mon_id not in quest_boss_ids:
         return False
 
-    row["aidist"], row["aidist(N)"], row["aidist(H)"] = "30", "34", "38"
+    row["aidist"], row["aidist(N)"], row["aidist(H)"] = "42", "46", "50"
     row["Crit"] = "22"
 
     # Progressive HP multipliers (Normal 2.8x -> Nightmare 3.2x -> Hell 3.6x)
@@ -967,7 +967,7 @@ def build_monstats(cfg: dict) -> str:
         vel = parse_int(row.get("Velocity", "0"))
         if vel <= 0:
             # Stationary nests/spawners: scale HP by 1.5x, XP by 2.4x, and off-screen aggro radius
-            row["aidist"], row["aidist(N)"], row["aidist(H)"] = "22", "25", "28"
+            row["aidist"], row["aidist(N)"], row["aidist(H)"] = "38", "42", "46"
             for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
                 row[col] = scale_int(row[col], 1.50)
             for col in ("Exp", "Exp(N)", "Exp(H)"):
@@ -975,20 +975,24 @@ def build_monstats(cfg: dict) -> str:
             continue
 
         # Progressive Off-Screen AI Aggro Distance (1.1x Normal -> 1.2x Nightmare -> 1.3x Hell
-        # over D2R's default 20-subtile screen radius: 22 / 25 / 28 subtiles)
-        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "22", "25", "28"
+        # over D2R's default 35-subtile AI radius: 38 / 42 / 46 subtiles)
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "38", "42", "46"
         ai_type = row.get("AI", "").strip()
         ai_dist_col = {
             "Zombie": "aip2",
             "Mummy": "aip1",
             "QuillRat": "aip1",
             "Vampire": "aip3",
+            "ElementalBeast": "aip2",
+            "FrogDemon": "aip8",
+            "Tentacle": "aip6",
+            "TentacleHead": "aip6",
         }.get(ai_type)
         if ai_dist_col:
-            for sfx, mult in (("", 1.10), ("(N)", 1.20), ("(H)", 1.30)):
+            for sfx, mult, floor_v in (("", 1.15, 35), ("(N)", 1.25, 38), ("(H)", 1.35, 42)):
                 col_name = f"{ai_dist_col}{sfx}"
                 if parse_int(row.get(col_name, "0")) > 0:
-                    row[col_name] = scale_int(row[col_name], mult, min_val=20)
+                    row[col_name] = scale_int(row[col_name], mult, min_val=floor_v)
 
         # Remove Open Desert Poison from Sand Leapers (sandleaper1..3)
         if mon_id in ("sandleaper1", "sandleaper2", "sandleaper3") and row.get("El1Type", "") == "pois":
@@ -1013,7 +1017,10 @@ def build_monstats(cfg: dict) -> str:
             if van_p_min > 0:
                 row["PartyMin"] = str(min(van_p_min, 1))
                 row["PartyMax"] = str(min(van_p_max, 1))
-            row["Velocity"] = str(max(3, vel - 1))
+            # Never increase a Heavy Brute's walk speed above vanilla (keep zombie1..5 at Velocity=1, Run=2)
+            row["Velocity"] = str(min(vel, max(1, vel - 1)))
+            if base_id == "zombie1" and parse_int(row.get("Run", "0")) > 0:
+                row["Run"] = str(min(parse_int(row["Run"]), 2))
             row["Crit"] = "15"
             hp_mult, dmg_mult, ar_mult, sk_bonus = 3.40, 1.70, 1.50, 4
         elif base_id in SWARMER_BASES:
@@ -1062,7 +1069,7 @@ def build_monstats(cfg: dict) -> str:
             "overseer1", "minionspawner1",
         ):
             row["Crit"] = "18"
-            row["aidist"], row["aidist(N)"], row["aidist(H)"] = "28", "32", "36"
+            row["aidist"], row["aidist(N)"], row["aidist(H)"] = "42", "46", "50"
             for i in range(1, 9):
                 sk_lvl = parse_int(row.get(f"Sk{i}lvl", "0"))
                 if sk_lvl > 0:

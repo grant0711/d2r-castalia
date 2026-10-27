@@ -495,6 +495,13 @@ def verify_all(cfg: dict = None) -> List[str]:
                 )
         if int(r.get("Crit") or "0") < 10:
             raise AssertionError(f"monstats.txt ({mid}): Crit={r.get('Crit')} must be >= 10")
+        for s_i in range(1, 9):
+            v_sk = int(vr.get(f"Sk{s_i}lvl") or "0")
+            m_sk = int(r.get(f"Sk{s_i}lvl") or "0")
+            if v_sk > 0 and m_sk < v_sk + 2:
+                raise AssertionError(
+                    f"monstats.txt ({mid}): Sk{s_i}lvl={m_sk} was not boosted by >= +2 over vanilla {v_sk}"
+                )
 
     from mod_builder.monsters import FIXED_SKIP_ZONE_IDS
     _, van_lvl_rows = read_excel_tsv("levels.txt")

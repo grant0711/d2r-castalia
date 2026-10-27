@@ -675,12 +675,19 @@ def _configure_baal_wave_monsters(row: dict, mon_id: str) -> bool:
     for col, mult in (("minHP", 2.40), ("maxHP", 2.40), ("MinHP(N)", 2.75), ("MaxHP(N)", 2.75), ("MinHP(H)", 3.10), ("MaxHP(H)", 3.10)):
         row[col] = scale_int(row[col], mult)
     for col in (
-        "A1MinD", "A1MaxD", "A2MinD", "A2MaxD",
-        "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)",
-        "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)",
+        "A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "S1MinD", "S1MaxD",
+        "El1MinD", "El1MaxD", "El2MinD", "El2MaxD", "El3MinD", "El3MaxD",
+        "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)", "S1MinD(N)", "S1MaxD(N)",
+        "El1MinD(N)", "El1MaxD(N)", "El2MinD(N)", "El2MaxD(N)", "El3MinD(N)", "El3MaxD(N)",
+        "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)", "S1MinD(H)", "S1MaxD(H)",
+        "El1MinD(H)", "El1MaxD(H)", "El2MinD(H)", "El2MaxD(H)", "El3MinD(H)", "El3MaxD(H)",
     ):
         if row.get(col, ""):
             row[col] = scale_int(row[col], 1.60)
+    for i in range(1, 9):
+        sk_lvl = parse_int(row.get(f"Sk{i}lvl", "0"))
+        if sk_lvl > 0:
+            row[f"Sk{i}lvl"] = str(sk_lvl + 6)
     for col in ("AC", "AC(N)", "AC(H)"):
         if row.get(col, ""):
             row[col] = scale_int(row[col], 1.35)
@@ -783,11 +790,11 @@ def _configure_quest_superuniques(row: dict, mon_id: str) -> bool:
     if run_v > 0:
         row["Run"] = str(min(18, run_v + 2))
 
-    # Boost all active boss skills by +2 levels
+    # Boost all active quest boss skills by +6 levels
     for i in range(1, 9):
         sk_lvl = parse_int(row.get(f"Sk{i}lvl", "0"))
         if sk_lvl > 0:
-            row[f"Sk{i}lvl"] = str(sk_lvl + 2)
+            row[f"Sk{i}lvl"] = str(sk_lvl + 6)
 
     if mon_id in (
         "bloodraven", "griswold", "smith", "radament", "maggotqueen1",
@@ -993,14 +1000,14 @@ def build_monstats(cfg: dict) -> str:
                 row["PartyMax"] = str(min(van_p_max, 1))
             row["Velocity"] = str(max(3, vel - 1))
             row["Crit"] = "15"
-            hp_mult, dmg_mult, ar_mult = 3.40, 1.70, 1.50
+            hp_mult, dmg_mult, ar_mult, sk_bonus = 3.40, 1.70, 1.50, 4
         elif base_id in SWARMER_BASES:
             # Preserve 100% vanilla MinGrp, MaxGrp, PartyMin, PartyMax so swarm packs match vanilla count
             row["Velocity"] = str(min(15, vel + 2))
             if parse_int(row.get("Run", "")) > 0:
                 row["Run"] = str(min(18, parse_int(row["Run"]) + 2))
             row["Crit"] = "10"
-            hp_mult, dmg_mult, ar_mult = 1.30, 1.20, 1.25
+            hp_mult, dmg_mult, ar_mult, sk_bonus = 1.30, 1.20, 1.25, 2
         elif base_id in ARCANE_CASTER_BASES:
             # Preserve full vanilla Shaman minion retinues on Fallen/Fetish Shamans; cap other casters
             if base_id not in ("fallenshaman1", "fetishshaman1"):
@@ -1012,7 +1019,7 @@ def build_monstats(cfg: dict) -> str:
                     row["PartyMin"] = str(min(van_p_min, 2))
                     row["PartyMax"] = str(min(van_p_max, 3))
             row["Crit"] = "12"
-            hp_mult, dmg_mult, ar_mult = 2.15, 1.50, 1.35
+            hp_mult, dmg_mult, ar_mult, sk_bonus = 2.15, 1.50, 1.35, 6
         else:
             # Elite Infantry
             if row.get("MinGrp", ""):
@@ -1023,10 +1030,16 @@ def build_monstats(cfg: dict) -> str:
                 row["PartyMin"] = str(min(van_p_min, 1))
                 row["PartyMax"] = str(min(van_p_max, 2))
             row["Crit"] = "12"
-            hp_mult, dmg_mult, ar_mult = 2.50, 1.45, 1.40
+            hp_mult, dmg_mult, ar_mult, sk_bonus = 2.50, 1.45, 1.40, 4
+
+        # Boost monster skill levels by archetype (+2 Swarmers, +4 Infantry/Brutes, +6 Arcane Casters)
+        for i in range(1, 9):
+            sk_lvl = parse_int(row.get(f"Sk{i}lvl", "0"))
+            if sk_lvl > 0:
+                row[f"Sk{i}lvl"] = str(sk_lvl + sk_bonus)
 
         # Dedicated SuperUnique monster classes (Council Members, Infector/Seis/Vizier,
-        # Shenk, Pindleskin, Frozenstein, etc.) get heightened Crit, off-screen aggro, and skill levels
+        # Shenk, Pindleskin, Frozenstein, etc.) get heightened Crit, off-screen aggro, and +2 extra skill levels
         if mon_id in (
             "corruptrogue3", "councilmember1", "councilmember2", "councilmember3",
             "unraveler3", "megademon3", "doomknight3", "fingermage3", "fetishshaman4",
@@ -1053,11 +1066,11 @@ def build_monstats(cfg: dict) -> str:
             if row.get(ac_col, ""):
                 row[ac_col] = scale_int(row[ac_col], ac_mult)
 
-        # Scale Physical, Skill & Elemental Damage progressively across Normal, Nightmare (+8%), and Hell (+18%)
+        # Scale Physical, Skill & Elemental Damage (El1..El3) progressively across Normal, Nightmare (+8%), and Hell (+18%)
         for sfx, prog in (("", 1.00), ("(N)", 1.08), ("(H)", 1.18)):
             for prefix in (
                 "A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "S1MinD", "S1MaxD",
-                "El1MinD", "El1MaxD", "El2MinD", "El2MaxD",
+                "El1MinD", "El1MaxD", "El2MinD", "El2MaxD", "El3MinD", "El3MaxD",
             ):
                 col = f"{prefix}{sfx}"
                 if row.get(col, ""):

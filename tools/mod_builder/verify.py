@@ -525,8 +525,8 @@ def verify_all(cfg: dict = None) -> List[str]:
                         else:
                             v_lo = int(mmn)
                             v_hi = int(mmx)
-                            if not (c_min <= v_lo <= v_hi <= c_max):
-                                raise AssertionError(f"cubemain.txt ({desc}): {mcode} [{v_lo}, {v_hi}] outside [{c_min}, {c_max}]")
+                            if not (c_min <= v_lo < v_hi <= c_max):
+                                raise AssertionError(f"cubemain.txt ({desc}): {mcode} [{v_lo}, {v_hi}] must have variability (v_lo < v_hi) within [{c_min}, {c_max}]")
         if distill_count < 800:
             raise AssertionError(f"cubemain.txt: expected >= 800 distillation rows, found {distill_count}")
     for afx_fn in ("magicprefix.txt", "magicsuffix.txt"):

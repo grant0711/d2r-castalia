@@ -123,12 +123,12 @@ BINARY_OR_SKILL_PROPS = {
 # Explicit hardcoded (min_cap, max_cap) bounds for every non-binary distillable property
 DISTILL_AFFIX_CAPS: Dict[str, Tuple[int, int]] = {
     # Tier 1: Gold Find, Combat Mechanics, Pierce & Skill Damage
-    "gold%": (5, 30),
+    "gold%": (3, 30),
     "gold%/lvl": (1, 6),
-    "crush": (2, 12),
-    "deadly": (2, 15),
+    "crush": (1, 12),
+    "deadly": (1, 15),
     "deadly/lvl": (1, 3),
-    "openwounds": (3, 15),
+    "openwounds": (2, 15),
     "pierce-fire": (1, 6),
     "pierce-ltng": (1, 6),
     "pierce-cold": (1, 6),
@@ -140,49 +140,49 @@ DISTILL_AFFIX_CAPS: Dict[str, Tuple[int, int]] = {
     "extra-cold": (1, 6),
     "extra-pois": (1, 6),
     "extra-mag": (1, 6),
-    "pierce": (3, 15),
-    "slow": (3, 12),
+    "pierce": (2, 15),
+    "slow": (2, 12),
     "freeze": (1, 2),
     "stupidity": (1, 2),
-    "howl": (5, 20),
+    "howl": (3, 20),
     "magicarrow": (1, 5),
     "explosivearrow": (1, 5),
     # Tier 2: Experience, Magic Find & Vendor Economy
     "addxp": (1, 3),
-    "mag%": (3, 20),
+    "mag%": (2, 20),
     "mag%/lvl": (1, 3),
-    "cheap": (2, 5),
+    "cheap": (1, 5),
     # Tier 3: Primary Offense, Speed Breakpoints & Damage Reduction %
-    "dmg%": (5, 45),
+    "dmg%": (4, 45),
     "dmg%/lvl": (1, 4),
     "dmg": (1, 15),
     "dmg/lvl": (1, 4),
     "dmg-norm": (1, 20),
-    "dmg-max": (2, 20),
+    "dmg-max": (1, 20),
     "dmg-min": (1, 12),
     "red-dmg%": (1, 8),
     "damageresist": (1, 8),
-    "swing1": (2, 15),
-    "swing2": (2, 15),
-    "swing3": (2, 15),
-    "cast1": (2, 10),
-    "cast2": (2, 10),
-    "cast3": (2, 10),
-    "move1": (2, 10),
-    "move2": (2, 10),
-    "move3": (2, 10),
-    "reduce-ac": (3, 12),
-    "dmg-ac": (-35, -5),
+    "swing1": (1, 15),
+    "swing2": (1, 15),
+    "swing3": (1, 15),
+    "cast1": (1, 10),
+    "cast2": (1, 10),
+    "cast3": (1, 10),
+    "move1": (1, 10),
+    "move2": (1, 10),
+    "move3": (1, 10),
+    "reduce-ac": (2, 12),
+    "dmg-ac": (-35, -4),
     "lifesteal": (1, 5),
     "manasteal": (1, 5),
-    "balance1": (2, 10),
-    "balance2": (2, 10),
-    "balance3": (2, 10),
-    "block": (2, 10),
-    "block2": (2, 12),
-    "block3": (2, 12),
+    "balance1": (1, 10),
+    "balance2": (1, 10),
+    "balance3": (1, 10),
+    "block": (1, 10),
+    "block2": (1, 12),
+    "block3": (1, 12),
     # Tier 4: Resistances, Absorb & Enhanced Defense
-    "res-all": (2, 15),
+    "res-all": (1, 15),
     "res-all-max": (1, 4),
     "res-fire-max": (1, 4),
     "res-ltng-max": (1, 4),
@@ -197,48 +197,48 @@ DISTILL_AFFIX_CAPS: Dict[str, Tuple[int, int]] = {
     "abs-cold": (1, 6),
     "abs-fire/lvl": (1, 2),
     "abs-cold/lvl": (1, 2),
-    "ac%": (5, 50),
+    "ac%": (4, 50),
     "ac/lvl": (1, 6),
-    "res-fire": (3, 25),
-    "res-ltng": (3, 25),
-    "res-cold": (3, 25),
-    "res-pois": (3, 25),
-    "res-mag": (3, 25),
+    "res-fire": (2, 25),
+    "res-ltng": (2, 25),
+    "res-cold": (2, 25),
+    "res-pois": (2, 25),
+    "res-mag": (2, 25),
     "res-ltng/lvl": (1, 3),
     "red-dmg": (1, 7),
     "red-mag": (1, 7),
-    "res-pois-len": (5, 25),
+    "res-pois-len": (4, 25),
     # Tier 5: Elemental Attack Damage, Sustain & Attack Rating
     "dmg-elem": (1, 90),
     "dmg-mag": (1, 90),
-    "magdam-rand": (1, 1),
+    "magdam-rand": (1, 2),
     "dmg-fire": (1, 90),
     "dmg-ltng": (1, 90),
     "dmg-cold": (1, 90),
-    "dmg-pois": (5, 160),
+    "dmg-pois": (4, 160),
     "heal-kill": (1, 5),
     "demon-heal": (1, 5),
     "mana-kill": (1, 5),
     "dmg-to-mana": (2, 15),
-    "att%": (3, 25),
+    "att%": (2, 25),
     "att%/lvl": (1, 2),
-    "att": (8, 100),
+    "att": (5, 100),
     "att/lvl": (1, 6),
-    "dmg-demon": (10, 60),
+    "dmg-demon": (5, 60),
     "dmg-dem/lvl": (1, 6),
-    "dmg-undead": (10, 60),
+    "dmg-undead": (5, 60),
     "dmg-und/lvl": (1, 6),
-    "att-demon": (10, 80),
+    "att-demon": (8, 80),
     "att-dem/lvl": (1, 6),
-    "att-undead": (10, 80),
+    "att-undead": (8, 80),
     "att-und/lvl": (1, 6),
     # Tier 6: Attributes, Life/Mana, Regeneration & Requirements
     "all-stats": (1, 5),
-    "hp%": (2, 8),
-    "mana%": (2, 8),
-    "hp": (3, 30),
+    "hp%": (1, 8),
+    "mana%": (1, 8),
+    "hp": (2, 30),
     "hp/lvl": (1, 4),
-    "mana": (3, 30),
+    "mana": (2, 30),
     "mana/lvl": (1, 4),
     "str": (1, 10),
     "str/lvl": (1, 2),
@@ -248,20 +248,20 @@ DISTILL_AFFIX_CAPS: Dict[str, Tuple[int, int]] = {
     "vit/lvl": (1, 2),
     "enr": (1, 10),
     "regen": (1, 7),
-    "regen-mana": (3, 15),
-    "ease": (-25, -5),
+    "regen-mana": (2, 15),
+    "ease": (-25, -4),
     # Tier 8: Low-Priority Flat Defense, Thorns, Stamina & Flavor
-    "ac": (3, 60),
-    "ac-miss": (5, 60),
-    "ac-hth": (5, 60),
+    "ac": (2, 60),
+    "ac-miss": (3, 60),
+    "ac-hth": (3, 60),
     "thorns": (1, 20),
     "thorns/lvl": (1, 3),
     "light-thorns": (1, 20),
-    "stam": (5, 30),
+    "stam": (3, 30),
     "stam/lvl": (1, 3),
-    "regen-stam": (5, 20),
+    "regen-stam": (3, 20),
     "regen-stam/lvl": (1, 3),
-    "stamdrain": (5, 20),
+    "stamdrain": (3, 20),
     "light": (1, 3),
     "bloody": (1, 3),
 }
@@ -604,8 +604,10 @@ def _build_distillation_rows(
             lvl = max(1, int(row.get("lvl") or "1"))
             lvl_req = max(1, int(row.get("lvl req") or str(lvl)))
             eff_lvl = min(100, max(lvl, lvl_req))
-            # Flatter scaling curve (20% at eff_lvl=0 -> 40% at eff_lvl=100) clamped by DISTILL_AFFIX_CAPS
-            scale_factor = 0.20 + 0.20 * (eff_lvl / 100.0)
+            # 15%-25% scaling curve (15% at eff_lvl=0 -> 25% at eff_lvl=100) with +/-25% roll variability
+            scale_factor = 0.15 + 0.10 * (eff_lvl / 100.0)
+            low_factor = scale_factor * 0.75
+            high_factor = scale_factor * 1.25
             binary_scale = 0.50 * (eff_lvl / 100.0)
             distilled_mods: List[Tuple[str, str, str, str, str]] = []  # (code, chance, param, min, max)
 
@@ -626,22 +628,45 @@ def _build_distillation_rows(
                     clamped_par = max(c_min, min(c_max, scaled_par))
                     distilled_mods.append((pcode, "100", str(clamped_par), "", ""))
                 elif pcode in ("ease", "dmg-ac"):
-                    neg_val = -max(1, int(round(abs(stat_val) * scale_factor)))
-                    clamped_neg = max(c_min, min(c_max, neg_val))
-                    distilled_mods.append((pcode, "100", ppar, str(clamped_neg), str(clamped_neg)))
+                    abs_lo_cap = abs(c_max)  # e.g. 4
+                    abs_hi_cap = abs(c_min)  # e.g. 25 or 35
+                    lo_mag = max(abs_lo_cap, min(abs_hi_cap, int(round(abs(v_min) * low_factor))))
+                    hi_mag = max(lo_mag, min(abs_hi_cap, int(round(abs(v_max) * high_factor))))
+                    if hi_mag == abs_hi_cap and lo_mag > int(round(abs_hi_cap * 0.75)):
+                        lo_mag = max(abs_lo_cap, min(abs_hi_cap - 1, int(round(abs_hi_cap * 0.75))))
+                    if hi_mag == lo_mag and abs_lo_cap < abs_hi_cap:
+                        if hi_mag < abs_hi_cap:
+                            hi_mag += 1
+                        else:
+                            lo_mag -= 1
+                    distilled_mods.append((pcode, "100", ppar, str(-hi_mag), str(-lo_mag)))
                 elif pcode in RANGE_DAMAGE_PROPS:
                     if pcode == "dmg-ltng" and int(round(v_min)) == 1:
                         s_min = 1
                     else:
-                        s_min = max(c_min, min(c_max, int(round(v_min * scale_factor))))
-                    s_max = max(s_min, min(c_max, int(round(v_max * scale_factor))))
+                        s_min = max(c_min, min(c_max, int(round(v_min * low_factor))))
+                    s_max = max(s_min, min(c_max, int(round(v_max * high_factor))))
+                    if s_max == c_max and s_min > int(round(c_max * 0.75)):
+                        s_min = max(c_min, min(c_max - 1, int(round(c_max * 0.75))))
+                    if s_max == s_min and c_min < c_max:
+                        if s_max < c_max:
+                            s_max += 1
+                        else:
+                            s_min -= 1
                     if pcode in ("dmg-cold", "dmg-pois", "dmg-elem") and not ppar:
                         ppar = "50"
                     distilled_mods.append((pcode, "100", ppar, str(s_min), str(s_max)))
                 else:
-                    raw_scaled = int(round(stat_val * scale_factor))
-                    clamped_val = max(c_min, min(c_max, raw_scaled))
-                    distilled_mods.append((pcode, "100", ppar, str(clamped_val), str(clamped_val)))
+                    lo_val = max(c_min, min(c_max, int(round(v_min * low_factor))))
+                    hi_val = max(lo_val, min(c_max, int(round(v_max * high_factor))))
+                    if hi_val == c_max and lo_val > int(round(c_max * 0.75)):
+                        lo_val = max(c_min, min(c_max - 1, int(round(c_max * 0.75))))
+                    if hi_val == lo_val and c_min < c_max:
+                        if hi_val < c_max:
+                            hi_val += 1
+                        else:
+                            lo_val -= 1
+                    distilled_mods.append((pcode, "100", ppar, str(lo_val), str(hi_val)))
 
             if not distilled_mods:
                 continue

@@ -64,9 +64,9 @@ def build_treasureclass(cfg: dict) -> str:
     by_tc = {r["Treasure Class"]: r for r in rows if r.get("Treasure Class")}
 
     econ = cfg.get("economy", {})
-    gold_mult = int(round(256 * float(econ.get("gold_pile_multiplier", 4.8))))
-    gold_mult_nm = int(round(256 * float(econ.get("gold_pile_multiplier_nm", 8.0))))
-    gold_mult_h = int(round(256 * float(econ.get("gold_pile_multiplier_hell", 14.0))))
+    gold_mult = int(round(256 * float(econ.get("gold_pile_multiplier", 2.4))))
+    gold_mult_nm = int(round(256 * float(econ.get("gold_pile_multiplier_nm", 4.0))))
+    gold_mult_h = int(round(256 * float(econ.get("gold_pile_multiplier_hell", 7.0))))
     gold_item = f'"gld,mul={gold_mult}"'
     gold_item_nm = f'"gld,mul={gold_mult_nm}"'
     gold_item_h = f'"gld,mul={gold_mult_h}"'

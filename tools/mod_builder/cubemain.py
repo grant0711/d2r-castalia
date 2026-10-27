@@ -594,6 +594,9 @@ def _build_distillation_rows(
             if qual_tag == "set" and raw_lvl >= 100:
                 continue
             bcode = row.get(code_col, "").strip()
+            if bcode in ("jew", "cjw"):
+                # Exclude Unique Jewels (e.g. Rainbow Facet) from Jewel Distillation
+                continue
             if bcode:
                 code_counts[bcode] = code_counts.get(bcode, 0) + 1
             parsed_rows.append(row)

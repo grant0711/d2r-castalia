@@ -486,8 +486,8 @@ def verify_all(cfg: dict = None) -> List[str]:
             if desc.startswith("Distill "):
                 distill_count += 1
                 in1 = r.get("input 1", "").strip()
-                if in1 in quest_names:
-                    raise AssertionError(f"cubemain.txt ({desc}): Quest item '{in1}' must not have a distillation recipe")
+                if in1 in quest_names or in1 == "Rainbow Facet" or in1 in ('"jew,uni"', '"cjw,uni"'):
+                    raise AssertionError(f"cubemain.txt ({desc}): Quest item or Unique Jewel '{in1}' must not have a distillation recipe")
                 if (
                     r.get("numinputs") != "3"
                     or r.get("input 2") != "bml"

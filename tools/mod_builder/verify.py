@@ -475,9 +475,12 @@ def verify_all(cfg: dict = None) -> List[str]:
         from mod_builder.cubemain import BINARY_OR_SKILL_PROPS, DISTILL_AFFIX_CAPS, PER_LEVEL_PROPS
         _, cube_rows = _read_mod_tsv("cubemain.txt", max_rows=3000)
         distill_count = 0
-        quest_names = {
+        forbidden_distill_names = {
             "Amulet of the Viper", "Staff of Kings", "Horadric Staff",
             "Hell Forge Hammer", "KhalimFlail", "SuperKhalimFlail",
+            "Rainbow Facet", "Gheed's Fortune", "Annihilus", "Hellfire Torch",
+            "Signet of the Maiden", "Carapace of Pain", "Soulstone Shard", "Eye of Destruction",
+            '"jew,uni"', '"cjw,uni"', '"cm1,uni"', '"cm2,uni"', '"cm3,uni"', '"cs2,uni"',
         }
         for r in cube_rows:
             if r.get("numinputs") == "1" and r.get("input 1") in ("isc", "tsc"):
@@ -486,8 +489,8 @@ def verify_all(cfg: dict = None) -> List[str]:
             if desc.startswith("Distill "):
                 distill_count += 1
                 in1 = r.get("input 1", "").strip()
-                if in1 in quest_names or in1 == "Rainbow Facet" or in1 in ('"jew,uni"', '"cjw,uni"'):
-                    raise AssertionError(f"cubemain.txt ({desc}): Quest item or Unique Jewel '{in1}' must not have a distillation recipe")
+                if in1 in forbidden_distill_names:
+                    raise AssertionError(f"cubemain.txt ({desc}): Quest item, Unique Jewel, or Unique Charm '{in1}' must not have a distillation recipe")
                 if (
                     r.get("numinputs") != "3"
                     or r.get("input 2") != "bml"

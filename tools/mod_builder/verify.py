@@ -432,19 +432,51 @@ def verify_all(cfg: dict = None) -> List[str]:
                 )
     checks_passed.append("misc.txt stat & sound referential integrity")
 
-    # 6. Verify QA config flags match MonStats.txt and cubemain.txt
-    if not cfg.get("qa_blood_moor_boost", False):
-        _, mon_rows = _read_mod_tsv("monstats.txt")
-        for r in mon_rows:
-            if r.get("Id") == "zombie1":
-                if int(r.get("Level", "1")) >= 50:
-                    raise AssertionError("monstats.txt: zombie1 still has QA boosted level while qa_blood_moor_boost=false")
+    # 6. Verify QA config flags, progressive aidist, monprop.txt, and monumod.txt contracts
+    _, mon_rows = _read_mod_tsv("monstats.txt")
+    _, mprop_rows = _read_mod_tsv("monprop.txt")
+    _, prop_rows = read_excel_tsv("properties.txt")
+    valid_props = {r["code"] for r in prop_rows if r.get("code")}
+    mprop_ids = {r["Id"] for r in mprop_rows if r.get("Id")}
+    for r in mprop_rows:
+        mp_id = r.get("Id", "")
+        for sfx in ("", " (N)", " (H)"):
+            for idx in range(1, 7):
+                pcode = r.get(f"prop{idx}{sfx}", "").strip()
+                if pcode and pcode not in valid_props:
+                    raise AssertionError(
+                        f"monprop.txt ({mp_id}): prop{idx}{sfx}='{pcode}' not found in properties.txt"
+                    )
+    for r in mon_rows:
+        mid = r.get("Id", "").strip()
+        if mid == "zombie1" and not cfg.get("qa_blood_moor_boost", False):
+            if int(r.get("Level", "1")) >= 50:
+                raise AssertionError("monstats.txt: zombie1 still has QA boosted level while qa_blood_moor_boost=false")
+        mp_ref = r.get("MonProp", "").strip()
+        if mp_ref and mp_ref not in mprop_ids:
+            raise AssertionError(f"monstats.txt ({mid}): MonProp='{mp_ref}' missing from monprop.txt")
+        if mid in ("andariel", "duriel", "mephisto", "diablo", "baalcrab", "griswold", "smith", "radament", "izual", "hephasto"):
+            ad_n = int(r.get("aidist") or "0")
+            ad_nm = int(r.get("aidist(N)") or "0")
+            ad_h = int(r.get("aidist(H)") or "0")
+            if not (28 <= ad_n < ad_nm < ad_h):
+                raise AssertionError(
+                    f"monstats.txt ({mid}): expected progressive off-screen aidist (28 <= {ad_n} < {ad_nm} < {ad_h})"
+                )
+    _, umod_rows = _read_mod_tsv("monumod.txt")
+    umod_consts = {r.get("id", "").strip(): int(r.get("constants") or "0") for r in umod_rows if r.get("id")}
+    if not (umod_consts.get("1", 0) < umod_consts.get("2", 0) < umod_consts.get("3", 0)):
+        raise AssertionError("monumod.txt: Minion HP % bonus (id 1..3) must increase progressively across N < NM < H")
+    if not (umod_consts.get("4", 0) < umod_consts.get("5", 0) < umod_consts.get("6", 0)):
+        raise AssertionError("monumod.txt: Champion HP % bonus (id 4..6) must increase progressively across N < NM < H")
+    if not (umod_consts.get("7", 0) < umod_consts.get("8", 0) < umod_consts.get("9", 0)):
+        raise AssertionError("monumod.txt: Unique HP % bonus (id 7..9) must increase progressively across N < NM < H")
     if not cfg.get("qa_cube_starter_kit", False):
         _, cube_rows = _read_mod_tsv("cubemain.txt", max_rows=200)
         for r in cube_rows:
             if r.get("numinputs") == "1" and r.get("input 1") in ("isc", "tsc"):
                 raise AssertionError("cubemain.txt: QA starter kit recipe active while qa_cube_starter_kit=false")
-    checks_passed.append("QA config gate contracts")
+    checks_passed.append("QA config gates, progressive off-screen aidist, monprop & monumod contracts")
 
     # 7. Verify hireling.txt 9-Aura Act 2 Matrix & skill/icon referential integrity
     _, hire_rows = _read_mod_tsv("hireling.txt")

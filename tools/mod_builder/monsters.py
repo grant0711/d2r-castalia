@@ -373,46 +373,67 @@ def _apply_weaknesses_and_magic_imm(row: dict, base_id: str) -> None:
 def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
     if mon_id == "andariel":
         row["Level"], row["Level(N)"], row["Level(H)"] = "14", "49", "76"
-        row["Velocity"], row["Run"] = "7", "7"
+        row["Velocity"], row["Run"] = "9", "9"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "32", "36", "42"
+        row["Crit"] = "25"
+        row["Sk1lvl"], row["Sk2lvl"] = "4", "4"
         row["MonProp"] = "andariel"
-        row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "0", "10", "15"
+        row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "10", "15", "20"
         # Progressive resists (N < NM < H):
-        # Fire weakness: -50% (N) -> -35% (NM) -> -20% (H)
-        # Phys weakness: -20% (N) -> -15% (NM) -> -10% (H)
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-20", "-15", "-10"
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "10", "25", "45"
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-50", "-35", "-20"
+        # Fire weakness: -40% (N) -> -30% (NM) -> -15% (H)
+        # Phys weakness: -10% (N) -> -5% (NM) -> 0% (H)
+        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-10", "-5", "0"
+        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "15", "30", "50"
+        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-40", "-30", "-15"
         row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "35", "55", "75"
         row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "35", "55", "75"
         row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "80", "90", "95"
-        for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-            row[col] = scale_int(row[col], 1.75)
-        for col in ("A1MinD", "A1MaxD", "A1MinD(N)", "A1MaxD(N)", "A1MinD(H)", "A1MaxD(H)"):
-            row[col] = scale_int(row[col], 1.35)
+        for col, mult in (("minHP", 2.85), ("maxHP", 2.85), ("MinHP(N)", 3.15), ("MaxHP(N)", 3.15), ("MinHP(H)", 3.45), ("MaxHP(H)", 3.45)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1MinD", 1.75), ("A1MaxD", 1.75), ("A1MinD(N)", 1.90), ("A1MaxD(N)", 1.90), ("A1MinD(H)", 2.10), ("A1MaxD(H)", 2.10)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("El1MinD", 2.00), ("El1MaxD", 2.00), ("El1MinD(N)", 2.25), ("El1MaxD(N)", 2.25), ("El1MinD(H)", 2.50), ("El1MaxD(H)", 2.50)):
+            if row.get(col, ""):
+                row[col] = scale_int(row[col], mult)
+        for col, mult in (("AC", 1.35), ("AC(N)", 1.45), ("AC(H)", 1.55)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1TH", 1.45), ("A1TH(N)", 1.60), ("A1TH(H)", 1.75)):
+            row[col] = scale_int(row[col], mult)
         row["Exp"] = "28000"
         row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
         row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
         return True
 
     if mon_id == "duriel":
-        row["Level"], row["Level(N)"], row["Level(H)"] = "21", "55", "84"
-        # Weakness 1: Reduced movement speed so solo players can kite after his charge
-        row["Velocity"], row["Run"] = "7", "10"
+        row["Level"], row["Level(N)"], row["Level(H)"] = "22", "55", "85"
+        # Relentless arena pursuit (Velocity 9 / Run 13) + higher Charge/Jab/Smite/HolyFreeze levels
+        row["Velocity"], row["Run"] = "9", "13"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "32", "36", "42"
+        row["Crit"] = "25"
+        row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"] = "7", "18", "10", "5"
         row["MonProp"] = "duriel"
         row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "0", "0", "0"
-        # Strengths: Holy Freeze (Sk4lvl=4), 50% Crushing Blow, 80/90/95 Cold Res, 35/45/55 Phys Res
-        # Weaknesses: Fire & Ltng Res -35% (N) -> -25% (NM) -> -15% (H)
-        row["Sk4lvl"] = "4"
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "35", "45", "55"
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "20", "35", "50"
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-35", "-25", "-15"
-        row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "-35", "-25", "-15"
+        # Strengths: Holy Freeze (Sk4lvl=5), 50% Crushing Blow, 80/90/95 Cold Res, 40/50/60 Phys Res
+        # Weaknesses: Fire & Ltng Res -30% (N) -> -20% (NM) -> -10% (H)
+        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "40", "50", "60"
+        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "25", "40", "55"
+        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-30", "-20", "-10"
+        row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "-30", "-20", "-10"
         row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "80", "90", "95"
         row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "45", "65", "80"
-        for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-            row[col] = scale_int(row[col], 1.70)
-        for col in ("A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)", "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)"):
-            row[col] = scale_int(row[col], 1.30)
+        for col, mult in (("minHP", 2.75), ("maxHP", 2.75), ("MinHP(N)", 3.05), ("MaxHP(N)", 3.05), ("MinHP(H)", 3.35), ("MaxHP(H)", 3.35)):
+            row[col] = scale_int(row[col], mult)
+        for col in ("A1MinD", "A1MaxD", "A2MinD", "A2MaxD"):
+            row[col] = scale_int(row[col], 1.75)
+        for col in ("A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)"):
+            row[col] = scale_int(row[col], 1.90)
+        for col in ("A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)"):
+            row[col] = scale_int(row[col], 2.10)
+        for col, mult in (("AC", 1.40), ("AC(N)", 1.50), ("AC(H)", 1.60)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1TH", 1.50), ("A2TH", 1.50), ("A1TH(N)", 1.65), ("A2TH(N)", 1.65), ("A1TH(H)", 1.80), ("A2TH(H)", 1.80)):
+            if row.get(col, ""):
+                row[col] = scale_int(row[col], mult)
         row["Exp"] = "52000"
         row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
         row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
@@ -420,20 +441,28 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
 
     if mon_id == "mephisto":
         row["Level"], row["Level(N)"], row["Level(H)"] = "26", "59", "87"
+        row["Velocity"], row["Run"] = "9", "10"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "36", "40", "46"
+        row["Crit"] = "25"
+        row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"], row["Sk5lvl"], row["Sk6lvl"] = "8", "8", "9", "8", "4", "8"
         row["MonProp"] = "mephisto"
         row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "0", "0", "0"
-        # Strengths: +35% FCR/IAS, 75/85/90 Ltng & Cold Res, 70/80/90 Poison Res
-        # Weaknesses: Phys Res -25% -> -15% -> -10% (0% Block), Fire & Magic Res -35% -> -25% -> -15%
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-25", "-15", "-10"
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "-35", "-25", "-15"
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-35", "-25", "-15"
+        # Strengths: +40% FCR/IAS, 75/85/90 Ltng & Cold Res, 70/80/90 Poison Res
+        # Weaknesses: Phys Res -20% -> -10% -> -5% (0% Block), Fire & Magic Res -30% -> -20% -> -10%
+        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-20", "-10", "-5"
+        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "-30", "-20", "-10"
+        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-30", "-20", "-10"
         row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "75", "85", "90"
         row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "75", "85", "90"
         row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "70", "80", "90"
-        for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-            row[col] = scale_int(row[col], 1.80)
-        for col in ("A1MinD", "A1MaxD", "A1MinD(N)", "A1MaxD(N)", "A1MinD(H)", "A1MaxD(H)"):
-            row[col] = scale_int(row[col], 1.35)
+        for col, mult in (("minHP", 2.85), ("maxHP", 2.85), ("MinHP(N)", 3.15), ("MaxHP(N)", 3.15), ("MinHP(H)", 3.50), ("MaxHP(H)", 3.50)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1MinD", 1.70), ("A1MaxD", 1.70), ("A1MinD(N)", 1.85), ("A1MaxD(N)", 1.85), ("A1MinD(H)", 2.05), ("A1MaxD(H)", 2.05)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("AC", 1.35), ("AC(N)", 1.45), ("AC(H)", 1.55)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1TH", 1.45), ("A1TH(N)", 1.60), ("A1TH(H)", 1.75)):
+            row[col] = scale_int(row[col], mult)
         row["Exp"] = "76000"
         row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
         row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
@@ -441,21 +470,33 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
 
     if mon_id == "diablo":
         row["Level"], row["Level(N)"], row["Level(H)"] = "32", "63", "92"
-        row["Velocity"], row["Run"] = "8", "10"
+        row["Velocity"], row["Run"] = "9", "12"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "34", "38", "44"
+        row["Crit"] = "28"
+        row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"], row["Sk5lvl"], row["Sk6lvl"] = "6", "6", "7", "5", "7", "10"
         row["MonProp"] = "diablo"
-        row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "0", "10", "15"
-        # Strengths: 75/85/90 Fire & 70/80/85 Ltng Res, 35% Deadly Strike, 25/35/45 Phys Res
-        # Weaknesses: Cold Res -35% -> -25% -> -15%, Magic Res -30% -> -20% -> -10%
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "25", "35", "45"
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "-30", "-20", "-10"
+        row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "10", "15", "20"
+        # Strengths: 75/85/90 Fire & 70/80/85 Ltng Res, 40% Deadly Strike, 30/40/50 Phys Res
+        # Weaknesses: Cold Res -30% -> -20% -> -10%, Magic Res -25% -> -15% -> -10%
+        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "30", "40", "50"
+        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "-25", "-15", "-10"
         row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "75", "85", "90"
         row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "70", "80", "85"
-        row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "-35", "-25", "-15"
+        row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "-30", "-20", "-10"
         row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "45", "60", "75"
-        for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-            row[col] = scale_int(row[col], 1.85)
-        for col in ("A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)", "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)"):
-            row[col] = scale_int(row[col], 1.35)
+        for col, mult in (("minHP", 2.95), ("maxHP", 2.95), ("MinHP(N)", 3.25), ("MaxHP(N)", 3.25), ("MinHP(H)", 3.60), ("MaxHP(H)", 3.60)):
+            row[col] = scale_int(row[col], mult)
+        for col in ("A1MinD", "A1MaxD", "A2MinD", "A2MaxD"):
+            row[col] = scale_int(row[col], 1.75)
+        for col in ("A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)"):
+            row[col] = scale_int(row[col], 1.90)
+        for col in ("A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)"):
+            row[col] = scale_int(row[col], 2.10)
+        for col, mult in (("AC", 1.40), ("AC(N)", 1.50), ("AC(H)", 1.60)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1TH", 1.50), ("A2TH", 1.50), ("A1TH(N)", 1.65), ("A2TH(N)", 1.65), ("A1TH(H)", 1.80), ("A2TH(H)", 1.80)):
+            if row.get(col, ""):
+                row[col] = scale_int(row[col], mult)
         row["Exp"] = "116000"
         row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
         row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
@@ -463,20 +504,33 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
 
     if mon_id == "baalcrab":
         row["Level"], row["Level(N)"], row["Level(H)"] = "42", "75", "99"
+        row["Velocity"], row["Run"] = "8", "10"
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "34", "38", "44"
+        row["Crit"] = "30"
+        row["Sk1lvl"], row["Sk2lvl"], row["Sk3lvl"], row["Sk4lvl"], row["Sk6lvl"], row["Sk7lvl"] = "4", "4", "4", "4", "5", "5"
         row["MonProp"] = "baalcrab"
-        row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "0", "10", "15"
-        # Strengths: 55/65/75 Fire/Cold/Magic Res, 40% Open Wounds, 1.85x HP
-        # Weaknesses: Phys Res -15% -> -10% -> 0%, Ltng & Pois Res -30% -> -20% -> -10%
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-15", "-10", "0"
+        row["ToBlock"], row["ToBlock(N)"], row["ToBlock(H)"] = "10", "15", "20"
+        # Strengths: 55/65/75 Fire/Cold/Magic Res, 45% Open Wounds
+        # Weaknesses: Phys Res -10% -> -5% -> 0%, Ltng & Pois Res -25% -> -15% -> -10%
+        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-10", "-5", "0"
         row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "55", "65", "75"
         row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "55", "65", "75"
-        row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "-30", "-20", "-10"
+        row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "-25", "-15", "-10"
         row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "55", "65", "75"
-        row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "-30", "-20", "-10"
-        for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-            row[col] = scale_int(row[col], 1.85)
-        for col in ("A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)", "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)"):
-            row[col] = scale_int(row[col], 1.35)
+        row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "-25", "-15", "-10"
+        for col, mult in (("minHP", 3.00), ("maxHP", 3.00), ("MinHP(N)", 3.35), ("MaxHP(N)", 3.35), ("MinHP(H)", 3.75), ("MaxHP(H)", 3.75)):
+            row[col] = scale_int(row[col], mult)
+        for col in ("A1MinD", "A1MaxD", "A2MinD", "A2MaxD"):
+            row[col] = scale_int(row[col], 1.75)
+        for col in ("A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)"):
+            row[col] = scale_int(row[col], 1.90)
+        for col in ("A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)"):
+            row[col] = scale_int(row[col], 2.10)
+        for col, mult in (("AC", 1.40), ("AC(N)", 1.50), ("AC(H)", 1.60)):
+            row[col] = scale_int(row[col], mult)
+        for col, mult in (("A1TH", 1.50), ("A2TH", 1.50), ("A1TH(N)", 1.65), ("A2TH(N)", 1.65), ("A1TH(H)", 1.80), ("A2TH(H)", 1.80)):
+            if row.get(col, ""):
+                row[col] = scale_int(row[col], mult)
         row["Exp"] = "180000"
         row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
         row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
@@ -489,15 +543,23 @@ def _configure_baal_wave_monsters(row: dict, mon_id: str) -> bool:
     if mon_id not in ("unraveler5", "baalhighpriest", "venomlord", "baalminion1", "baalminion2", "baalminion3"):
         return False
 
-    for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-        row[col] = scale_int(row[col], 2.10)
+    row["aidist"], row["aidist(N)"], row["aidist(H)"] = "30", "33", "36"
+    row["Crit"] = "20"
+    for col, mult in (("minHP", 2.40), ("maxHP", 2.40), ("MinHP(N)", 2.75), ("MaxHP(N)", 2.75), ("MinHP(H)", 3.10), ("MaxHP(H)", 3.10)):
+        row[col] = scale_int(row[col], mult)
     for col in (
         "A1MinD", "A1MaxD", "A2MinD", "A2MaxD",
         "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)",
         "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)",
     ):
         if row.get(col, ""):
-            row[col] = scale_int(row[col], 1.40)
+            row[col] = scale_int(row[col], 1.60)
+    for col in ("AC", "AC(N)", "AC(H)"):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], 1.35)
+    for col in ("A1TH", "A2TH", "A1TH(N)", "A2TH(N)", "A1TH(H)", "A2TH(H)"):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], 1.45)
     for col in ("Exp", "Exp(N)", "Exp(H)"):
         row[col] = scale_int(row[col], 4.8)
 
@@ -522,6 +584,94 @@ def _configure_baal_wave_monsters(row: dict, mon_id: str) -> bool:
         row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "-30", "-20", "-10"
         row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "60", "95", "120"
         row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "95", "95", "95"
+    return True
+
+
+def _configure_quest_superuniques(row: dict, mon_id: str) -> bool:
+    """
+    Configure dedicated Quest & Act Sub-Boss SuperUniques (Blood Raven, Griswold, The Smith,
+    Radament, Summoner, Izual, Hephasto, Nihlathak, The Ancients, Cow King, Dark Elder, Coldworm)
+    so their HP, damage, velocity, defense, AR, critical strike chance, skill levels, and AI
+    aggro distance scale progressively across Normal -> Nightmare -> Hell while exaggerating
+    each boss's distinct combat character.
+    """
+    quest_boss_ids = {
+        "bloodraven", "griswold", "smith", "radament", "summoner",
+        "maggotqueen1", "darkelder", "izual", "hephasto",
+        "nihlathakboss", "ancientbarb1", "ancientbarb2", "ancientbarb3",
+        "cowking",
+    }
+    if mon_id not in quest_boss_ids:
+        return False
+
+    row["aidist"], row["aidist(N)"], row["aidist(H)"] = "30", "34", "38"
+    row["Crit"] = "22"
+
+    # Progressive HP multipliers (Normal 2.8x -> Nightmare 3.2x -> Hell 3.6x)
+    # Summoner & Nihlathak start with very low vanilla glass-cannon HP (129 / 191), so give them a 4.0x..5.0x pool
+    if mon_id in ("summoner", "nihlathakboss"):
+        hp_n, hp_nm, hp_h = 3.80, 4.40, 5.00
+    elif mon_id in ("ancientbarb1", "ancientbarb2", "ancientbarb3"):
+        hp_n, hp_nm, hp_h = 2.40, 2.75, 3.10
+    else:
+        hp_n, hp_nm, hp_h = 2.85, 3.25, 3.65
+
+    for col, mult in (
+        ("minHP", hp_n), ("maxHP", hp_n),
+        ("MinHP(N)", hp_nm), ("MaxHP(N)", hp_nm),
+        ("MinHP(H)", hp_h), ("MaxHP(H)", hp_h),
+    ):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], mult)
+
+    # Progressive Physical & Elemental Damage (Normal 1.65x -> Nightmare 1.85x -> Hell 2.05x)
+    for col, mult in (
+        ("A1MinD", 1.65), ("A1MaxD", 1.65), ("A2MinD", 1.65), ("A2MaxD", 1.65), ("S1MinD", 1.65), ("S1MaxD", 1.65),
+        ("El1MinD", 1.65), ("El1MaxD", 1.65), ("El2MinD", 1.65), ("El2MaxD", 1.65),
+        ("A1MinD(N)", 1.85), ("A1MaxD(N)", 1.85), ("A2MinD(N)", 1.85), ("A2MaxD(N)", 1.85), ("S1MinD(N)", 1.85), ("S1MaxD(N)", 1.85),
+        ("El1MinD(N)", 1.85), ("El1MaxD(N)", 1.85), ("El2MinD(N)", 1.85), ("El2MaxD(N)", 1.85),
+        ("A1MinD(H)", 2.05), ("A1MaxD(H)", 2.05), ("A2MinD(H)", 2.05), ("A2MaxD(H)", 2.05), ("S1MinD(H)", 2.05), ("S1MaxD(H)", 2.05),
+        ("El1MinD(H)", 2.05), ("El1MaxD(H)", 2.05), ("El2MinD(H)", 2.05), ("El2MaxD(H)", 2.05),
+    ):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], mult)
+
+    # Progressive Defense (1.35x -> 1.45x -> 1.55x) & Attack Rating (1.45x -> 1.60x -> 1.75x)
+    for col, mult in (("AC", 1.35), ("AC(N)", 1.45), ("AC(H)", 1.55)):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], mult)
+    for col, mult in (
+        ("A1TH", 1.45), ("A2TH", 1.45), ("S1TH", 1.45),
+        ("A1TH(N)", 1.60), ("A2TH(N)", 1.60), ("S1TH(N)", 1.60),
+        ("A1TH(H)", 1.75), ("A2TH(H)", 1.75), ("S1TH(H)", 1.75),
+    ):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], mult)
+
+    # Velocity & Character-Specific Exaggeration
+    vel = parse_int(row.get("Velocity", "0"))
+    run_v = parse_int(row.get("Run", "0"))
+    if vel > 0:
+        row["Velocity"] = str(min(14, vel + 2))
+    if run_v > 0:
+        row["Run"] = str(min(18, run_v + 2))
+
+    # Boost all active boss skills by +2 levels
+    for i in range(1, 9):
+        sk_lvl = parse_int(row.get(f"Sk{i}lvl", "0"))
+        if sk_lvl > 0:
+            row[f"Sk{i}lvl"] = str(sk_lvl + 2)
+
+    if mon_id in (
+        "bloodraven", "griswold", "smith", "radament", "maggotqueen1",
+        "summoner", "izual", "hephasto", "nihlathakboss",
+    ):
+        row["MonProp"] = mon_id
+
+    for col in ("Exp", "Exp(N)", "Exp(H)"):
+        if row.get(col, ""):
+            row[col] = scale_int(row[col], 4.8)
+
     return True
 
 
@@ -641,6 +791,11 @@ def build_monstats(cfg: dict) -> str:
         if _configure_baal_wave_monsters(row, mon_id):
             continue
 
+        # 2b. Quest SuperUniques & Act Minibosses (Blood Raven, Griswold, The Smith, Radament,
+        #     The Summoner, Izual, Hephasto, Nihlathak, Coldworm, The Ancients, Cow King)
+        if _configure_quest_superuniques(row, mon_id):
+            continue
+
         # 3. Player Summons
         if _configure_player_summons(row, mon_id):
             continue
@@ -662,12 +817,29 @@ def build_monstats(cfg: dict) -> str:
         base_id = row.get("BaseId", "").strip()
         vel = parse_int(row.get("Velocity", "0"))
         if vel <= 0:
-            # Stationary nests/spawners: scale HP by 1.5x and XP by 2.4x
+            # Stationary nests/spawners: scale HP by 1.5x, XP by 2.4x, and off-screen aggro radius
+            row["aidist"], row["aidist(N)"], row["aidist(H)"] = "22", "25", "28"
             for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
                 row[col] = scale_int(row[col], 1.50)
             for col in ("Exp", "Exp(N)", "Exp(H)"):
                 row[col] = scale_int(row[col], 2.40)
             continue
+
+        # Progressive Off-Screen AI Aggro Distance (1.1x Normal -> 1.2x Nightmare -> 1.3x Hell
+        # over D2R's default 20-subtile screen radius: 22 / 25 / 28 subtiles)
+        row["aidist"], row["aidist(N)"], row["aidist(H)"] = "22", "25", "28"
+        ai_type = row.get("AI", "").strip()
+        ai_dist_col = {
+            "Zombie": "aip2",
+            "Mummy": "aip1",
+            "QuillRat": "aip1",
+            "Vampire": "aip3",
+        }.get(ai_type)
+        if ai_dist_col:
+            for sfx, mult in (("", 1.10), ("(N)", 1.20), ("(H)", 1.30)):
+                col_name = f"{ai_dist_col}{sfx}"
+                if parse_int(row.get(col_name, "0")) > 0:
+                    row[col_name] = scale_int(row[col_name], mult, min_val=20)
 
         # Remove Open Desert Poison from Sand Leapers (sandleaper1..3)
         if mon_id in ("sandleaper1", "sandleaper2", "sandleaper3") and row.get("El1Type", "") == "pois":
@@ -684,7 +856,8 @@ def build_monstats(cfg: dict) -> str:
             if parse_int(row.get("PartyMin", "")) > 0:
                 row["PartyMin"], row["PartyMax"] = "1", "1"
             row["Velocity"] = str(max(3, vel - 1))
-            hp_mult, dmg_mult, ar_mult = 2.80, 1.50, 1.30
+            row["Crit"] = "12"
+            hp_mult, dmg_mult, ar_mult = 2.80, 1.50, 1.35
         elif base_id in SWARMER_BASES:
             row["MinGrp"], row["MaxGrp"] = "3", "5"
             if parse_int(row.get("PartyMin", "")) > 0:
@@ -692,42 +865,66 @@ def build_monstats(cfg: dict) -> str:
             row["Velocity"] = str(min(15, vel + 1))
             if parse_int(row.get("Run", "")) > 0:
                 row["Run"] = str(min(18, parse_int(row["Run"]) + 1))
-            hp_mult, dmg_mult, ar_mult = 1.85, 1.30, 1.25
+            row["Crit"] = "10"
+            hp_mult, dmg_mult, ar_mult = 1.85, 1.30, 1.30
         elif base_id in ARCANE_CASTER_BASES:
             row["MinGrp"], row["MaxGrp"] = "1", "2"
             if parse_int(row.get("PartyMin", "")) > 0:
                 row["PartyMin"], row["PartyMax"] = "2", "3"
-            hp_mult, dmg_mult, ar_mult = 2.10, 1.45, 1.30
+            row["Crit"] = "10"
+            hp_mult, dmg_mult, ar_mult = 2.10, 1.45, 1.35
         else:
             # Elite Infantry
             row["MinGrp"], row["MaxGrp"] = "2", "3"
             if parse_int(row.get("PartyMin", "")) > 0:
                 row["PartyMin"], row["PartyMax"] = "1", "2"
-            hp_mult, dmg_mult, ar_mult = 2.40, 1.40, 1.35
+            row["Crit"] = "12"
+            hp_mult, dmg_mult, ar_mult = 2.40, 1.40, 1.40
 
-        # Scale HP
-        for col in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
-            row[col] = scale_int(row[col], hp_mult)
-
-        # Scale Physical, Skill & Elemental Damage
-        for col in (
-            "A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "S1MinD", "S1MaxD",
-            "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)", "S1MinD(N)", "S1MaxD(N)",
-            "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)", "S1MinD(H)", "S1MaxD(H)",
-            "El1MinD", "El1MaxD", "El1MinD(N)", "El1MaxD(N)", "El1MinD(H)", "El1MaxD(H)",
-            "El2MinD", "El2MaxD", "El2MinD(N)", "El2MaxD(N)", "El2MinD(H)", "El2MaxD(H)",
+        # Dedicated SuperUnique monster classes (Council Members, Infector/Seis/Vizier,
+        # Shenk, Pindleskin, Frozenstein, etc.) get heightened Crit, off-screen aggro, and skill levels
+        if mon_id in (
+            "corruptrogue3", "councilmember1", "councilmember2", "councilmember3",
+            "unraveler3", "megademon3", "doomknight3", "fingermage3", "fetishshaman4",
+            "clawviper3", "thornhulk3", "reanimatedhorde5", "snowyeti4", "siegebeast3",
+            "overseer1", "minionspawner1",
         ):
-            if row.get(col, ""):
-                row[col] = scale_int(row[col], dmg_mult)
+            row["Crit"] = "18"
+            row["aidist"], row["aidist(N)"], row["aidist(H)"] = "28", "32", "36"
+            for i in range(1, 9):
+                sk_lvl = parse_int(row.get(f"Sk{i}lvl", "0"))
+                if sk_lvl > 0:
+                    row[f"Sk{i}lvl"] = str(sk_lvl + 2)
 
-        # Scale Attack Rating
-        for col in (
-            "A1TH", "A2TH", "S1TH",
-            "A1TH(N)", "A2TH(N)", "S1TH(N)",
-            "A1TH(H)", "A2TH(H)", "S1TH(H)",
-        ):
-            if row.get(col, ""):
-                row[col] = scale_int(row[col], ar_mult)
+        # Scale HP progressively across Normal, Nightmare (+10%), and Hell (+20%)
+        for sfx, prog in (("", 1.00), ("(N)", 1.10), ("(H)", 1.20)):
+            min_c = "minHP" if sfx == "" else f"MinHP{sfx}"
+            max_c = "maxHP" if sfx == "" else f"MaxHP{sfx}"
+            row[min_c] = scale_int(row[min_c], hp_mult * prog)
+            row[max_c] = scale_int(row[max_c], hp_mult * prog)
+
+        # Scale Defense progressively across Normal, Nightmare, and Hell
+        for sfx, ac_mult in (("", 1.15), ("(N)", 1.25), ("(H)", 1.35)):
+            ac_col = f"AC{sfx}"
+            if row.get(ac_col, ""):
+                row[ac_col] = scale_int(row[ac_col], ac_mult)
+
+        # Scale Physical, Skill & Elemental Damage progressively across Normal, Nightmare (+8%), and Hell (+18%)
+        for sfx, prog in (("", 1.00), ("(N)", 1.08), ("(H)", 1.18)):
+            for prefix in (
+                "A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "S1MinD", "S1MaxD",
+                "El1MinD", "El1MaxD", "El2MinD", "El2MaxD",
+            ):
+                col = f"{prefix}{sfx}"
+                if row.get(col, ""):
+                    row[col] = scale_int(row[col], dmg_mult * prog)
+
+        # Scale Attack Rating progressively across Normal, Nightmare (+8%), and Hell (+15%)
+        for sfx, prog in (("", 1.00), ("(N)", 1.08), ("(H)", 1.15)):
+            for prefix in ("A1TH", "A2TH", "S1TH"):
+                col = f"{prefix}{sfx}"
+                if row.get(col, ""):
+                    row[col] = scale_int(row[col], ar_mult * prog)
 
         # Scale Experience (3.84x — reduced 20% from 4.80x)
         xp_mult = float(cfg.get("pacing", {}).get("normal_monster_xp_multiplier", 3.84))
@@ -753,63 +950,163 @@ def build_monprop(cfg: dict) -> str:
             by_id[mid] = nr
         return by_id[mid]
 
-    # Andariel: +35% IAS across N/NM/H
-    r_andy = ensure_row("andariel")
-    for sfx in ("", " (N)", " (H)"):
-        r_andy[f"prop1{sfx}"] = "swing2"
-        r_andy[f"min1{sfx}"] = "35"
-        r_andy[f"max1{sfx}"] = "35"
+    def set_progressive_props(mid: str, prop_specs: list[tuple[str, str, str, str]]) -> None:
+        r = ensure_row(mid)
+        for idx, (prop_code, val_n, val_nm, val_h) in enumerate(prop_specs, start=1):
+            for sfx, val in (("", val_n), (" (N)", val_nm), (" (H)", val_h)):
+                r[f"prop{idx}{sfx}"] = prop_code
+                r[f"min{idx}{sfx}"] = val
+                r[f"max{idx}{sfx}"] = val
 
-    # Duriel: 50% Crushing Blow across N/NM/H
-    r_dur = ensure_row("duriel")
-    for sfx in ("", " (N)", " (H)"):
-        r_dur[f"prop1{sfx}"] = "crush"
-        r_dur[f"min1{sfx}"] = "50"
-        r_dur[f"max1{sfx}"] = "50"
+    # Act Capstone Bosses — Progressive Signature Properties across Normal -> Nightmare -> Hell
+    set_progressive_props("andariel", [
+        ("swing2",      "35", "45", "55"),  # +35%/45%/55% IAS
+        ("move2",       "25", "35", "45"),  # +25%/35%/45% FRW
+        ("pierce-pois", "15", "25", "35"),  # -15%/-25%/-35% Enemy Poison Resist
+    ])
+    set_progressive_props("duriel", [
+        ("crush",       "50", "60", "70"),  # 50%/60%/70% Crushing Blow
+        ("swing2",      "25", "35", "45"),  # +25%/35%/45% IAS
+        ("deadly",      "25", "35", "45"),  # 25%/35%/45% Deadly Strike
+    ])
+    set_progressive_props("mephisto", [
+        ("cast2",       "40", "50", "60"),  # +40%/50%/60% FCR
+        ("swing2",      "40", "50", "60"),  # +40%/50%/60% IAS
+        ("pierce-ltng", "15", "25", "35"),  # -15%/-25%/-35% Enemy Lightning Resist
+        ("pierce-cold", "15", "25", "35"),  # -15%/-25%/-35% Enemy Cold Resist
+    ])
+    set_progressive_props("diablo", [
+        ("deadly",      "40", "50", "60"),  # 40%/50%/60% Deadly Strike
+        ("cast2",       "30", "40", "50"),  # +30%/40%/50% FCR
+        ("pierce-fire", "15", "25", "35"),  # -15%/-25%/-35% Enemy Fire Resist
+        ("pierce-ltng", "15", "25", "35"),  # -15%/-25%/-35% Enemy Lightning Resist
+    ])
+    set_progressive_props("baalcrab", [
+        ("openwounds",  "45", "55", "65"),  # 45%/55%/65% Open Wounds
+        ("crush",       "35", "45", "55"),  # 35%/45%/55% Crushing Blow
+        ("cast2",       "30", "40", "50"),  # +30%/40%/50% FCR
+    ])
 
-    # Mephisto: +35% Cast Speed & +35% Attack Speed across N/NM/H
-    r_meph = ensure_row("mephisto")
-    for sfx in ("", " (N)", " (H)"):
-        r_meph[f"prop1{sfx}"] = "cast2"
-        r_meph[f"min1{sfx}"] = "35"
-        r_meph[f"max1{sfx}"] = "35"
-        r_meph[f"prop2{sfx}"] = "swing2"
-        r_meph[f"min2{sfx}"] = "35"
-        r_meph[f"max2{sfx}"] = "35"
-
-    # Diablo: 35% Deadly Strike across N/NM/H
-    r_diab = ensure_row("diablo")
-    for sfx in ("", " (N)", " (H)"):
-        r_diab[f"prop1{sfx}"] = "deadly"
-        r_diab[f"min1{sfx}"] = "35"
-        r_diab[f"max1{sfx}"] = "35"
-
-    # Baal: 40% Open Wounds across N/NM/H
-    r_baal = ensure_row("baalcrab")
-    for sfx in ("", " (N)", " (H)"):
-        r_baal[f"prop1{sfx}"] = "openwounds"
-        r_baal[f"min1{sfx}"] = "40"
-        r_baal[f"max1{sfx}"] = "40"
+    # Quest SuperUniques — Exaggerated Character-Specific Properties across Normal -> Nightmare -> Hell
+    set_progressive_props("bloodraven", [
+        ("swing2",      "30", "40", "50"),
+        ("move2",       "25", "35", "45"),
+        ("deadly",      "20", "30", "40"),
+    ])
+    set_progressive_props("griswold", [
+        ("crush",       "35", "45", "55"),
+        ("swing2",      "20", "30", "40"),
+    ])
+    set_progressive_props("smith", [
+        ("crush",       "45", "55", "65"),
+        ("swing2",      "30", "40", "50"),
+        ("move2",       "20", "30", "40"),
+    ])
+    set_progressive_props("radament", [
+        ("cast2",       "35", "45", "55"),
+        ("pierce-pois", "15", "25", "35"),
+    ])
+    set_progressive_props("maggotqueen1", [
+        ("pierce-pois", "20", "30", "40"),
+        ("openwounds",  "35", "45", "55"),
+    ])
+    set_progressive_props("summoner", [
+        ("cast2",       "40", "50", "60"),
+        ("pierce-cold", "15", "25", "35"),
+        ("pierce-fire", "15", "25", "35"),
+    ])
+    set_progressive_props("izual", [
+        ("crush",       "40", "50", "60"),
+        ("swing2",      "30", "40", "50"),
+        ("pierce-cold", "20", "30", "40"),
+    ])
+    set_progressive_props("hephasto", [
+        ("crush",       "45", "55", "65"),
+        ("deadly",      "30", "40", "50"),
+        ("swing2",      "25", "35", "45"),
+    ])
+    set_progressive_props("nihlathakboss", [
+        ("cast2",       "35", "45", "55"),
+        ("pierce-fire", "15", "25", "35"),
+    ])
 
     return write_tsv("monprop.txt", headers, rows)
+
+
+def build_monumod(cfg: dict) -> str:
+    """
+    Configure Unique, Champion, and Minion global stat multipliers in monumod.txt (`constants` column)
+    so elite packs scale UP progressively across Normal -> Nightmare -> Hell instead of shrinking
+    as in vanilla (where Unique HP % drops 300 -> 200 -> 100 and Champion HP % drops 200 -> 150 -> 100).
+    """
+    headers, rows = read_tsv("monumod.txt")
+    progressive_constants = {
+        "1":  "125",  # Minion HitPoints % Bonus (Normal)      [Vanilla: 100]
+        "2":  "150",  # Minion HitPoints % Bonus (Nightmare)   [Vanilla: 75]
+        "3":  "175",  # Minion HitPoints % Bonus (Hell)        [Vanilla: 50]
+        "4":  "220",  # Champion HitPoints % Bonus (Normal)    [Vanilla: 200]
+        "5":  "260",  # Champion HitPoints % Bonus (Nightmare) [Vanilla: 150]
+        "6":  "300",  # Champion HitPoints % Bonus (Hell)      [Vanilla: 100]
+        "7":  "320",  # Unique HitPoints % Bonus (Normal)      [Vanilla: 300]
+        "8":  "380",  # Unique HitPoints % Bonus (Nightmare)   [Vanilla: 200]
+        "9":  "450",  # Unique HitPoints % Bonus (Hell)        [Vanilla: 100]
+        "10": "110",  # Champion Attack Rating % Bonus         [Vanilla: 75]
+        "11": "135",  # Champion Damage % Bonus                [Vanilla: 100]
+        "12": "85",   # Minion Attack Rating % Bonus           [Vanilla: 50]
+        "13": "150",  # Unique Attack Rating % Bonus           [Vanilla: 100]
+        "14": "100",  # Minion Strong % Bonus                  [Vanilla: 75]
+        "15": "185",  # Unique Strong % Bonus                  [Vanilla: 150]
+    }
+    for row in rows:
+        uid = row.get("id", "").strip()
+        if uid in progressive_constants:
+            row["constants"] = progressive_constants[uid]
+    return write_tsv("monumod.txt", headers, rows)
 
 
 def build_superuniques(cfg: dict) -> str:
     headers, rows = read_tsv("superuniques.txt")
     baal_waves = {
-        "Baal Subject 1": ("4", "4", "9"),   # Colenzo: 4 Warped Shamans, Fire Enchanted
-        "Baal Subject 2": ("2", "2", "23"),  # Achmel: 2 Greater Mummies, Poison Enchanted
-        "Baal Subject 3": ("3", "3", "17"),  # Bartuc: 3 Council High Priests, Lightning Enchanted
-        "Baal Subject 4": ("3", "3", "6"),   # Ventar: 3 Venom Lords, Extra Fast
-        "Baal Subject 5": ("3", "3", "5"),   # Lister: 3 Minions of Destruction, Extra Strong
+        "Baal Subject 1": ("4", "4", "9",  "8"),   # Colenzo: 4 Warped Shamans, Fire Enchanted + Magic Resistant
+        "Baal Subject 2": ("2", "2", "23", "8"),   # Achmel: 2 Greater Mummies, Poison Enchanted + Magic Resistant
+        "Baal Subject 3": ("3", "3", "17", "6"),   # Bartuc: 3 Council High Priests, Lightning Enchanted + Extra Fast
+        "Baal Subject 4": ("3", "3", "6",  "27"),  # Ventar: 3 Venom Lords, Extra Fast + Spectral Hit
+        "Baal Subject 5": ("3", "3", "5",  "27"),  # Lister: 3 Minions of Destruction, Extra Strong + Spectral Hit
+    }
+    # Give single-mod SuperUniques a thematic second modifier so every SuperUnique
+    # has at least 2 baseline elite modifiers (plus Nightmare/Hell random bonuses)
+    thematic_second_mod = {
+        "Corpsefire":         "5",   # Spectral Hit + Extra Strong
+        "Coldcrow":           "26",  # Cold Enchanted + Multiple Shot
+        "The Countess":       "6",   # Fire Enchanted + Extra Fast
+        "Griswold":           "5",   # Cursed + Extra Strong
+        "The Smith":          "6",   # Extra Strong + Extra Fast
+        "Radament":           "8",   # Extra Fast + Magic Resistant
+        "The Summoner":       "9",   # Extra Strong + Fire Enchanted
+        "Taintbreeder":       "6",   # Magic Resistant + Extra Fast
+        "Grand Vizier of Chaos": "8",  # Extra Strong + Fire Enchanted + Magic Resistant (via Mod2 if open)
+        "Siege Boss":         "28",  # Extra Strong + Stone Skin
+        "Ancient Barbarian 1": "5",  # Talic: Extra Fast + Extra Strong
+        "Ancient Barbarian 2": "28", # Madawc: Shout + Stone Skin
+        "Ancient Barbarian 3": "27", # Korlic: Leap Attack + Spectral Hit
+        "Bonesaw Breaker":    "6",   # Extra Strong + Magic Resistant + Extra Fast
+        "Dac Farren":         "5",   # Cold Enchanted + Extra Strong
+        "Megaflow Rectifier": "27",  # Eldritch: Extra Fast + Spectral Hit
+        "Eyeback Unleashed":  "27",  # Extra Strong + Extra Fast + Spectral Hit
+        "Threash Socket":     "5",   # Cursed + Extra Strong
+        "Pindleskin":         "6",   # Fire Enchanted + Extra Fast
+        "Snapchip Shatter":   "5",   # Cursed + Cold Enchanted + Extra Strong
+        "Sharp Tooth Sayer":  "5",   # Extra Fast + Extra Strong
+        "Frozenstein":        "5",   # Cold Enchanted + Mana Burn + Extra Strong
     }
     for row in rows:
         su = row.get("Superunique", "").strip()
         if su in baal_waves:
-            mn, mx, mod1 = baal_waves[su]
+            mn, mx, mod1, mod2 = baal_waves[su]
             row["MinGrp"] = mn
             row["MaxGrp"] = mx
             row["Mod1"] = mod1
+            row["Mod2"] = mod2
         else:
             # Cap oversized Superunique minion packs (e.g. 8-9 minions -> 3-4) for solo play
             mn = parse_int(row.get("MinGrp", ""))
@@ -818,6 +1115,13 @@ def build_superuniques(cfg: dict) -> str:
                 row["MinGrp"] = str(max(2, (mn + 1) // 2))
             if mx > 4:
                 row["MaxGrp"] = str(max(3, (mx + 1) // 2))
+
+            if su in thematic_second_mod:
+                new_mod = thematic_second_mod[su]
+                if not row.get("Mod2") or row.get("Mod2") == "0":
+                    row["Mod2"] = new_mod
+                elif (not row.get("Mod3") or row.get("Mod3") == "0") and row.get("Mod1") != new_mod and row.get("Mod2") != new_mod:
+                    row["Mod3"] = new_mod
 
     return write_tsv("superuniques.txt", headers, rows)
 
@@ -885,6 +1189,7 @@ def build_monequip(cfg: dict) -> str:
 def build_difficultylevels(cfg: dict) -> str:
     headers, rows = read_tsv("difficultylevels.txt")
     static_mins = {"Normal": "25", "Nightmare": "33", "Hell": "50"}
+    elite_dmg_bonus = {"Normal": "100", "Nightmare": "110", "Hell": "120"}
     for row in rows:
         name = row.get("Name", "").strip()
         if name not in static_mins:
@@ -893,6 +1198,8 @@ def build_difficultylevels(cfg: dict) -> str:
         row["PrimeEvilDamagePercentVSPet"] = "175"
         row["MercenaryDamagePercentVSBoss"] = "50"
         row["StaticFieldMin"] = static_mins[name]
+        row["UniqueDamageBonus"] = elite_dmg_bonus[name]
+        row["ChampionDamageBonus"] = elite_dmg_bonus[name]
 
     return write_tsv("difficultylevels.txt", headers, rows)
 
@@ -1167,6 +1474,7 @@ def build_monsters_all(cfg: dict) -> list[str]:
         build_levels(cfg),
         build_monstats(cfg),
         build_monprop(cfg),
+        build_monumod(cfg),
         build_superuniques(cfg),
         build_monequip(cfg),
         build_difficultylevels(cfg),

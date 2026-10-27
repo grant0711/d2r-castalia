@@ -817,6 +817,23 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
             gc["MaxELev4"] = "320"
             gc["MaxELev5"] = "360"
 
+    # 4. Act Boss Missiles (Andariel Poison Spray & Poison Bolt — 1.45x base + progressive per-level scaling)
+    for boss_ms in ("andarielspray", "andypoisonbolt"):
+        if boss_ms in rows_by_name:
+            bm = rows_by_name[boss_ms]
+            for dcol in (
+                "MinDamage", "MaxDamage", "MinLevDam1", "MinLevDam2", "MinLevDam3", "MinLevDam4", "MinLevDam5",
+                "MaxLevDam1", "MaxLevDam2", "MaxLevDam3", "MaxLevDam4", "MaxLevDam5",
+                "EMin", "EMax", "MinELev1", "MinELev2", "MinELev3", "MinELev4", "MinELev5",
+                "MaxELev1", "MaxELev2", "MaxELev3", "MaxELev4", "MaxELev5",
+            ):
+                if bm.get(dcol):
+                    bm[dcol] = scale_int(bm[dcol], 1.45)
+            if bm.get("Vel"):
+                bm["Vel"] = str(min(28, int(bm["Vel"]) + 3))
+            if bm.get("MaxVel"):
+                bm["MaxVel"] = str(min(28, int(bm["MaxVel"]) + 3))
+
 
 def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     s_headers, s_rows = read_excel_tsv("skills.txt")
@@ -868,6 +885,23 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             ts["MaxLevDam3"] = "470"
             ts["MaxLevDam4"] = "530"
             ts["MaxLevDam5"] = "590"
+
+    # Scale Act Boss & SuperUnique Signature Spells (1.40x base + progressive per-level scaling)
+    for boss_skill in (
+        "PrimeLightning", "PrimeBolt", "MephistoMissile", "MephFrostNova",
+        "DiabLight", "DiabCold", "DiabFire",
+        "Baal Nova", "Baal Inferno", "Baal Cold Missiles",
+    ):
+        if boss_skill in by_name:
+            bs = by_name[boss_skill]
+            for dcol in (
+                "MinDam", "MaxDam", "MinLevDam1", "MinLevDam2", "MinLevDam3", "MinLevDam4", "MinLevDam5",
+                "MaxLevDam1", "MaxLevDam2", "MaxLevDam3", "MaxLevDam4", "MaxLevDam5",
+                "EMin", "EMax", "EMinLev1", "EMinLev2", "EMinLev3", "EMinLev4", "EMinLev5",
+                "EMaxLev1", "EMaxLev2", "EMaxLev3", "EMaxLev4", "EMaxLev5",
+            ):
+                if bs.get(dcol):
+                    bs[dcol] = scale_int(bs[dcol], 1.40)
 
     # Populate HireableIconCel (0..28 in Spells/Hireables/HrSkillIcon) for custom Mercenary skills
     # so HireMenuPanelHD & HirelingInventoryPanelHD always render a visible skill icon next to tooltips.

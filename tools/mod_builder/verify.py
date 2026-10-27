@@ -479,16 +479,22 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError("cubemain.txt: QA starter kit recipe active while qa_cube_starter_kit=false")
             if r.get("description", "").startswith("Distill "):
                 distill_count += 1
-                if r.get("output") != '"jew,crf"' or r.get("lvl") != "1":
+                if (
+                    r.get("numinputs") != "3"
+                    or r.get("input 2") != "bml"
+                    or r.get("input 3") != '"jew,mag"'
+                    or r.get("output") != '"jew,crf"'
+                    or r.get("lvl") != "1"
+                ):
                     raise AssertionError(
-                        f"cubemain.txt ({r.get('description')}): expected output='\"jew,crf\"' and lvl='1'"
+                        f"cubemain.txt ({r.get('description')}): expected numinputs=3, input 2=bml, input 3='\"jew,mag\"', output='\"jew,crf\"', lvl='1'"
                     )
                 if "levelreq" not in (r.get(f"mod {i}", "") for i in range(1, 6)):
                     raise AssertionError(
                         f"cubemain.txt ({r.get('description')}): missing levelreq modifier"
                     )
-        if distill_count < 1000:
-            raise AssertionError(f"cubemain.txt: expected >= 1000 distillation rows, found {distill_count}")
+        if distill_count < 800:
+            raise AssertionError(f"cubemain.txt: expected >= 800 distillation rows, found {distill_count}")
     for afx_fn in ("magicprefix.txt", "magicsuffix.txt"):
         _, afx_rows = _read_mod_tsv(afx_fn)
         for r in afx_rows:

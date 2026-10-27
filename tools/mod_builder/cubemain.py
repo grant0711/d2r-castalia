@@ -293,27 +293,25 @@ def _build_distillation_rows(
                 input_specs.append((f'"{bcode},{qual_tag}"', f"{idx_name} ({bcode},{qual_tag})"))
 
             for in1_val, desc_lbl in input_specs:
-                for with_jewel in (True, False):
-                    fields = {
-                        "description": f"Distill {desc_lbl}{' + Jewel' if with_jewel else ''} -> Crafted Jewel",
-                        "enabled": "1",
-                        "version": "100",
-                        "numinputs": "3" if with_jewel else "2",
-                        "input 1": in1_val,
-                        "input 2": "bml",
-                        "output": '"jew,crf"',
-                        "lvl": "1",
-                    }
-                    if with_jewel:
-                        fields["input 3"] = "jew"
-                    for m_idx, (mc, mch, mpar, mmn, mmx) in enumerate(distilled_mods, start=1):
-                        fields[f"mod {m_idx}"] = mc
-                        fields[f"mod {m_idx} chance"] = mch
-                        fields[f"mod {m_idx} param"] = mpar
-                        fields[f"mod {m_idx} min"] = mmn
-                        fields[f"mod {m_idx} max"] = mmx
+                fields = {
+                    "description": f"Distill {desc_lbl} + Magic Jewel -> Crafted Jewel",
+                    "enabled": "1",
+                    "version": "100",
+                    "numinputs": "3",
+                    "input 1": in1_val,
+                    "input 2": "bml",
+                    "input 3": '"jew,mag"',
+                    "output": '"jew,crf"',
+                    "lvl": "1",
+                }
+                for m_idx, (mc, mch, mpar, mmn, mmx) in enumerate(distilled_mods, start=1):
+                    fields[f"mod {m_idx}"] = mc
+                    fields[f"mod {m_idx} chance"] = mch
+                    fields[f"mod {m_idx} param"] = mpar
+                    fields[f"mod {m_idx} min"] = mmn
+                    fields[f"mod {m_idx} max"] = mmx
 
-                    out_lines.append(_make_row_str(num_cols, col_idx, fields))
+                out_lines.append(_make_row_str(num_cols, col_idx, fields))
 
     return out_lines
 

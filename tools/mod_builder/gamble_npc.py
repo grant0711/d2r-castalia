@@ -23,7 +23,7 @@ def build_npc(cfg: dict = None) -> str:
     headers, rows = read_excel_tsv("npc.txt")
     for row in rows:
         row["buy mult"] = "128"
-        row["rep mult"] = "96"
+        row["rep mult"] = "768"
         row["max buy"] = str(cap_n)
         row["max buy (N)"] = str(cap_nm)
         row["max buy (H)"] = str(cap_h)

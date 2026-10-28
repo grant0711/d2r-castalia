@@ -210,8 +210,18 @@ def verify_all(cfg: dict = None) -> List[str]:
 
     # 3. Verify weapons.txt & armor.txt melee reach, javelin reach tiers, throwing properties,
     #    and strictly partitioned Act 1..5 Magic-only vendor stocking + ubercode/ultracode upgrades
+    _, van_weap_rows = read_excel_tsv("weapons.txt")
+    van_weap_by_code = {r["code"]: r for r in van_weap_rows if r.get("code")}
     _, weap_rows = _read_mod_tsv("weapons.txt")
     _, arm_rows = _read_mod_tsv("armor.txt")
+    _, npc_rows = _read_mod_tsv("npc.txt")
+    for nr in npc_rows:
+        if nr.get("rep mult") != "768":
+            raise AssertionError(f"npc.txt ({nr.get('npc')}): expected rep mult='768', got '{nr.get('rep mult')}'")
+    _, mod_isc_rows = _read_mod_tsv("itemstatcost.txt")
+    isc_charged = next((r for r in mod_isc_rows if r.get("Stat") == "item_charged_skill"), None)
+    if not isc_charged or isc_charged.get("Multiply") != "4" or isc_charged.get("Add") != "10":
+        raise AssertionError("itemstatcost.txt (item_charged_skill): expected Multiply='4', Add='10' for cheap charge refills")
     ranged_only_types = {"bow", "abow", "xbow", "tpot"}
     vendor_names = (
         "Charsi", "Gheed", "Akara", "Fara", "Lysander", "Drognan",
@@ -242,6 +252,13 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
         if r.get("spawnable") != "1" or wtype == "tpot" or code in ("bml", "um1"):
             continue
+        vw = van_weap_by_code.get(code)
+        if vw and r.get("nodurability") != "1" and int(vw.get("durability") or "0") > 0:
+            exp_dur = min(255, int(vw["durability"]) * 2)
+            if int(r.get("durability") or "0") != exp_dur:
+                raise AssertionError(
+                    f"weapons.txt ({code}): expected 2x durability={exp_dur}, got {r.get('durability')}"
+                )
         wcost = int(r.get("cost") or "0")
         if wcost < 2 or wcost > 50000:
             raise AssertionError(

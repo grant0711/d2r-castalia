@@ -67,7 +67,7 @@ def build_itemstatcost(cfg: dict) -> str:
         "item_addskill_tab": ("512", "8000"),        # +3 Skill Tab = +150% of base cost + 8,000g
         "item_maxhp_percent": ("128", "4000"),       # Replaces vanilla's 32,093 flat Add
         "item_maxmana_percent": ("128", "4000"),     # Replaces vanilla's 56,452 flat Add
-        "item_charged_skill": ("64", "100"),         # Compress charged skill base cost & recharge multiplier
+        "item_charged_skill": ("4", "10"),           # Keep recharging skill charges cheap even with rep mult = 768
     }
     for r in rows:
         st = r.get("Stat", "")

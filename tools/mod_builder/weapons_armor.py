@@ -599,7 +599,13 @@ def build_weapons(cfg: dict) -> str:
         if wtype in weapon_staffmod_group:
             row["auto prefix"] = weapon_staffmod_group[wtype]
 
-        # 3c. Normalize weapon base cost by progression level (1..85) and slot weight
+        # 3c. Scale weapon durability by 2x (clamped to 255 save-bit limit) so per-point weapon
+        #     repair cost is half that of armor against npc.txt rep mult = 768
+        w_dur = int(row.get("durability") or "0")
+        if w_dur > 0 and row.get("nodurability") != "1":
+            row["durability"] = str(min(255, w_dur * 2))
+
+        # 3d. Normalize weapon base cost by progression level (1..85) and slot weight
         w_lvl = int(row.get("level") or "1")
         if wtype in ("jave", "ajav", "tkni", "taxe"):
             s_div = max(1, int(row.get("maxstack") or "25"))

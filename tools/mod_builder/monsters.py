@@ -12,7 +12,13 @@ Generates:
   - experience.txt (Solo Level 1-99 ExpRatio curve)
   - charstats.txt (2 SkillsPerLevel, 2.5x LifePerLevel, 1.75x ManaPerMagic, tactical Stamina)
 """
-from mod_builder.common import read_excel_tsv as read_tsv, write_excel_tsv as write_tsv
+from mod_builder.common import (
+    read_excel_tsv as read_tsv,
+    read_strings_json,
+    upsert_string_entries,
+    write_excel_tsv as write_tsv,
+    write_strings_json,
+)
 
 
 def parse_int(val: str, default: int = 0) -> int:
@@ -419,39 +425,66 @@ def _scale_weakness_by_diff(base_w: int, diff_suffix: str, is_phys_or_mag: bool)
     return min(-5 if is_phys_or_mag else -10, base_w + step)
 
 
-def _apply_weaknesses_and_magic_imm(row: dict, base_id: str) -> None:
-    profile = FAMILY_RESIST_PROFILES.get(base_id, {"weak": {}, "strong": ()})
-    weaknesses = profile["weak"]
-    strong_elems = profile["strong"]
+ICE_MINION_IDS = {
+    "minion3", "minion6", "minion8",
+    "suicideminion3", "suicideminion6", "suicideminion8",
+}
+
+RES_COLOR_LABELS = {
+    "Dm": "ÿc4Physicalÿc0",
+    "Ma": "ÿc8Magicÿc0",
+    "Fi": "ÿc1Fireÿc0",
+    "Li": "ÿc9Lightningÿc0",
+    "Co": "ÿc3Coldÿc0",
+    "Po": "ÿc2Poisonÿc0",
+}
+
+
+def _apply_weaknesses_and_magic_imm(row: dict, base_id: str, mon_id: str = "") -> None:
+    if mon_id in ICE_MINION_IDS:
+        weaknesses = {"Fi": -35, "Li": -30}
+        strong_elems = ("Co",)
+    elif base_id in ("minion1", "suicideminion1"):
+        weaknesses = {"Co": -35, "Li": -30}
+        strong_elems = ("Fi",)
+    else:
+        profile = FAMILY_RESIST_PROFILES.get(base_id, {"weak": {}, "strong": ()})
+        weaknesses = profile["weak"]
+        strong_elems = profile["strong"]
+    if base_id in HEAVY_BRUTE_BASES and "Dm" not in weaknesses and "Dm" not in strong_elems:
+        strong_elems = ("Dm",) + tuple(strong_elems)
     all_res = ("Dm", "Ma", "Fi", "Li", "Co", "Po")
 
     orig_res = {
         diff: {r: parse_int(row.get(f"Res{r}{diff}", "")) for r in all_res}
         for diff in ("", "(N)", "(H)")
     }
+    var_weak = {
+        r for r in weaknesses
+        if orig_res[""][r] < 50
+    }
 
     for diff_suffix in ("", "(N)", "(H)"):
-        # Count existing immunities (>= 100) in this difficulty
+        # Count existing non-weakness immunities (>= 100) in this difficulty
         imm_count = sum(
-            1 for r in all_res if orig_res[diff_suffix][r] >= 100
+            1 for r in all_res if r not in var_weak and orig_res[diff_suffix][r] >= 100
         )
         max_imm = 1 if diff_suffix in ("", "(N)") else 2
 
         for rtype in all_res:
             col = f"Res{rtype}{diff_suffix}"
             cur = orig_res[diff_suffix][rtype]
-            normal_cur = orig_res[""][rtype]
             is_pm = rtype in ("Dm", "Ma")
 
-            # 1. Keep native immunities (>= 100) intact
-            if cur >= 100:
-                continue
-
-            # 2. If this element is one of the family's designated weaknesses AND this specific monster
-            #    is not an elemental sub-variant of that element (normal_cur < 50 and cur < 100):
-            if rtype in weaknesses and normal_cur < 50:
+            # 1. If this element is one of this variant's designated weaknesses, keep it Weak (< 0%)
+            #    across all 3 difficulties (Normal < Nightmare < Hell) so it never flips to Immune in Hell
+            if rtype in var_weak:
                 w_val = _scale_weakness_by_diff(weaknesses[rtype], diff_suffix, is_pm)
                 row[col] = str(w_val)
+                continue
+
+            # 2. Keep native immunities (>= 100) intact on non-weakness elements
+            if cur >= 100:
                 continue
 
             # 3. Stretch positive / thematic resistances upward so immunities appear earlier when suited to the biome,
@@ -467,9 +500,11 @@ def _apply_weaknesses_and_magic_imm(row: dict, base_id: str) -> None:
                     row[col] = str(min(85, cur + 20))
                 elif rtype in strong_elems and cur > 0:
                     row[col] = str(min(75, cur + 25))
+                elif rtype == "Dm" and base_id in HEAVY_BRUTE_BASES:
+                    row[col] = "25"
             elif diff_suffix == "(N)":
-                # Nightmare: stretch thematic resists (>= 55, or >= 40 in primary strong_elems) to 100% Immune (max 1 immunity),
-                # moderate thematic resists to 75..85%, and neutral elements to 25..35%
+                # Nightmare: stretch thematic resists (>= 55, or >= 45 in primary strong_elems) to 100% Immune (max 1 immunity),
+                # moderate thematic resists to 65..85% (or >= 50%), and neutral elements to 15..25%
                 if (
                     ((rtype in strong_elems and cur >= 45) or cur >= 60)
                     and imm_count < max_imm
@@ -482,14 +517,14 @@ def _apply_weaknesses_and_magic_imm(row: dict, base_id: str) -> None:
                 elif rtype in strong_elems:
                     row[col] = str(max(50, cur + 35))
                 else:
-                    # Neutral resistance in Nightmare: 20% (Dm/Ma) or 25% (Elemental)
+                    # Neutral resistance in Nightmare: 15% (Dm/Ma) or 25% (Elemental)
                     floor_nm = 15 if is_pm else 25
-                    row[col] = str(max(cur + 15, floor_nm))
+                    row[col] = str(min(45, max(cur + 15, floor_nm)))
             else:
-                # Hell "(H)": stretch thematic resists (>= 60 or strong_elems >= 50) to 100% Immune (up to 2 immunities),
-                # and raise neutral resistances to 50..65% (33..45% for Dm/Ma) so non-weakness hits face stiff resistance
+                # Hell "(H)": stretch thematic resists (>= 65 or strong_elems >= 50) to 100% Immune (up to 2 immunities),
+                # and raise neutral resistances to 33..50% so non-weakness hits face stiff resistance
                 if (
-                    ((rtype in strong_elems and cur >= 50) or cur >= 65)
+                    ((rtype in strong_elems and (cur >= 33 or imm_count == 0)) or cur >= 65)
                     and imm_count < max_imm
                     and rtype != "Dm"
                 ):
@@ -497,9 +532,11 @@ def _apply_weaknesses_and_magic_imm(row: dict, base_id: str) -> None:
                     imm_count += 1
                 elif is_thematic and cur >= 33:
                     row[col] = str(min(90, max(75, cur + 25)))
+                elif rtype in strong_elems:
+                    row[col] = str(max(75, cur + 50))
                 else:
-                    floor_h = 33 if is_pm else 50
-                    row[col] = str(min(85, max(cur + 25, floor_h)))
+                    floor_h = 33 if is_pm else 45
+                    row[col] = str(min(75, max(cur + 25, floor_h)))
 
     # Add Magic Immunity to select Arcane/Undead/Zakarum casters in Hell (and 75% Magic Res in NM)
     if base_id in HELL_MAGIC_IMMUNE_BASES:
@@ -898,8 +935,18 @@ def _configure_player_summons(row: dict, mon_id: str) -> bool:
 
     if mon_id == "infernosentry":
         row["aidist"] = "25"
-        row["aip2"] = "20"
-        row["aip3"] = "25"
+        for sfx in ("", "(N)", "(H)"):
+            row[f"aidel{sfx}"] = "4"
+            row[f"aip2{sfx}"] = "4"
+            row[f"aip3{sfx}"] = "5"
+            row[f"aip4{sfx}"] = "25"
+        row["Level"] = "30"
+        row["Level(N)"] = "60"
+        row["Level(H)"] = "85"
+        row["A1TH"] = "9999"
+        row["A1TH(N)"] = "9999"
+        row["A1TH(H)"] = "9999"
+        row["MonProp"] = "infernosentry"
         row["SendSkills"] = "31"
         row["Skill1"] = "mon inferno sentry"
         row["Sk1mode"] = "S2"
@@ -952,12 +999,88 @@ def _configure_trap_entities(row: dict, mon_id: str) -> bool:
     return True
 
 
+def _get_descstr_pool() -> tuple[dict[str, str], list[tuple[int, str, str]]]:
+    """
+    Return (van_desc_en, pool) where pool is a deterministic list of (id, Key, source_file)
+    for .tbl-backed string keys (id < 23000) safe to use in monstats.txt DescStr.
+    """
+    m_str = read_strings_json("monsters.json")
+    b_str = read_strings_json("bnet.json")
+    _, mon_rows = read_tsv("monstats.txt")
+    _, su_rows = read_tsv("superuniques.txt")
+    _, hire_rows = read_tsv("hireling.txt")
+
+    van_desc_en = {e["Key"]: e["enUS"] for e in m_str}
+
+    protected_keys = set()
+    for r in mon_rows:
+        if r.get("NameStr", "").strip():
+            protected_keys.add(r["NameStr"].strip())
+    for r in su_rows:
+        if r.get("Name", "").strip():
+            protected_keys.add(r["Name"].strip())
+    for r in hire_rows:
+        if r.get("HireDesc", "").strip():
+            protected_keys.add(r["HireDesc"].strip())
+
+    protected_prefixes = (
+        "unique", "monsterunique", "champ", "Undead", "Demon", "minion", "Dummy",
+        "Baal", "Necro", "Druid", "UI", "Ui", "darkwanderer",
+    )
+    for e in m_str:
+        k = e["Key"]
+        if any(k.startswith(p) for p in protected_prefixes):
+            protected_keys.add(k)
+
+    pool: list[tuple[int, str, str]] = []
+    for e in m_str:
+        if e["Key"] not in protected_keys and e["id"] < 23000:
+            pool.append((e["id"], e["Key"], "monsters.json"))
+    for e in b_str:
+        if e["Key"].startswith("D2bnetHelp") and e["id"] < 23000:
+            pool.append((e["id"], e["Key"], "bnet.json"))
+
+    return van_desc_en, pool
+
+
+def _format_monster_affinity_desc(row: dict, orig_desc_key: str, van_desc_en: dict[str, str]) -> str:
+    all_res = ("Dm", "Ma", "Fi", "Li", "Co", "Po")
+    res_list = [k for k in all_res if parse_int(row.get(f"Res{k}(N)", "")) >= 50]
+    weak_list = [k for k in all_res if parse_int(row.get(f"Res{k}(N)", "")) < 0]
+    parts = []
+    if orig_desc_key and orig_desc_key in van_desc_en:
+        parts.append(van_desc_en[orig_desc_key])
+    if res_list:
+        parts.append(", ".join(RES_COLOR_LABELS[k] for k in res_list) + " Resistant")
+    if weak_list:
+        parts.append("Weak to " + ", ".join(RES_COLOR_LABELS[k] for k in weak_list))
+    return " - ".join(parts)
+
+
 def build_monstats(cfg: dict) -> str:
     headers, rows = read_tsv("monstats.txt")
+    van_desc_en, desc_pool = _get_descstr_pool()
+    text_to_key: dict[str, str] = {}
+    pool_idx = 0
+
+    def assign_desc_str(r: dict, orig_d: str) -> None:
+        nonlocal pool_idx
+        desc_text = _format_monster_affinity_desc(r, orig_d, van_desc_en)
+        if not desc_text:
+            return
+        if desc_text not in text_to_key:
+            if pool_idx >= len(desc_pool):
+                raise RuntimeError(f"Exhausted .tbl DescStr pool ({len(desc_pool)} keys)")
+            _, k_name, _ = desc_pool[pool_idx]
+            pool_idx += 1
+            text_to_key[desc_text] = k_name
+        r["DescStr"] = text_to_key[desc_text]
+
     for row in rows:
         mon_id = row.get("Id", "").strip()
         if not mon_id or mon_id == "Expansion":
             continue
+        orig_desc = row.get("DescStr", "").strip()
 
         # 0. Act 1 Rogue Mercenary: Enable equipping Arrows (bowq) in off-hand (slot_left_arm)
         if mon_id == "roguehire":
@@ -969,6 +1092,7 @@ def build_monstats(cfg: dict) -> str:
 
         # 2. Solo-Tuned Baal Throne Room Wave Monsters
         if _configure_baal_wave_monsters(row, mon_id):
+            assign_desc_str(row, orig_desc)
             continue
 
         # 2b. Quest SuperUniques & Act Minibosses (Blood Raven, Griswold, The Smith, Radament,
@@ -1142,7 +1266,26 @@ def build_monstats(cfg: dict) -> str:
             row[col] = scale_int(row[col], xp_mult)
 
         # Apply Biome Weaknesses & Hell Magic Immunities
-        _apply_weaknesses_and_magic_imm(row, base_id)
+        _apply_weaknesses_and_magic_imm(row, base_id, mon_id)
+
+        # Populate color-coded Resistances and Weaknesses via DescStr on all normal monsters
+        assign_desc_str(row, orig_desc)
+
+    # Write allocated .tbl-backed DescStr entries to monsters.json and bnet.json
+    pool_by_key = {k_name: (eid, src) for eid, k_name, src in desc_pool}
+    m_updates: list[tuple[int, str, str]] = []
+    b_updates: list[tuple[int, str, str]] = []
+    for desc_text, k_name in text_to_key.items():
+        eid, src = pool_by_key[k_name]
+        m_updates.append((eid, k_name, desc_text))
+        if src == "bnet.json":
+            b_updates.append((eid, k_name, desc_text))
+
+    m_entries = upsert_string_entries(read_strings_json("monsters.json"), m_updates)
+    write_strings_json("monsters.json", m_entries)
+    if b_updates:
+        b_entries = upsert_string_entries(read_strings_json("bnet.json"), b_updates)
+        write_strings_json("bnet.json", b_entries)
 
     return write_tsv("monstats.txt", headers, rows)
 
@@ -1246,6 +1389,14 @@ def build_monprop(cfg: dict) -> str:
         r_trap[f"par1{sfx}"] = "Ass Trap Charge Consume"
         r_trap[f"min1{sfx}"] = "1"
         r_trap[f"max1{sfx}"] = "1"
+
+    # Register the item_openwounds event callback on infernosentry with baseline -1 (<= 0%, matching vanilla druidhawk stupidity -1 -1)
+    # so Fire Trauma's passivestat3 (+51 at 3 charges) activates 50% Open Wounds only when deployed with 3 Tiger Strike charges.
+    r_inf = ensure_row("infernosentry")
+    for sfx in ("", " (N)", " (H)"):
+        r_inf[f"prop1{sfx}"] = "openwounds"
+        r_inf[f"min1{sfx}"] = "-1"
+        r_inf[f"max1{sfx}"] = "-1"
 
     return write_tsv("monprop.txt", headers, rows)
 

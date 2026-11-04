@@ -171,6 +171,9 @@ def build_itemstatcost(cfg: dict) -> str:
             r["op stat1"] = "firemindam"
             r["op stat2"] = "firemaxdam"
             r["op stat3"] = "firemaxdam"
+        elif st == "item_pierce":
+            # Enable Send Other so trap pets (infernosentry at 3 Tiger Strike charges) sync 33% Pierce to the client
+            r["Send Other"] = "1"
         elif st == "item_attackertakesdamage":
             # Revert Patch 2.4's attackedinmelee back to damagedinmelee so missed and blocked
             # swings do NOT trigger Thorns; only landed melee hits reflect damage.

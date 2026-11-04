@@ -173,7 +173,7 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"missiles.txt ({no_stun_ms}): forbidden pSrvHitFunc='{ms_row.get('pSrvHitFunc')}' (breaks damage or causes infinite 0-charge stun)"
             )
-    for stun_ms_name in ("sucfireballexplode", "sentryspikeinair"):
+    for stun_ms_name in ("sucfireballexplode",):
         sfe_row = missiles_by_name.get(stun_ms_name, {})
         if (
             sfe_row.get("pSrvDmgFunc") != "7"
@@ -184,6 +184,17 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"missiles.txt ({stun_ms_name}): Charge-3 micro-stun missile must have pSrvDmgFunc='7', InitSteps='0', Range gated by '>= 3', and ProgOverlay=''"
             )
+    bf3_row = missiles_by_name.get("bladefragment3", {})
+    if (
+        bf3_row.get("pSrvDoFunc") != "1"
+        or bf3_row.get("pSrvHitFunc") != ""
+        or bf3_row.get("CollideKill") != "1"
+        or bf3_row.get("SrcDamage") != "128"
+        or bf3_row.get("CelFile") != "Expansion\\bladefury_C"
+    ):
+        raise AssertionError(
+            "missiles.txt (bladefragment3): Shrapnel Sentry missile must be straight-line Blade Fury star (CollideKill='1', SrcDamage='128', CelFile='Expansion\\bladefury_C')"
+        )
 
     # Verify pettype.txt dedicated trap types & srvstfunc='39' charge-consumption invariants
     _, pet_rows = _read_mod_tsv("pettype.txt")
@@ -276,6 +287,16 @@ def verify_all(cfg: dict = None) -> List[str]:
     ):
         raise AssertionError(
             "skills.txt (Wake Of Destruction Sentry): must fire straight-line vampirefireball with srvdofunc='' and cltdofunc=''"
+        )
+    ft_sk = skills_by_name.get("Fire Trauma", {})
+    mis_sk = skills_by_name.get("mon inferno sentry", {})
+    if (
+        ft_sk.get("passivestat2") != "item_openwounds"
+        or mis_sk.get("srvmissile") != "bladefragment3"
+        or mis_sk.get("cltmissile") != "bladefragment3"
+    ):
+        raise AssertionError(
+            "skills.txt (Fire Trauma / mon inferno sentry): must fire straight-line bladefragment3 with 100% Open Wounds at 3 Tiger Strike charges"
         )
     checks_passed.append("skills/states/missiles/skilldesc referential & rollback bounds")
 
@@ -735,9 +756,11 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"monstats.txt ({mid}): expected progressive off-screen aidist (42 <= {ad_n} < {ad_nm} < {ad_h})"
                 )
-    from mod_builder.monsters import FIXED_SKIP_ZONE_IDS, HEAVY_BRUTE_BASES
+    from mod_builder.monsters import FAMILY_RESIST_PROFILES, FIXED_SKIP_ZONE_IDS, HEAVY_BRUTE_BASES
     _, van_mon_rows = read_excel_tsv("monstats.txt")
     van_mon_by_id = {r["Id"]: r for r in van_mon_rows if r.get("Id")}
+    with open(os.path.join(MOD_STRINGS, "monsters.json"), "r", encoding="utf-8-sig") as f:
+        mod_mon_strings = {e["Key"]: e for e in json.load(f) if isinstance(e, dict) and "Key" in e}
     for r in mon_rows:
         mid = r.get("Id", "").strip()
         if (
@@ -752,6 +775,12 @@ def verify_all(cfg: dict = None) -> List[str]:
         vr = van_mon_by_id.get(mid)
         if not vr:
             continue
+        if r.get("BaseId", "").strip() in FAMILY_RESIST_PROFILES and mid not in ("cowking", "darkelder"):
+            dstr_key = r.get("DescStr", "").strip()
+            if not dstr_key or dstr_key not in mod_mon_strings or int(mod_mon_strings[dstr_key].get("id", 99999)) >= 23000:
+                raise AssertionError(
+                    f"monstats.txt ({mid}): DescStr='{dstr_key}' must be a valid .tbl-backed key (id < 23000) in monsters.json"
+                )
         ad_n = int(r.get("aidist") or "0")
         ad_nm = int(r.get("aidist(N)") or "0")
         ad_h = int(r.get("aidist(H)") or "0")

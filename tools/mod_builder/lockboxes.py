@@ -66,6 +66,15 @@ LOCKBOX_TIER_INFO = {
     },
 }
 
+ELIXIR_SPRITE_INFO = {
+    "wm2": {"asset": "potion/elixir", "img": "elixir_thawing_nm.jpg"},
+    "wm3": {"asset": "potion/healing_potion", "img": "elixir_thawing_hell.jpg"},
+    "yp2": {"asset": "potion/full_healing_potion", "img": "elixir_antidote_nm.jpg"},
+    "yp3": {"asset": "potion/mana_potion", "img": "elixir_antidote_hell.jpg"},
+    "vp2": {"asset": "potion/full_mana_potion", "img": "elixir_stamina_nm.jpg"},
+    "vp3": {"asset": "potion/rejuv_potion", "img": "elixir_stamina_hell.jpg"},
+}
+
 ACT_LEVEL_BANDS: List[Tuple[str, int, int, int]] = [
     # (act_prefix, tier, min_lvl, max_lvl)
     ("Act 1", 1, 1, 11),
@@ -381,5 +390,13 @@ def build_lockbox_sprites() -> List[str]:
         _write_d2r_sprite(key_src, f"{key_base}.sprite", 98, 98, solid_interior=False)
         _write_d2r_sprite(key_src, f"{key_base}.lowend.sprite", 49, 49, solid_interior=False)
         written.append(f"{key_base}.sprite")
+
+    for ecode, einfo in ELIXIR_SPRITE_INFO.items():
+        # 3. 1x1 Upgraded Nightmare/Hell Preparation Elixir sprites (98x98 HD, 49x49 lowend)
+        elx_src = os.path.join(ASSETS_DIR, einfo["img"])
+        elx_base = os.path.join(ui_misc_root, einfo["asset"])
+        _write_d2r_sprite(elx_src, f"{elx_base}.sprite", 98, 98, solid_interior=False)
+        _write_d2r_sprite(elx_src, f"{elx_base}.lowend.sprite", 49, 49, solid_interior=False)
+        written.append(f"{elx_base}.sprite")
 
     return written

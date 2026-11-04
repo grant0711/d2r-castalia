@@ -473,9 +473,12 @@ def build_weapons(cfg: dict) -> str:
 
         elif wtype == "swor":
             if is_1or2h or is_2h:
+                row["1or2handed"] = ""
+                row["mindam"] = ""
+                row["maxdam"] = ""
+                row["wclass"] = "2hs"
                 row["StrBonus"] = "160"
                 row["DexBonus"] = "100"
-                _scale_pair(row, "mindam", "maxdam", 1.10, 0.60, 1.40)
                 _scale_pair(row, "2handmindam", "2handmaxdam", 1.60, 0.60, 1.40)
             else:
                 row["StrBonus"] = "125"
@@ -599,6 +602,13 @@ def build_weapons(cfg: dict) -> str:
         if wtype in weapon_staffmod_group:
             row["auto prefix"] = weapon_staffmod_group[wtype]
 
+        # Tag all 2-handed melee weapons with type2='2hml' and all strictly 1-handed melee weapons with type2='1hml'
+        # so skills and masteries (One-Handed Mastery, Two-Handed Mastery, Desperate Berserk) cleanly partition 1H vs. 2H!
+        if (is_2h or is_1or2h) and wtype in ("swor", "axe", "hamm", "pole", "spea", "staf", "aspe"):
+            row["type2"] = "2hml"
+        elif not is_2h and not is_1or2h and wtype in ("swor", "axe", "mace", "club", "hamm", "scep", "knif", "wand", "orb", "h2h", "h2h2"):
+            row["type2"] = "1hml"
+
         # 3c. Scale weapon durability by 2x (clamped to 255 save-bit limit) so per-point weapon
         #     repair cost is half that of armor against npc.txt rep mult = 768
         w_dur = int(row.get("durability") or "0")
@@ -653,10 +663,9 @@ def build_weapons(cfg: dict) -> str:
     rows.append(bml)
 
     # 4b. Add Untempered Malus (um1) to weapons.txt:
-    # - Sold ONLY by Charsi as a single depleting White item (CharsiMin=1, CharsiMax=1, PermStoreItem=0)
-    #   for 100,000 Gold in Normal, Nightmare, and Hell.
-    # - Setting level=1 ensures Charsi's Act 1 Normal shop (ilvl cap = 12) can spawn it, while
-    #   HiQuality=1000000 in itemratio.txt guarantees it always rolls Normal (White) rather than Superior!
+    # - Sold ONLY by Charsi as a permanent White item (CharsiMin=1, CharsiMax=1, PermStoreItem=1)
+    #   for 100,000 Gold in Normal, Nightmare, and Hell (PermStoreItem=1 prevents the ilvl >= 25
+    #   vendor Magic-forcing rule from turning it into a Magic item in NM/Hell).
     # - Because it is the ONLY White weapon/armor in the entire mod (and type='umal' inherits from 'weap'
     #   with Rare=1), it is the ONLY item accepted by Charsi's "Temper Malus" (Imbue) quest reward!
     # - Tempering it at Charsi transforms it into a Rare Malus (um1,rar), which can then be transmuted
@@ -672,7 +681,7 @@ def build_weapons(cfg: dict) -> str:
     um1["normcode"] = "um1"
     um1["ubercode"] = "um1"
     um1["ultracode"] = "um1"
-    um1["PermStoreItem"] = "0"
+    um1["PermStoreItem"] = "1"
     um1["NightmareUpgrade"] = "xxx"
     um1["HellUpgrade"] = "xxx"
     _clear_vendors(um1)
@@ -792,6 +801,32 @@ def build_armor(cfg: dict) -> str:
             row["auto prefix"] = "313"
         elif atype == "pelt":
             row["auto prefix"] = "314"
+
+        # Enforce 4 / 8 / 12 Belt Slot Progression & Strength Requirements across Normal, NM, and Hell:
+        # - Light Belts (Sash & Light Belt families): 4 slots (1 row, belt="2"), low Str (0 / 20 / 50)
+        # - Medium Belts (Belt & Heavy Belt families): 8 slots (2 rows, belt="1"), medium Str (35..145)
+        # - Heavy Belts (Plated Belt, War Belt, Colossus Girdle): 12 slots (3 rows, belt="0"), high Str (100 / 140 / 185)
+        belt_progression_specs = {
+            "lbl": ("2", "0"),
+            "zlb": ("2", "20"),
+            "ulc": ("2", "50"),
+            "vbl": ("2", "0"),
+            "zvb": ("2", "20"),
+            "uvc": ("2", "50"),
+            "mbl": ("1", "35"),
+            "zmb": ("1", "65"),
+            "umc": ("1", "106"),
+            "tbl": ("1", "50"),
+            "ztb": ("1", "88"),
+            "utc": ("1", "145"),
+            "hbl": ("0", "100"),
+            "zhb": ("0", "140"),
+            "uhc": ("0", "185"),
+        }
+        if code in belt_progression_specs:
+            b_idx, b_str = belt_progression_specs[code]
+            row["belt"] = b_idx
+            row["reqstr"] = b_str
 
         # Normalize armor base cost by progression level (1..85) and slot weight
         a_lvl = int(row.get("level") or "1")

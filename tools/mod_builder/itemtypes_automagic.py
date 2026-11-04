@@ -10,9 +10,10 @@ Step 5: Build itemtypes.txt and automagic.txt:
   mod2code = rep-quant (10) to group 302 rows so Amazon Javelins (am5, ama, amf)
   and all generic Throwing Weapons (group 307) automatically replenish stack quantity!
 """
+import os
 from typing import Dict, List
 
-from mod_builder.common import read_excel_tsv, write_excel_tsv
+from mod_builder.common import MOD_ROOT, VANILLA_ROOT, read_excel_tsv, write_excel_tsv
 
 
 def build_itemtypes(cfg: dict) -> str:
@@ -79,25 +80,48 @@ def build_itemtypes(cfg: dict) -> str:
         umal["MaxSockets3"] = "0"
         rows.append(umal)
 
-    # 4. Add Crafting Slot Umbrella ItemTypes ('gljw' for Gloves/Ring/Amulet and 'btbl' for Boots/Belt)
-    # so cubemain.txt can evaluate 'gljw' and 'btbl' before the 'armo' catch-all!
-    if "gljw" not in by_code and "misc" in by_code:
-        gljw = dict(by_code["misc"])
-        gljw["ItemType"] = "Glove or Jewelry"
-        gljw["Code"] = "gljw"
-        gljw["Equiv1"] = ""
-        gljw["Equiv2"] = ""
-        rows.append(gljw)
-    for c in ("glov", "ring", "amul"):
+    # 4. Add Crafting Slot Umbrella ItemTypes ('jwly' for Ring/Amulet and 'btbl' for Boots/Belt)
+    # so cubemain.txt can evaluate each disjoint slot group cleanly, AND wire up the Row 37 ('hlm1')
+    # Mercenary Equipment inheritance trick so Hirelings can equip Gloves, Boots, Belts, Rings, and Amulets
+    # without leaking Helm affixes or Helm cube recipes onto those item types!
+    if rows[37].get("Code") == "helm" and rows[14].get("ItemType") == "Not Used":
+        orig_helm = dict(rows[37])
+        orig_unused = dict(rows[14])
+        orig_helm["Equiv1"] = "armo"
+        orig_helm["Equiv2"] = "hlm1"
+        rows[14] = orig_helm
+        by_code["helm"] = rows[14]
+
+        hlm1 = dict(orig_unused)
+        hlm1["ItemType"] = "Merc Equip"
+        hlm1["Code"] = "hlm1"
+        hlm1["Equiv1"] = ""
+        hlm1["Equiv2"] = ""
+        hlm1["Body"] = "0"
+        hlm1["BodyLoc1"] = ""
+        hlm1["BodyLoc2"] = ""
+        rows[37] = hlm1
+        by_code["hlm1"] = rows[37]
+
+    if "jwly" not in by_code and "misc" in by_code:
+        jwly = dict(by_code["misc"])
+        jwly["ItemType"] = "Jewelry"
+        jwly["Code"] = "jwly"
+        jwly["Equiv1"] = "hlm1"
+        jwly["Equiv2"] = ""
+        rows.append(jwly)
+    for c in ("ring", "amul"):
         if c in by_code:
-            by_code[c]["Equiv2"] = "gljw"
+            by_code[c]["Equiv2"] = "jwly"
+    if "glov" in by_code:
+        by_code["glov"]["Equiv2"] = "hlm1"
 
     if "btbl" not in by_code and "armo" in by_code:
         btbl = dict(by_code["armo"])
         btbl["ItemType"] = "Boots or Belt"
         btbl["Code"] = "btbl"
         btbl["Equiv1"] = "armo"
-        btbl["Equiv2"] = ""
+        btbl["Equiv2"] = "hlm1"
         rows.append(btbl)
     for c in ("boot", "belt"):
         if c in by_code:
@@ -112,6 +136,29 @@ def build_itemtypes(cfg: dict) -> str:
             by_code[ltype]["Rare"] = ""
     if "key" in by_code:
         by_code["key"]["AutoStack"] = "0"
+
+    # 5b. Add '1hml' (One-Handed Melee) and '2hml' (Two-Handed Melee) item type tags so skills and masteries
+    # (e.g., One-Handed Mastery, Two-Handed Mastery, Desperate Berserk) cleanly partition 1H vs. 2H melee weapons!
+    if "1hml" not in by_code and "mele" in by_code:
+        ohml = dict(by_code["mele"])
+        ohml["ItemType"] = "One-Handed Melee"
+        ohml["Code"] = "1hml"
+        ohml["Equiv1"] = ""
+        ohml["Equiv2"] = ""
+        ohml["Body"] = "0"
+        ohml["BodyLoc1"] = ""
+        ohml["BodyLoc2"] = ""
+        rows.append(ohml)
+    if "2hml" not in by_code and "mele" in by_code:
+        thml = dict(by_code["mele"])
+        thml["ItemType"] = "Two-Handed Melee"
+        thml["Code"] = "2hml"
+        thml["Equiv1"] = ""
+        thml["Equiv2"] = ""
+        thml["Body"] = "0"
+        thml["BodyLoc1"] = ""
+        thml["BodyLoc2"] = ""
+        rows.append(thml)
 
     # 6. Clear hardcoded StaffMods in itemtypes.txt so our automagic.txt 'skill-rand' groups (303, 305, 310..315)
     # control 100% of class skill rolls across all 6 progression tiers (reqlevel 1/8/16/24/32/40)!
@@ -436,7 +483,349 @@ def build_automagic(cfg: dict) -> str:
     return write_excel_tsv("automagic.txt", headers, rows)
 
 
+def build_inventory(cfg: dict) -> str:
+    """Populate neck, rHand, lHand, belt, feet, and gloves slot coordinates on Hireling & Hireling2 in inventory.txt."""
+    headers, rows = read_excel_tsv("inventory.txt")
+    by_cls = {r.get("class", ""): r for r in rows}
+    slot_prefixes = ("neck", "rHand", "lHand", "belt", "feet", "gloves")
+    for src_cls, dst_cls in (("Amazon", "Hireling"), ("Amazon2", "Hireling2")):
+        if src_cls in by_cls and dst_cls in by_cls:
+            src = by_cls[src_cls]
+            dst = by_cls[dst_cls]
+            for pfx in slot_prefixes:
+                dst[f"{pfx}Left"] = str(int(src[f"{pfx}Left"]) - 320)
+                dst[f"{pfx}Right"] = str(int(src[f"{pfx}Right"]) - 320)
+                dst[f"{pfx}Top"] = src[f"{pfx}Top"]
+                dst[f"{pfx}Bottom"] = src[f"{pfx}Bottom"]
+                dst[f"{pfx}Width"] = src[f"{pfx}Width"]
+                dst[f"{pfx}Height"] = src[f"{pfx}Height"]
+    return write_excel_tsv("inventory.txt", headers, rows)
+
+
+def _patch_hireling_sprite(hp_src: str, cb_src: str, dst_path: str, scale: int) -> None:
+    """
+    Composite all 10 equipment slot frames from classic_background.sprite onto hirelingpanel.sprite
+    (scale=1 for full 1162x1507 HD, scale=2 for 581x753 lowend).
+    """
+    with open(hp_src, "rb") as f:
+        hp_bytes = bytearray(f.read())
+    with open(cb_src, "rb") as f:
+        cb_bytes = bytearray(f.read())
+
+    W = 1162 // scale
+    H = 1507 // scale
+    hp_px = hp_bytes[40:]
+    cb_px = cb_bytes[40:]
+    out_px = bytearray(hp_px)
+
+    # Erase the entire interior paperdoll stone region (x=86..1076, y=148..758) using mirror-tiled
+    # unmarked stone from x=326..458 so 100% of the old 4 slot frames are removed with zero seams!
+    strip_x0 = 326 // scale
+    strip_w = 132 // scale
+    y_start = 148 // scale
+    y_end = 758 // scale
+    x_start = 86 // scale
+    x_end = 1076 // scale
+    for y in range(y_start, min(H, y_end)):
+        sy = min((745 // scale), max((150 // scale), y))
+        for x in range(x_start, min(W, x_end)):
+            if y < (195 // scale) and (x < (120 // scale) or x > (1042 // scale)):
+                continue
+            rel = x - x_start
+            cycle = rel // strip_w
+            offset = rel % strip_w
+            if cycle % 2 == 1:
+                offset = strip_w - 1 - offset
+            sx = strip_x0 + offset
+            sidx = (sy * W + sx) * 4
+            didx = (y * W + x) * 4
+            out_px[didx:didx + 4] = hp_px[sidx:sidx + 4]
+
+    slots = (
+        (482 // scale, 185 // scale, 196 // scale, 196 // scale, 481 // scale, 148 // scale),
+        (482 // scale, 428 // scale, 196 // scale, 294 // scale, 481 // scale, 355 // scale),
+        (483 // scale, 769 // scale, 196 // scale,  98 // scale, 481 // scale, 660 // scale),
+        (718 // scale, 353 // scale,  98 // scale,  98 // scale, 718 // scale, 290 // scale),
+        (344 // scale, 770 // scale,  98 // scale,  98 // scale, 344 // scale, 660 // scale),
+        (718 // scale, 770 // scale,  98 // scale,  98 // scale, 718 // scale, 660 // scale),
+        (108 // scale, 232 // scale, 196 // scale, 392 // scale, 108 // scale, 150 // scale),
+        (860 // scale, 232 // scale, 196 // scale, 392 // scale, 861 // scale, 150 // scale),
+        (107 // scale, 672 // scale, 196 // scale, 196 // scale, 108 // scale, 562 // scale),
+        (859 // scale, 672 // scale, 196 // scale, 196 // scale, 861 // scale, 562 // scale),
+    )
+    pad = max(6, 12 // scale)
+    for sx, sy, w, h, dx, dy in slots:
+        for ry in range(-pad, h + pad):
+            for rx in range(-pad, w + pad):
+                sidx = ((sy + ry) * W + (sx + rx)) * 4
+                didx = ((dy + ry) * W + (dx + rx)) * 4
+                out_px[didx:didx + 4] = cb_px[sidx:sidx + 4]
+
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+    with open(dst_path, "wb") as f:
+        f.write(hp_bytes[:40] + out_px)
+
+
+def build_hireling_ui(cfg: dict) -> str:
+    """
+    Build expanded 10-slot HirelingInventoryPanel HD layout JSON and HD/lowend background sprites
+    so mercenaries can equip Helm, Amulet, Torso, Right Arm, Left Arm (including Arrows on Act 1 Rogue),
+    Gloves, Boots, Belt, and 2 Rings!
+    """
+    src_json = os.path.join(VANILLA_ROOT, "data/global/ui/layouts/hirelinginventorypanelhd.json")
+    with open(src_json, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    old_slots_block = """        {
+            "type": "InventorySlotWidget", "name": "slot_head",
+            "fields": {
+                "rect": { "x": 481, "y": 193, "width": 196, "height": 196 },
+                "cellSize": "$ItemCellSize",
+                "location": "head",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_HeadArmor",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_torso",
+            "fields": {
+                "rect": { "x": 481, "y": 433, "width": 196, "height": 294 },
+                "cellSize": "$ItemCellSize",
+                "location": "torso",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_ChestArmor",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_right_arm",
+            "fields": {
+                "rect": { "x": 108, "y": 336, "width": 196, "height": 392 },
+                "cellSize": "$ItemCellSize",
+                "location": "right_arm",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Weapon",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_left_arm",
+            "fields": {
+                "rect": { "x": 861, "y": 336, "width": 196, "height": 392 },
+                "cellSize": "$ItemCellSize",
+                "location": "left_arm",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Weapon",
+                "isHireable": true,
+            }
+        },"""
+
+    new_slots_block = """        {
+            "type": "InventorySlotWidget", "name": "slot_head",
+            "fields": {
+                "rect": { "x": 481, "y": 148, "width": 196, "height": 196 },
+                "cellSize": "$ItemCellSize",
+                "location": "head",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_HeadArmor",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_neck",
+            "fields": {
+                "rect": { "x": 718, "y": 290, "width": 98, "height": 98 },
+                "cellSize": "$ItemCellSize",
+                "location": "neck",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Amulet",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_torso",
+            "fields": {
+                "rect": { "x": 481, "y": 355, "width": 196, "height": 294 },
+                "cellSize": "$ItemCellSize",
+                "location": "torso",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_ChestArmor",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_right_arm",
+            "fields": {
+                "rect": { "x": 108, "y": 150, "width": 196, "height": 392 },
+                "cellSize": "$ItemCellSize",
+                "location": "right_arm",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Weapon",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_left_arm",
+            "fields": {
+                "rect": { "x": 861, "y": 150, "width": 196, "height": 392 },
+                "cellSize": "$ItemCellSize",
+                "location": "left_arm",
+                "gemSocketFilename": "PANEL\\\\gemsocket",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Weapon",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_right_hand",
+            "fields": {
+                "rect": { "x": 344, "y": 660, "width": 98, "height": 98 },
+                "cellSize": "$ItemCellSize",
+                "location": "right_hand",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Ring",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_left_hand",
+            "fields": {
+                "rect": { "x": 718, "y": 660, "width": 98, "height": 98 },
+                "cellSize": "$ItemCellSize",
+                "location": "left_hand",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Ring",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_belt",
+            "fields": {
+                "rect": { "x": 481, "y": 660, "width": 196, "height": 98 },
+                "cellSize": "$ItemCellSize",
+                "location": "belt",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Belt",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_feet",
+            "fields": {
+                "rect": { "x": 861, "y": 562, "width": 196, "height": 196 },
+                "cellSize": "$ItemCellSize",
+                "location": "feet",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Boots",
+                "isHireable": true,
+            }
+        },
+        {
+            "type": "InventorySlotWidget", "name": "slot_gloves",
+            "fields": {
+                "rect": { "x": 108, "y": 562, "width": 196, "height": 196 },
+                "cellSize": "$ItemCellSize",
+                "location": "gloves",
+                "backgroundFilename": "PANEL\\\\Inventory\\\\Inventory_Paperdoll_Glove",
+                "isHireable": true,
+            }
+        },"""
+
+    norm_content = content.replace("\r\n", "\n")
+    norm_content = norm_content.replace('"\\\\PANEL\\\\Hireling\\\\HirelingPanel"', '"panel\\\\hireling\\\\hirelingpanel"')
+    norm_content = norm_content.replace('"Spells/Hireables/HrSkillIcon"', '"spells/hireables/hrskillicon"')
+    assert old_slots_block in norm_content, "Failed to locate slot block in hirelinginventorypanelhd.json"
+    norm_content = norm_content.replace(old_slots_block, new_slots_block, 1)
+
+    dst_json = os.path.join(MOD_ROOT, "data/global/ui/layouts/hirelinginventorypanelhd.json")
+    os.makedirs(os.path.dirname(dst_json), exist_ok=True)
+    with open(dst_json, "w", encoding="utf-8", newline="\r\n") as f:
+        f.write(norm_content)
+
+    # Also normalize skillIconFilename in hiremenupanelhd.json so the Hire Menu loads our expanded hrskillicon.sprite
+    src_menu_json = os.path.join(VANILLA_ROOT, "data/global/ui/layouts/hiremenupanelhd.json")
+    dst_menu_json = os.path.join(MOD_ROOT, "data/global/ui/layouts/hiremenupanelhd.json")
+    with open(src_menu_json, "r", encoding="utf-8", newline="") as f:
+        menu_content = f.read().replace("\r\n", "\n")
+    menu_content = menu_content.replace('"Spells/Hireables/HrSkillIcon"', '"spells/hireables/hrskillicon"')
+    with open(dst_menu_json, "w", encoding="utf-8", newline="\r\n") as f:
+        f.write(menu_content)
+
+    # Generate HD and lowend hirelingpanel sprites
+    _patch_hireling_sprite(
+        os.path.join(VANILLA_ROOT, "data/hd/global/ui/panel/hireling/hirelingpanel.sprite"),
+        os.path.join(VANILLA_ROOT, "data/hd/global/ui/panel/inventory/classic_background.sprite"),
+        os.path.join(MOD_ROOT, "data/hd/global/ui/panel/hireling/hirelingpanel.sprite"),
+        scale=1,
+    )
+    _patch_hireling_sprite(
+        os.path.join(VANILLA_ROOT, "data/hd/global/ui/panel/hireling/hirelingpanel.lowend.sprite"),
+        os.path.join(VANILLA_ROOT, "data/hd/global/ui/panel/inventory/classic_background.lowend.sprite"),
+        os.path.join(MOD_ROOT, "data/hd/global/ui/panel/hireling/hirelingpanel.lowend.sprite"),
+        scale=2,
+    )
+
+    # Generate expanded HD and lowend HrSkillIcon sprites (frames 0..28 vanilla + 29..54 custom class skill icons)
+    _build_hireling_skill_icons(suffix=".sprite", frame_w=132, frame_h=130)
+    _build_hireling_skill_icons(suffix=".lowend.sprite", frame_w=67, frame_h=65)
+    return dst_json
+
+
+def _build_hireling_skill_icons(suffix: str, frame_w: int, frame_h: int) -> None:
+    """
+    Append authentic class skill icon frames (29..54) from each class's native skillicon.sprite
+    onto Spells/Hireables/HrSkillIcon (.sprite and .lowend.sprite).
+    """
+    import struct
+    from mod_builder.skills import CUSTOM_MERC_SKILL_ICONS
+
+    hr_src = os.path.join(VANILLA_ROOT, f"data/hd/global/ui/spells/hireables/hrskillicon{suffix}")
+    with open(hr_src, "rb") as f:
+        hr_data = f.read()
+    hr_hdr = bytearray(hr_data[:40])
+    hr_px = hr_data[40:]
+    base_frames = 29
+    base_row_bytes = base_frames * frame_w * 4
+
+    # Cache class sprite pixel payloads
+    cls_px_cache: Dict[Tuple[str, str], bytes] = {}
+    for _fidx, _sdesc, cls_dir, spr_prefix, _icel in CUSTOM_MERC_SKILL_ICONS:
+        key = (cls_dir, spr_prefix)
+        if key not in cls_px_cache:
+            cpath = os.path.join(VANILLA_ROOT, f"data/hd/global/ui/spells/{cls_dir}/{spr_prefix}{suffix}")
+            with open(cpath, "rb") as f:
+                cls_px_cache[key] = f.read()[40:]
+
+    cls_row_bytes = 60 * frame_w * 4
+    total_frames = base_frames + len(CUSTOM_MERC_SKILL_ICONS)
+    total_w = total_frames * frame_w
+    out_px = bytearray(total_w * frame_h * 4)
+    out_row_bytes = total_w * 4
+
+    for y in range(frame_h):
+        dst_row_off = y * out_row_bytes
+        src_hr_off = y * base_row_bytes
+        out_px[dst_row_off : dst_row_off + base_row_bytes] = hr_px[src_hr_off : src_hr_off + base_row_bytes]
+        for frame_idx, _sdesc, cls_dir, spr_prefix, icon_cel in CUSTOM_MERC_SKILL_ICONS:
+            c_px = cls_px_cache[(cls_dir, spr_prefix)]
+            c_off = y * cls_row_bytes + icon_cel * frame_w * 4
+            f_off = dst_row_off + frame_idx * frame_w * 4
+            out_px[f_off : f_off + frame_w * 4] = c_px[c_off : c_off + frame_w * 4]
+            # Clamp rightmost separator column (frame_w - 1) to match column (frame_w - 2)
+            out_px[f_off + (frame_w - 1) * 4 : f_off + frame_w * 4] = out_px[
+                f_off + (frame_w - 2) * 4 : f_off + (frame_w - 1) * 4
+            ]
+
+    # Update SpA1 header: w (offset 8), h (offset 12), frames (offset 20), byte_len (offset 32)
+    struct.pack_into("<I", hr_hdr, 8, total_w)
+    struct.pack_into("<I", hr_hdr, 12, frame_h)
+    struct.pack_into("<I", hr_hdr, 20, total_frames)
+    struct.pack_into("<I", hr_hdr, 32, len(out_px))
+
+    dst_path = os.path.join(MOD_ROOT, f"data/hd/global/ui/spells/hireables/hrskillicon{suffix}")
+    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+    with open(dst_path, "wb") as f:
+        f.write(hr_hdr + out_px)
+
+
 def build_itemtypes_automagic(cfg: dict) -> str:
     p1 = build_itemtypes(cfg)
     p2 = build_automagic(cfg)
-    return f"{p1}, {p2}"
+    p3 = build_inventory(cfg)
+    p4 = build_hireling_ui(cfg)
+    return f"{p1}, {p2}, {p3}, {p4}"

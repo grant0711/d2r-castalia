@@ -53,15 +53,20 @@ def build_misc(cfg: dict) -> str:
     # while Drognan is the Vizjerei Sage (Caster Weapons, Tomes/Scrolls & Mana Potions only).
     # In Act 3, Alkor is the Kurast Alchemist (Health + Mana Potions, Elixirs, Grenades & Lockbox Keys),
     # while Ormus is the Skatsimi Mage (Caster Weapons, Caster Armor, Tomes/Scrolls, Mana Potions & Lockbox Keys).
-    hp_caps = [250, 500, 750, 1000, 2000]
+    hp_caps = [120, 250, 400, 800, 1500]
+    mp_caps = [80, 165, 270, 530, 1000]
     pot_costs = [500, 1200, 2500, 5000, 9000]
     act1_3_hp_vendors = ["Akara", "Lysander", "Alkor"]
     act1_3_mp_vendors = ["Akara", "Lysander", "Drognan", "Alkor", "Ormus"]
     act4_5_pot_vendors = ["Jamella", "Malah"]
+    all_hp_vendors = act1_3_hp_vendors + act4_5_pot_vendors
+    all_mp_vendors = act1_3_mp_vendors + act4_5_pot_vendors
+    potion_helper_rows: List[Dict[str, str]] = []
 
     for idx in range(5):
         tier = idx + 1
-        cap = hp_caps[idx]
+        hp_cap = hp_caps[idx]
+        mp_cap = mp_caps[idx]
         cost = str(pot_costs[idx])
 
         # Health Potion hp1..hp5: uses pSpell=6 with custom state `hp_cooldown` (75 frames = 3.0s)
@@ -76,25 +81,22 @@ def build_misc(cfg: dict) -> str:
         hrow["cstate2"] = ""
         hrow["len"] = "75"
         hrow["stat1"] = "hpregen"
-        hrow["calc1"] = str(int(round(cap * 256 / 75)))
+        hrow["calc1"] = str(int(round(hp_cap * 256 / 75)))
         hrow["spelldesc"] = "1"
         hrow["spelldescstr"] = f"ModHpPotDesc{tier}"
         hrow["spelldesccalc"] = ""
-        hrow["UsageConditionCalc"] = "(stat('hpregen'.accr)<500)"
+        hrow["UsageConditionCalc"] = "(stat('hpregen'.accr)<300)"
         _clear_vendors(hrow)
+        hrow["NightmareUpgrade"] = "xxx"
+        hrow["HellUpgrade"] = "xxx"
         if tier == 1:
-            _set_vendor_stock(hrow, act1_3_hp_vendors, "1", "1")
-            hrow["NightmareUpgrade"] = "hp3"
-            hrow["HellUpgrade"] = "hp5"
+            # Slot 1: Minor Healing Potion stays stocked at all 5 Acts across Normal, Nightmare, and Hell
+            _set_vendor_stock(hrow, all_hp_vendors, "1", "1")
         elif tier == 2:
+            # Slot 2 (Act 4-5): Light Healing Potion unlocked in Normal Act 4-5 and stays in NM & Hell
             _set_vendor_stock(hrow, act4_5_pot_vendors, "1", "1")
-            hrow["NightmareUpgrade"] = "hp4"
-            hrow["HellUpgrade"] = "hp5"
-        else:
-            hrow["NightmareUpgrade"] = "xxx"
-            hrow["HellUpgrade"] = "xxx"
 
-        # Mana Potion mp1..mp5: restores up to `cap` over 75 frames (3.0s) and blocks re-drinking while active
+        # Mana Potion mp1..mp5: restores ~2/3 of HP potion cap over 75 frames (3.0s) and blocks re-drinking while active
         mcode = f"mp{tier}"
         mrow = rows_by_code[mcode]
         mrow["cost"] = cost
@@ -104,47 +106,94 @@ def build_misc(cfg: dict) -> str:
         mrow["cstate2"] = ""
         mrow["len"] = "75"
         mrow["stat1"] = "manarecovery"
-        mrow["calc1"] = str(cap)
+        mrow["calc1"] = str(mp_cap)
         mrow["spelldesc"] = "1"
         mrow["spelldescstr"] = f"ModMpPotDesc{tier}"
         mrow["spelldesccalc"] = ""
-        mrow["UsageConditionCalc"] = "(stat('manarecovery'.accr)<500)"
+        mrow["UsageConditionCalc"] = "(stat('manarecovery'.accr)<200)"
         _clear_vendors(mrow)
+        mrow["NightmareUpgrade"] = "xxx"
+        mrow["HellUpgrade"] = "xxx"
         if tier == 1:
-            _set_vendor_stock(mrow, act1_3_mp_vendors, "1", "1")
-            mrow["NightmareUpgrade"] = "mp3"
-            mrow["HellUpgrade"] = "mp5"
+            _set_vendor_stock(mrow, all_mp_vendors, "1", "1")
         elif tier == 2:
             _set_vendor_stock(mrow, act4_5_pot_vendors, "1", "1")
-            mrow["NightmareUpgrade"] = "mp4"
-            mrow["HellUpgrade"] = "mp5"
-        else:
-            mrow["NightmareUpgrade"] = "xxx"
-            mrow["HellUpgrade"] = "xxx"
 
-    # 2. Strategic Town Portal & Identify Scrolls/Tomes (sold exclusively by each Act's Mystic/Sage)
+    # Build 5-slot cumulative vendor potion helper rows so each newly unlocked tier appears
+    # alongside all previously unlocked cheaper tiers (mirroring the Lockbox Key slot matrix):
+    # - Act 1-3 Normal: 5x Tier 1 -> NM: Tier 1, 2, 3 -> Hell: Tier 1, 2, 3, 4, 5
+    # - Act 4-5 Normal: Tier 1 + 4x Tier 2 -> NM: Tier 1, 2, 3, 4 -> Hell: Tier 1, 2, 3, 4, 5
+    act1_3_slot_specs = [
+        ("a", "2", "2"),  # Slot 2 (Act 1-3): Minor in Normal -> Light in NM & Hell
+        ("b", "3", "3"),  # Slot 3 (Act 1-3): Minor in Normal -> Standard in NM & Hell
+        ("c", "3", "4"),  # Slot 4 (Act 1-3): Minor in Normal -> Standard in NM -> Greater in Hell
+        ("d", "3", "5"),  # Slot 5 (Act 1-3): Minor in Normal -> Standard in NM -> Super in Hell
+    ]
+    for sfx, nm_t, hell_t in act1_3_slot_specs:
+        hr = dict(rows_by_code["hp1"])
+        hr["code"] = f"h1{sfx}"
+        hr["namestr"] = f"h1{sfx}"
+        _clear_vendors(hr)
+        _set_vendor_stock(hr, act1_3_hp_vendors, "1", "1")
+        hr["NightmareUpgrade"] = f"hp{nm_t}"
+        hr["HellUpgrade"] = f"hp{hell_t}"
+        potion_helper_rows.append(hr)
+
+        mr = dict(rows_by_code["mp1"])
+        mr["code"] = f"m1{sfx}"
+        mr["namestr"] = f"m1{sfx}"
+        _clear_vendors(mr)
+        _set_vendor_stock(mr, act1_3_mp_vendors, "1", "1")
+        mr["NightmareUpgrade"] = f"mp{nm_t}"
+        mr["HellUpgrade"] = f"mp{hell_t}"
+        potion_helper_rows.append(mr)
+
+    act4_5_slot_specs = [
+        ("b", "3", "3"),  # Slot 3 (Act 4-5): Light in Normal -> Standard in NM & Hell
+        ("c", "4", "4"),  # Slot 4 (Act 4-5): Light in Normal -> Greater in NM & Hell
+        ("d", "4", "5"),  # Slot 5 (Act 4-5): Light in Normal -> Greater in NM -> Super in Hell
+    ]
+    for sfx, nm_t, hell_t in act4_5_slot_specs:
+        hr = dict(rows_by_code["hp2"])
+        hr["code"] = f"h2{sfx}"
+        hr["namestr"] = f"h2{sfx}"
+        _clear_vendors(hr)
+        _set_vendor_stock(hr, act4_5_pot_vendors, "1", "1")
+        hr["NightmareUpgrade"] = f"hp{nm_t}"
+        hr["HellUpgrade"] = f"hp{hell_t}"
+        potion_helper_rows.append(hr)
+
+        mr = dict(rows_by_code["mp2"])
+        mr["code"] = f"m2{sfx}"
+        mr["namestr"] = f"m2{sfx}"
+        _clear_vendors(mr)
+        _set_vendor_stock(mr, act4_5_pot_vendors, "1", "1")
+        mr["NightmareUpgrade"] = f"mp{nm_t}"
+        mr["HellUpgrade"] = f"mp{hell_t}"
+        potion_helper_rows.append(mr)
+
+    # 2. Identify Scrolls/Tomes (sold exclusively by each Act's Mystic/Sage);
+    # Town Portal Scroll (tsc) and Tome of Town Portal (tbk) removed from all vendors
     scroll_vendors = ["Akara", "Drognan", "Ormus", "Jamella", "Malah"]
     tsc = rows_by_code["tsc"]
     tsc["cost"] = "400"
     _clear_vendors(tsc)
-    _set_vendor_stock(tsc, scroll_vendors, "1", "1")
 
     tbk = rows_by_code["tbk"]
     tbk["cost"] = "600"
     tbk["maxstack"] = "5"
-    tbk["spawnstack"] = "2"
+    tbk["spawnstack"] = "0"
     _clear_vendors(tbk)
-    _set_vendor_stock(tbk, scroll_vendors, "1", "1")
 
     isc = rows_by_code["isc"]
-    isc["cost"] = "80"
+    isc["cost"] = "250"
     _clear_vendors(isc)
     _set_vendor_stock(isc, scroll_vendors, "1", "1")
 
     ibk = rows_by_code["ibk"]
-    ibk["cost"] = "200"
-    ibk["maxstack"] = "50"
-    ibk["spawnstack"] = "10"
+    ibk["cost"] = "10000"
+    ibk["maxstack"] = "10"
+    ibk["spawnstack"] = "1"
     _clear_vendors(ibk)
     _set_vendor_stock(ibk, scroll_vendors, "1", "1")
 
@@ -172,12 +221,13 @@ def build_misc(cfg: dict) -> str:
     # 5. 3-Tier 5-Minute (7500 frames) Preparation Elixirs
     # Stocked exclusively at each Act's Alchemist/Mystic (Akara, Lysander, Alkor, Jamella, Malah)
     elixir_vendors = ["Akara", "Lysander", "Alkor", "Jamella", "Malah"]
-    new_rows: List[Dict[str, str]] = []
+    new_rows: List[Dict[str, str]] = list(potion_helper_rows)
 
     # 5a. Thawing Elixir (wms -> wm2 -> wm3)
     wms = rows_by_code["wms"]
     wms["name"] = "Minor Thawing Elixir"
     wms["cost"] = "600"
+    wms["autobelt"] = "1"
     wms["len"] = "7500"
     wms["stat1"] = "coldresist"
     wms["calc1"] = "25"
@@ -215,6 +265,7 @@ def build_misc(cfg: dict) -> str:
     yps = rows_by_code["yps"]
     yps["name"] = "Minor Antidote Elixir"
     yps["cost"] = "600"
+    yps["autobelt"] = "1"
     yps["len"] = "7500"
     yps["stat1"] = "poisonresist"
     yps["calc1"] = "25"
@@ -256,6 +307,7 @@ def build_misc(cfg: dict) -> str:
     vps = rows_by_code["vps"]
     vps["name"] = "Minor Stamina Elixir"
     vps["cost"] = "600"
+    vps["autobelt"] = "1"
     vps["len"] = "7500"
     vps["stat1"] = "staminarecoverybonus"
     vps["calc1"] = "75"
@@ -313,14 +365,14 @@ def build_misc(cfg: dict) -> str:
     krow["maxstack"] = ""
     krow["spawnstack"] = ""
     krow["multibuy"] = "0"
-    krow["PermStoreItem"] = "0"
+    krow["PermStoreItem"] = "1"
     krow["NightmareUpgrade"] = "xxx"
     krow["HellUpgrade"] = "xxx"
     krow["spelldesc"] = "1"
     krow["spelldescstr"] = "ModKeyDesc1"
     krow["spelldesccolor"] = "8"
 
-    # Slot 1 (key): Crude Lockbox Key in Normal, Nightmare, and Hell (depletes on purchase)
+    # Slot 1 (key): Crude Lockbox Key in Normal, Nightmare, and Hell
     _set_vendor_stock(krow, key_vendors, "1", "1")
 
     # Slot 2 (ky0): Crude Lockbox Key in Normal -> upgrades to Iron Lockbox Key (ky2) in Nightmare & Hell
@@ -347,7 +399,7 @@ def build_misc(cfg: dict) -> str:
         knew["code"] = ktinfo["key_code"]
         knew["namestr"] = ktinfo["key_code"]
         knew["cost"] = ktinfo["key_cost"]
-        knew["PermStoreItem"] = "0"
+        knew["PermStoreItem"] = "1"
         knew["NightmareUpgrade"] = "xxx"
         knew["HellUpgrade"] = "xxx"
         knew["spelldescstr"] = f"ModKeyDesc{ktier}"
@@ -413,15 +465,29 @@ def build_misc(cfg: dict) -> str:
 
 
 def build_hd_items_json(cfg: dict) -> str:
-    from mod_builder.lockboxes import LOCKBOX_TIER_INFO, build_lockbox_sprites, get_lockbox_registry
+    from mod_builder.lockboxes import ELIXIR_SPRITE_INFO, LOCKBOX_TIER_INFO, build_lockbox_sprites, get_lockbox_registry
 
     additions = [
-        ("wm2", "potion/thawing_potion"),
-        ("wm3", "potion/thawing_potion"),
-        ("yp2", "potion/antidote_potion"),
-        ("yp3", "potion/antidote_potion"),
-        ("vp2", "potion/stamina_potion"),
-        ("vp3", "potion/stamina_potion"),
+        ("h1a", "potion/lesser_healing_potion"),
+        ("h1b", "potion/lesser_healing_potion"),
+        ("h1c", "potion/lesser_healing_potion"),
+        ("h1d", "potion/lesser_healing_potion"),
+        ("h2b", "potion/light_healing_potion"),
+        ("h2c", "potion/light_healing_potion"),
+        ("h2d", "potion/light_healing_potion"),
+        ("m1a", "potion/lesser_mana_potion"),
+        ("m1b", "potion/lesser_mana_potion"),
+        ("m1c", "potion/lesser_mana_potion"),
+        ("m1d", "potion/lesser_mana_potion"),
+        ("m2b", "potion/light_mana_potion"),
+        ("m2c", "potion/light_mana_potion"),
+        ("m2d", "potion/light_mana_potion"),
+        ("wm2", ELIXIR_SPRITE_INFO["wm2"]["asset"]),
+        ("wm3", ELIXIR_SPRITE_INFO["wm3"]["asset"]),
+        ("yp2", ELIXIR_SPRITE_INFO["yp2"]["asset"]),
+        ("yp3", ELIXIR_SPRITE_INFO["yp3"]["asset"]),
+        ("vp2", ELIXIR_SPRITE_INFO["vp2"]["asset"]),
+        ("vp3", ELIXIR_SPRITE_INFO["vp3"]["asset"]),
         ("bml", "hammer/horadric_malus"),
         ("bm2", "hammer/horadric_malus"),
         ("bm3", "hammer/horadric_malus"),
@@ -460,6 +526,20 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (61994, "ky1", LOCKBOX_TIER_INFO[1]["key_name"]),
         (60008, "ky2", LOCKBOX_TIER_INFO[2]["key_name"]),
         (60009, "ky3", LOCKBOX_TIER_INFO[3]["key_name"]),
+        (61970, "h1a", "Minor Healing Potion"),
+        (61971, "h1b", "Minor Healing Potion"),
+        (61972, "h1c", "Minor Healing Potion"),
+        (61973, "h1d", "Minor Healing Potion"),
+        (61974, "h2b", "Light Healing Potion"),
+        (61975, "h2c", "Light Healing Potion"),
+        (61976, "h2d", "Light Healing Potion"),
+        (61977, "m1a", "Minor Mana Potion"),
+        (61978, "m1b", "Minor Mana Potion"),
+        (61979, "m1c", "Minor Mana Potion"),
+        (61980, "m1d", "Minor Mana Potion"),
+        (61981, "m2b", "Light Mana Potion"),
+        (61982, "m2c", "Light Mana Potion"),
+        (61983, "m2d", "Light Mana Potion"),
     ]
     next_lb_id = 62000
     for entry in get_lockbox_registry():
@@ -469,16 +549,16 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
 
     # 2. item-modifiers.json
     mod_updates = [
-        (60010, "ModHpPotDesc1", "Restores 250 Life over 3 Seconds (3s Cooldown)"),
-        (60011, "ModHpPotDesc2", "Restores 500 Life over 3 Seconds (3s Cooldown)"),
-        (60012, "ModHpPotDesc3", "Restores 750 Life over 3 Seconds (3s Cooldown)"),
-        (60013, "ModHpPotDesc4", "Restores 1000 Life over 3 Seconds (3s Cooldown)"),
-        (60014, "ModHpPotDesc5", "Restores 2000 Life over 3 Seconds (3s Cooldown)"),
-        (60015, "ModMpPotDesc1", "Restores 250 Mana over 3 Seconds (3s Cooldown)"),
-        (60016, "ModMpPotDesc2", "Restores 500 Mana over 3 Seconds (3s Cooldown)"),
-        (60017, "ModMpPotDesc3", "Restores 750 Mana over 3 Seconds (3s Cooldown)"),
-        (60018, "ModMpPotDesc4", "Restores 1000 Mana over 3 Seconds (3s Cooldown)"),
-        (60019, "ModMpPotDesc5", "Restores 2000 Mana over 3 Seconds (3s Cooldown)"),
+        (60010, "ModHpPotDesc1", "Restores 120 Life over 3 Seconds (3s Cooldown)"),
+        (60011, "ModHpPotDesc2", "Restores 250 Life over 3 Seconds (3s Cooldown)"),
+        (60012, "ModHpPotDesc3", "Restores 400 Life over 3 Seconds (3s Cooldown)"),
+        (60013, "ModHpPotDesc4", "Restores 800 Life over 3 Seconds (3s Cooldown)"),
+        (60014, "ModHpPotDesc5", "Restores 1500 Life over 3 Seconds (3s Cooldown)"),
+        (60015, "ModMpPotDesc1", "Restores 80 Mana over 3 Seconds (3s Cooldown)"),
+        (60016, "ModMpPotDesc2", "Restores 165 Mana over 3 Seconds (3s Cooldown)"),
+        (60017, "ModMpPotDesc3", "Restores 270 Mana over 3 Seconds (3s Cooldown)"),
+        (60018, "ModMpPotDesc4", "Restores 530 Mana over 3 Seconds (3s Cooldown)"),
+        (60019, "ModMpPotDesc5", "Restores 1000 Mana over 3 Seconds (3s Cooldown)"),
         (60020, "ModMalusDesc1", "Transmute with Socketable Gear + Perfect Skull to Add 1-2 Sockets"),
         (60021, "ModKeyDesc1", "Unlocks Crude Wooden Lockbox"),
         (60022, "ModKeyDesc2", "Unlocks Reinforced Iron Lockbox"),

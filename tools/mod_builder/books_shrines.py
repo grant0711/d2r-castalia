@@ -21,58 +21,26 @@ def build_books(cfg: dict = None) -> str:
             row["BaseCost"] = "600"
             row["CostPerCharge"] = "400"
         elif name == "Tome of Identify":
-            row["BaseCost"] = "200"
-            row["CostPerCharge"] = "80"
+            row["BaseCost"] = "9750"
+            row["CostPerCharge"] = "250"
     return write_excel_tsv("books.txt", headers, rows)
 
 
 def build_shrines(cfg: dict = None) -> str:
     headers, rows = read_excel_tsv("shrines.txt")
     for row in rows:
-        code = row.get("Code", "")
-        if code == "6":  # Armor Shrine
-            row["Arg0"] = "250"
-            row["Duration in frames"] = "6000"
-            row["reset time in minutes"] = "3"
+        code = row.get("Code", "").strip()
+        if code in ("1", "2", "3"):  # Refilling Shrine, Health Shrine, Mana Shrine
+            row["reset time in minutes"] = "1"
             row["rarity"] = "1"
             row["LevelMin"] = "1"
-        elif code == "7":  # Combat Shrine
-            row["Arg0"] = "250"
-            row["Arg1"] = "250"
-            row["Duration in frames"] = "6000"
-            row["reset time in minutes"] = "3"
-            row["rarity"] = "1"
-            row["LevelMin"] = "1"
-        elif code in ("8", "9", "10", "11"):  # Resist Fire/Cold/Light/Poison
-            row["Arg0"] = "100"
-            row["Duration in frames"] = "7500"
-            row["reset time in minutes"] = "3"
-            row["LevelMin"] = "1"
-        elif code == "12":  # Skill Shrine (+4 All Skills for 4 minutes)
-            row["Arg0"] = "4"
-            row["Duration in frames"] = "6000"
-            row["reset time in minutes"] = "3"
-            row["rarity"] = "1"
-            row["LevelMin"] = "1"
-        elif code == "13":  # Mana Recharge Shrine
+        elif code == "13":  # Mana Recharge Shrine (+500% Mana Recharge Rate, 1-min reset)
             row["Arg0"] = "500"
-            row["Duration in frames"] = "6000"
-            row["reset time in minutes"] = "3"
-            row["LevelMin"] = "1"
-        elif code == "14":  # Stamina Shrine (disabled from random pool so Stamina Elixirs matter)
-            row["LevelMin"] = "120"
-        elif code == "15":  # Experience Shrine (+100% XP for 5 minutes)
-            row["Arg0"] = "100"
-            row["Duration in frames"] = "7500"
+            row["Duration in frames"] = "4500"
+            row["reset time in minutes"] = "1"
             row["rarity"] = "1"
             row["LevelMin"] = "1"
-        elif code == "18":  # Gem Shrine
-            row["rarity"] = "1"
-            row["LevelMin"] = "1"
-        elif code == "20":  # Monster Shrine (spawns a Unique/Champion -> guaranteed Gem/Rune + Equip!)
-            row["rarity"] = "1"
-            row["LevelMin"] = "1"
-        elif code in ("19", "21", "22"):  # Fire, Exploding, Poison Shrines
+        elif code != "0":  # Disable all non-recovery shrines (Booster & Magic shrines) from spawning
             row["LevelMin"] = "120"
 
     return write_excel_tsv("shrines.txt", headers, rows)

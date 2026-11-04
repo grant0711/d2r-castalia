@@ -45,6 +45,7 @@ def build_itemstatcost(cfg: dict) -> str:
     headers, rows = read_excel_tsv("itemstatcost.txt")
     signed_stats = {
         "strength", "energy", "dexterity", "vitality",
+        "hitpoints", "mana", "stamina",
         "maxhp", "maxmana", "maxstamina", "hpregen", "manarecovery",
     }
     # Normalize vendor transaction cost multipliers (Multiply / 1024 of base cost + Add)
@@ -54,27 +55,145 @@ def build_itemstatcost(cfg: dict) -> str:
     # - Cruel Colossus Blade of Quickness (+400% ED + 40% IAS)     -> ~314,000g
     # - +2 Class Skills / +3 Skill Tab + Staffmods                 -> ~275,000g - 315,000g
     cost_tuning = {
-        "item_numsockets": ("512", "2000"),          # 4 sockets = +200% of base cost (+100,000g on 50k base)
-        "maxhp": ("16", "50"),                       # +133 Life = +208% of base cost (+104,000g on 50k base)
-        "maxmana": ("16", "50"),                     # +160 Mana = +250% of base cost
-        "item_armor_percent": ("12", "45"),          # +266% Defense = +312% of base cost (+156,000g on 50k base)
-        "item_maxdamage_percent": ("5", "25"),       # Applied alongside item_mindamage_percent (5+5=10 combined)
-        "item_mindamage_percent": ("5", "25"),       # +400% Weapon ED = +390% of base cost (+195,000g on 50k base)
-        "item_fasterattackrate": ("32", "500"),      # +40% IAS = +125% of base cost (+62,500g on 50k base)
-        "item_fastermovevelocity": ("32", "500"),    # +40% FRW = +125% of base cost
-        "item_fastercastrate": ("48", "500"),        # +20% FCR = +94% of base cost
-        "item_addclassskills": ("1024", "15000"),    # +2 Class Skills = +200% of base cost + 15,000g
-        "item_addskill_tab": ("512", "8000"),        # +3 Skill Tab = +150% of base cost + 8,000g
+        # Zero out base/op=13 target stats so base Defense/Damage/Durability and %ED op=13 never double-count
+        "armorclass": ("0", "0"),
+        "mindamage": ("0", "0"),
+        "maxdamage": ("0", "0"),
+        "secondary_mindamage": ("0", "0"),
+        "secondary_maxdamage": ("0", "0"),
+        "item_throw_mindamage": ("0", "0"),
+        "item_throw_maxdamage": ("0", "0"),
+        "maxdurability": ("0", "0"),
+        # Core %ED, Sockets, Life, Mana, Resists, Attributes
+        "item_numsockets": ("512", "2000"),          # 4 sockets = +102,000g on 50k base
+        "maxhp": ("14", "50"),                       # +133 Life = +91,000g on 50k base
+        "maxmana": ("14", "50"),                     # +160 Mana = +109,000g on 50k base
+        "item_armor_percent": ("9", "35"),           # +266% Defense (Godly) = +117,000g on 50k base
+        "item_maxdamage_percent": ("3", "20"),       # Applied alongside item_mindamage_percent (3+3=6 combined)
+        "item_mindamage_percent": ("3", "20"),       # +399% Weapon ED (Cruel) = +117,000g on 50k base
+        "tohit": ("3", "10"),                        # +598 AR (Weird) = +88,000g; Grandmaster's = +136,000g
+        "strength": ("45", "100"),                   # +30 Str = +66,000g
+        "dexterity": ("45", "100"),                  # +40 Dex = +88,000g
+        "energy": ("45", "100"),                     # +30 Enr = +66,000g
+        "vitality": ("45", "100"),
+        "fireresist": ("14", "30"),                  # +40% Single Res = +27,000g; +40% All Res (Chromatic) = +109,000g
+        "lightresist": ("14", "30"),
+        "coldresist": ("14", "30"),
+        "poisonresist": ("14", "30"),
+        # Speed, Block, FHR, Leech, Regen, DR, MF, GF
+        "item_fasterattackrate": ("32", "500"),      # +40% IAS = +63,000g on 50k base
+        "item_fastermovevelocity": ("32", "500"),    # +40% FRW = +63,000g
+        "item_fastercastrate": ("48", "500"),        # +20% FCR = +47,000g
+        "item_fastergethitrate": ("48", "500"),      # +24% FHR = +57,000g
+        "toblock": ("48", "100"),                    # +20% Block + 30% FBR (of Deflecting) = +94,000g
+        "item_fasterblockrate": ("32", "200"),
+        "lifedrainmindam": ("180", "500"),           # 9% Life Steal = +80,000g
+        "manadrainmindam": ("180", "500"),           # 9% Mana Steal = +80,000g
+        "hpregen": ("80", "250"),                    # +20 Replenish Life = +78,000g
+        "normal_damage_reduction": ("55", "150"),    # 33 PDR (of Life Everlasting) = +89,000g
+        "magic_damage_reduction": ("160", "200"),    # 8 MDR = +63,000g
+        "item_magicbonus": ("40", "300"),            # 47% MF (of Luck) = +92,000g
+        "item_goldbonus": ("24", "150"),             # 40% GF (of Wealth) = +47,000g
+        "item_attackertakesdamage": ("64", "100"),   # 27 Thorns (of Swords) = +84,000g
+        "item_staminadrainpct": ("10", "50"),        # 90% Heal Stamina = +44,000g
+        # Elemental, Poison & Magic Damage
+        "firemindam": ("6", "10"),                   # Scorching (170-240) = +120,000g
+        "firemaxdam": ("6", "15"),
+        "lightmindam": ("5", "10"),                  # Shocking (1-480) = +117,000g
+        "lightmaxdam": ("5", "15"),
+        "magicmindam": ("6", "25"),                  # Astral (210-210) = +123,000g
+        "magicmaxdam": ("6", "25"),
+        "coldmindam": ("12", "25"),                  # Hibernal (45-140) = +118,000g (replaces vanilla Mult=512/340)
+        "coldmaxdam": ("12", "25"),
+        "coldlength": ("2", "25"),
+        "poisonmindam": ("2", "10"),                 # Pestilent (470) = +115,000g (replaces vanilla Mult=28/34)
+        "poisonmaxdam": ("2", "10"),
+        "poisonlength": ("1", "0"),
+        # Vs Demon / Vs Undead
+        "item_demon_tohit": ("2", "10"),             # Celestial (400 AR, 300% Dmg) = +112,000g
+        "item_demondamage_percent": ("5", "15"),
+        "item_undead_tohit": ("2", "10"),            # Divine (450 AR, 350% Dmg) = +129,000g
+        "item_undeaddamage_percent": ("5", "15"),
+        # Tactical Suffixes & Binaries
+        "item_pierce": ("32", "500"),                # 40% Pierce (of Skewering) = +63,000g (replaces vanilla Mult=2048)
+        "item_openwounds": ("32", "300"),            # 40% Open Wounds (of Hemorrhage) = +63,000g
+        "item_deadlystrike": ("40", "300"),          # 32% Deadly Strike (of Execution) = +63,000g
+        "item_crushingblow": ("48", "300"),          # 25% Crushing Blow (of Crushing) = +59,000g
+        "item_slow": ("40", "300"),                  # 30% Slows Target (of Crippling) = +59,000g
+        "item_ignoretargetac": ("1024", "1000"),     # Ignore Target's Defense = +51,000g
+        "item_halffreezeduration": ("512", "1000"),  # Half Freeze Duration = +26,000g
+        "item_cannotbefrozen": ("1024", "5000"),     # Cannot Be Frozen = +55,000g
+        "item_replenish_durability": ("128", "100"),
+        "item_replenish_quantity": ("128", "100"),
+        # Skills, Staffmods, Procs & Charges
+        "item_addclassskills": ("1024", "10000"),    # +2 Class Skills = +110,000g on 50k base
+        "item_addskill_tab": ("512", "5000"),        # +3 Skill Tab = +80,000g on 50k base
+        "item_singleskill": ("96", "100"),           # Staffmods
+        "item_nonclassskill": ("128", "100"),
+        "item_skillonattack": ("8", "100"),          # Chance-to-Cast Procs (Encode=2)
+        "item_skillonhit": ("8", "100"),
+        "item_skillongethit": ("8", "100"),
+        "item_charged_skill": ("1", "10"),           # Skill Charges (Encode=3)
         "item_maxhp_percent": ("128", "4000"),       # Replaces vanilla's 32,093 flat Add
         "item_maxmana_percent": ("128", "4000"),     # Replaces vanilla's 56,452 flat Add
-        "item_charged_skill": ("4", "10"),           # Keep recharging skill charges cheap even with rep mult = 768
     }
     for r in rows:
         st = r.get("Stat", "")
         if st in signed_stats:
             r["Signed"] = "1"
-        if st in ("hpregen", "manarecovery"):
+        if st in ("hpregen", "manarecovery", "item_healafterkill", "item_damagetomana"):
             r["Send Bits"] = "16"
+        if st == "item_slash_damage_percent":
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["op"] = "11"
+            r["op stat1"] = "mindamage"
+            r["op stat2"] = "secondary_mindamage"
+            r["op stat3"] = "item_throw_mindamage"
+        elif st == "item_crush_damage_percent":
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["op"] = "11"
+            r["op stat1"] = "maxdamage"
+            r["op stat2"] = "secondary_maxdamage"
+            r["op stat3"] = "item_throw_maxdamage"
+        elif st == "item_absorb_slash":
+            # Constant 1 base stat on Fists of Fire (ass_fof_passive) for item_slash_damage (op=2)
+            r["Signed"] = "1"
+            r["Send Bits"] = "8"
+        elif st == "item_slash_damage":
+            # Stored inside progressive_fire (aurastat2) so firemindam (+1x) and firemaxdam (+2x) scale per orb and clear on state removal
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["op"] = "2"
+            r["op param"] = "0"
+            r["op base"] = "item_absorb_slash"
+            r["op stat1"] = "firemindam"
+            r["op stat2"] = "firemaxdam"
+            r["op stat3"] = "firemaxdam"
+        elif st == "item_attackertakesdamage":
+            # Revert Patch 2.4's attackedinmelee back to damagedinmelee so missed and blocked
+            # swings do NOT trigger Thorns; only landed melee hits reflect damage.
+            r["itemevent1"] = "damagedinmelee"
+        elif st == "skill_channeling_tick":
+            # Used by Frenzy (Id 147, aurastat3=skill_channeling_tick) so srvdofunc=9 registers
+            # domeleeattack -> 36 (sWarHexOnAttack -> installs bar_stamina_reflex + Param1=3 Shiver Armor)
+            # and domeleedamage -> 1 (spawns srvmissilea=grimwardsmallstart -> grimwardsmall pSrvDoFunc=14, Param2=30)
+            r["Signed"] = "1"
+            r["Send Bits"] = "8"
+            r["fCallback"] = "1"
+            r["itemevent1"] = "domeleeattack"
+            r["itemeventfunc1"] = "36"
+            r["itemevent2"] = "domeleedamage"
+            r["itemeventfunc2"] = "1"
+        elif st == "skill_cooldown":
+            r["Signed"] = "1"
+            r["Send Bits"] = "8"
+            r["fCallback"] = "1"
+            r["itemevent1"] = "domeleedamage"
+            r["itemeventfunc1"] = "36"
+            r["itemevent2"] = "domeleeattack"
+            r["itemeventfunc2"] = "1"
         if st in cost_tuning:
             mult_val, add_val = cost_tuning[st]
             r["Multiply"] = mult_val
@@ -101,6 +220,13 @@ def build_magicprefix(cfg: dict) -> str:
     quiver_prefix_groups = {"116", "117", "118", "119", "120", "137", "138", "139", "140"}
 
     for r in rows:
+        # Disable all charged suffixes referencing reworked Barbarian skills (IDs 126..155)
+        if r.get("mod1code") == "charged":
+            m1p = r.get("mod1param", "").strip()
+            if m1p.isdigit() and 126 <= int(m1p) <= 155:
+                r["spawnable"] = "0"
+                continue
+
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
         grp = r.get("group", "")
@@ -155,6 +281,12 @@ def build_magicprefix(cfg: dict) -> str:
             if r.get("Name") in ("Azure", "Crimson", "Tangerine", "Beryl") and r.get("maxlevel") == "4":
                 r["level"] = "1"
                 r["levelreq"] = "1"
+
+        # 4b. Clear redundant row multiply/add on Group 116 (res-all) so All-Res prefixes are priced
+        #     solely via fireresist + lightresist + coldresist + poisonresist in itemstatcost.txt
+        if grp == "116":
+            r["multiply"] = "0"
+            r["add"] = "0"
 
     # 5. Add Rare-eligible Grandmaster's (Group 111, lvl=69, lreq=61, 151-200% ED + 251-300 AR, freq=3)
     gm = {h: "" for h in headers}
@@ -249,6 +381,13 @@ def build_magicsuffix(cfg: dict) -> str:
     quiver_suffix_groups = {"7", "10", "12", "13", "16", "24"}
 
     for r in rows:
+        # Disable all charged suffixes referencing reworked Barbarian skills (IDs 126..155)
+        if r.get("mod1code") == "charged":
+            m1p = r.get("mod1param", "").strip()
+            if m1p.isdigit() and 126 <= int(m1p) <= 155:
+                r["spawnable"] = "0"
+                continue
+
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
         grp = r.get("group", "")
@@ -287,6 +426,18 @@ def build_magicsuffix(cfg: dict) -> str:
             if r.get("Name") in ("of Readiness", "of Frost", "of Flame", "of Shock", "of Blight") and int(r.get("level") or "99") <= 5:
                 r["level"] = "1"
                 r["levelreq"] = "1"
+
+        # 3b. Price flat +Max Damage (Group 14) and +Min Damage (Group 15) suffixes directly via row
+        #     multiply/add so mindamage/maxdamage/secondary_maxdamage/item_throw_maxdamage can remain 0
+        #     in itemstatcost.txt without base weapon damage or %ED (op=13) double-counting
+        if not is_charm_or_jewel and grp in ("14", "15"):
+            mx_val = int(r.get("mod1max") or "1")
+            if grp == "14":
+                r["multiply"] = str(mx_val * 20)
+                r["add"] = str(mx_val * 25)
+            else:
+                r["multiply"] = str(mx_val * 50)
+                r["add"] = str(mx_val * 50)
 
     # 4. Add Progressive Tactical Suffix Groups (60..64) for Pierce, Open Wounds, Deadly, Crushing, Slow
     # Strict frequency = "1" and non-overlapping maxlevel on Rare tiers so these are genuinely rare chase rolls!

@@ -88,23 +88,23 @@ def build_treasureclass(cfg: dict) -> str:
         by_tc["Ammo"]["Magic"] = "1024"
         by_tc["Ammo"]["Rare"] = ""
 
-    # 2. Strip ALL potions (including rvs/rvl) from Potion/Hpotion/Cpot/Misc/Magic/Junk TCs
+    # 2. Strip ALL potions (including rvs/rvl) and Town Portal scrolls (tsc) from Potion/Hpotion/Cpot/Misc/Magic/Junk TCs
     for i in range(1, 7):
         for prefix in ("Hpotion", "Potion"):
             tc = f"{prefix} {i}"
             if tc in by_tc:
-                _set_items(by_tc[tc], [(gold_item, "4"), ("isc", "2"), ("tsc", "1")])
+                _set_items(by_tc[tc], [(gold_item, "5"), ("isc", "2")])
 
     for i in range(3):
         tc = f"Misc {i}"
         if tc in by_tc:
-            _set_items(by_tc[tc], [(gold_item, "2"), ("tsc", "1"), ("isc", "3")])
+            _set_items(by_tc[tc], [(gold_item, "3"), ("isc", "3")])
 
-    # Remove mp1..mp5 and rvs/rvl from Act X Magic A/B/C and Cpot
+    # Remove mp1..mp5, rvs/rvl, and tsc from Act X Magic A/B/C and Cpot
     for r in rows:
         tc = r["Treasure Class"]
         if "Magic " in tc and r.get("group") == "4":
-            _set_items(r, [("tsc", "1"), ("isc", "3")])
+            _set_items(r, [(_gold_for_tc(tc), "1"), ("isc", "3")])
         elif r.get("group") == "12":  # Cpot
             _set_items(r, [(_gold_for_tc(tc), "1")])
 
@@ -114,9 +114,10 @@ def build_treasureclass(cfg: dict) -> str:
         if tc.endswith("Junk"):
             _set_items(r, [(_gold_for_tc(tc), "19"), ("Ammo", "1")])
 
-    # Catch-all sweep: ensure zero potion or key item codes exist anywhere in treasureclassex.txt
+    # Catch-all sweep: ensure zero potion, key, or Town Portal item codes exist anywhere in treasureclassex.txt
     banned_potions = {
         "key",
+        "tsc", "tbk",
         "rvs", "rvl",
         "hp1", "hp2", "hp3", "hp4", "hp5",
         "mp1", "mp2", "mp3", "mp4", "mp5",
@@ -502,15 +503,27 @@ def build_treasureclass(cfg: dict) -> str:
                     r["Rare"] = "1024"
                     r["Magic"] = "1024"
                     r["NoDrop"] = "0"
-                    _set_items(
-                        r,
-                        [
-                            (boss_uitem, "3"),
-                            (boss_cpot, "1"),
-                            (boss_charm_tc, "1"),
-                            (act_gold, "1"),
-                        ],
-                    )
+                    if boss == "Duriel":
+                        # Duriel exclusively drops 1 and only 1 Scroll of Town Portal (tsc)
+                        _set_items(
+                            r,
+                            [
+                                (boss_uitem, "3"),
+                                (boss_charm_tc, "1"),
+                                ("tsc", "1"),
+                                (act_gold, "1"),
+                            ],
+                        )
+                    else:
+                        _set_items(
+                            r,
+                            [
+                                (boss_uitem, "3"),
+                                (boss_cpot, "1"),
+                                (boss_charm_tc, "1"),
+                                (act_gold, "1"),
+                            ],
+                        )
 
     # 10. Configure Chest & Super Chest TCs (Act X Chest A/B/C) to drop ONLY:
     # Gold, Runes, Jewelry, Gems (via Act X Good), and Act-scaled Modified Potions
@@ -662,6 +675,15 @@ def build_objects(cfg: dict) -> str:
             r["OperateFn"] = "4"
             r["InitFn"] = "3"
             r["Damage"] = "100"
+        elif r.get("OperateFn") == "22":
+            # Fast-regenerating Nox-style Wells: 10s recharge (250 frames) and 100% full Life/Mana/Stamina restore (256)
+            r["Parm0"] = "250"
+            r["Parm1"] = "256"
+        elif r.get("OperateFn") == "2" and r.get("InitFn") == "1":
+            # Convert all Magic/Booster shrine pedestals (Parm0=3) into Health (Parm0=1) or Mana (Parm0=2) recovery shrines
+            if r.get("Parm0") not in ("1", "2"):
+                obj_id = int(r.get("*ID") or "0")
+                r["Parm0"] = "1" if (obj_id % 2 == 0) else "2"
         elif r.get("OperateFn") in generic_container_ops and r.get("*ID") not in preserve_ids:
             r["Selectable0"] = "0"
             r["PopulateFn"] = "0"

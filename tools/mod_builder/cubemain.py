@@ -82,6 +82,30 @@ GEM_LEVEL_RULES: Dict[str, Tuple[str, str]] = {
     "skc": ("12", ""), "skf": ("24", ""), "sku": ("36", ""), "skl": ("50", ""), "skz": ("", "100"),
 }
 
+# Gem Tier multipliers for Rune Affixes:
+# Tier 0 (Chipped):  0.20x - 0.30x
+# Tier 1 (Flawed):   0.40x - 0.50x
+# Tier 2 (Standard): 0.60x - 0.80x
+# Tier 3 (Flawless): 0.90x - 1.10x
+# Tier 4 (Perfect):  1.20x - 1.40x
+GEM_TIER_MULTS: List[Tuple[float, float]] = [
+    (0.20, 0.30),
+    (0.40, 0.50),
+    (0.60, 0.80),
+    (0.90, 1.10),
+    (1.20, 1.40),
+]
+
+GEM_TIER_INDEX: Dict[str, int] = {
+    "gcr": 0, "gfr": 1, "gsr": 2, "glr": 3, "gpr": 4,
+    "gcb": 0, "gfb": 1, "gsb": 2, "glb": 3, "gpb": 4,
+    "gcy": 0, "gfy": 1, "gsy": 2, "gly": 3, "gpy": 4,
+    "gcg": 0, "gfg": 1, "gsg": 2, "glg": 3, "gpg": 4,
+    "gcw": 0, "gfw": 1, "gsw": 2, "glw": 3, "gpw": 4,
+    "gcv": 0, "gfv": 1, "gsv": 2, "gzv": 3, "gpv": 4,
+    "skc": 0, "skf": 1, "sku": 2, "skl": 3, "skz": 4,
+}
+
 GEM_UPGRADE_CHAINS = [
     ["gcv", "gfv", "gsv", "gzv", "gpv"],
     ["gcr", "gfr", "gsr", "glr", "gpr"],
@@ -338,21 +362,17 @@ AFFIX_PRIORITY_RANK: Dict[str, int] = {
 def _scale_craft_mod(
     mod: Tuple[str, str, str, str],
     slot_scale: float,
-    synergy_mult: float = 1.0,
-    is_gljw: bool = False,
+    gem_tier_mult: Tuple[float, float],
+    rune_count: int = 1,
 ) -> Tuple[str, str, str, str]:
     """
-    Compute (code, param, min_str, max_str) for a Gem Boon or Rune craft modifier.
-    - Base craft roll is ~45%-65% of the socket value for 1x Rune (or ~80%-110% of socket value for Gem Boon),
-      scaled by slot_scale (1.0 for weap/shld/armo, 0.60 for gljw/btbl) and synergy_mult (1.0, 2.25, 3.75).
+    Compute (code, param, min_str, max_str) for a Rune craft modifier:
+    - Binary properties (knock, ignore-ac, indestruct, etc.) always roll ("1", "1").
+    - allskills rolls equal to the number of r33 runes used ("1" for 1x, "2" for 2x) across all gem tiers.
+    - All numeric properties scale by:
+        base_value * rune_count * slot_scale * [gem_min_mult, gem_max_mult]
     """
     code, param, mn_s, mx_s = mod
-    # Fallback weapon-only binary properties on Gloves/Rings/Amulets (gljw) to sensible numeric stats
-    if is_gljw:
-        if code == "ignore-ac":
-            code, param, mn_s, mx_s = ("reduce-ac", "", "20", "20")
-        elif code == "indestruct":
-            code, param, mn_s, mx_s = ("red-dmg%", "", "8", "8")
 
     if code in ("knock", "ignore-ac", "indestruct", "half-freeze", "noheal", "rip"):
         return (code, param, "1", "1")
@@ -364,19 +384,16 @@ def _scale_craft_mod(
         return (code, param, mn_s, mx_s)
 
     if code == "allskills":
-        # 1x r33 = +1, 2x r33 = +1..2, 3x r33 = +2
-        if synergy_mult >= 3.0:
-            return (code, param, "2", "2")
-        elif synergy_mult >= 2.0:
-            return (code, param, "1", "2")
-        return (code, param, "1", "1")
+        val_s = str(max(1, int(rune_count)))
+        return (code, param, val_s, val_s)
 
     sign = -1 if mn_v < 0 or mx_v < 0 else 1
     abs_mn = abs(mn_v)
     abs_mx = abs(mx_v)
 
-    low_f = abs_mn * 0.45 * slot_scale * synergy_mult
-    high_f = abs_mx * 0.65 * slot_scale * synergy_mult
+    g_min, g_max = gem_tier_mult
+    low_f = abs_mn * rune_count * slot_scale * g_min
+    high_f = abs_mx * rune_count * slot_scale * g_max
 
     low_i = max(1, int(round(low_f)))
     high_i = max(low_i, int(round(high_f)))
@@ -413,6 +430,23 @@ def _scale_gem_boon(
     if sign < 0:
         return (code, param, str(-high_i), str(-low_i))
     return (code, param, str(low_i), str(high_i))
+
+
+def _scale_gem_curse(
+    curse: Tuple[str, str, str, str],
+    slot_scale: float,
+) -> Tuple[str, str, str, str]:
+    code, param, mn_s, mx_s = curse
+    try:
+        mn_v = int(mn_s)
+        mx_v = int(mx_s)
+    except ValueError:
+        return curse
+    abs_lo = abs(mx_v)
+    abs_hi = abs(mn_v)
+    scaled_lo = max(1, int(round(abs_lo * slot_scale)))
+    scaled_hi = max(scaled_lo, int(round(abs_hi * slot_scale)))
+    return (code, param, str(-scaled_hi), str(-scaled_lo))
 
 
 def _make_row_str(
@@ -813,93 +847,69 @@ def build_cubemain(cfg: dict) -> str:
                 "lvl": "99",
             }))
 
-    # 6. Case B Full Cartesian 1-Step Gem Pact + 3-Rune Slot-Specific Crafting (1,145,375 rows):
-    # Evaluated top-to-bottom across our 5 Slot Groups:
-    #   1) weap (100% Weapon spec)
-    #   2) gljw (60% Weapon spec -> Gloves, Rings, Amulets)
-    #   3) btbl (60% Armor/Helm spec -> Boots, Belts)
-    #   4) shld (100% Shield spec -> Shields, Paladin Shields, Necro Heads)
-    #   5) armo (100% Armor/Helm spec catch-all -> Body Armor, Helms, Pelts, Primal Helms, Circlets)
+    # 6. 1-Step Gem Pact + 2-Rune Slot-Specific Crafting across all 7 Disjoint Slot Groups
+    # and all 35 Gems/Skulls (Chipped -> Perfect):
+    #   1) weap (1.00x Weapon spec, Eth + Non-Eth)
+    #   2) glov (0.60x Weapon spec, Eth + Non-Eth; omits r31 Ignore Target's Defense)
+    #   3) jwly (0.50x Weapon spec -> Rings & Amulets, Non-Eth only; omits r31 Ignore Target's Defense & r32 Indestructible)
+    #   4) btbl (0.60x Armor/Helm spec -> Boots & Belts, Eth + Non-Eth)
+    #   5) helm (0.75x Armor/Helm spec -> Helms, Circlets, Pelts, Primal Helms, Eth + Non-Eth)
+    #   6) shld (1.00x Shield spec -> Shields, Paladin Shields, Necro Heads, Grimoires, Eth + Non-Eth)
+    #   7) tors (1.00x Armor/Helm spec -> Body Armor, Eth + Non-Eth)
     slot_groups = [
-        ("weap", 0, 1.0, False),
-        ("gljw", 0, 0.60, True),
-        ("btbl", 1, 0.60, False),
-        ("shld", 2, 1.0, False),
-        ("armo", 1, 1.0, False),
+        ("weap", 0, 1.00, True, set()),
+        ("glov", 0, 0.60, True, {"r31"}),
+        ("jwly", 0, 0.50, False, {"r31", "r32"}),
+        ("btbl", 1, 0.60, True, set()),
+        ("helm", 1, 0.75, True, set()),
+        ("shld", 2, 1.00, True, set()),
+        ("tors", 1, 1.00, True, set()),
     ]
 
-    # Precompute scaled Rune mods for each (slot_idx, rune_idx, mult_key)
-    # slot_idx in 0..4, rune_idx in 0..32, mult_key in (1, 2, 3)
-    mult_map = {1: 1.0, 2: 2.25, 3: 3.75}
     rune_codes = [r[0] for r in RUNE_SPECS]
-    rune_slot_mods: List[List[Dict[int, Tuple[str, str, str, str]]]] = []
-    for s_idx, (_, gem_col_idx, s_scale, is_gljw) in enumerate(slot_groups):
-        s_list = []
-        for r_idx, r_spec in enumerate(RUNE_SPECS):
-            # r_spec = (code, sem_name, wmod, hmod, smod)
-            raw_mod = r_spec[2 + gem_col_idx]
-            m_dict = {}
-            for cnt, m_val in mult_map.items():
-                m_dict[cnt] = _scale_craft_mod(raw_mod, s_scale, m_val, is_gljw=is_gljw)
-            s_list.append(m_dict)
-        rune_slot_mods.append(s_list)
-
-    # Precompute all 6,545 3-Rune combinations per slot_idx as ready-to-join tab strings!
-    # In cubemain.txt headers:
-    # 0:description, 1:enabled, 2:firstLadderSeason, 3:lastLadderSeason, 4:min diff, 5:version,
-    # 6:op, 7:param, 8:value, 9:class, 10:numinputs, 11:input 1, 12:input 2, 13:input 3, 14:input 4, 15:input 5,
-    # 16:input 6, 17:input 7, 18:output, 19:lvl, 20:plvl, 21:ilvl,
-    # 22:mod 1, 23:mod 1 chance, 24:mod 1 param, 25:mod 1 min, 26:mod 1 max,
-    # 27:mod 2, 28:mod 2 chance, 29:mod 2 param, 30:mod 2 min, 31:mod 2 max,
-    # 32..46: mod 3..mod 5 (15 columns), 47..102: output b/c (56 columns), 103:*eol ("0")
     tail_empty = "\t" * (num_cols - 47 - 1) + "\t0"
 
-    slot_rune_Data: List[List[Tuple[str, str]]] = []
-    # Each element in slot_rune_Data[s_idx] is (inputs_3_to_5_tab_str, mods_3_to_5_tab_str)
-    for s_idx in range(len(slot_groups)):
-        combos: List[Tuple[str, str]] = []
-        rmods = rune_slot_mods[s_idx]
+    # Precompute 2-Rune combinations per (slot_idx, gem_tier_idx)
+    # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_3_5_str)]
+    slot_tier_combos: List[List[List[Tuple[str, str]]]] = []
+    for s_idx, (_, gem_col_idx, s_scale, _, forbidden_runes) in enumerate(slot_groups):
+        tier_list: List[List[Tuple[str, str]]] = []
+        for t_idx, g_mult in enumerate(GEM_TIER_MULTS):
+            rmods_1: List[Tuple[str, str, str, str]] = []
+            rmods_2: List[Tuple[str, str, str, str]] = []
+            for r_spec in RUNE_SPECS:
+                raw_mod = r_spec[2 + gem_col_idx]
+                rmods_1.append(_scale_craft_mod(raw_mod, s_scale, g_mult, rune_count=1))
+                rmods_2.append(_scale_craft_mod(raw_mod, s_scale, g_mult, rune_count=2))
 
-        # A) 3 identical runes: "rXX,qty=3" (33 combos)
-        for i in range(33):
-            rc = rune_codes[i]
-            inp_str = f'"{rc},qty=3"\t\t'
-            m3 = rmods[i][3]
-            mod_str = f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t\t\t\t\t\t\t\t\t\t"
-            combos.append((inp_str, mod_str))
-
-        # B) 2 identical + 1 different: "rXX,qty=2" + rYY (33 * 32 = 1,056 combos)
-        for i in range(33):
-            rc1 = rune_codes[i]
-            m3 = rmods[i][2]
-            for j in range(33):
-                if i == j:
+            combos: List[Tuple[str, str]] = []
+            # A) 2 identical runes: "rXX,qty=2"
+            for i in range(33):
+                rc = rune_codes[i]
+                if rc in forbidden_runes:
                     continue
-                rc2 = rune_codes[j]
-                m4 = rmods[j][1]
-                inp_str = f'"{rc1},qty=2"\t{rc2}\t'
-                mod_str = f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t{m4[0]}\t\t{m4[1]}\t{m4[2]}\t{m4[3]}\t\t\t\t\t"
+                inp_str = f'"{rc},qty=2"\t\t'
+                m3 = rmods_2[i]
+                mod_str = f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t\t\t\t\t\t\t\t\t\t"
                 combos.append((inp_str, mod_str))
 
-        # C) 3 different runes: rXX + rYY + rZZ, i < j < k (5,456 combos)
-        for i in range(33):
-            rc1 = rune_codes[i]
-            m3 = rmods[i][1]
-            for j in range(i + 1, 33):
-                rc2 = rune_codes[j]
-                m4 = rmods[j][1]
-                for k in range(j + 1, 33):
-                    rc3 = rune_codes[k]
-                    m5 = rmods[k][1]
-                    inp_str = f"{rc1}\t{rc2}\t{rc3}"
-                    mod_str = (
-                        f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t"
-                        f"{m4[0]}\t\t{m4[1]}\t{m4[2]}\t{m4[3]}\t"
-                        f"{m5[0]}\t\t{m5[1]}\t{m5[2]}\t{m5[3]}"
-                    )
+            # B) 2 different runes: rXX + rYY (i < j)
+            for i in range(33):
+                rc1 = rune_codes[i]
+                if rc1 in forbidden_runes:
+                    continue
+                m3 = rmods_1[i]
+                for j in range(i + 1, 33):
+                    rc2 = rune_codes[j]
+                    if rc2 in forbidden_runes:
+                        continue
+                    m4 = rmods_1[j]
+                    inp_str = f"{rc1}\t{rc2}\t"
+                    mod_str = f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t{m4[0]}\t\t{m4[1]}\t{m4[2]}\t{m4[3]}\t\t\t\t\t"
                     combos.append((inp_str, mod_str))
 
-        slot_rune_Data.append(combos)
+            tier_list.append(combos)
+        slot_tier_combos.append(tier_list)
 
     out_path = os.path.join(MOD_ROOT, "data/global/excel/cubemain.txt")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -909,25 +919,23 @@ def build_cubemain(cfg: dict) -> str:
         # Write header + non-craft recipes first
         f.write(("\r\n".join(lines) + "\r\n").encode("utf-8"))
 
-        # Stream-write the 5 Slot Groups x 35 Gems x 6,545 Rune combinations:
-        # First pass for each slot group: Ethereal Magic base ("<slot_code>,mag,eth" -> "usetype,crf,eth")
-        # Second pass for each slot group: Non-Ethereal Magic base ("<slot_code>,mag" -> "usetype,crf")
-        # Because cubemain.txt evaluates top-to-bottom, an Ethereal Magic item matches the ",eth" row first!
-        for s_idx, (slot_code, gem_col_idx, s_scale, _) in enumerate(slot_groups):
-            combos = slot_rune_Data[s_idx]
-            for is_eth in (True, False):
+        for s_idx, (slot_code, gem_col_idx, s_scale, allow_eth, _) in enumerate(slot_groups):
+            eth_variants = (True, False) if allow_eth else (False,)
+            for is_eth in eth_variants:
                 inp1_str = f'"{slot_code},mag,eth"' if is_eth else f'"{slot_code},mag"'
                 out_str = '"usetype,crf,eth"' if is_eth else '"usetype,crf"'
                 desc_tag = "EthCraft" if is_eth else "Craft"
 
                 for g_spec in GEM_SPECS:
                     g_code = g_spec[0]
+                    t_idx = GEM_TIER_INDEX[g_code]
+                    combos = slot_tier_combos[s_idx][t_idx]
                     raw_boon = g_spec[1 + gem_col_idx]
                     boon = _scale_gem_boon(raw_boon, s_scale)
-                    curse = GEM_CURSES[g_code]
+                    curse = _scale_gem_curse(GEM_CURSES[g_code], s_scale)
                     lvl_s, plvl_s = GEM_LEVEL_RULES[g_code]
 
-                    prefix_0_12 = f"{desc_tag} {slot_code} {g_code}\t1\t\t\t\t100\t\t\t\t\t5\t{inp1_str}\t{g_code}\t"
+                    prefix_0_12 = f"{desc_tag} {slot_code} {g_code}\t1\t\t\t\t100\t\t\t\t\t4\t{inp1_str}\t{g_code}\t"
                     mid_16_31 = (
                         f"\t\t\t{out_str}\t{lvl_s}\t{plvl_s}\t\t"
                         f"{boon[0]}\t\t{boon[1]}\t{boon[2]}\t{boon[3]}\t"

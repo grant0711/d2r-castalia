@@ -92,7 +92,7 @@ def _detect_theme(props: List[Tuple[str, str, str, str]]) -> str:
 # - ZERO duplicate added procs within the same equipment slot & level bracket
 # - Early utility/MF/mana rings (e.g. Nagelring, Manald Heal) and complete endgame items are left untouched
 CURATED_UNIQUE_ADDITIONS: Dict[str, List[Tuple[str, str, str, str]]] = {
-    # --- Curated Oskills (18 distinct skills, 1 item each + 2 distinct on new Javelins = 20 distinct oskills total) ---
+    # --- Curated Oskills (16 distinct skills, 1 item each + 2 distinct on new Javelins = 18 distinct oskills total) ---
     "Stoutnail": [("oskill", "Sacrifice", "4", "6")],
     "Dimoaks Hew": [("oskill", "Jab", "4", "6"), ("light", "", "-2", "-2")],
     "Deathspade": [("oskill", "Cleave", "4", "6"), ("light", "", "-2", "-2")],
@@ -101,14 +101,12 @@ CURATED_UNIQUE_ADDITIONS: Dict[str, List[Tuple[str, str, str, str]]] = {
     "Soulflay": [("oskill", "Zeal", "5", "7"), ("light", "", "-2", "-2")],
     "Lance of Yaggai": [("oskill", "Charged Strike", "6", "8"), ("balance2", "", "-10", "-10")],
     "Irices Shard": [("oskill", "Frozen Armor", "6", "8")],
-    "Goldskin": [("oskill", "Natural Resistance", "3", "5"), ("ease", "", "20", "20")],
     "The Spirit Shroud": [("oskill", "Psychic Ward", "6", "8")],
     "Blastbark": [("oskill", "Multiple Shot", "6", "8"), ("ease", "", "20", "20")],
     "Frostburn": [("oskill", "Chilling Armor", "7", "9"), ("balance2", "", "-10", "-10")],
     "Valkiry Wing": [("oskill", "Valkyrie", "4", "6"), ("light", "", "-2", "-2")],
     "Bloodmoon": [("oskill", "Blood Boil", "8", "11"), ("damageresist", "", "-8", "-5")],
     "Steelshade": [("oskill", "Enchant", "10", "13"), ("ease", "", "20", "20")],
-    "Deathcleaver": [("oskill", "Berserk", "9", "12"), ("light", "", "-2", "-2")],
     "Gutsiphon": [("oskill", "Strafe", "9", "12"), ("balance2", "", "-10", "-10")],
     "Boneflame": [("oskill", "Bone Armor", "12", "15"), ("light", "", "-2", "-2")],
 
@@ -221,9 +219,19 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         props = _get_props(r, 12)
         theme = _detect_theme(props)
 
-        # 1. Remove nofreeze & compress % Extra Gold (gold%) by 0.45x so Gold Find cannot trivialize the economy
+        # 1. Remove nofreeze, strip reworked Barbarian charged/oskill/repurposed skill refs, & compress gold% by 0.45x
+        reworked_barb_skill_refs = {
+            "127", "129", "131", "142", "150", "155",
+            "Blade Mastery", "Mace Mastery", "Find Potion", "Find Item", "Grim Ward",
+            "Battle Command", "Natural Resistance", "Berserk",
+        }
         new_props = []
         for p, par, mn, mx in props:
+            if p in ("charged", "oskill", "skill") and (
+                par.strip() in reworked_barb_skill_refs
+                or (p in ("charged", "oskill") and par.strip().isdigit() and 126 <= int(par.strip()) <= 155)
+            ):
+                continue
             if p == "nofreeze":
                 nofreeze_removed += 1
                 if theme == "cold" or len(props) <= 3:

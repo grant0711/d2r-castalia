@@ -7,10 +7,22 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+static int is_local_or_lan_ipv4(uint32_t ip) {
+    if (ip == 0) return 1;                          /* 0.0.0.0 */
+    if ((ip >> 24) == 127) return 1;                /* 127.0.0.0/8 loopback */
+    if ((ip >> 24) == 10) return 1;                 /* 10.0.0.0/8 LAN */
+    if ((ip >> 20) == ((172 << 4) | 1)) return 1;   /* 172.16.0.0/12 LAN */
+    if ((ip >> 16) == ((192 << 8) | 168)) return 1; /* 192.168.0.0/16 LAN */
+    return 0;
+}
+
 static int is_local_node(const char *node) {
     if (!node || !node[0]) return 1;
     if (strcmp(node, "localhost") == 0) return 1;
     if (strncmp(node, "127.", 4) == 0) return 1;
+    if (strncmp(node, "192.168.", 8) == 0) return 1;
+    if (strncmp(node, "10.", 3) == 0) return 1;
+    if (strncmp(node, "172.", 4) == 0) return 1;
     if (strcmp(node, "0.0.0.0") == 0) return 1;
     if (strcmp(node, "::1") == 0) return 1;
     if (strcmp(node, "::") == 0) return 1;
@@ -33,7 +45,7 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
         if (addr->sa_family == AF_INET && addrlen >= sizeof(struct sockaddr_in)) {
             const struct sockaddr_in *sin = (const struct sockaddr_in *)addr;
             uint32_t ip = ntohl(sin->sin_addr.s_addr);
-            if (ip != 0 && (ip >> 24) != 127) {
+            if (!is_local_or_lan_ipv4(ip)) {
                 errno = ENETUNREACH;
                 return -1;
             }

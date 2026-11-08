@@ -39,7 +39,7 @@ def build_gamble(cfg: dict = None) -> str:
         "ui.json",
         [
             (3398, "gamble", "crafting"),
-            (11168, "respec", ""),
+            (11168, "respec", "Reset Stat/Skill Points"),
             (3343, "TransactionMenu1f", "Place an Untempered Malus to temper"),
             (4017, "Upgrade", "Temper Malus"),
         ],

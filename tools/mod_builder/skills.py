@@ -124,8 +124,13 @@ BARBARIAN_STATES = [
 
 ASSASSIN_STATES = [
     ("ass_trap_consume", {"group": "12", "aura": "1", "active": "1", "srvactivefunc": "18", "stat": "item_kickdamage", "overlay1": "innersight"}),
+    ("ass_whirl_shred", {"curable": "1"}),
     ("ass_fof_passive", {}),
+    ("ass_flow_passive", {}),
     ("ass_ts_passive", {}),
+    ("ass_cobra_debuff", {"curable": "1", "curse": "1"}),
+    ("ass_boi_passive", {}),
+    ("ass_cot_passive", {}),
 ]
 
 
@@ -1279,6 +1284,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ww["*calc7desc"] = "Escalation 2 Skill Id"
     ww["aurastat1"] = ""
     ww["aurastatcalc1"] = ""
+    ww["TargetableOnly"] = ""
+    ww["AttackNoMana"] = ""
 
     # -------------------------------------------------------------------------
     # 2. "WELL-RESTED" SKILLS (Bash 126, Shield Slam 139, Concentrate 144)
@@ -2963,13 +2970,13 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         sfb_ms["HitFlags"] = "2"
         sfb_ms["HitShift"] = "8"
         sfb_ms["EType"] = "fire"
-        sfb_ms["EMin"] = "25"
+        sfb_ms["EMin"] = "18"
         sfb_ms["MinELev1"] = "0"
         sfb_ms["MinELev2"] = "0"
         sfb_ms["MinELev3"] = "0"
         sfb_ms["MinELev4"] = "0"
         sfb_ms["MinELev5"] = "0"
-        sfb_ms["EMax"] = "40"
+        sfb_ms["EMax"] = "30"
         sfb_ms["MaxELev1"] = "0"
         sfb_ms["MaxELev2"] = "0"
         sfb_ms["MaxELev3"] = "0"
@@ -3024,11 +3031,12 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         sfe_ms["NumDirections"] = "32"
         sfe_ms["ProgOverlay"] = ""
 
-    # Fists of Fire Finishing Move Release Missiles (1 distinct effect per orb tier):
-    # - Charge 1 Finisher Release: fistsoffireexplode (Instant AoE Fire Explosion)
-    # - Charge 2 Finisher Release: fistsoffirefirewall (AoE Burning Ground field)
-    # - Charge 3 Finisher Release: royalstrikemeteorcenter -> royalstrikemeteor + royalstrikemeteorfire (Crashing Meteor + Ground Fire)
-    fof_syn_expr = "12*skill('Dragon Tail'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+    # Fists of Fire (Flamestrike) Finishing Move Release Missiles (1 distinct effect per orb tier,
+    # scaled so 1/2/3 Held Orbs = 50% of Charge 1/2/3 Release at every skill level):
+    # - Charge 1 Finisher Release: fistsoffireexplode (Instant AoE Fire Explosion = 2x of 1 Held Orb)
+    # - Charge 2 Finisher Release: fistsoffirefirewall (Wide AoE Burning Ground carpet = 2x of 2 Held Orbs/sec)
+    # - Charge 3 Finisher Release: royalstrikemeteorcenter -> royalstrikemeteor + royalstrikemeteorfire (Crashing Meteor = 2x of 3 Held Orbs)
+    fof_syn_expr = "9*skill('Blades of Ice'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
     if "fistsoffireexplode" in rows_by_name:
         ffe = rows_by_name["fistsoffireexplode"]
         ffe["CollideType"] = "3"
@@ -3037,55 +3045,78 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         ffe["LastCollide"] = "1"
         ffe["NextHit"] = "1"
         ffe["NextDelay"] = "25"
-        ffe["Size"] = "2"
+        ffe["Size"] = "3"
         ffe["HitShift"] = "8"
         ffe["ApplyMastery"] = "1"
         ffe["EType"] = "fire"
-        ffe["EMin"] = "18"
-        ffe["MinELev1"] = "8"
-        ffe["MinELev2"] = "14"
-        ffe["MinELev3"] = "22"
-        ffe["MinELev4"] = "30"
-        ffe["MinELev5"] = "38"
-        ffe["EMax"] = "30"
-        ffe["MaxELev1"] = "10"
-        ffe["MaxELev2"] = "18"
-        ffe["MaxELev3"] = "26"
-        ffe["MaxELev4"] = "36"
-        ffe["MaxELev5"] = "46"
+        ffe["EMin"] = "12"
+        ffe["MinELev1"] = "4"
+        ffe["MinELev2"] = "8"
+        ffe["MinELev3"] = "24"
+        ffe["MinELev4"] = "32"
+        ffe["MinELev5"] = "40"
+        ffe["EMax"] = "24"
+        ffe["MaxELev1"] = "8"
+        ffe["MaxELev2"] = "16"
+        ffe["MaxELev3"] = "48"
+        ffe["MaxELev4"] = "64"
+        ffe["MaxELev5"] = "80"
         ffe["EDmgSymPerCalc"] = fof_syn_expr
     if "fistsoffirefirewall" in rows_by_name:
         ffw = rows_by_name["fistsoffirefirewall"]
+        ffw["Range"] = "85"
+        ffw["Size"] = "3"
         ffw["EMin"] = "8"
-        ffw["MinELev1"] = "4"
-        ffw["MinELev2"] = "8"
-        ffw["MinELev3"] = "13"
-        ffw["MinELev4"] = "18"
-        ffw["MinELev5"] = "24"
-        ffw["EMax"] = "12"
-        ffw["MaxELev1"] = "5"
+        ffw["MinELev1"] = "3"
+        ffw["MinELev2"] = "5"
+        ffw["MinELev3"] = "15"
+        ffw["MinELev4"] = "20"
+        ffw["MinELev5"] = "26"
+        ffw["EMax"] = "16"
+        ffw["MaxELev1"] = "6"
         ffw["MaxELev2"] = "10"
-        ffw["MaxELev3"] = "16"
-        ffw["MaxELev4"] = "22"
-        ffw["MaxELev5"] = "28"
+        ffw["MaxELev3"] = "30"
+        ffw["MaxELev4"] = "40"
+        ffw["MaxELev5"] = "52"
         ffw["EDmgSymPerCalc"] = fof_syn_expr
+    if "royalstrikemeteorcenter" in rows_by_name:
+        rsmc = rows_by_name["royalstrikemeteorcenter"]
+        rsmc["Range"] = "30"
+        rsmc["CltParam1"] = "29"
+        rsmc["CltParam2"] = "50"
+        rsmc["CltParam3"] = "30"
     if "royalstrikemeteor" in rows_by_name:
         rsm = rows_by_name["royalstrikemeteor"]
-        rsm["EMin"] = "45"
-        rsm["MinELev1"] = "18"
-        rsm["MinELev2"] = "32"
-        rsm["MinELev3"] = "48"
-        rsm["MinELev4"] = "64"
-        rsm["MinELev5"] = "80"
-        rsm["EMax"] = "75"
-        rsm["MaxELev1"] = "22"
-        rsm["MaxELev2"] = "38"
-        rsm["MaxELev3"] = "56"
-        rsm["MaxELev4"] = "74"
-        rsm["MaxELev5"] = "92"
+        rsm["sHitPar1"] = "9"
+        rsm["EMin"] = "36"
+        rsm["MinELev1"] = "12"
+        rsm["MinELev2"] = "24"
+        rsm["MinELev3"] = "72"
+        rsm["MinELev4"] = "96"
+        rsm["MinELev5"] = "120"
+        rsm["EMax"] = "72"
+        rsm["MaxELev1"] = "24"
+        rsm["MaxELev2"] = "48"
+        rsm["MaxELev3"] = "144"
+        rsm["MaxELev4"] = "192"
+        rsm["MaxELev5"] = "240"
         rsm["EDmgSymPerCalc"] = fof_syn_expr
     if "royalstrikemeteorfire" in rows_by_name:
         rsmf = rows_by_name["royalstrikemeteorfire"]
+        rsmf["Range"] = "75"
+        rsmf["Size"] = "3"
+        rsmf["EMin"] = "4"
+        rsmf["MinELev1"] = "2"
+        rsmf["MinELev2"] = "3"
+        rsmf["MinELev3"] = "8"
+        rsmf["MinELev4"] = "10"
+        rsmf["MinELev5"] = "13"
+        rsmf["EMax"] = "8"
+        rsmf["MaxELev1"] = "3"
+        rsmf["MaxELev2"] = "5"
+        rsmf["MaxELev3"] = "15"
+        rsmf["MaxELev4"] = "20"
+        rsmf["MaxELev5"] = "26"
         rsmf["EDmgSymPerCalc"] = fof_syn_expr
 
     # Step 2: Shrapnel Sentry (Tiger Strike 1/2/3 Charge Tier Upgrades via straight-line Blade Fury shuriken turret)
@@ -3162,6 +3193,958 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         bf3_ms["CltHitSubMissile1"] = ""
         bf3_ms["ProgOverlay"] = ""
 
+    # Tiger Strike Finishing Move Release Missiles (360-degree Expanding Physical Shockwave Ring):
+    # All 3 charge tiers use srvprgfunc=41 / cltprgfunc=15 (prgcalc=36) rather than srvprgfunc=36 (Nova),
+    # because srvprgfunc=36 hardcodes a full-screen ~20-subtile Nova radius in C++ while srvprgfunc=41
+    # strictly obeys missiles.txt Vel and Range!
+    # At Vel=8 (1.0 sub-tile/frame) and plain integer Range=7, the shockwave travels 7.0 sub-tiles
+    # (~4.6 yards, right in the middle between 3.75 and 11.25 sub-tiles) while completing its
+    # 7-frame expansion_shockwave animation (AnimSpeed=16 -> 7 frames) right as it expires.
+    ts_c123_syn = "skill('Tiger Strike'.clc6)"
+    ts_ring_specs = [
+        # (m_name, vel, rng, size, res_flags, kb, syn_calc, min_d, min1, min2, min3, min4, min5, max_d, max1, max2, max3, max4, max5)
+        ("inferno sentry 1",          "8", "7", "2", "4",  "",    ts_c123_syn, "4", "1", "3", "7", "11", "15", "8", "2", "5", "9", "15", "21"),
+        ("inferno sentry 2",          "8", "7", "2", "4",  "",    ts_c123_syn, "4", "1", "3", "7", "11", "15", "8", "2", "5", "9", "15", "21"),
+        ("progressive radius damage", "8", "7", "2", "13", "100", ts_c123_syn, "4", "1", "3", "7", "11", "15", "8", "2", "5", "9", "15", "21"),
+    ]
+    for (
+        m_name, vel, rng, sz, rflags, kb, syn_calc,
+        mn0, mn1, mn2, mn3, mn4, mn5,
+        mx0, mx1, mx2, mx3, mx4, mx5,
+    ) in ts_ring_specs:
+        if m_name in rows_by_name:
+            trm = rows_by_name[m_name]
+            trm["pCltDoFunc"] = "1"
+            trm["pCltHitFunc"] = ""
+            trm["pSrvDoFunc"] = "1"
+            trm["pSrvHitFunc"] = ""
+            trm["pSrvDmgFunc"] = ""
+            trm["Vel"] = vel
+            trm["MaxVel"] = vel
+            trm["VelLev"] = ""
+            trm["Accel"] = ""
+            trm["Range"] = rng
+            trm["Light"] = ""
+            trm["Red"] = "255"
+            trm["Green"] = "255"
+            trm["Blue"] = "255"
+            trm["InitSteps"] = "0"
+            trm["Activate"] = "0"
+            trm["LoopAnim"] = "0"
+            trm["CelFile"] = "expansion\\shockwave"
+            trm["animrate"] = "1024"
+            trm["AnimLen"] = "7"
+            trm["AnimSpeed"] = "16"
+            trm["CollideType"] = "3"
+            trm["CollideKill"] = ""
+            trm["LastCollide"] = "1"
+            trm["Collision"] = "1"
+            trm["ClientCol"] = "1"
+            trm["NextHit"] = "1"
+            trm["NextDelay"] = "30"
+            trm["Size"] = sz
+            trm["CanSlow"] = ""
+            trm["ReturnFire"] = "1"
+            trm["GetHit"] = "1"
+            trm["KnockBack"] = kb
+            trm["Trans"] = "1"
+            trm["Pierce"] = "1"
+            trm["Skill"] = ""
+            trm["ResultFlags"] = rflags
+            trm["HitFlags"] = "2"
+            trm["HitShift"] = "8"
+            trm["SrcDamage"] = ""
+            trm["MinDamage"] = mn0
+            trm["MinLevDam1"] = mn1
+            trm["MinLevDam2"] = mn2
+            trm["MinLevDam3"] = mn3
+            trm["MinLevDam4"] = mn4
+            trm["MinLevDam5"] = mn5
+            trm["MaxDamage"] = mx0
+            trm["MaxLevDam1"] = mx1
+            trm["MaxLevDam2"] = mx2
+            trm["MaxLevDam3"] = mx3
+            trm["MaxLevDam4"] = mx4
+            trm["MaxLevDam5"] = mx5
+            trm["DmgSymPerCalc"] = syn_calc
+            trm["EType"] = ""
+            trm["EMin"] = ""
+            trm["EMax"] = ""
+            trm["EDmgSymPerCalc"] = ""
+            trm["DamageRate"] = ""
+            trm["NumDirections"] = "32"
+            trm["TravelSound"] = "druid_shockwave"
+            trm["HitSound"] = "assassin_bladefury_hit"
+            trm["ProgOverlay"] = "doubledamage1"
+            trm["SubMissile1"] = ""
+
+    # Step 3: Cobra Strike (progressive_steal) Finishing Move Soul-Hex Wave + Soul Siphon Sentry (Charged Bolt Sentry, Id 261)
+    # 1. Cobra Strike 1/2/3 Orb Release Missiles (unholybolt2..4 -> undeadmissile2..4):
+    #    - 7.0-sub-tile (4.6-yard) translucent Soul-Hex Wave (b_a_yell_shock_wave_01)
+    #    - Plays the growing green Soul-Drain swirl (cobrastrike1 / cobrastrike2 / cobrastrike3) on every monster hit
+    #    - Applies Ass Cobra Hex 1 / 2 / 3 (Monster Defense Shred: -1x / -2x / -3x Defense) via pSrvHitFunc=21 submissile
+    cs_wave_specs = [
+        ("unholybolt2", "undeadmissile2", "cobrastrike1", "Ass Cobra Hex 1"),
+        ("unholybolt3", "undeadmissile3", "cobrastrike2", "Ass Cobra Hex 2"),
+        ("unholybolt4", "undeadmissile4", "cobrastrike3", "Ass Cobra Hex 3"),
+    ]
+    for wave_m, sub_m, prog_ov, hex_sk in cs_wave_specs:
+        if wave_m in rows_by_name:
+            wm = rows_by_name[wave_m]
+            wm["pCltDoFunc"] = "1"
+            wm["pCltHitFunc"] = "10"
+            wm["pSrvDoFunc"] = "2"
+            wm["SrvCalc1"] = "1"
+            wm["pSrvHitFunc"] = ""
+            wm["pSrvDmgFunc"] = ""
+            wm["Vel"] = "8"
+            wm["MaxVel"] = "8"
+            wm["VelLev"] = ""
+            wm["Accel"] = ""
+            wm["Range"] = "7"
+            wm["Light"] = ""
+            wm["Red"] = ""
+            wm["Green"] = ""
+            wm["Blue"] = ""
+            wm["InitSteps"] = "1"
+            wm["Activate"] = "0"
+            wm["LoopAnim"] = "0"
+            wm["CelFile"] = "null"
+            wm["animrate"] = "1024"
+            wm["AnimLen"] = "7"
+            wm["AnimSpeed"] = "16"
+            wm["CollideType"] = "3"
+            wm["CollideKill"] = ""
+            wm["LastCollide"] = "1"
+            wm["Collision"] = "1"
+            wm["ClientCol"] = "1"
+            wm["NextHit"] = "1"
+            wm["NextDelay"] = "25"
+            wm["Size"] = "2"
+            wm["CanSlow"] = ""
+            wm["ReturnFire"] = ""
+            wm["GetHit"] = ""
+            wm["KnockBack"] = ""
+            wm["Trans"] = "1"
+            wm["Pierce"] = "1"
+            wm["Skill"] = ""
+            wm["ResultFlags"] = "4"
+            wm["HitFlags"] = "2"
+            wm["HitShift"] = "8"
+            wm["SrcDamage"] = ""
+            wm["MinDamage"] = "1"
+            wm["MaxDamage"] = "2"
+            wm["EType"] = ""
+            wm["EMin"] = ""
+            wm["MinELev1"] = ""
+            wm["MinELev2"] = ""
+            wm["MinELev3"] = ""
+            wm["MinELev4"] = ""
+            wm["MinELev5"] = ""
+            wm["EMax"] = ""
+            wm["MaxELev1"] = ""
+            wm["MaxELev2"] = ""
+            wm["MaxELev3"] = ""
+            wm["MaxELev4"] = ""
+            wm["MaxELev5"] = ""
+            wm["NumDirections"] = "32"
+            wm["TravelSound"] = "assassin_chargeup_cobra_1"
+            wm["HitSound"] = ""
+            wm["ProgOverlay"] = prog_ov
+            wm["SubMissile1"] = sub_m
+        if sub_m in rows_by_name:
+            sm = rows_by_name[sub_m]
+            sm["pCltDoFunc"] = "1"
+            sm["pCltHitFunc"] = ""
+            sm["pSrvDoFunc"] = "1"
+            sm["pSrvHitFunc"] = "21"
+            sm["pSrvDmgFunc"] = ""
+            sm["Param1"] = ""
+            sm["Param2"] = ""
+            sm["Vel"] = "0"
+            sm["MaxVel"] = "0"
+            sm["Range"] = "2"
+            sm["CelFile"] = "null"
+            sm["AnimLen"] = "1"
+            sm["AnimSpeed"] = "16"
+            sm["CollideType"] = "3"
+            sm["CollideKill"] = ""
+            sm["LastCollide"] = "1"
+            sm["NextHit"] = "1"
+            sm["NextDelay"] = "4"
+            sm["Size"] = "2"
+            sm["NumDirections"] = "1"
+            sm["Skill"] = hex_sk
+            sm["EType"] = ""
+            sm["EMin"] = ""
+            sm["MinELev1"] = ""
+            sm["MinELev2"] = ""
+            sm["MinELev3"] = ""
+            sm["MinELev4"] = ""
+            sm["MinELev5"] = ""
+            sm["EMax"] = ""
+            sm["MaxELev1"] = ""
+            sm["MaxELev2"] = ""
+            sm["MaxELev3"] = ""
+            sm["MaxELev4"] = ""
+            sm["MaxELev5"] = ""
+            sm["AlwaysExplode"] = ""
+            sm["ExplosionMissile"] = ""
+            sm["SubMissile1"] = ""
+            sm["HitSubMissile1"] = ""
+            sm["CltHitSubMissile1"] = ""
+
+    # 2. Soul Siphon Sentry (sentrychargedbolt -> sentryspikeinair -> sentryspikeonground):
+    #    - Fires straight-line piercing Black Unholy Bolts (unholy_bolt in missiles.json) with pSrvDoFunc=2, pCltDoFunc=1
+    #    - sentrychargedbolt directly deals the Magic damage (EType=mag, 42-66 base) and pierces through all enemies (CollideKill="", LastCollide="1", Pierce="1")
+    #    - Charge 1: +Shots (handled in BoltSentry calc4)
+    #    - Charge 2: BoltSentry sumsk1calc sets lvl=2 (Vel=16 -> MaxVel=24 via VelLev=8) & +Range (30 -> 46+blvl frames)
+    #    - Charge 3: BoltSentry sumsk1calc sets lvl=10; sentryspikeinair (pSrvDoFunc=1, pSrvHitFunc=38, sHitPar1=-4, sHitPar2=1)
+    #      spawns (-4 + lvl*1) = 6 sentryspikeonground (Life Tap) missiles ONLY when lvl >= 5 (3 charges), and 0 when lvl <= 2 (0-2 charges)!
+    cs_c = "skill('Ass Trap Charge Consume'.blvl)"
+    cs_m = "skill('Cobra Strike'.blvl)"
+    if "sentrychargedbolt" in rows_by_name:
+        scb = rows_by_name["sentrychargedbolt"]
+        scb["pCltDoFunc"] = "1"
+        scb["pCltHitFunc"] = ""
+        scb["pSrvDoFunc"] = "2"
+        scb["SrvCalc1"] = "(lvl >= 3) ? 1 : 999"
+        scb["pSrvHitFunc"] = ""
+        scb["pSrvDmgFunc"] = ""
+        scb["Param1"] = ""
+        scb["Param2"] = ""
+        scb["CltParam1"] = ""
+        scb["sHitPar1"] = ""
+        scb["sHitPar2"] = ""
+        scb["Vel"] = "16"
+        scb["VelLev"] = "8"
+        scb["MaxVel"] = "24"
+        scb["Range"] = f"30 + ((lvl >= 2) ? (16 + {cs_m}) : 0)"
+        scb["Light"] = "5"
+        scb["Flicker"] = ""
+        scb["Red"] = "0"
+        scb["Green"] = "0"
+        scb["Blue"] = "0"
+        scb["InitSteps"] = "1"
+        scb["Activate"] = "0"
+        scb["LoopAnim"] = "0"
+        scb["CelFile"] = "UnholyBolt"
+        scb["animrate"] = "1024"
+        scb["AnimLen"] = "64"
+        scb["AnimSpeed"] = "16"
+        scb["SubLoop"] = ""
+        scb["SubStart"] = ""
+        scb["SubStop"] = ""
+        scb["CollideType"] = "3"
+        scb["CollideKill"] = ""
+        scb["LastCollide"] = "1"
+        scb["ClientCol"] = "1"
+        scb["NextHit"] = "1"
+        scb["NextDelay"] = "8"
+        scb["Size"] = "2"
+        scb["AlwaysExplode"] = ""
+        scb["CanSlow"] = "1"
+        scb["ReturnFire"] = "1"
+        scb["GetHit"] = "1"
+        scb["Trans"] = "2"
+        scb["Pierce"] = "1"
+        scb["Skill"] = ""
+        scb["ResultFlags"] = "4"
+        scb["HitFlags"] = "2"
+        scb["HitShift"] = "8"
+        scb["HitClass"] = ""
+        scb["EType"] = "mag"
+        scb["EMin"] = "42"
+        scb["MinELev1"] = "0"
+        scb["MinELev2"] = "0"
+        scb["MinELev3"] = "0"
+        scb["MinELev4"] = "0"
+        scb["MinELev5"] = "0"
+        scb["EMax"] = "66"
+        scb["MaxELev1"] = "0"
+        scb["MaxELev2"] = "0"
+        scb["MaxELev3"] = "0"
+        scb["MaxELev4"] = "0"
+        scb["MaxELev5"] = "0"
+        scb["EDmgSymPerCalc"] = "(skill('BoltSentry'.clc2) * skill('BoltSentry'.clc3)) / 100 - 100"
+        scb["NumDirections"] = "1"
+        scb["TravelSound"] = "greatermummy_unholybolt_1"
+        scb["HitSound"] = "paladin_holybolt_impact_1"
+        scb["ExplosionMissile"] = "bonespiritexplode"
+        scb["SubMissile1"] = "sentryspikeinair"
+        scb["HitSubMissile1"] = ""
+        scb["CltHitSubMissile1"] = ""
+
+    if "sentryspikeinair" in rows_by_name:
+        ssa = rows_by_name["sentryspikeinair"]
+        ssa["pCltDoFunc"] = "1"
+        ssa["pCltHitFunc"] = ""
+        ssa["pSrvDoFunc"] = "1"
+        ssa["SrvCalc1"] = ""
+        ssa["pSrvHitFunc"] = "38"
+        ssa["sHitPar1"] = "-4"
+        ssa["sHitPar2"] = "1"
+        ssa["pSrvDmgFunc"] = ""
+        ssa["Vel"] = "16"
+        ssa["MaxVel"] = "24"
+        ssa["Range"] = "(lvl >= 3) ? 2 : 0"
+        ssa["InitSteps"] = "0"
+        ssa["Activate"] = "0"
+        ssa["LoopAnim"] = "0"
+        ssa["CelFile"] = "null"
+        ssa["AnimLen"] = "4"
+        ssa["AnimSpeed"] = "16"
+        ssa["SubLoop"] = ""
+        ssa["SubStop"] = ""
+        ssa["CollideType"] = "3"
+        ssa["CollideKill"] = "1"
+        ssa["LastCollide"] = "1"
+        ssa["ClientCol"] = "1"
+        ssa["NextHit"] = "1"
+        ssa["NextDelay"] = "4"
+        ssa["Size"] = "2"
+        ssa["AlwaysExplode"] = ""
+        ssa["Explosion"] = ""
+        ssa["NoMultiShot"] = ""
+        ssa["GetHit"] = "1"
+        ssa["Trans"] = "1"
+        ssa["Skill"] = ""
+        ssa["ResultFlags"] = "4"
+        ssa["HitFlags"] = "2"
+        ssa["HitShift"] = "8"
+        ssa["EType"] = ""
+        ssa["EMin"] = ""
+        ssa["MinELev1"] = ""
+        ssa["MinELev2"] = ""
+        ssa["MinELev3"] = ""
+        ssa["MinELev4"] = ""
+        ssa["MinELev5"] = ""
+        ssa["EMax"] = ""
+        ssa["MaxELev1"] = ""
+        ssa["MaxELev2"] = ""
+        ssa["MaxELev3"] = ""
+        ssa["MaxELev4"] = ""
+        ssa["MaxELev5"] = ""
+        ssa["EDmgSymPerCalc"] = ""
+        ssa["NumDirections"] = "32"
+        ssa["SubMissile1"] = ""
+        ssa["HitSubMissile1"] = "sentryspikeonground"
+        ssa["CltHitSubMissile1"] = ""
+
+    if "sentryspikeonground" in rows_by_name:
+        ssg = rows_by_name["sentryspikeonground"]
+        ssg["pCltDoFunc"] = "1"
+        ssg["pCltHitFunc"] = ""
+        ssg["pSrvDoFunc"] = "14"
+        ssg["pSrvHitFunc"] = ""
+        ssg["Param1"] = "1"
+        ssg["*param1 desc"] = "Periodic Delay until Repeat (Min=1)"
+        ssg["Param2"] = "30"
+        ssg["*param2 desc"] = "Use skills srvdofunc #"
+        ssg["Vel"] = "0"
+        ssg["MaxVel"] = "0"
+        ssg["Range"] = "(lvl >= 3) ? 2 : 0"
+        ssg["Radius"] = "5"
+        ssg["InitSteps"] = "0"
+        ssg["LoopAnim"] = "0"
+        ssg["CelFile"] = "null"
+        ssg["AnimLen"] = "2"
+        ssg["AnimSpeed"] = "16"
+        ssg["CollideType"] = ""
+        ssg["CollideKill"] = ""
+        ssg["CollideFriend"] = ""
+        ssg["LastCollide"] = ""
+        ssg["Collision"] = ""
+        ssg["ClientCol"] = ""
+        ssg["ClientSend"] = ""
+        ssg["NextHit"] = ""
+        ssg["NextDelay"] = ""
+        ssg["Size"] = "1"
+        ssg["AlwaysExplode"] = ""
+        ssg["Explosion"] = ""
+        ssg["NoMultiShot"] = "1"
+        ssg["CanSlow"] = ""
+        ssg["Skill"] = "BoltSentry"
+        ssg["HitShift"] = "8"
+        ssg["NumDirections"] = "1"
+        ssg["ExplosionMissile"] = ""
+
+    # Step 4: Blades of Ice (progressive_cold, Id 274) <-> Ice Sentry (Death Sentry, Id 276)
+    # 1. Blades of Ice Finishing Move Release Missiles (scaled so 1/2/3 Held Orbs = 50% of Charge 1/2/3 Release):
+    #    - Charge 1 Finisher Release: bladesoficeexplode (Compact AoE Ice Blast + Solid Freeze = 2x of 1 Held Orb)
+    #    - Charge 2 Finisher Release: royalstrikechaosice -> bladesoficeexplode (Ice Blast + 12 Radiating Ice Bolts = 2x of 2 Held Orbs)
+    #    - Charge 3 Finisher Release: catapult cold ball on (Full Frozen Orb -> catapult cold ball = 3x of 1 Held Orb per bolt)
+    boi_syn_expr = "9*skill('Fists of Fire'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Death Sentry'.blvl)"
+    if "bladesoficeexplode" in rows_by_name:
+        bie = rows_by_name["bladesoficeexplode"]
+        bie["pCltDoFunc"] = "1"
+        bie["pSrvDoFunc"] = "1"
+        bie["pSrvHitFunc"] = ""
+        bie["pSrvDmgFunc"] = "2"
+        bie["dParam1"] = "100"
+        bie["Range"] = "16"
+        bie["CollideType"] = "3"
+        bie["Collision"] = "1"
+        bie["CollideKill"] = ""
+        bie["LastCollide"] = "1"
+        bie["NextHit"] = "1"
+        bie["NextDelay"] = "25"
+        bie["Size"] = "3"
+        bie["ResultFlags"] = "4"
+        bie["HitFlags"] = "2"
+        bie["HitShift"] = "8"
+        bie["ApplyMastery"] = "1"
+        bie["EType"] = "cold"
+        bie["EMin"] = "16"
+        bie["MinELev1"] = "6"
+        bie["MinELev2"] = "8"
+        bie["MinELev3"] = "18"
+        bie["MinELev4"] = "28"
+        bie["MinELev5"] = "36"
+        bie["EMax"] = "32"
+        bie["MaxELev1"] = "12"
+        bie["MaxELev2"] = "16"
+        bie["MaxELev3"] = "36"
+        bie["MaxELev4"] = "56"
+        bie["MaxELev5"] = "72"
+        bie["EDmgSymPerCalc"] = boi_syn_expr
+        bie["ELen"] = "50"
+        bie["ELevLen1"] = "3"
+        bie["ELevLen2"] = "3"
+        bie["ELevLen3"] = "3"
+
+    if "royalstrikechaosice" in rows_by_name:
+        rsci = rows_by_name["royalstrikechaosice"]
+        rsci["pCltDoFunc"] = "1"
+        rsci["pCltHitFunc"] = "1"
+        rsci["pSrvDoFunc"] = "1"
+        rsci["pSrvHitFunc"] = "38"
+        rsci["pSrvDmgFunc"] = "2"
+        rsci["Param1"] = ""
+        rsci["dParam1"] = "100"
+        rsci["sHitPar1"] = "4"
+        rsci["sHitPar2"] = "0"
+        rsci["cHitPar1"] = "3"
+        rsci["cHitPar2"] = "1"
+        rsci["Vel"] = "14"
+        rsci["MaxVel"] = "14"
+        rsci["Range"] = "18"
+        rsci["InitSteps"] = "1"
+        rsci["CollideType"] = "3"
+        rsci["CollideKill"] = "1"
+        rsci["LastCollide"] = "1"
+        rsci["ClientCol"] = "1"
+        rsci["NextHit"] = "1"
+        rsci["NextDelay"] = "4"
+        rsci["Size"] = "1"
+        rsci["AlwaysExplode"] = "1"
+        rsci["ResultFlags"] = "5"
+        rsci["HitFlags"] = "2"
+        rsci["HitShift"] = "8"
+        rsci["ApplyMastery"] = "1"
+        rsci["EType"] = "frze"
+        rsci["EMin"] = "32"
+        rsci["MinELev1"] = "12"
+        rsci["MinELev2"] = "16"
+        rsci["MinELev3"] = "36"
+        rsci["MinELev4"] = "56"
+        rsci["MinELev5"] = "72"
+        rsci["EMax"] = "64"
+        rsci["MaxELev1"] = "24"
+        rsci["MaxELev2"] = "32"
+        rsci["MaxELev3"] = "72"
+        rsci["MaxELev4"] = "112"
+        rsci["MaxELev5"] = "144"
+        rsci["EDmgSymPerCalc"] = boi_syn_expr
+        rsci["ELen"] = "65"
+        rsci["ELevLen1"] = "4"
+        rsci["ELevLen2"] = "4"
+        rsci["ELevLen3"] = "4"
+        rsci["ProgOverlay"] = "ice_explode"
+        rsci["ExplosionMissile"] = "bladesoficeexplode"
+        rsci["HitSubMissile1"] = "bladesoficeexplode"
+        rsci["CltHitSubMissile1"] = "bladesoficeexplode"
+
+    if "catapult cold ball on" in rows_by_name:
+        ccbo = rows_by_name["catapult cold ball on"]
+        ccbo["pCltDoFunc"] = "19"
+        ccbo["pCltHitFunc"] = "30"
+        ccbo["pSrvDoFunc"] = "15"
+        ccbo["pSrvHitFunc"] = "29"
+        ccbo["Param1"] = "1"
+        ccbo["*param1 desc"] = "Missile Spawn Rate (Min=1)"
+        ccbo["Param2"] = "19"
+        ccbo["*param2 desc"] = "Direction Index Increment"
+        ccbo["CltParam1"] = "1"
+        ccbo["*client param1 desc"] = "CltSubMissile1 Spawn Rate (Min=1)"
+        ccbo["CltParam2"] = "19"
+        ccbo["*client param2 desc"] = "CltSubMissile1 Direction Index Increment (Max = 64)"
+        ccbo["sHitPar1"] = "4"
+        ccbo["*server hit param1 desc"] = "Increment for # of HitSubMissile1 created (Higher value means less Missiles created) (Min=1)"
+        ccbo["cHitPar1"] = "4"
+        ccbo["*client hit param1 desc"] = "Density of CltHitSubMissile1 (Higher value means less Missiles created)"
+        ccbo["Vel"] = "10"
+        ccbo["MaxVel"] = "10"
+        ccbo["Range"] = "30"
+        ccbo["Light"] = "6"
+        ccbo["Red"] = "81"
+        ccbo["Green"] = "81"
+        ccbo["Blue"] = "255"
+        ccbo["InitSteps"] = "1"
+        ccbo["Activate"] = "0"
+        ccbo["LoopAnim"] = "1"
+        ccbo["CelFile"] = "IceOrb"
+        ccbo["animrate"] = "1024"
+        ccbo["AnimLen"] = "16"
+        ccbo["AnimSpeed"] = "16"
+        ccbo["CollideType"] = "3"
+        ccbo["LastCollide"] = "1"
+        ccbo["ClientCol"] = "1"
+        ccbo["Size"] = "1"
+        ccbo["AlwaysExplode"] = "1"
+        ccbo["ReturnFire"] = "1"
+        ccbo["GetHit"] = "1"
+        ccbo["Trans"] = "1"
+        ccbo["ResultFlags"] = "4"
+        ccbo["HitShift"] = "8"
+        ccbo["NumDirections"] = "1"
+        ccbo["TravelSound"] = "sorceress_cast_cold"
+        ccbo["HitSound"] = "sorceress_iceblast_impact_1"
+        ccbo["SubMissile1"] = "catapult cold ball"
+        ccbo["HitSubMissile1"] = "catapult cold explosion"
+        ccbo["CltSubMissile1"] = "catapult cold ball"
+        ccbo["CltHitSubMissile1"] = "catapult cold explosion"
+        ccbo["ExplosionMissile"] = "frozenorbexplode"
+
+    for fo_child in ("catapult cold ball", "catapult cold explosion"):
+        if fo_child in rows_by_name:
+            fcb = rows_by_name[fo_child]
+            is_nova = fo_child == "catapult cold explosion"
+            fcb["pCltDoFunc"] = "20" if is_nova else "1"
+            fcb["pCltHitFunc"] = ""
+            fcb["pSrvDoFunc"] = "16" if is_nova else "1"
+            fcb["pSrvHitFunc"] = ""
+            fcb["pSrvDmgFunc"] = "2"
+            fcb["dParam1"] = "100"
+            fcb["Param1"] = "6" if is_nova else ""
+            fcb["Param2"] = "2" if is_nova else ""
+            fcb["CltParam1"] = "6" if is_nova else ""
+            fcb["CltParam2"] = "2" if is_nova else ""
+            fcb["sHitPar1"] = ""
+            fcb["Vel"] = "24" if is_nova else "18"
+            fcb["MaxVel"] = "24" if is_nova else "18"
+            fcb["Range"] = "25"
+            fcb["Light"] = "4"
+            fcb["Red"] = "81"
+            fcb["Green"] = "81"
+            fcb["Blue"] = "255"
+            fcb["InitSteps"] = "0"
+            fcb["Activate"] = "0"
+            fcb["LoopAnim"] = "1"
+            fcb["CelFile"] = "IceBolt"
+            fcb["animrate"] = "1024"
+            fcb["AnimLen"] = "6"
+            fcb["AnimSpeed"] = "16"
+            fcb["CollideType"] = "3"
+            fcb["CollideKill"] = "1"
+            fcb["LastCollide"] = "1"
+            fcb["ClientCol"] = "1"
+            fcb["ClientSend"] = ""
+            fcb["NextHit"] = "1"
+            fcb["NextDelay"] = "4"
+            fcb["Size"] = "1"
+            fcb["AlwaysExplode"] = ""
+            fcb["Explosion"] = ""
+            fcb["NoMultiShot"] = ""
+            fcb["ReturnFire"] = "1"
+            fcb["GetHit"] = "1"
+            fcb["Trans"] = "1"
+            fcb["Skill"] = ""
+            fcb["ResultFlags"] = "4"
+            fcb["HitFlags"] = "2"
+            fcb["HitShift"] = "8"
+            fcb["ApplyMastery"] = "1"
+            fcb["EType"] = "cold"
+            fcb["EMin"] = "24"
+            fcb["MinELev1"] = "9"
+            fcb["MinELev2"] = "12"
+            fcb["MinELev3"] = "27"
+            fcb["MinELev4"] = "42"
+            fcb["MinELev5"] = "54"
+            fcb["EMax"] = "48"
+            fcb["MaxELev1"] = "18"
+            fcb["MaxELev2"] = "24"
+            fcb["MaxELev3"] = "54"
+            fcb["MaxELev4"] = "84"
+            fcb["MaxELev5"] = "108"
+            fcb["EDmgSymPerCalc"] = boi_syn_expr
+            fcb["ELen"] = "75"
+            fcb["ELevLen1"] = "5"
+            fcb["ELevLen2"] = "5"
+            fcb["ELevLen3"] = "5"
+            fcb["NumDirections"] = "16"
+            fcb["TravelSound"] = "" if is_nova else "sorceress_glacialspike_1"
+            fcb["HitSound"] = "sorceress_iceblast_impact_1"
+            fcb["ExplosionMissile"] = "iceexplode"
+
+    # 2. Ice Sentry (Death Sentry, Id 276 -> mon death sentry, Id 312 -> frozenhorror arcticblast1 -> frozenhorror arcticblast2):
+    #    - Fires Arctic Blast jet (frozenhorror arcticblast1)
+    #    - Charge 1: +Range (Range = 16 -> 26 + Blades of Ice.blvl / 2 frames)
+    #    - Charge 2: +Duration (5 base bursts -> 8 + Blades of Ice.blvl / 10 bursts via mon death sentry calc4)
+    #    - Charge 3: Solid Freeze in place (spawns frozenhorror arcticblast2 with EType=frze, pSrvDmgFunc=2, dParam1=100)
+    ds_c = "skill('Ass Trap Charge Consume'.blvl)"
+    boi_m = "skill('Blades of Ice'.blvl)"
+    if "frozenhorror arcticblast1" in rows_by_name:
+        fhab1 = rows_by_name["frozenhorror arcticblast1"]
+        fhab1["pCltDoFunc"] = "1"
+        fhab1["pSrvDoFunc"] = "2"
+        fhab1["SrvCalc1"] = "1"
+        fhab1["pSrvHitFunc"] = ""
+        fhab1["pSrvDmgFunc"] = ""
+        fhab1["sHitPar1"] = ""
+        fhab1["sHitPar2"] = ""
+        fhab1["Param2"] = "16"
+        fhab1["Vel"] = "12"
+        fhab1["MaxVel"] = "12"
+        fhab1["Range"] = f"16 + (({ds_c} >= 1) ? (10 + {boi_m} / 2) : 0)"
+        fhab1["InitSteps"] = "1"
+        fhab1["Activate"] = "0"
+        fhab1["LoopAnim"] = "0"
+        fhab1["CelFile"] = "expansion\\ArcticBlastIce"
+        fhab1["animrate"] = "1024"
+        fhab1["AnimLen"] = "16"
+        fhab1["AnimSpeed"] = "16"
+        fhab1["CollideType"] = "3"
+        fhab1["CollideKill"] = ""
+        fhab1["LastCollide"] = "1"
+        fhab1["ClientCol"] = "1"
+        fhab1["NextHit"] = "1"
+        fhab1["NextDelay"] = "4"
+        fhab1["Size"] = "2"
+        fhab1["NoUniqueMod"] = ""
+        fhab1["CanSlow"] = "1"
+        fhab1["ReturnFire"] = "1"
+        fhab1["GetHit"] = "1"
+        fhab1["Trans"] = "1"
+        fhab1["Pierce"] = "1"
+        fhab1["Skill"] = ""
+        fhab1["ResultFlags"] = "4"
+        fhab1["HitFlags"] = "2"
+        fhab1["HitShift"] = "8"
+        fhab1["EType"] = "cold"
+        fhab1["EMin"] = "24"
+        fhab1["MinELev1"] = "0"
+        fhab1["MinELev2"] = "0"
+        fhab1["MinELev3"] = "0"
+        fhab1["MinELev4"] = "0"
+        fhab1["MinELev5"] = "0"
+        fhab1["EMax"] = "38"
+        fhab1["MaxELev1"] = "0"
+        fhab1["MaxELev2"] = "0"
+        fhab1["MaxELev3"] = "0"
+        fhab1["MaxELev4"] = "0"
+        fhab1["MaxELev5"] = "0"
+        fhab1["EDmgSymPerCalc"] = "(skill('mon death sentry'.clc2) * skill('mon death sentry'.clc3)) / 100 - 100"
+        fhab1["ELen"] = "100"
+        fhab1["ELevLen1"] = "5"
+        fhab1["ELevLen2"] = "5"
+        fhab1["ELevLen3"] = "5"
+        fhab1["HitClass"] = "32"
+        fhab1["NumDirections"] = "16"
+        fhab1["DamageRate"] = ""
+        fhab1["TravelSound"] = "druid_arcticblast"
+        fhab1["SubMissile1"] = "frozenhorror arcticblast2"
+        fhab1["HitSubMissile1"] = ""
+        fhab1["CltHitSubMissile1"] = ""
+
+    if "frozenhorror arcticblast2" in rows_by_name:
+        fhab2 = rows_by_name["frozenhorror arcticblast2"]
+        fhab2["pCltDoFunc"] = "1"
+        fhab2["pSrvDoFunc"] = "1"
+        fhab2["pSrvHitFunc"] = ""
+        fhab2["pSrvDmgFunc"] = "2"
+        fhab2["dParam1"] = "100"
+        fhab2["Param2"] = ""
+        fhab2["Vel"] = "12"
+        fhab2["MaxVel"] = "12"
+        fhab2["Range"] = f"({ds_c} >= 3) ? 2 : 0"
+        fhab2["InitSteps"] = "0"
+        fhab2["Activate"] = "0"
+        fhab2["LoopAnim"] = "0"
+        fhab2["CelFile"] = "null"
+        fhab2["AnimLen"] = "4"
+        fhab2["AnimSpeed"] = "16"
+        fhab2["CollideType"] = "3"
+        fhab2["CollideKill"] = "1"
+        fhab2["LastCollide"] = "1"
+        fhab2["ClientCol"] = "1"
+        fhab2["NextHit"] = "1"
+        fhab2["NextDelay"] = "4"
+        fhab2["Size"] = "2"
+        fhab2["AlwaysExplode"] = ""
+        fhab2["Explosion"] = ""
+        fhab2["NoUniqueMod"] = ""
+        fhab2["CanSlow"] = ""
+        fhab2["ReturnFire"] = ""
+        fhab2["GetHit"] = "1"
+        fhab2["Trans"] = "1"
+        fhab2["Skill"] = ""
+        fhab2["ResultFlags"] = "5"
+        fhab2["HitFlags"] = "2"
+        fhab2["HitShift"] = "8"
+        fhab2["EType"] = "frze"
+        fhab2["EMin"] = "1"
+        fhab2["MinELev1"] = "0"
+        fhab2["MinELev2"] = "0"
+        fhab2["MinELev3"] = "0"
+        fhab2["MinELev4"] = "0"
+        fhab2["MinELev5"] = "0"
+        fhab2["EMax"] = "2"
+        fhab2["MaxELev1"] = "0"
+        fhab2["MaxELev2"] = "0"
+        fhab2["MaxELev3"] = "0"
+        fhab2["MaxELev4"] = "0"
+        fhab2["MaxELev5"] = "0"
+        fhab2["ELen"] = "75"
+        fhab2["ELevLen1"] = "5"
+        fhab2["ELevLen2"] = "5"
+        fhab2["ELevLen3"] = "5"
+        fhab2["NumDirections"] = "16"
+        fhab2["TravelSound"] = ""
+
+    # 5. Claws of Thunder / Electrocute (Id 269) & Lightning Sentry (Id 271) Missiles:
+    #    - Charge 1 Finisher: clawsofthunderbolt (spread of 8..16 Charged Bolts, 1.5x of 1 Held Orb per bolt)
+    #    - Charge 2 Finisher: clawsofthundernova (360-degree Lightning Nova, 2x of 2 Held Orbs)
+    #    - Charge 3 Finisher: royalstrikechainlightning (Chain Lightning, 2x of 3 Held Orbs)
+    #    - Lightning Sentry: sentrylightningbolt (piercing bolt, Charge 1+ extends range) + sentrylightningbolt2 (Charge 3 blinds hit monsters)
+    cot_syn_expr = "9*skill('Fists of Fire'.blvl) + 9*skill('Blades of Ice'.blvl) + 6*skill('Lightning Sentry'.blvl)"
+    if "clawsofthunderbolt" in rows_by_name:
+        cotb = rows_by_name["clawsofthunderbolt"]
+        cotb["Skill"] = ""
+        cotb["HitShift"] = "8"
+        cotb["EType"] = "ltng"
+        cotb["EMin"] = "1"
+        cotb["MinELev1"] = "0"
+        cotb["MinELev2"] = "0"
+        cotb["MinELev3"] = "0"
+        cotb["MinELev4"] = "0"
+        cotb["MinELev5"] = "0"
+        cotb["EMax"] = "45"
+        cotb["MaxELev1"] = "15"
+        cotb["MaxELev2"] = "21"
+        cotb["MaxELev3"] = "40"
+        cotb["MaxELev4"] = "60"
+        cotb["MaxELev5"] = "78"
+        cotb["EDmgSymPerCalc"] = cot_syn_expr
+
+    if "clawsofthundernova" in rows_by_name:
+        cotn = rows_by_name["clawsofthundernova"]
+        cotn["Skill"] = ""
+        cotn["HitShift"] = "8"
+        cotn["EType"] = "ltng"
+        cotn["EMin"] = "1"
+        cotn["MinELev1"] = "0"
+        cotn["MinELev2"] = "0"
+        cotn["MinELev3"] = "0"
+        cotn["MinELev4"] = "0"
+        cotn["MinELev5"] = "0"
+        cotn["EMax"] = "120"
+        cotn["MaxELev1"] = "40"
+        cotn["MaxELev2"] = "56"
+        cotn["MaxELev3"] = "108"
+        cotn["MaxELev4"] = "160"
+        cotn["MaxELev5"] = "208"
+        cotn["EDmgSymPerCalc"] = cot_syn_expr
+
+    if "royalstrikechainlightning" in rows_by_name:
+        rscl = rows_by_name["royalstrikechainlightning"]
+        rscl["pCltDoFunc"] = "8"
+        rscl["pCltHitFunc"] = "16"
+        rscl["pSrvDoFunc"] = "1"
+        rscl["pSrvHitFunc"] = "12"
+        rscl["sHitPar1"] = "12"
+        rscl["cHitPar1"] = "12"
+        rscl["CollideKill"] = "1"
+        rscl["LastCollide"] = "1"
+        rscl["Skill"] = ""
+        rscl["HitShift"] = "8"
+        rscl["EType"] = "ltng"
+        rscl["EMin"] = "1"
+        rscl["MinELev1"] = "0"
+        rscl["MinELev2"] = "0"
+        rscl["MinELev3"] = "0"
+        rscl["MinELev4"] = "0"
+        rscl["MinELev5"] = "0"
+        rscl["EMax"] = "180"
+        rscl["MaxELev1"] = "60"
+        rscl["MaxELev2"] = "84"
+        rscl["MaxELev3"] = "162"
+        rscl["MaxELev4"] = "240"
+        rscl["MaxELev5"] = "312"
+        rscl["EDmgSymPerCalc"] = cot_syn_expr
+
+    if "sentrylightningbolt" in rows_by_name:
+        slb = rows_by_name["sentrylightningbolt"]
+        slb["pCltDoFunc"] = "8"
+        slb["pSrvDoFunc"] = "2"
+        slb["SrvCalc1"] = "1"
+        slb["*SrvCalc1 desc"] = "Submissile spawn frequency"
+        slb["Vel"] = "30"
+        slb["MaxVel"] = "30"
+        slb["Range"] = "8 + ((skill('Ass Trap Charge Consume'.blvl) >= 1) ? (6 + skill('Claws of Thunder'.blvl) / 3) : 0)"
+        slb["LoopAnim"] = "0"
+        slb["AnimLen"] = "32"
+        slb["AnimSpeed"] = "16"
+        slb["Pierce"] = "1"
+        slb["NextHit"] = "1"
+        slb["NextDelay"] = "4"
+        slb["CollideKill"] = ""
+        slb["Skill"] = ""
+        slb["HitShift"] = "8"
+        slb["EType"] = "ltng"
+        slb["EMin"] = "1"
+        slb["MinELev1"] = "0"
+        slb["MinELev2"] = "0"
+        slb["MinELev3"] = "0"
+        slb["MinELev4"] = "0"
+        slb["MinELev5"] = "0"
+        slb["EMax"] = "84"
+        slb["MaxELev1"] = "0"
+        slb["MaxELev2"] = "0"
+        slb["MaxELev3"] = "0"
+        slb["MaxELev4"] = "0"
+        slb["MaxELev5"] = "0"
+        slb["EDmgSymPerCalc"] = "(skill('sentry lightning'.clc2) * skill('sentry lightning'.clc3)) / 100 - 100"
+        slb["SubMissile1"] = "sentrylightningbolt2"
+
+    if "sentrylightningbolt2" in rows_by_name:
+        slb2 = rows_by_name["sentrylightningbolt2"]
+        slb2["pCltDoFunc"] = "1"
+        slb2["pCltHitFunc"] = ""
+        slb2["pSrvDoFunc"] = "1"
+        slb2["pSrvHitFunc"] = "21"
+        slb2["pSrvDmgFunc"] = ""
+        slb2["Param1"] = ""
+        slb2["Param2"] = ""
+        slb2["CltParam1"] = ""
+        slb2["sHitPar1"] = ""
+        slb2["cHitPar1"] = ""
+        slb2["Vel"] = "30"
+        slb2["MaxVel"] = "30"
+        slb2["Range"] = "(skill('Ass Trap Charge Consume'.blvl) >= 3) ? 2 : 0"
+        slb2["Light"] = ""
+        slb2["Flicker"] = ""
+        slb2["Red"] = ""
+        slb2["Green"] = ""
+        slb2["Blue"] = ""
+        slb2["InitSteps"] = "0"
+        slb2["Activate"] = "0"
+        slb2["LoopAnim"] = "0"
+        slb2["CelFile"] = "null"
+        slb2["animrate"] = "1024"
+        slb2["AnimLen"] = "4"
+        slb2["AnimSpeed"] = "16"
+        slb2["SubLoop"] = ""
+        slb2["SubStart"] = ""
+        slb2["SubStop"] = ""
+        slb2["CollideType"] = "3"
+        slb2["CollideKill"] = ""
+        slb2["CollideFriend"] = ""
+        slb2["LastCollide"] = "1"
+        slb2["Collision"] = ""
+        slb2["ClientCol"] = "1"
+        slb2["ClientSend"] = ""
+        slb2["NextHit"] = "1"
+        slb2["NextDelay"] = "4"
+        slb2["Size"] = "2"
+        slb2["ReturnFire"] = ""
+        slb2["GetHit"] = ""
+        slb2["Trans"] = "1"
+        slb2["Pierce"] = "1"
+        slb2["MissileSkill"] = ""
+        slb2["Skill"] = "sentry lightning"
+        slb2["ResultFlags"] = ""
+        slb2["HitFlags"] = ""
+        slb2["HitShift"] = "8"
+        slb2["EType"] = ""
+        slb2["EMin"] = ""
+        slb2["EMax"] = ""
+        slb2["NumDirections"] = "32"
+        slb2["TravelSound"] = ""
+        slb2["HitSound"] = ""
+        slb2["ProgOverlay"] = ""
+        slb2["CltSubMissile1"] = ""
+        slb2["CltHitSubMissile1"] = ""
+        slb2["CltHitSubMissile2"] = ""
+        slb2["CltHitSubMissile3"] = ""
+        slb2["CltHitSubMissile4"] = ""
+
+
+
+    # Caltrops (Shock Field, Id 256): the ground patch is physical spikes (HD visual remapped to the fire-spike
+    # ground art).  Damage-only: it comes from the Shock Field skill row (Skill = 'Shock Field', physical
+    # MinDam/MaxDam, once per second).  (A slow could not be delivered alongside damage: pSrvHitFunc 21 applies an
+    # aura state but skips damage, and spawning a twin slow patch never reached monsters.)
+    if "shock field on ground" in rows_by_name:
+        csg = rows_by_name["shock field on ground"]
+        csg["pSrvHitFunc"] = "21"
+        csg["Skill"] = "Shock Field"
+        csg["CelFile"] = "expansion\\FireSpikesGround"
+        csg["AnimLen"] = "8"
+        csg["Light"] = ""
+        csg["Red"] = "255"
+        csg["Green"] = "255"
+        csg["Blue"] = "255"
+        csg["TravelSound"] = ""
+        csg["SrcDamage"] = ""
+        csg["EType"] = ""
+        csg["EMin"] = ""
+        csg["EMax"] = ""
+        csg["DmgSymPerCalc"] = ""
+        csg["EDmgSymPerCalc"] = ""
+        for _k in ("MinDamage", "MaxDamage") + tuple(f"MinLevDam{n}" for n in range(1, 6)) + tuple(
+            f"MaxLevDam{n}" for n in range(1, 6)
+        ):
+            csg[_k] = ""
+        csg["HitSubMissile1"] = ""
+        csg["CltHitSubMissile1"] = ""
+        csg["pSrvHitFunc"] = ""
+        csg["SubMissile1"] = ""
+        # Duration scales with skill level: 90 frames (3.6s) at Lvl 1 -> 185 frames (7.4s) at Lvl 20 (~2x).
+        # Damage per second is unchanged (one hit per NextDelay=25 frames).
+        csg["Range"] = "85 + 5*lvl"
+
+    # Shuriken (Inferno Sentry, Id 272): bouncing heavy throwing star, modeled on the reworked Blessed Hammer
+    # (Chain Lightning mechanics: srvdofunc 26 / pSrvHitFunc 12).  Reuses the unused 'throwingstar' row, which already
+    # has the expansion throwing-star HD visual.  No stun (ResultFlags 4 = GetHit only, no knockback/stun dmg func).
+    if "throwingstar" in rows_by_name:
+        ts_m = rows_by_name["throwingstar"]
+        ts_m["pCltDoFunc"] = "1"
+        ts_m["pCltHitFunc"] = "16"
+        ts_m["pSrvDoFunc"] = "1"
+        ts_m["pSrvHitFunc"] = "12"
+        ts_m["sHitPar1"] = "0"
+        ts_m["cHitPar1"] = "0"
+        ts_m["pSrvDmgFunc"] = ""
+        ts_m["dParam1"] = ""
+        ts_m["dParam2"] = ""
+        ts_m["Vel"] = "20"
+        ts_m["VelLev"] = "6"
+        ts_m["MaxVel"] = "40"
+        ts_m["Accel"] = ""
+        ts_m["Range"] = "40"
+        ts_m["Size"] = "2"
+        ts_m["Pierce"] = ""
+        ts_m["CollideKill"] = "1"
+        ts_m["LastCollide"] = "1"
+        ts_m["ClientCol"] = "1"
+        ts_m["NextHit"] = "1"
+        ts_m["NextDelay"] = "4"
+        ts_m["Skill"] = "Inferno Sentry"
+        ts_m["ResultFlags"] = "4"
+        ts_m["EType"] = ""
+        ts_m["TravelSound"] = "assassin_bladefury_throw_1"
+        ts_m["HitSound"] = "assassin_bladefury_hit"
 
 # Appended frames 29..54 in data/hd/global/ui/spells/hireables/hrskillicon.sprite (and .lowend.sprite)
 # sliced directly from each class's native skillicon.sprite sheet at IconCel.
@@ -3193,6 +4176,7 @@ CUSTOM_MERC_SKILL_ICONS = (
     (53, "battle orders",     "barbarian",   "baskillicon", 46),
     (54, "double swing",      "barbarian",   "baskillicon", 14),
 )
+
 
 
 def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
@@ -3501,15 +4485,53 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             cu["anim"] = "A1"
             cu["seqtrans"] = "A1"
             cu["seqnum"] = ""
+            # Orb hold duration: 15 minutes (22500 frames @ 25 fps) -> auralencalc = par3 (kept under 16-bit frame limit)
+            cu["Param3"] = "22500"
+            cu["auralencalc"] = "par3"
 
     if "Tiger Strike" in by_name:
         ts = by_name["Tiger Strike"]
+        ts["prgstack"] = ""
         ts["prgdam"] = ""
-        ts["Param1"] = "4"
+        ts["srvprgfunc1"] = "41"
+        ts["cltprgfunc1"] = "15"
+        ts["prgcalc1"] = "36"
+        ts["srvprgfunc2"] = "41"
+        ts["cltprgfunc2"] = "15"
+        ts["prgcalc2"] = "36"
+        ts["srvprgfunc3"] = "41"
+        ts["cltprgfunc3"] = "15"
+        ts["prgcalc3"] = "36"
+        ts["srvmissilea"] = "inferno sentry 1"
+        ts["cltmissilea"] = "inferno sentry 1"
+        ts["srvmissileb"] = "inferno sentry 2"
+        ts["cltmissileb"] = "inferno sentry 2"
+        ts["srvmissilec"] = "progressive radius damage"
+        ts["cltmissilec"] = "progressive radius damage"
+        ts["Param1"] = "8"
         ts["Param2"] = "8"
         ts["calc1"] = (
-            "par1 + 3*max(0,lvl-1) + 12*max(0,lvl-5) + 3*max(0,lvl-10) - 6*max(0,lvl-15) + 4*skill('Dragon Talon'.blvl) + 2*skill('Fire Trauma'.blvl) + 2*skill('Cobra Strike'.blvl)"
+            "par1 + 3*max(0,lvl-1) + 6*max(0,lvl-5) + 3*max(0,lvl-10) + 3*skill('Dragon Talon'.blvl) + 2*skill('Fire Trauma'.blvl) + 2*skill('Cobra Strike'.blvl)"
         )
+        ts["*calc1 desc"] = "Held Charge Damage % per Orb"
+        ts["calc2"] = (
+            "((4 + 1*max(0,lvl-1) + 2*max(0,lvl-8) + 4*max(0,lvl-16) + 4*max(0,lvl-22) + 4*max(0,lvl-28)) * (100 + clc4)) / 100"
+        )
+        ts["*calc2 desc"] = "Charge 1 Shockwave Ring Min Physical Damage"
+        ts["calc3"] = (
+            "((8 + 2*max(0,lvl-1) + 3*max(0,lvl-8) + 4*max(0,lvl-16) + 6*max(0,lvl-22) + 6*max(0,lvl-28)) * (100 + clc4)) / 100"
+        )
+        ts["*calc3 desc"] = "Charge 1 Shockwave Ring Max Physical Damage"
+        ts["calc4"] = (
+            "12*skill('Dragon Talon'.blvl) + 6*skill('Fire Trauma'.blvl) + 6*skill('Cobra Strike'.blvl)"
+        )
+        ts["*calc4 desc"] = "Total Synergy Bonus (%)"
+        ts["calc5"] = "5"
+        ts["*calc5 desc"] = "Shockwave Ring Range in Frames (5 @ Vel 6 = 3.75 sub-tiles)"
+        ts["calc6"] = (
+            "((stat('progressive_damage'.accr) >= 3) ? 3 : ((stat('progressive_damage'.accr) == 2) ? 2 : 1)) * (100 + clc4) - 100"
+        )
+        ts["*calc6 desc"] = "Charge 1/2/3 Shockwave Ring Total Multiplier (%)"
         ts["aurastat2"] = "damagepercent"
         ts["aurastatcalc2"] = "clc1"
         ts["passivestate"] = ""
@@ -3520,7 +4542,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     snap_ts = "max(stat('progressive_damage'.accr), stat('item_kickdamage'.accr))"
     ts_m = "skill('Tiger Strike'.blvl)"
     ss_c = "skill('Ass Trap Charge Consume'.blvl)"
-    ss_trap_syn = "(skill('Lightning Sentry'.blvl) + skill('Wake of Fire Sentry'.blvl))"
+    ss_trap_syn = "(skill('Shock Field'.blvl) + skill('Inferno Sentry'.blvl))"
 
     if "Fire Trauma" in by_name:
         ft = by_name["Fire Trauma"]
@@ -3559,8 +4581,8 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft["sumsk2calc"] = "lvl"
         ft["sumskill3"] = "Tiger Strike"
         ft["sumsk3calc"] = ts_m
-        ft["sumskill4"] = "Wake of Fire Sentry"
-        ft["sumsk4calc"] = "2 * skill('Lightning Sentry'.blvl) + skill('Wake of Fire Sentry'.blvl)"
+        ft["sumskill4"] = "Shock Field"
+        ft["sumsk4calc"] = "skill('Shock Field'.blvl) + 4 * skill('Inferno Sentry'.blvl)"
         ft["sumskill5"] = "Ass Trap Charge Consume"
         ft["sumsk5calc"] = snap_ts
         ft["LineOfSight"] = "4"
@@ -3570,7 +4592,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft["manashift"] = "8"
         ft["mana"] = "11"
         ft["lvlmana"] = "0"
-        ft["Param1"] = "20"
+        ft["Param1"] = "11"
         ft["*Param1 Description"] = "# of shots"
         ft["HitShift"] = "8"
         ft["EType"] = ""
@@ -3599,16 +4621,16 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft["MaxLevDam3"] = "0"
         ft["MaxLevDam4"] = "0"
         ft["MaxLevDam5"] = "0"
-        ft["calc1"] = "100 + 18*max(0,lvl-1) + 24*max(0,lvl-5) + 30*max(0,lvl-10) + 45*max(0,lvl-15)"
+        ft["calc1"] = "100 + 18*max(0,lvl-1) + 24*max(0,lvl-5) + 38*max(0,lvl-10) + 58*max(0,lvl-15)"
         ft["*calc1 desc"] = "Base Physical Damage Level Ramp (%)"
         ft["calc2"] = ""
         ft["*calc2 desc"] = ""
-        ft["calc3"] = "12*skill('Lightning Sentry'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Tiger Strike'.blvl)"
+        ft["calc3"] = "4*skill('Shock Field'.blvl) + 4*skill('Tiger Strike'.blvl) + 16*skill('Inferno Sentry'.blvl)"
         ft["*calc3 desc"] = "Total Synergy Bonus (%)"
         ft["DmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
         ft["aitype"] = "3"
 
-    ss_shots_calc = f"par8 + (({ss_c} >= 1) ? (8 + {ts_m}) : 0)"
+    ss_shots_calc = f"par8 + (({ss_c} >= 1) ? (6 + {ts_m} / 4) : 0)"
     if "mon inferno sentry" in by_name:
         mis = by_name["mon inferno sentry"]
         mis["srvstfunc"] = ""
@@ -3625,30 +4647,36 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         mis["seqtrans"] = "SQ"
         mis["monanim"] = "S2"
         mis["UseAttackRate"] = "1"
-        mis["Param8"] = "20"
+        mis["Param8"] = "11"
         mis["calc1"] = "skill('Fire Trauma'.blvl)"
         mis["*calc1 desc"] = "Shrapnel Sentry Level"
-        mis["calc2"] = "100 + 18*max(0,clc1-1) + 24*max(0,clc1-5) + 30*max(0,clc1-10) + 45*max(0,clc1-15)"
+        mis["calc2"] = "100 + 18*max(0,clc1-1) + 24*max(0,clc1-5) + 38*max(0,clc1-10) + 58*max(0,clc1-15)"
         mis["*calc2 desc"] = "Base Physical Damage Level Ramp (%)"
-        mis["calc3"] = "100 + 6*(skill('Wake of Fire Sentry'.blvl) + skill('Tiger Strike'.blvl))"
+        mis["calc3"] = "100 + 4*(skill('Shock Field'.blvl) + skill('Tiger Strike'.blvl))"
         mis["*calc3 desc"] = "Total Synergy Multiplier (%)"
         mis["calc4"] = ss_shots_calc
 
     if "tiger strike" in by_desc:
         ts_d = by_desc["tiger strike"]
         ts_d["descdam"] = "1"
-        ts_d["descline1"] = "74"
-        ts_d["desctexta1"] = "StrSkillAssassinTigerStrikeCharge3"
-        ts_d["desccalca1"] = "3*clc1"
-        ts_d["descline2"] = "74"
-        ts_d["desctexta2"] = "StrSkillAssassinTigerStrikeCharge2"
-        ts_d["desccalca2"] = "2*clc1"
-        ts_d["descline3"] = "74"
-        ts_d["desctexta3"] = "StrSkillAssassinTigerStrikeCharge1"
-        ts_d["desccalca3"] = "clc1"
+        ts_d["descline1"] = "75"
+        ts_d["desctexta1"] = "ModTigerStrikeOrb3"
+        ts_d["desccalca1"] = "3*clc2"
+        ts_d["desccalcb1"] = "3*clc3"
+        ts_d["descline2"] = "75"
+        ts_d["desctexta2"] = "ModTigerStrikeOrb2"
+        ts_d["desccalca2"] = "2*clc2"
+        ts_d["desccalcb2"] = "2*clc3"
+        ts_d["descline3"] = "75"
+        ts_d["desctexta3"] = "ModTigerStrikeOrb1"
+        ts_d["desccalca3"] = "clc2"
+        ts_d["desccalcb3"] = "clc3"
         ts_d["descline4"] = "74"
-        ts_d["desctexta4"] = "StrSkill22"
-        ts_d["desccalca4"] = "toht"
+        ts_d["desctexta4"] = "ModTigerStrikeHoldBuff"
+        ts_d["desccalca4"] = "clc1"
+        ts_d["descline5"] = "74"
+        ts_d["desctexta5"] = "StrSkill22"
+        ts_d["desccalca5"] = "toht"
         ts_d["dsc3line1"] = "40"
         ts_d["dsc3texta1"] = "Sksyn"
         ts_d["dsc3textb1"] = "Skillname255"
@@ -3692,23 +4720,23 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft_d["dsc2calca3"] = f"1 + (({ss_trap_syn} >= 10) ? 1 : 0) + (({ss_trap_syn} >= 25) ? 1 : 0)"
         ft_d["dsc2line4"] = "74"
         ft_d["dsc2texta4"] = "ModFireSentryChargedShots"
-        ft_d["dsc2calca4"] = f"par1 + 8 + {ts_m}"
+        ft_d["dsc2calca4"] = f"par1 + 6 + {ts_m} / 4"
         ft_d["dsc3line1"] = "40"
         ft_d["dsc3texta1"] = "Sksyn"
         ft_d["dsc3textb1"] = "Skillname252"
         ft_d["dsc3calca1"] = "2"
         ft_d["dsc3line2"] = "76"
         ft_d["dsc3texta2"] = "Damplev"
-        ft_d["dsc3textb2"] = "Skillname272"
-        ft_d["dsc3calca2"] = "12"
+        ft_d["dsc3textb2"] = "Skillname257"
+        ft_d["dsc3calca2"] = "4"
         ft_d["dsc3line3"] = "76"
         ft_d["dsc3texta3"] = "Damplev"
-        ft_d["dsc3textb3"] = "Skillname263"
-        ft_d["dsc3calca3"] = "6"
+        ft_d["dsc3textb3"] = "Skillname255"
+        ft_d["dsc3calca3"] = "4"
         ft_d["dsc3line4"] = "76"
         ft_d["dsc3texta4"] = "Damplev"
-        ft_d["dsc3textb4"] = "Skillname255"
-        ft_d["dsc3calca4"] = "6"
+        ft_d["dsc3textb4"] = "Skillname273"
+        ft_d["dsc3calca4"] = "16"
         ft_d["dsc3line5"] = ""
         ft_d["dsc3texta5"] = ""
         ft_d["dsc3textb5"] = ""
@@ -3724,29 +4752,29 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         fof["prgdam"] = ""
         fof["srvprgfunc1"] = "39"
         fof["cltprgfunc1"] = "9"
-        fof["prgcalc1"] = "3"
+        fof["prgcalc1"] = "6"
         fof["srvprgfunc2"] = "39"
         fof["cltprgfunc2"] = "9"
-        fof["prgcalc2"] = "5"
+        fof["prgcalc2"] = "9"
         fof["srvprgfunc3"] = "40"
         fof["cltprgfunc3"] = "14"
-        fof["prgcalc3"] = "6"
+        fof["prgcalc3"] = "9"
         fof["srvmissilea"] = "fistsoffireexplode"
         fof["cltmissilea"] = "fistsoffireexplode"
         fof["srvmissileb"] = "fistsoffirefirewall"
         fof["cltmissileb"] = "fistsoffirefirewall"
         fof["srvmissilec"] = "royalstrikemeteorcenter"
         fof["cltmissilec"] = "royalstrikemeteorcenter"
-        fof["calc1"] = "6"
+        fof["calc1"] = "9"
         fof["*calc1 desc"] = "Meteor Explosion Radius"
         fof["calc2"] = "1"
         fof["*calc2 desc"] = "Min Fire Damage per Orb"
         fof["calc3"] = (
-            "((3 + 2*max(0,lvl-1) + 2*max(0,lvl-8) + 3*max(0,lvl-16) + 3*max(0,lvl-22) + 3*max(0,lvl-28)) * (100 + clc4)) / 100"
+            "((6 + 2*max(0,lvl-1) + 2*max(0,lvl-8) + 8*max(0,lvl-16) + 4*max(0,lvl-22) + 4*max(0,lvl-28)) * (100 + clc4)) / 100"
         )
         fof["*calc3 desc"] = "Min Fire Damage per Orb (Max = 2 * clc3)"
         fof["calc4"] = (
-            "12*skill('Dragon Tail'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+            "9*skill('Blades of Ice'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
         )
         fof["*calc4 desc"] = "Total Synergy Bonus (%)"
         fof["EType"] = ""
@@ -3775,11 +4803,11 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         fof["aurastat4"] = ""
         fof["aurastatcalc4"] = ""
 
-    # Step 1: Fists of Fire (progressive_fire) <-> Wake of Fire Sentry (Id 262)
+    # Step 1: Fists of Fire / Flamestrike (progressive_fire) <-> Wake of Fire Sentry / Fire Sentry (Id 262)
     snap_fof = "max(stat('progressive_fire'.accr), stat('item_kickdamage'.accr))"
     fof_m = "skill('Fists of Fire'.blvl)"
     wof_c = "skill('Ass Trap Charge Consume'.blvl)"
-    wof_trap_syn = "(skill('Death Sentry'.blvl) + skill('Fire Trauma'.blvl))"
+    wof_trap_syn = "(skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl))"
 
     if "Wake of Fire Sentry" in by_name:
         wof = by_name["Wake of Fire Sentry"]
@@ -3803,26 +4831,26 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wof["sumskill3"] = "Fists of Fire"
         wof["sumsk3calc"] = fof_m
         wof["sumskill4"] = "Fire Trauma"
-        wof["sumsk4calc"] = "2 * skill('Death Sentry'.blvl) + skill('Fire Trauma'.blvl)"
+        wof["sumsk4calc"] = "skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)"
         wof["sumskill5"] = "Ass Trap Charge Consume"
         wof["sumsk5calc"] = snap_fof
-        wof["EMin"] = "25"
+        wof["EMin"] = "18"
         wof["EMinLev1"] = "0"
         wof["EMinLev2"] = "0"
         wof["EMinLev3"] = "0"
         wof["EMinLev4"] = "0"
         wof["EMinLev5"] = "0"
-        wof["EMax"] = "40"
+        wof["EMax"] = "30"
         wof["EMaxLev1"] = "0"
         wof["EMaxLev2"] = "0"
         wof["EMaxLev3"] = "0"
         wof["EMaxLev4"] = "0"
         wof["EMaxLev5"] = "0"
-        wof["calc1"] = "100 + 25*max(0,lvl-1) + 35*max(0,lvl-5) + 45*max(0,lvl-10) + 65*max(0,lvl-15)"
+        wof["calc1"] = "100 + 22*max(0,lvl-1) + 32*max(0,lvl-5) + 46*max(0,lvl-10) + 68*max(0,lvl-15)"
         wof["*calc1 desc"] = "Base Fire Damage Level Ramp (%)"
         wof["calc2"] = ""
         wof["*calc2 desc"] = ""
-        wof["calc3"] = "12*skill('Death Sentry'.blvl) + 6*skill('Fire Trauma'.blvl) + 6*skill('Fists of Fire'.blvl)"
+        wof["calc3"] = "9*skill('Death Sentry'.blvl) + 9*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl)"
         wof["*calc3 desc"] = "Total Synergy Bonus (%)"
         wof["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
 
@@ -3866,15 +4894,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         fof_d["dsc3calca1"] = "2"
         fof_d["dsc3line2"] = "76"
         fof_d["dsc3texta2"] = "Firedplev"
-        fof_d["dsc3textb2"] = "Skillname271"
-        fof_d["dsc3calca2"] = "12"
+        fof_d["dsc3textb2"] = "Skillname275"
+        fof_d["dsc3calca2"] = "9"
         fof_d["dsc3line3"] = "76"
         fof_d["dsc3texta3"] = "Firedplev"
-        fof_d["dsc3textb3"] = "Skillname263"
-        fof_d["dsc3calca3"] = "6"
+        fof_d["dsc3textb3"] = "Skillname270"
+        fof_d["dsc3calca3"] = "9"
         fof_d["dsc3line4"] = "76"
         fof_d["dsc3texta4"] = "Firedplev"
-        fof_d["dsc3textb4"] = "Skillname270"
+        fof_d["dsc3textb4"] = "Skillname263"
         fof_d["dsc3calca4"] = "6"
 
     if "wake of fire sentry" in by_desc:
@@ -3884,7 +4912,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wof_d["dsc2calca3"] = f"1 + (({wof_trap_syn} >= 10) ? 1 : 0) + (({wof_trap_syn} >= 25) ? 1 : 0)"
         wof_d["dsc2line4"] = "74"
         wof_d["dsc2texta4"] = "ModFireSentryChargedShots"
-        wof_d["dsc2calca4"] = f"par1 + 1 + {fof_m} / 4"
+        wof_d["dsc2calca4"] = f"par1 + 3 + {fof_m} / 10"
         wof_d["dsc3line1"] = "40"
         wof_d["dsc3texta1"] = "Sksyn"
         wof_d["dsc3textb1"] = "Skillname263"
@@ -3892,17 +4920,17 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wof_d["dsc3line2"] = "76"
         wof_d["dsc3texta2"] = "Firedplev"
         wof_d["dsc3textb2"] = "Skillname277"
-        wof_d["dsc3calca2"] = "12"
+        wof_d["dsc3calca2"] = "9"
         wof_d["dsc3line3"] = "76"
         wof_d["dsc3texta3"] = "Firedplev"
-        wof_d["dsc3textb3"] = "Skillname252"
-        wof_d["dsc3calca3"] = "6"
+        wof_d["dsc3textb3"] = "Skillname272"
+        wof_d["dsc3calca3"] = "9"
         wof_d["dsc3line4"] = "76"
         wof_d["dsc3texta4"] = "Firedplev"
         wof_d["dsc3textb4"] = "Skillname260"
         wof_d["dsc3calca4"] = "6"
 
-    wof_shots_calc = f"par8 + (({wof_c} >= 1) ? (1 + {fof_m} / 4) : 0)"
+    wof_shots_calc = f"par8 + (({wof_c} >= 1) ? (3 + {fof_m} / 10) : 0)"
     if "Wake Of Destruction Sentry" in by_name:
         wods = by_name["Wake Of Destruction Sentry"]
         wods["srvdofunc"] = ""
@@ -3917,9 +4945,9 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wods["aurarangecalc"] = f"({wof_c} >= 3) ? 6 : 0"
         wods["calc1"] = "skill('Wake of Fire Sentry'.blvl)"
         wods["*calc1 desc"] = "Wake of Fire Sentry Level"
-        wods["calc2"] = "100 + 25*max(0,clc1-1) + 35*max(0,clc1-5) + 45*max(0,clc1-10) + 65*max(0,clc1-15)"
+        wods["calc2"] = "100 + 22*max(0,clc1-1) + 32*max(0,clc1-5) + 46*max(0,clc1-10) + 68*max(0,clc1-15)"
         wods["*calc2 desc"] = "Base Fire Damage Level Ramp (%)"
-        wods["calc3"] = "100 + 6*(skill('Fire Trauma'.blvl) + skill('Fists of Fire'.blvl))"
+        wods["calc3"] = "100 + 9*skill('Fire Trauma'.blvl) + 6*skill('Fists of Fire'.blvl)"
         wods["*calc3 desc"] = "Total Synergy Multiplier (%)"
         wods["calc4"] = wof_shots_calc
 
@@ -3928,23 +4956,1283 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         vfb_sk["srvmissile"] = "desertfireball"
         vfb_sk["cltmissile"] = "desertfireball"
 
+    # Step 3: Cobra Strike (progressive_steal, Id 265) <-> Soul Siphon Sentry (Charged Bolt Sentry, Id 261)
+    for tier_idx, hex_name in ((1, "Ass Cobra Hex 1"), (2, "Ass Cobra Hex 2"), (3, "Ass Cobra Hex 3")):
+        if hex_name not in by_name:
+            max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
+            sk_hex = {h: "" for h in s_headers}
+            sk_hex["skill"] = hex_name
+            sk_hex["*Id"] = str(max_sid + 1)
+            sk_hex["aurafilter"] = "98304"
+            sk_hex["auratargetstate"] = "ass_cobra_debuff"
+            sk_hex["auralencalc"] = "250 + 15 * skill('Cobra Strike'.blvl)"
+            sk_hex["aurastat1"] = "armorclass"
+            sk_hex["aurastatcalc1"] = f"-{tier_idx} * skill('Cobra Strike'.clc2)"
+            sk_hex["aurastat2"] = "skill_armor_percent"
+            sk_hex["aurastatcalc2"] = f"-{tier_idx} * skill('Cobra Strike'.clc3)"
+            sk_hex["range"] = "none"
+            sk_hex["monanim"] = "xx"
+            sk_hex["reqlevel"] = "1"
+            sk_hex["InGame"] = "1"
+            sk_hex["HitShift"] = "8"
+            sk_hex["*eol"] = "0"
+            s_rows.append(sk_hex)
+            by_name[hex_name] = sk_hex
+
+    if "Cobra Strike" in by_name:
+        cs = by_name["Cobra Strike"]
+        cs["prgstack"] = ""
+        cs["prgdam"] = "2"
+        cs["srvprgfunc1"] = "41"
+        cs["cltprgfunc1"] = "15"
+        cs["prgcalc1"] = "36"
+        cs["srvprgfunc2"] = "41"
+        cs["cltprgfunc2"] = "15"
+        cs["prgcalc2"] = "36"
+        cs["srvprgfunc3"] = "41"
+        cs["cltprgfunc3"] = "15"
+        cs["prgcalc3"] = "36"
+        cs["srvmissilea"] = "unholybolt2"
+        cs["cltmissilea"] = "unholybolt2"
+        cs["srvmissileb"] = "unholybolt3"
+        cs["cltmissileb"] = "unholybolt3"
+        cs["srvmissilec"] = "unholybolt4"
+        cs["cltmissilec"] = "unholybolt4"
+        cs["Param1"] = "45"
+        cs["Param2"] = "6"
+        cs["calc1"] = (
+            "ln12 + 3*skill('Dragon Claw'.blvl) + 2*skill('Charged Bolt Sentry'.blvl) + 2*skill('Fists of Fire'.blvl)"
+        )
+        cs["*calc1 desc"] = "Finisher Life & Mana Steal %"
+        cs["calc2"] = (
+            "((50 + 15*max(0,lvl-1) + 25*max(0,lvl-8) + 40*max(0,lvl-16) + 55*max(0,lvl-22)) * (100 + clc4)) / 100"
+        )
+        cs["*calc2 desc"] = "Soul-Hex Wave Flat Defense Shred per Orb"
+        cs["calc3"] = "10 + lvl / 2"
+        cs["*calc3 desc"] = "Soul-Hex Wave % Defense Shred per Orb"
+        cs["calc4"] = (
+            "12*skill('Dragon Claw'.blvl) + 6*skill('Charged Bolt Sentry'.blvl) + 6*skill('Fists of Fire'.blvl)"
+        )
+        cs["*calc4 desc"] = "Total Synergy Bonus (%)"
+        cs["aurastat2"] = "item_damagetargetac"
+        cs["aurastatcalc2"] = "-50"
+        cs["aurastat3"] = "progressive_tohit"
+        cs["aurastatcalc3"] = "par4"
+        cs["passivestate"] = ""
+        cs["passivestat1"] = ""
+        cs["passivecalc1"] = ""
+
+    if "cobra strike" in by_desc:
+        cs_d = by_desc["cobra strike"]
+        cs_d["descdam"] = "5"
+        cs_d["descatt"] = "1"
+        cs_d["descline1"] = "75"
+        cs_d["desctexta1"] = "ModCobraStrikeOrb3"
+        cs_d["desccalca1"] = "2*clc1"
+        cs_d["desccalcb1"] = "3*clc2"
+        cs_d["descline2"] = "75"
+        cs_d["desctexta2"] = "ModCobraStrikeOrb2"
+        cs_d["desccalca2"] = "clc1"
+        cs_d["desccalcb2"] = "2*clc2"
+        cs_d["descline3"] = "75"
+        cs_d["desctexta3"] = "ModCobraStrikeOrb1"
+        cs_d["desccalca3"] = "clc1"
+        cs_d["desccalcb3"] = "clc2"
+        cs_d["descline4"] = "74"
+        cs_d["desctexta4"] = "ModCobraStrikeHoldBuff"
+        cs_d["desccalca4"] = "50"
+        cs_d["descline5"] = "74"
+        cs_d["desctexta5"] = "StrSkill22"
+        cs_d["desccalca5"] = "toht"
+        cs_d["dsc3line1"] = "40"
+        cs_d["dsc3texta1"] = "Sksyn"
+        cs_d["dsc3textb1"] = "Skillname266"
+        cs_d["dsc3calca1"] = "2"
+        cs_d["dsc3line2"] = "76"
+        cs_d["dsc3texta2"] = "ModCobraSynergyPerLev"
+        cs_d["dsc3textb2"] = "Skillname261"
+        cs_d["dsc3calca2"] = "12"
+        cs_d["dsc3line3"] = "76"
+        cs_d["dsc3texta3"] = "ModCobraSynergyPerLev"
+        cs_d["dsc3textb3"] = "Skillname262"
+        cs_d["dsc3calca3"] = "6"
+        cs_d["dsc3line4"] = "76"
+        cs_d["dsc3texta4"] = "ModCobraSynergyPerLev"
+        cs_d["dsc3textb4"] = "Skillname260"
+        cs_d["dsc3calca4"] = "6"
+
+    snap_cs = "max(stat('progressive_steal'.accr), stat('item_kickdamage'.accr))"
+    cs_m = "skill('Cobra Strike'.blvl)"
+    cs_c = "skill('Ass Trap Charge Consume'.blvl)"
+    cs_trap_syn = "(skill('Fire Trauma'.blvl) + skill('Shock Field'.blvl))"
+
+    if "Charged Bolt Sentry" in by_name:
+        cbs = by_name["Charged Bolt Sentry"]
+        cbs["srvstfunc"] = "39"
+        cbs["srvdofunc"] = "45"
+        cbs["pettype"] = "miasmatrap"
+        cbs["petmax"] = f"1 + (({cs_trap_syn} >= 10) ? 1 : 0) + (({cs_trap_syn} >= 25) ? 1 : 0)"
+        cbs["aurastate"] = "progressive_steal"
+        cbs["auralencalc"] = "12"
+        cbs["aurastat1"] = "item_kickdamage"
+        cbs["aurastatcalc1"] = snap_cs
+        cbs["aurastat2"] = ""
+        cbs["aurastatcalc2"] = ""
+        cbs["passivestat1"] = "item_pierce_magic_immunity"
+        cbs["passivecalc1"] = "stat('item_pierce_magic_immunity'.accr)"
+        cbs["passivestat2"] = "passive_mag_pierce"
+        cbs["passivecalc2"] = "stat('passive_mag_pierce'.accr)"
+        cbs["passivestat3"] = "passive_mag_mastery"
+        cbs["passivecalc3"] = "stat('passive_mag_mastery'.accr)"
+        cbs["passivestat4"] = ""
+        cbs["passivecalc4"] = ""
+        cbs["sumskill1"] = "BoltSentry"
+        cbs["sumsk1calc"] = f"({snap_cs} >= 3) ? 10 : (({snap_cs} == 2) ? 2 : 1)"
+        cbs["sumskill2"] = "Charged Bolt Sentry"
+        cbs["sumsk2calc"] = "lvl"
+        cbs["sumskill3"] = "Cobra Strike"
+        cbs["sumsk3calc"] = cs_m
+        cbs["sumskill4"] = "Fire Trauma"
+        cbs["sumsk4calc"] = "skill('Fire Trauma'.blvl) + skill('Shock Field'.blvl)"
+        cbs["sumskill5"] = "Ass Trap Charge Consume"
+        cbs["sumsk5calc"] = snap_cs
+        cbs["Param1"] = "9"
+        cbs["*Param1 Description"] = "# of shots"
+        cbs["HitShift"] = "8"
+        cbs["EType"] = "mag"
+        cbs["EMin"] = "42"
+        cbs["EMinLev1"] = "0"
+        cbs["EMinLev2"] = "0"
+        cbs["EMinLev3"] = "0"
+        cbs["EMinLev4"] = "0"
+        cbs["EMinLev5"] = "0"
+        cbs["EMax"] = "66"
+        cbs["EMaxLev1"] = "0"
+        cbs["EMaxLev2"] = "0"
+        cbs["EMaxLev3"] = "0"
+        cbs["EMaxLev4"] = "0"
+        cbs["EMaxLev5"] = "0"
+        cbs["calc1"] = "100 + 14*max(0,lvl-1) + 18*max(0,lvl-5) + 26*max(0,lvl-10) + 38*max(0,lvl-15)"
+        cbs["*calc1 desc"] = "Base Magic Damage Level Ramp (%)"
+        cbs["calc3"] = "9*skill('Fire Trauma'.blvl) + 9*skill('Shock Field'.blvl) + 6*skill('Cobra Strike'.blvl)"
+        cbs["*calc3 desc"] = "Total Synergy Bonus (%)"
+        cbs["calc4"] = ""
+        cbs["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
+
+    cs_shots_calc = f"par8 + (({cs_c} >= 1) ? (5 + {cs_m} / 4) : 0)"
+    if "BoltSentry" in by_name:
+        bs_sk = by_name["BoltSentry"]
+        bs_sk["srvstfunc"] = ""
+        bs_sk["srvdofunc"] = ""
+        bs_sk["srvmissile"] = "sentrychargedbolt"
+        bs_sk["srvmissilea"] = ""
+        bs_sk["cltstfunc"] = ""
+        bs_sk["cltdofunc"] = ""
+        bs_sk["cltmissile"] = "sentrychargedbolt"
+        bs_sk["cltmissilea"] = ""
+        bs_sk["anim"] = "SQ"
+        bs_sk["seqtrans"] = "SQ"
+        bs_sk["monanim"] = "S2"
+        bs_sk["UseAttackRate"] = "1"
+        bs_sk["aurafilter"] = "3"
+        bs_sk["auratargetstate"] = "lifetap"
+        bs_sk["auralencalc"] = f"125 + 10 * {cs_m}"
+        bs_sk["aurarangecalc"] = "(lvl >= 3) ? 5 : 0"
+        bs_sk["auraevent1"] = "damagedinmelee"
+        bs_sk["auraeventfunc1"] = "5"
+        bs_sk["auraevent2"] = "damagedbymissile"
+        bs_sk["auraeventfunc2"] = "5"
+        bs_sk["prgoverlay"] = "steallife"
+        bs_sk["Param5"] = "50"
+        bs_sk["Param6"] = "0"
+        bs_sk["Param8"] = "9"
+        bs_sk["calc1"] = "ln56"
+        bs_sk["*calc1 desc"] = "Damage % returned as healing to attacker"
+        bs_sk["calc2"] = (
+            "100 + 14*max(0,skill('Charged Bolt Sentry'.blvl)-1) + 18*max(0,skill('Charged Bolt Sentry'.blvl)-5)"
+            " + 26*max(0,skill('Charged Bolt Sentry'.blvl)-10) + 38*max(0,skill('Charged Bolt Sentry'.blvl)-15)"
+        )
+        bs_sk["*calc2 desc"] = "Base Magic Damage Level Ramp (%)"
+        bs_sk["calc3"] = "100 + 9*skill('Fire Trauma'.blvl) + 6*skill('Cobra Strike'.blvl)"
+        bs_sk["*calc3 desc"] = "Total Synergy Multiplier (%)"
+        bs_sk["calc4"] = cs_shots_calc
+
+    if "charged bolt sentry" in by_desc:
+        cbs_d = by_desc["charged bolt sentry"]
+        cbs_d["descdam"] = "5"
+        cbs_d["descline1"] = "75"
+        cbs_d["desctexta1"] = "StrSkill39"
+        cbs_d["desccalca1"] = "enma"
+        cbs_d["desccalcb1"] = "exma"
+        cbs_d["descline2"] = ""
+        cbs_d["desctexta2"] = ""
+        cbs_d["desccalca2"] = ""
+        cbs_d["desccalcb2"] = ""
+        cbs_d["dsc2line1"] = "36"
+        cbs_d["dsc2texta1"] = "StrSkill3"
+        cbs_d["dsc2textb1"] = ""
+        cbs_d["dsc2calca1"] = "usmc"
+        cbs_d["dsc2calcb1"] = "256"
+        cbs_d["dsc2line2"] = "74"
+        cbs_d["dsc2texta2"] = "ESkillShoots"
+        cbs_d["dsc2textb2"] = ""
+        cbs_d["dsc2calca2"] = "par1"
+        cbs_d["dsc2calcb2"] = ""
+        cbs_d["dsc2line3"] = "74"
+        cbs_d["dsc2texta3"] = "ModSoulSiphonMaxTraps"
+        cbs_d["dsc2calca3"] = f"1 + (({cs_trap_syn} >= 10) ? 1 : 0) + (({cs_trap_syn} >= 25) ? 1 : 0)"
+        cbs_d["dsc2line4"] = "74"
+        cbs_d["dsc2texta4"] = "ModFireSentryChargedShots"
+        cbs_d["dsc2calca4"] = f"par1 + 5 + {cs_m} / 4"
+        cbs_d["dsc3line1"] = "40"
+        cbs_d["dsc3texta1"] = "Sksyn"
+        cbs_d["dsc3textb1"] = "Skillname262"
+        cbs_d["dsc3calca1"] = "2"
+        cbs_d["dsc3line2"] = "76"
+        cbs_d["dsc3texta2"] = "Magdplev"
+        cbs_d["dsc3textb2"] = "Skillname257"
+        cbs_d["dsc3calca2"] = "9"
+        cbs_d["dsc3line3"] = "76"
+        cbs_d["dsc3texta3"] = "Magdplev"
+        cbs_d["dsc3textb3"] = "Skillname252"
+        cbs_d["dsc3calca3"] = "9"
+        cbs_d["dsc3line4"] = "76"
+        cbs_d["dsc3texta4"] = "Magdplev"
+        cbs_d["dsc3textb4"] = "Skillname266"
+        cbs_d["dsc3calca4"] = "6"
+        cbs_d["dsc3line5"] = ""
+        cbs_d["dsc3texta5"] = ""
+        cbs_d["dsc3textb5"] = ""
+        cbs_d["dsc3calca5"] = ""
+        cbs_d["dsc3calcb5"] = ""
+
+    # Step 5: Claws of Thunder (progressive_lightning, Id 269) <-> Lightning Sentry (Id 271)
+    if "Claws of Thunder" in by_name:
+        cot = by_name["Claws of Thunder"]
+        cot["prgstack"] = ""
+        cot["prgdam"] = ""
+        cot["srvprgfunc1"] = "37"
+        cot["cltprgfunc1"] = "11"
+        cot["prgcalc1"] = "max(4, 8 - lvl / 5)"
+        cot["srvprgfunc2"] = "36"
+        cot["cltprgfunc2"] = "10"
+        cot["prgcalc2"] = ""
+        cot["srvprgfunc3"] = "143"
+        cot["cltprgfunc3"] = "83"
+        cot["prgcalc3"] = "0"
+        cot["srvmissilea"] = "clawsofthunderbolt"
+        cot["cltmissilea"] = "clawsofthunderbolt"
+        cot["srvmissileb"] = "clawsofthundernova"
+        cot["cltmissileb"] = "clawsofthundernova"
+        cot["srvmissilec"] = "royalstrikechainlightning"
+        cot["cltmissilec"] = "royalstrikechainlightning"
+        cot["aurarangecalc"] = "5 + lvl / 4"
+        cot["calc1"] = "max(4, 8 - lvl / 5)"
+        cot["*calc1 desc"] = "Charged Bolt Spread Step (64 / clc1 bolts)"
+        cot["calc2"] = "64 / clc1"
+        cot["*calc2 desc"] = "Charge 1 Finisher Charged Bolt Count"
+        cot["calc3"] = (
+            "((30 + 10*max(0,lvl-1) + 4*max(0,lvl-8) + 13*max(0,lvl-16) + 13*max(0,lvl-22) + 12*max(0,lvl-28)) * (100 + clc4)) / 100"
+        )
+        cot["*calc3 desc"] = "Held Max Lightning Damage per Orb (Min = +1, Max = clc3)"
+        cot["calc4"] = (
+            "9*skill('Fists of Fire'.blvl) + 9*skill('Blades of Ice'.blvl) + 6*skill('Lightning Sentry'.blvl)"
+        )
+        cot["*calc4 desc"] = "Total Synergy Bonus (%)"
+        cot["EType"] = ""
+        cot["EMin"] = ""
+        cot["EMinLev1"] = ""
+        cot["EMinLev2"] = ""
+        cot["EMinLev3"] = ""
+        cot["EMinLev4"] = ""
+        cot["EMinLev5"] = ""
+        cot["EMax"] = ""
+        cot["EMaxLev1"] = ""
+        cot["EMaxLev2"] = ""
+        cot["EMaxLev3"] = ""
+        cot["EMaxLev4"] = ""
+        cot["EMaxLev5"] = ""
+        cot["EDmgSymPerCalc"] = ""
+        cot["aurastat2"] = "item_thrust_damage_percent"
+        cot["aurastatcalc2"] = "clc3"
+        cot["aurastat3"] = ""
+        cot["aurastatcalc3"] = ""
+        cot["aurastat4"] = ""
+        cot["aurastatcalc4"] = ""
+        cot["passivestate"] = "ass_cot_passive"
+        cot["passivestat1"] = "item_absorb_thrust"
+        cot["passivecalc1"] = "1"
+        cot["passivestat2"] = "lightmindam"
+        cot["passivecalc2"] = "1"
+
+    if "claws of thunder" in by_desc:
+        cot_d = by_desc["claws of thunder"]
+        cot_d["descdam"] = "1"
+        cot_d["p1dmelem"] = ""
+        cot_d["p1dmmin"] = ""
+        cot_d["p1dmmax"] = ""
+        cot_d["p2dmelem"] = ""
+        cot_d["p2dmmin"] = ""
+        cot_d["p2dmmax"] = ""
+        cot_d["p3dmelem"] = ""
+        cot_d["p3dmmin"] = ""
+        cot_d["p3dmmax"] = ""
+        cot_d["descmissile1"] = "clawsofthunderbolt"
+        cot_d["descmissile2"] = "clawsofthundernova"
+        cot_d["descmissile3"] = "royalstrikechainlightning"
+        cot_d["descline1"] = "75"
+        cot_d["desctexta1"] = "ModClawsOfThunderOrb3"
+        cot_d["desccalca1"] = "m3en"
+        cot_d["desccalcb1"] = "m3ex"
+        cot_d["descline2"] = "75"
+        cot_d["desctexta2"] = "ModClawsOfThunderOrb2"
+        cot_d["desccalca2"] = "m2en"
+        cot_d["desccalcb2"] = "m2ex"
+        cot_d["descline3"] = "75"
+        cot_d["desctexta3"] = "ModClawsOfThunderOrb1"
+        cot_d["desccalca3"] = "m1en"
+        cot_d["desccalcb3"] = "m1ex"
+        cot_d["descline4"] = "75"
+        cot_d["desctexta4"] = "ModClawsOfThunderHoldBuff"
+        cot_d["desccalca4"] = "1"
+        cot_d["desccalcb4"] = "clc3"
+        cot_d["descline5"] = "74"
+        cot_d["desctexta5"] = "StrSkill22"
+        cot_d["desccalca5"] = "toht"
+        cot_d["dsc3line1"] = "40"
+        cot_d["dsc3texta1"] = "Sksyn"
+        cot_d["dsc3textb1"] = "Skillname270"
+        cot_d["dsc3calca1"] = "2"
+        cot_d["dsc3line2"] = "76"
+        cot_d["dsc3texta2"] = "Ltngdplev"
+        cot_d["dsc3textb2"] = "Skillname260"
+        cot_d["dsc3calca2"] = "9"
+        cot_d["dsc3line3"] = "76"
+        cot_d["dsc3texta3"] = "Ltngdplev"
+        cot_d["dsc3textb3"] = "Skillname275"
+        cot_d["dsc3calca3"] = "9"
+        cot_d["dsc3line4"] = "76"
+        cot_d["dsc3texta4"] = "Ltngdplev"
+        cot_d["dsc3textb4"] = "Skillname272"
+        cot_d["dsc3calca4"] = "6"
+
     snap_cot = "max(stat('progressive_lightning'.accr), stat('item_kickdamage'.accr))"
+    cot_m = "skill('Claws of Thunder'.blvl)"
+    ls_c = "skill('Ass Trap Charge Consume'.blvl)"
+    ls_trap_syn = "(skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl))"
+
     if "Lightning Sentry" in by_name:
         ls = by_name["Lightning Sentry"]
         ls["srvstfunc"] = "39"
+        ls["srvdofunc"] = "45"
         ls["pettype"] = "ltngtrap"
-        ls["petmax"] = "1"
+        ls["petmax"] = f"1 + (({ls_trap_syn} >= 10) ? 1 : 0) + (({ls_trap_syn} >= 25) ? 1 : 0)"
         ls["aurastate"] = "progressive_lightning"
         ls["auralencalc"] = "12"
         ls["aurastat1"] = "item_kickdamage"
         ls["aurastatcalc1"] = snap_cot
-        ls["passivecalc3"] = f"stat('passive_ltng_mastery'.accr) + 30 * {snap_cot}"
+        ls["aurastat2"] = ""
+        ls["aurastatcalc2"] = ""
+        ls["passivestat1"] = "item_pierce_ltng_immunity"
+        ls["passivecalc1"] = "stat('item_pierce_ltng_immunity'.accr)"
+        ls["passivestat2"] = "passive_ltng_pierce"
+        ls["passivecalc2"] = "stat('passive_ltng_pierce'.accr)"
+        ls["passivestat3"] = "passive_ltng_mastery"
+        ls["passivecalc3"] = "stat('passive_ltng_mastery'.accr)"
+        ls["passivestat4"] = ""
+        ls["passivecalc4"] = ""
+        ls["sumskill1"] = "sentry lightning"
+        ls["sumsk1calc"] = "lvl"
+        ls["sumskill2"] = "Lightning Sentry"
+        ls["sumsk2calc"] = "lvl"
+        ls["sumskill3"] = "Claws of Thunder"
+        ls["sumsk3calc"] = cot_m
+        ls["sumskill4"] = "Wake of Fire Sentry"
+        ls["sumsk4calc"] = "skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl)"
         ls["sumskill5"] = "Ass Trap Charge Consume"
         ls["sumsk5calc"] = snap_cot
+        ls["Param1"] = "7"
+        ls["*Param1 Description"] = "# of shots"
+        ls["HitShift"] = "8"
+        ls["EType"] = "ltng"
+        ls["EMin"] = "1"
+        ls["EMinLev1"] = "0"
+        ls["EMinLev2"] = "0"
+        ls["EMinLev3"] = "0"
+        ls["EMinLev4"] = "0"
+        ls["EMinLev5"] = "0"
+        ls["EMax"] = "84"
+        ls["EMaxLev1"] = "0"
+        ls["EMaxLev2"] = "0"
+        ls["EMaxLev3"] = "0"
+        ls["EMaxLev4"] = "0"
+        ls["EMaxLev5"] = "0"
+        ls["calc1"] = "100 + 15*max(0,lvl-1) + 20*max(0,lvl-5) + 28*max(0,lvl-10) + 40*max(0,lvl-15)"
+        ls["*calc1 desc"] = "Base Lightning Damage Level Ramp (%)"
+        ls["calc3"] = "9*skill('Wake of Fire Sentry'.blvl) + 9*skill('Death Sentry'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+        ls["*calc3 desc"] = "Total Synergy Bonus (%)"
+        ls["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
 
+    ls_shots_calc = f"par8 + (({ls_c} >= 2) ? (4 + {cot_m} / 5) : 0)"
     if "sentry lightning" in by_name:
         sl = by_name["sentry lightning"]
-        sl["calc4"] = "par8 + 2 * skill('Ass Trap Charge Consume'.blvl)"
+        sl["srvstfunc"] = ""
+        sl["srvdofunc"] = ""
+        sl["srvmissile"] = "sentrylightningbolt"
+        sl["srvmissilea"] = ""
+        sl["cltstfunc"] = ""
+        sl["cltdofunc"] = ""
+        sl["cltmissile"] = "sentrylightningbolt"
+        sl["cltmissilea"] = ""
+        sl["anim"] = "SQ"
+        sl["seqtrans"] = "SQ"
+        sl["monanim"] = "S2"
+        sl["UseAttackRate"] = "1"
+        sl["aurafilter"] = "98304"
+        sl["auratargetstate"] = "dimvision"
+        sl["auralencalc"] = f"({ls_c} >= 3) ? (100 + 10 * {cot_m}) : 0"
+        sl["aurarangecalc"] = ""
+        sl["Param8"] = "7"
+        sl["calc1"] = "skill('Lightning Sentry'.blvl)"
+        sl["*calc1 desc"] = "Lightning Sentry Skill Level"
+        sl["calc2"] = "100 + 15*max(0,clc1-1) + 20*max(0,clc1-5) + 28*max(0,clc1-10) + 40*max(0,clc1-15)"
+        sl["*calc2 desc"] = "Base Lightning Damage Level Ramp (%)"
+        sl["calc3"] = "100 + 9*skill('Wake of Fire Sentry'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+        sl["*calc3 desc"] = "Total Synergy Multiplier (%)"
+        sl["calc4"] = ls_shots_calc
+
+    if "lightning sentry" in by_desc:
+        ls_d = by_desc["lightning sentry"]
+        ls_d["descdam"] = "5"
+        ls_d["descline1"] = "75"
+        ls_d["desctexta1"] = "StrSkill7"
+        ls_d["desctextb1"] = ""
+        ls_d["desccalca1"] = "1"
+        ls_d["desccalcb1"] = "exma"
+        ls_d["descline2"] = ""
+        ls_d["desctexta2"] = ""
+        ls_d["desccalca2"] = ""
+        ls_d["desccalcb2"] = ""
+        ls_d["dsc2line1"] = "36"
+        ls_d["dsc2texta1"] = "StrSkill3"
+        ls_d["dsc2textb1"] = ""
+        ls_d["dsc2calca1"] = "usmc"
+        ls_d["dsc2calcb1"] = "256"
+        ls_d["dsc2line2"] = "74"
+        ls_d["dsc2texta2"] = "ESkillShoots"
+        ls_d["dsc2textb2"] = ""
+        ls_d["dsc2calca2"] = "par1"
+        ls_d["dsc2calcb2"] = ""
+        ls_d["dsc2line3"] = "74"
+        ls_d["dsc2texta3"] = "ModLightningSentryMaxTraps"
+        ls_d["dsc2calca3"] = f"1 + (({ls_trap_syn} >= 10) ? 1 : 0) + (({ls_trap_syn} >= 25) ? 1 : 0)"
+        ls_d["dsc2calcb3"] = ""
+        ls_d["dsc2line4"] = "74"
+        ls_d["dsc2texta4"] = "ModLightningSentryChargedShots"
+        ls_d["dsc2calca4"] = f"par1 + 4 + {cot_m} / 5"
+        ls_d["dsc2calcb4"] = ""
+        ls_d["dsc3line1"] = "40"
+        ls_d["dsc3texta1"] = "Sksyn"
+        ls_d["dsc3textb1"] = "Skillname272"
+        ls_d["dsc3calca1"] = "2"
+        ls_d["dsc3line2"] = "76"
+        ls_d["dsc3texta2"] = "Ltngdplev"
+        ls_d["dsc3textb2"] = "Skillname263"
+        ls_d["dsc3calca2"] = "9"
+        ls_d["dsc3calcb2"] = ""
+        ls_d["dsc3line3"] = "76"
+        ls_d["dsc3texta3"] = "Ltngdplev"
+        ls_d["dsc3textb3"] = "Skillname277"
+        ls_d["dsc3calca3"] = "9"
+        ls_d["dsc3calcb3"] = ""
+        ls_d["dsc3line4"] = "76"
+        ls_d["dsc3texta4"] = "Ltngdplev"
+        ls_d["dsc3textb4"] = "Skillname270"
+        ls_d["dsc3calca4"] = "6"
+        ls_d["dsc3calcb4"] = ""
+        ls_d["dsc3line5"] = ""
+        ls_d["dsc3texta5"] = ""
+        ls_d["dsc3textb5"] = ""
+        ls_d["dsc3calca5"] = ""
+        ls_d["dsc3calcb5"] = ""
+
+    # Step 4: Blades of Ice (progressive_cold, Id 274) <-> Ice Sentry (Death Sentry, Id 276)
+    if "Blades of Ice" in by_name:
+        boi = by_name["Blades of Ice"]
+        boi["prgstack"] = ""
+        boi["prgdam"] = ""
+        boi["srvprgfunc1"] = "39"
+        boi["cltprgfunc1"] = "9"
+        boi["prgcalc1"] = "6"
+        boi["srvprgfunc2"] = "41"
+        boi["cltprgfunc2"] = "15"
+        boi["prgcalc2"] = "12"
+        boi["srvprgfunc3"] = "40"
+        boi["cltprgfunc3"] = "14"
+        boi["prgcalc3"] = "9"
+        boi["srvmissilea"] = "bladesoficeexplode"
+        boi["cltmissilea"] = "bladesoficeexplode"
+        boi["srvmissileb"] = "royalstrikechaosice"
+        boi["cltmissileb"] = "royalstrikechaosice"
+        boi["srvmissilec"] = "catapult cold ball on"
+        boi["cltmissilec"] = "catapult cold ball on"
+        boi["calc1"] = "9"
+        boi["*calc1 desc"] = "Frozen Orb Target Offset"
+        boi["calc2"] = "1"
+        boi["*calc2 desc"] = "Cold Damage Unit per Orb"
+        boi["calc3"] = (
+            "((8 + 3*max(0,lvl-1) + 1*max(0,lvl-8) + 5*max(0,lvl-16) + 5*max(0,lvl-22) + 4*max(0,lvl-28)) * (100 + clc4)) / 100"
+        )
+        boi["*calc3 desc"] = "Held Min Cold Damage per Orb (Max = 2 * clc3)"
+        boi["calc4"] = (
+            "9*skill('Fists of Fire'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Death Sentry'.blvl)"
+        )
+        boi["*calc4 desc"] = "Total Synergy Bonus (%)"
+        boi["EType"] = ""
+        boi["EMin"] = ""
+        boi["EMinLev1"] = ""
+        boi["EMinLev2"] = ""
+        boi["EMinLev3"] = ""
+        boi["EMinLev4"] = ""
+        boi["EMinLev5"] = ""
+        boi["EMax"] = ""
+        boi["EMaxLev1"] = ""
+        boi["EMaxLev2"] = ""
+        boi["EMaxLev3"] = ""
+        boi["EMaxLev4"] = ""
+        boi["EMaxLev5"] = ""
+        boi["EDmgSymPerCalc"] = ""
+        boi["ELen"] = ""
+        boi["ELevLen1"] = ""
+        boi["ELevLen2"] = ""
+        boi["ELevLen3"] = ""
+        boi["aurastat2"] = "item_crush_damage"
+        boi["aurastatcalc2"] = "clc3"
+        boi["aurastat3"] = ""
+        boi["aurastatcalc3"] = ""
+        boi["aurastat4"] = ""
+        boi["aurastatcalc4"] = ""
+        boi["passivestate"] = "ass_boi_passive"
+        boi["passivestat1"] = "item_absorb_crush"
+        boi["passivecalc1"] = "1"
+        boi["passivestat2"] = "coldlength"
+        boi["passivecalc2"] = "75"
+
+    if "blades of ice" in by_desc:
+        boi_d = by_desc["blades of ice"]
+        boi_d["descdam"] = "1"
+        boi_d["p1dmelem"] = ""
+        boi_d["p1dmmin"] = ""
+        boi_d["p1dmmax"] = ""
+        boi_d["p2dmelem"] = ""
+        boi_d["p2dmmin"] = ""
+        boi_d["p2dmmax"] = ""
+        boi_d["p3dmelem"] = ""
+        boi_d["p3dmmin"] = ""
+        boi_d["p3dmmax"] = ""
+        boi_d["descmissile1"] = "bladesoficeexplode"
+        boi_d["descmissile2"] = "royalstrikechaosice"
+        boi_d["descmissile3"] = "catapult cold ball"
+        boi_d["descline1"] = "75"
+        boi_d["desctexta1"] = "ModBladesOfIceOrb3"
+        boi_d["desccalca1"] = "m3en"
+        boi_d["desccalcb1"] = "m3ex"
+        boi_d["descline2"] = "75"
+        boi_d["desctexta2"] = "ModBladesOfIceOrb2"
+        boi_d["desccalca2"] = "m2en"
+        boi_d["desccalcb2"] = "m2ex"
+        boi_d["descline3"] = "75"
+        boi_d["desctexta3"] = "ModBladesOfIceOrb1"
+        boi_d["desccalca3"] = "m1en"
+        boi_d["desccalcb3"] = "m1ex"
+        boi_d["descline4"] = "75"
+        boi_d["desctexta4"] = "ModBladesOfIceHoldBuff"
+        boi_d["desccalca4"] = "clc3"
+        boi_d["desccalcb4"] = "2*clc3"
+        boi_d["descline5"] = "74"
+        boi_d["desctexta5"] = "StrSkill22"
+        boi_d["desccalca5"] = "toht"
+        boi_d["dsc3line1"] = "40"
+        boi_d["dsc3texta1"] = "Sksyn"
+        boi_d["dsc3textb1"] = "Skillname275"
+        boi_d["dsc3calca1"] = "2"
+        boi_d["dsc3line2"] = "76"
+        boi_d["dsc3texta2"] = "Colddplev"
+        boi_d["dsc3textb2"] = "Skillname260"
+        boi_d["dsc3calca2"] = "9"
+        boi_d["dsc3line3"] = "76"
+        boi_d["dsc3texta3"] = "Colddplev"
+        boi_d["dsc3textb3"] = "Skillname270"
+        boi_d["dsc3calca3"] = "9"
+        boi_d["dsc3line4"] = "76"
+        boi_d["dsc3texta4"] = "Colddplev"
+        boi_d["dsc3textb4"] = "Skillname277"
+        boi_d["dsc3calca4"] = "6"
+
+    snap_boi = "max(stat('progressive_cold'.accr), stat('item_kickdamage'.accr))"
+    boi_m = "skill('Blades of Ice'.blvl)"
+    ds_c = "skill('Ass Trap Charge Consume'.blvl)"
+    ds_trap_syn = "(skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl))"
+
+    if "Death Sentry" in by_name:
+        ds = by_name["Death Sentry"]
+        ds["srvstfunc"] = "39"
+        ds["srvdofunc"] = "45"
+        ds["pettype"] = "deathtrap"
+        ds["petmax"] = f"1 + (({ds_trap_syn} >= 10) ? 1 : 0) + (({ds_trap_syn} >= 25) ? 1 : 0)"
+        ds["aurastate"] = "progressive_cold"
+        ds["auralencalc"] = "12"
+        ds["aurastat1"] = "item_kickdamage"
+        ds["aurastatcalc1"] = snap_boi
+        ds["aurastat2"] = ""
+        ds["aurastatcalc2"] = ""
+        ds["passivestat1"] = "item_pierce_cold_immunity"
+        ds["passivecalc1"] = "stat('item_pierce_cold_immunity'.accr)"
+        ds["passivestat2"] = "passive_cold_pierce"
+        ds["passivecalc2"] = "stat('passive_cold_pierce'.accr)"
+        ds["passivestat3"] = "passive_cold_mastery"
+        ds["passivecalc3"] = "stat('passive_cold_mastery'.accr)"
+        ds["passivestat4"] = ""
+        ds["passivecalc4"] = ""
+        ds["passivestat5"] = ""
+        ds["passivecalc5"] = ""
+        ds["passivestat6"] = ""
+        ds["passivecalc6"] = ""
+        ds["passivestat7"] = ""
+        ds["passivecalc7"] = ""
+        ds["sumskill1"] = "mon death sentry"
+        ds["sumsk1calc"] = "lvl"
+        ds["sumskill2"] = "Death Sentry"
+        ds["sumsk2calc"] = "lvl"
+        ds["sumskill3"] = "Blades of Ice"
+        ds["sumsk3calc"] = boi_m
+        ds["sumskill4"] = "Wake of Fire Sentry"
+        ds["sumsk4calc"] = "skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl)"
+        ds["sumskill5"] = "Ass Trap Charge Consume"
+        ds["sumsk5calc"] = snap_boi
+        ds["sumumod"] = ""
+        ds["Param1"] = "25"
+        ds["*Param1 Description"] = "# of shots"
+        ds["HitShift"] = "8"
+        ds["EType"] = "cold"
+        ds["EMin"] = "24"
+        ds["EMinLev1"] = "0"
+        ds["EMinLev2"] = "0"
+        ds["EMinLev3"] = "0"
+        ds["EMinLev4"] = "0"
+        ds["EMinLev5"] = "0"
+        ds["EMax"] = "38"
+        ds["EMaxLev1"] = "0"
+        ds["EMaxLev2"] = "0"
+        ds["EMaxLev3"] = "0"
+        ds["EMaxLev4"] = "0"
+        ds["EMaxLev5"] = "0"
+        ds["calc1"] = "100 + 18*max(0,lvl-1) + 24*max(0,lvl-5) + 34*max(0,lvl-10) + 48*max(0,lvl-15)"
+        ds["*calc1 desc"] = "Base Cold Damage Level Ramp (%)"
+        ds["calc3"] = "9*skill('Wake of Fire Sentry'.blvl) + 9*skill('Lightning Sentry'.blvl) + 6*skill('Blades of Ice'.blvl)"
+        ds["*calc3 desc"] = "Total Synergy Bonus (%)"
+        ds["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
+
+    ds_shots_calc = f"par8 + (({ds_c} >= 2) ? (15 + {boi_m} / 2) : 0)"
+    if "mon death sentry" in by_name:
+        mds = by_name["mon death sentry"]
+        mds["srvstfunc"] = ""
+        mds["srvdofunc"] = ""
+        mds["srvmissile"] = "frozenhorror arcticblast1"
+        mds["srvmissilea"] = ""
+        mds["cltstfunc"] = ""
+        mds["cltdofunc"] = ""
+        mds["cltmissile"] = "frozenhorror arcticblast1"
+        mds["cltmissilea"] = ""
+        mds["cltmissileb"] = ""
+        mds["cltcalc1"] = ""
+        mds["aurarangecalc"] = ""
+        mds["prgsound"] = ""
+        mds["castoverlay"] = ""
+        mds["TargetCorpse"] = ""
+        mds["anim"] = "SQ"
+        mds["seqtrans"] = "SQ"
+        mds["monanim"] = "S2"
+        mds["UseAttackRate"] = "1"
+        mds["Param8"] = "25"
+        mds["calc1"] = "skill('Death Sentry'.blvl)"
+        mds["*calc1 desc"] = "Ice Sentry Skill Level"
+        mds["calc2"] = "100 + 18*max(0,clc1-1) + 24*max(0,clc1-5) + 34*max(0,clc1-10) + 48*max(0,clc1-15)"
+        mds["*calc2 desc"] = "Ice Sentry Level Multiplier (%)"
+        mds["calc3"] = "100 + 9*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl)"
+        mds["*calc3 desc"] = "Synergy Multiplier (%)"
+        mds["calc4"] = ds_shots_calc
+
+    if "death sentry" in by_desc:
+        ds_d = by_desc["death sentry"]
+        ds_d["descdam"] = "5"
+        ds_d["descline1"] = "75"
+        ds_d["desctexta1"] = "StrSkill6"
+        ds_d["desctextb1"] = ""
+        ds_d["desccalca1"] = "enma"
+        ds_d["desccalcb1"] = "exma"
+        ds_d["descline2"] = ""
+        ds_d["desctexta2"] = ""
+        ds_d["desccalca2"] = ""
+        ds_d["desccalcb2"] = ""
+        ds_d["dsc2line1"] = "36"
+        ds_d["dsc2texta1"] = "StrSkill3"
+        ds_d["dsc2textb1"] = ""
+        ds_d["dsc2calca1"] = "usmc"
+        ds_d["dsc2calcb1"] = "256"
+        ds_d["dsc2line2"] = "74"
+        ds_d["dsc2texta2"] = "ESkillShoots"
+        ds_d["dsc2textb2"] = ""
+        ds_d["dsc2calca2"] = "par1"
+        ds_d["dsc2calcb2"] = ""
+        ds_d["dsc2line3"] = "74"
+        ds_d["dsc2texta3"] = "ModIceSentryMaxTraps"
+        ds_d["dsc2calca3"] = f"1 + (({ds_trap_syn} >= 10) ? 1 : 0) + (({ds_trap_syn} >= 25) ? 1 : 0)"
+        ds_d["dsc2calcb3"] = ""
+        ds_d["dsc2line4"] = "74"
+        ds_d["dsc2texta4"] = "ModIceSentryChargedShots"
+        ds_d["dsc2calca4"] = f"par1 + 15 + {boi_m} / 2"
+        ds_d["dsc2calcb4"] = ""
+        ds_d["dsc3line1"] = "40"
+        ds_d["dsc3texta1"] = "Sksyn"
+        ds_d["dsc3textb1"] = "Skillname277"
+        ds_d["dsc3calca1"] = "2"
+        ds_d["dsc3line2"] = "76"
+        ds_d["dsc3texta2"] = "Colddplev"
+        ds_d["dsc3textb2"] = "Skillname263"
+        ds_d["dsc3calca2"] = "9"
+        ds_d["dsc3calcb2"] = ""
+        ds_d["dsc3line3"] = "76"
+        ds_d["dsc3texta3"] = "Colddplev"
+        ds_d["dsc3textb3"] = "Skillname272"
+        ds_d["dsc3calca3"] = "9"
+        ds_d["dsc3calcb3"] = ""
+        ds_d["dsc3line4"] = "76"
+        ds_d["dsc3texta4"] = "Colddplev"
+        ds_d["dsc3textb4"] = "Skillname275"
+        ds_d["dsc3calca4"] = "6"
+        ds_d["dsc3calcb4"] = ""
+
+    # Step 5b: Omnislash (Royal Strike, Id 280) — Level 40 Martial Arts Capstone standalone Whirlwind (non-finisher)
+    #   - Multi-strike weapon finishing move (srvstfunc=39, srvdofunc=1, cltstfunc=1, cltdofunc=1)
+    #   - Driven by anim/seqtrans='A2' (AIA2* configured in animdata.d2 with 4 rapid ev=1 melee hit triggers; S3 has no valid Assassin melee mode)
+    #   - Usable with all melee weapons (itypea1=mele, weapsel=""): 1H weapons, dual claws (alternating hands via ht2_sequence), and 2H weapons
+    #   - Natively releases built-up Martial Arts charges on each hit (3 -> 2 -> 1 -> 0 via srvdofunc=1 + finishing=1, prgchargesconsumed=1)
+    #   - Innate Enhanced Damage: 36% + 6%/lvl (RAMP34 -> +150% ED at Lvl 20), applied via srvstfunc=39 self-buff (aurastate='dragonflight')
+    #   - Synergies: +8%/lvl from Shuriken (Inferno Sentry, +160% at 20) and +5%/lvl from Dragon Claw (+100% at 20) -> +410% max ED
+    #   - Innate Attack Rating: +50% base + 15%/lvl (+335% AR at Lvl 20), applied via aurastat2='item_tohit_percent'
+    if "Royal Strike" in by_name:
+        rs = by_name["Royal Strike"]
+        rs["srvstfunc"] = "37"
+        rs["srvdofunc"] = "13"
+        rs["cltstfunc"] = "53"
+        rs["cltdofunc"] = "21"
+        rs["Kick"] = ""
+        rs["stsound"] = "assassin_kick_1"
+        rs["weaponsnd"] = "1"
+        rs["srvprgfunc1"] = ""
+        rs["srvprgfunc2"] = ""
+        rs["srvprgfunc3"] = ""
+        rs["cltprgfunc1"] = ""
+        rs["cltprgfunc2"] = ""
+        rs["cltprgfunc3"] = ""
+        rs["prgcalc1"] = ""
+        rs["prgcalc2"] = ""
+        rs["prgcalc3"] = ""
+        rs["srvmissilea"] = ""
+        rs["srvmissileb"] = ""
+        rs["srvmissilec"] = ""
+        rs["cltmissilea"] = ""
+        rs["cltmissileb"] = ""
+        rs["cltmissilec"] = ""
+        rs["aurastate"] = ""
+        rs["auralencalc"] = ""
+        rs["aurarangecalc"] = ""
+        rs["aurastat1"] = ""
+        rs["aurastatcalc1"] = ""
+        rs["aurastat2"] = ""
+        rs["aurastatcalc2"] = ""
+        rs["enhanceable"] = "1"
+        rs["attackrank"] = "2"
+        rs["range"] = "h2h"
+        rs["itypea1"] = "mele"
+        rs["weapsel"] = ""
+        rs["anim"] = "A2"
+        rs["seqtrans"] = "A2"
+        rs["monanim"] = "xx"
+        rs["seqnum"] = ""
+        rs["UseAttackRate"] = "1"
+        rs["TargetableOnly"] = "1"
+        rs["SearchEnemyXY"] = "1"
+        rs["AttackNoMana"] = "1"
+        rs["KeepCursorStateOnKill"] = "1"
+        rs["leftskill"] = "1"
+        rs["rightskill"] = "1"
+        rs["minmana"] = "1"
+        rs["manashift"] = "8"
+        rs["mana"] = "4"
+        rs["lvlmana"] = "0"
+        rs["interrupt"] = "1"
+        rs["progressive"] = ""
+        rs["finishing"] = "1"
+        rs["prgchargestocast"] = "0"
+        rs["prgchargesconsumed"] = "1"
+        # srvdofunc=13 (Zeal/Fend engine): weapon damage, Param2 = % anim frame rollback, calc1 = # of hits.
+        # NOTE: srvdofunc 13 does not release Martial Arts charges; srvdofunc 42 (multi-hit) hard-codes boot damage.
+        rs["Param1"] = ""
+        rs["*Param1 Description"] = ""
+        rs["Param2"] = "70"
+        rs["*Param2 Description"] = "% Anim frame rollback"
+        rs["Param3"] = "36"
+        rs["*Param3 Description"] = "Damage % baseline"
+        rs["Param4"] = "6"
+        rs["*Param4 Description"] = "Damage % per level"
+        rs["Param5"] = "3"
+        rs["*Param5 Description"] = "# of hits Min"
+        rs["Param6"] = "6"
+        rs["*Param6 Description"] = "# of hits Max"
+        rs["Param7"] = "8"
+        rs["*Param7 Description"] = "Damage synergy % from Shuriken"
+        rs["Param8"] = "5"
+        rs["*Param8 Description"] = "Damage synergy % from Dragon Claw"
+        rs["calc1"] = "min(par5 + (lvl - 1) / 5, par6)"
+        rs["*calc1 desc"] = "# of hits"
+        rs["calc2"] = f"{RAMP34} + skill('Inferno Sentry'.blvl)*par7 + skill('Dragon Claw'.blvl)*par8"
+        rs["*calc2 desc"] = "Damage %"
+        rs["calc3"] = ""
+        rs["*calc3 desc"] = ""
+        rs["calc4"] = "0"
+        rs["*calc4 desc"] = "% Damage Dealt as Elemental"
+        rs["ToHit"] = "50"
+        rs["LevToHit"] = "15"
+        rs["HitShift"] = "8"
+        rs["SrcDam"] = "128"
+
+        # --- Omnislash = standalone Whirlwind (neither a charge-up nor a finishing move) ---
+        # Role: what the Assassin casts when she does NOT want to release her held orbs.  The held-orb stats
+        # (fire / cold / lightning damage, +% damage, etc.) are plain unit stats, so every spin hit carries them.
+        # Whirlwind's own start-up applies an orb-aware resistance-shredding debuff to nearby monsters via the
+        # same escalation hook the Barbarian Whirlwind uses (srvdofunc 168 casts the hidden skill in calc6).
+        for k in ("srvprgfunc1", "srvprgfunc2", "srvprgfunc3", "cltprgfunc1", "cltprgfunc2", "cltprgfunc3",
+                  "aurastat1", "aurastatcalc1", "aurastat2", "aurastatcalc2", "aurastat3", "aurastatcalc3",
+                  "aurastat4", "aurastatcalc4", "aurastat5", "aurastatcalc5", "aurastat6", "aurastatcalc6",
+                  "prgcalc1", "prgcalc2", "prgcalc3", "finishing", "prgchargesconsumed", "prgchargestocast",
+                  "progressive", "aurarangecalc", "calc3", "calc4", "calc5", "calc7",
+                  "Param5", "Param6", "*Param5 Description", "*Param6 Description"):
+            rs[k] = ""
+        rs["srvstfunc"] = "38"
+        rs["srvdofunc"] = "168"
+        rs["srvstopfunc"] = "1"
+        rs["cltstfunc"] = "31"
+        rs["cltdofunc"] = "45"
+        rs["cltstopfunc"] = "1"
+        rs["stsuccessonly"] = "1"
+        rs["stsound"] = "barbarian_whirlwind"
+        rs["aurastate"] = "whirlwind"
+        rs["range"] = "none"
+        rs["weapsel"] = "2"
+        rs["itypea1"] = "mele"
+        rs["itypeb1"] = ""
+        rs["anim"] = "SQ"
+        rs["seqtrans"] = "A1"
+        rs["seqnum"] = "10"
+        rs["attackrank"] = "3"
+        rs["Kick"] = ""
+        rs["Param1"] = "36"
+        rs["*Param1 Description"] = "Damage % baseline"
+        rs["Param2"] = "6"
+        rs["*Param2 Description"] = "Damage % per level"
+        rs["Param7"] = "8"
+        rs["*Param7 Description"] = "Damage synergy % from Shuriken"
+        rs["Param8"] = "5"
+        rs["*Param8 Description"] = "Damage synergy % from Dragon Claw"
+        rs["calc1"] = f"{RAMP34} + skill('Inferno Sentry'.blvl)*par7 + skill('Dragon Claw'.blvl)*par8"
+        rs["*calc1 desc"] = "Damage %"
+        rs["calc2"] = "2"
+        rs["*calc2 desc"] = "Escalation 1 Skill Level"
+        rs["calc4"] = "0"
+        rs["calc5"] = "0"
+        rs["calc7"] = "0"
+        rs["*calc3 desc"] = "Chance to Cast Escalation 1 Skill"
+        rs["calc3"] = "100"
+        rs["*calc4 desc"] = "Escalation 2 Skill Level"
+        rs["*calc5 desc"] = "Chance To Cast Escalation 2 Skill"
+        rs["*calc7desc"] = "Escalation 2 Skill Id"
+
+        # Hidden skill cast by Whirlwind on every spin tick: temporary elemental resistance shred on nearby enemies.
+        #   Each element's shred scales with the points in that element's charge-up skill (x2) plus Whirlwind's
+        #   own level (x1) - independent of whether orbs are currently held.
+        #   Lasts 3s after the last tick, so it outlives the spin by a few seconds.
+        if "Ass Whirl Shred" not in by_name:
+            max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
+            # Clone the stock Battle Cry row (srvdofunc 68 + 'battlecry' missile): a warcry-style burst around the
+            # caster that applies its aura state to every enemy it touches, with no target needed -> castable from
+            # Whirlwind's escalation hook.  (Curse-style srvdofunc 30 needs a target and never reached monsters.)
+            # Made hidden and class-less.
+            sk_shred = dict(by_name["Battle Cry"])
+            for k in ("charclass", "skilldesc", "reqskill1", "reqskill2", "reqskill3", "leftskill", "rightskill",
+                      "stsound", "stsoundclass", "ItemCastSound", "cost mult", "cost add", "mana", "lvlmana",
+                      "localdelay", "globaldelay", "Param1", "Param2", "Param3", "Param4", "Param5", "Param6",
+                      "*Param1 Description", "*Param2 Description", "*Param3 Description", "*Param4 Description",
+                      "*Param5 Description", "*Param6 Description"):
+                if k in sk_shred:
+                    sk_shred[k] = ""
+            for n_clear in range(1, 7):
+                sk_shred[f"aurastat{n_clear}"] = ""
+                sk_shred[f"aurastatcalc{n_clear}"] = ""
+            sk_shred["skill"] = "Ass Whirl Shred"
+            sk_shred["*Id"] = str(max_sid + 1)
+            sk_shred["srvdofunc"] = "68"
+            sk_shred["srvmissilea"] = "battlecry"
+            sk_shred["aurafilter"] = "98304"
+            sk_shred["auratargetstate"] = "ass_whirl_shred"
+            sk_shred["auralencalc"] = "75"
+            sk_shred["aurarangecalc"] = ""
+            for n_idx, (res_stat, orb_stat, orb_skill) in enumerate(
+                (
+                    ("fireresist", "progressive_fire", "Fists of Fire"),
+                    ("coldresist", "progressive_cold", "Blades of Ice"),
+                    ("lightresist", "progressive_lightning", "Claws of Thunder"),
+                ),
+                start=1,
+            ):
+                sk_shred[f"aurastat{n_idx}"] = res_stat
+                sk_shred[f"aurastatcalc{n_idx}"] = f"-(2*skill('{orb_skill}'.blvl) + skill('Royal Strike'.blvl))"
+            # Visuals toned down: no client-side Battle Cry burst/overlay; only the state's monster tint remains.
+            for k in ("cltdofunc", "cltstfunc", "cltmissilea", "cltmissileb", "cltmissilec", "castoverlay",
+                      "srvoverlay", "tgtoverlay", "ItemCastOverlay", "*cltcalc1 desc"):
+                if k in sk_shred:
+                    sk_shred[k] = ""
+            sk_shred["range"] = "none"
+            sk_shred["monanim"] = "xx"
+            sk_shred["ItemEffect"] = "1"
+            sk_shred["reqlevel"] = "1"
+            sk_shred["InGame"] = "1"
+            sk_shred["HitShift"] = "8"
+            sk_shred["*eol"] = "0"
+            s_rows.append(sk_shred)
+            by_name["Ass Whirl Shred"] = sk_shred
+        rs["calc2"] = "10"  # cast level (the cloned Battle Cry row allows levels up to 20)
+        rs["calc6"] = by_name["Ass Whirl Shred"]["*Id"]
+        rs["*calc6 desc"] = "Escalation 1 Skill Id"
+
+        # Experiment: stop the engine from swapping Whirlwind for a plain attack when the cursor is on a monster.
+        rs["TargetableOnly"] = ""
+        rs["AttackNoMana"] = ""
+        rs["SearchEnemyXY"] = ""
+
+
+    if "royal strike" in by_desc:
+        rs_d = by_desc["royal strike"]
+        rs_d["descdam"] = "7"
+        rs_d["ddam calc1"] = "clc1"
+        rs_d["p1dmelem"] = ""
+        rs_d["p1dmmin"] = ""
+        rs_d["p1dmmax"] = ""
+        rs_d["p2dmelem"] = ""
+        rs_d["p2dmmin"] = ""
+        rs_d["p2dmmax"] = ""
+        rs_d["p3dmelem"] = ""
+        rs_d["p3dmmin"] = ""
+        rs_d["p3dmmax"] = ""
+        rs_d["descatt"] = "2"
+        rs_d["descmissile1"] = ""
+        rs_d["descmissile2"] = ""
+        rs_d["descmissile3"] = ""
+        rs_d["descline1"] = "74"
+        rs_d["desctexta1"] = "StrSkillDamagePercent"
+        rs_d["desctextb1"] = ""
+        rs_d["desccalca1"] = "clc1"
+        rs_d["desccalcb1"] = ""
+        rs_d["descline2"] = "74"
+        rs_d["desctexta2"] = "StrSkill22"
+        rs_d["desctextb2"] = ""
+        rs_d["desccalca2"] = "toht"
+        rs_d["desccalcb2"] = ""
+        rs_d["descline3"] = "74"
+        rs_d["desctexta3"] = "ModWhirlFireShred"
+        rs_d["desctextb3"] = ""
+        rs_d["desccalca3"] = "2*skill('Fists of Fire'.blvl) + skill('Royal Strike'.blvl)"
+        rs_d["desccalcb3"] = ""
+        rs_d["descline4"] = "74"
+        rs_d["desctexta4"] = "ModWhirlColdShred"
+        rs_d["desctextb4"] = ""
+        rs_d["desccalca4"] = "2*skill('Blades of Ice'.blvl) + skill('Royal Strike'.blvl)"
+        rs_d["desccalcb4"] = ""
+        rs_d["descline5"] = "74"
+        rs_d["desctexta5"] = "ModWhirlLightShred"
+        rs_d["desctextb5"] = ""
+        rs_d["desccalca5"] = "2*skill('Claws of Thunder'.blvl) + skill('Royal Strike'.blvl)"
+        rs_d["desccalcb5"] = ""
+        rs_d["dsc2line1"] = "36"
+        rs_d["dsc2texta1"] = "StrSkill3"
+        rs_d["dsc2calca1"] = "usmc"
+        rs_d["dsc2calcb1"] = "256"
+        rs_d["dsc3line1"] = "40"
+        rs_d["dsc3texta1"] = "Sksyn"
+        rs_d["dsc3textb1"] = "Skillname281"
+        rs_d["dsc3calca1"] = "2"
+        rs_d["dsc3line2"] = "76"
+        rs_d["dsc3texta2"] = "Damplev"
+        rs_d["dsc3textb2"] = "Skillname273"
+        rs_d["dsc3calca2"] = "par7"
+        rs_d["dsc3line3"] = "76"
+        rs_d["dsc3texta3"] = "Damplev"
+        rs_d["dsc3textb3"] = "Skillname261"
+        rs_d["dsc3calca3"] = "par8"
+        rs_d["dsc3line4"] = ""
+        rs_d["dsc3texta4"] = ""
+        rs_d["dsc3textb4"] = ""
+        rs_d["dsc3calca4"] = ""
+        rs_d["dsc3line5"] = ""
+        rs_d["dsc3texta5"] = ""
+        rs_d["dsc3textb5"] = ""
+        rs_d["dsc3calca5"] = ""
+
+    # Step 5c: Caltrops (Shock Field, Id 256, Lvl 1): physical ground spikes with level-scaled damage.
+    #   Damage (missile fields on 'shock field on ground'): 2-5 at Lvl 1 -> ~76-133 per second at Lvl 20.
+    #   Damage only (no slow): see the note in apply_skill_missile_updates.
+    if "Shock Field" in by_name:
+        sf = by_name["Shock Field"]
+        for k in ("EType", "EMin", "EMinLev1", "EMinLev2", "EMinLev3", "EMinLev4", "EMinLev5",
+                  "EMax", "EMaxLev1", "EMaxLev2", "EMaxLev3", "EMaxLev4", "EMaxLev5", "EDmgSymPerCalc",
+                  "Param8", "*Param8 Description"):
+            sf[k] = ""
+        sf["MinDam"] = "2"
+        sf["MaxDam"] = "5"
+        for _n, (_mn, _mx) in enumerate(((2, 4), (4, 7), (7, 11), (10, 16), (14, 22)), start=1):
+            sf[f"MinLevDam{_n}"] = str(_mn)
+            sf[f"MaxLevDam{_n}"] = str(_mx)
+        sf["DmgSymPerCalc"] = ""
+        for k in ("aurafilter", "auratargetstate", "auralencalc", "aurastat1", "aurastatcalc1"):
+            sf[k] = ""
+
+    if "shock field" in by_desc:
+        sf_d = by_desc["shock field"]
+        sf_d["descdam"] = ""
+        sf_d["descmissile1"] = ""
+        sf_d["descline2"] = "75"
+        sf_d["desctexta2"] = "ModCaltropsDamage"
+        sf_d["desccalca2"] = "2 + 2*max(0,min(lvl,8)-1) + 4*max(0,min(lvl,16)-8) + 7*max(0,min(lvl,22)-16) + 10*max(0,min(lvl,28)-22) + 14*max(0,lvl-28)"
+        sf_d["desccalcb2"] = "5 + 4*max(0,min(lvl,8)-1) + 7*max(0,min(lvl,16)-8) + 11*max(0,min(lvl,22)-16) + 16*max(0,min(lvl,28)-22) + 22*max(0,lvl-28)"
+        sf_d["descline4"] = ""
+        sf_d["desctexta4"] = ""
+        sf_d["desccalca4"] = ""
+        for k in ("dsc3line3", "dsc3texta3", "dsc3textb3", "dsc3calca3",
+                  "dsc3line4", "dsc3texta4", "dsc3textb4", "dsc3calca4"):
+            sf_d[k] = ""
+
+    # Step 5d: Shuriken (Inferno Sentry, Id 272, Lvl 40 capstone of the Blades line): a heavy, slow-cooldown bouncing
+    # throwing star modeled on the reworked Blessed Hammer.
+    #   - Chain mechanics: srvdofunc 26 / cltdofunc 27, radius par1 = 20 sub-tiles, hits = ln34/par5 = 6 at Lvl 1 -> 10 at Lvl 20
+    #   - No casting delay / cooldown, 20 Mana (+1/lvl)
+    #   - 100 percent weapon damage (SrcDam 128) + flat physical 30-45 at Lvl 1 -> ~261-338 at Lvl 20, +6 percent per Blade Sentinel / Blade Fury / Blade Shield level
+    #   - No stun.
+    if "Inferno Sentry" in by_name:
+        sh = by_name["Inferno Sentry"]
+        for k in ("srvstfunc", "summon", "pettype", "petmax", "summode", "sumumod", "stsoundclass",
+                  "passivestate", "passivestat1", "passivecalc1", "passivestat2", "passivecalc2",
+                  "passivestat3", "passivecalc3", "passivestat4", "passivecalc4", "passivestat5", "passivecalc5",
+                  "sumskill1", "sumsk1calc", "sumskill2", "sumsk2calc", "sumskill3", "sumsk3calc",
+                  "sumskill4", "sumsk4calc", "sumskill5", "sumsk5calc", "LineOfSight", "UseAttackRate",
+                  "EType", "EMin", "EMinLev1", "EMinLev2", "EMinLev3", "EMinLev4", "EMinLev5",
+                  "EMax", "EMaxLev1", "EMaxLev2", "EMaxLev3", "EMaxLev4", "EMaxLev5", "EDmgSymPerCalc",
+                  "Param2", "*Param2 Description", "*Param3 Description", "*Param4 Description"):
+            if k in sh:
+                sh[k] = ""
+        sh["srvdofunc"] = "26"
+        sh["srvmissilea"] = "throwingstar"
+        sh["srvmissileb"] = "throwingstar"
+        sh["srvmissilec"] = "throwingstar"
+        sh["cltdofunc"] = "27"
+        sh["cltmissilea"] = "throwingstar"
+        sh["cltmissileb"] = "throwingstar"
+        sh["cltmissilec"] = "throwingstar"
+        sh["aurarangecalc"] = "par1"
+        sh["stsound"] = "assassin_bladefury_throw_1"
+        sh["ItemCastSound"] = "assassin_bladefury_throw_1"
+        sh["ItemEffect"] = "1"
+        sh["KeepCursorStateOnKill"] = "1"
+        sh["range"] = "none"
+        sh["anim"] = "SC"
+        sh["seqtrans"] = "SC"
+        sh["monanim"] = "xx"
+        sh["leftskill"] = "1"
+        sh["rightskill"] = "1"
+        sh["localdelay"] = ""
+        sh["manashift"] = "8"
+        sh["mana"] = "20"
+        sh["lvlmana"] = "1"
+        sh["HitShift"] = "8"
+        sh["Param1"] = "20"
+        sh["*Param1 Description"] = "Radius of jump to next target"
+        sh["Param3"] = "24"
+        sh["*Param3 Description"] = "# of target jump hits baseline"
+        sh["Param4"] = "1"
+        sh["*Param4 Description"] = "# of target jump hits per level"
+        sh["Param5"] = "4"
+        sh["*Param5 Description"] = "Every # levels, increase target jump"
+        sh["Param8"] = "6"
+        sh["*Param8 Description"] = "Damage synergy"
+        sh["calc1"] = "ln34/par5"
+        sh["*calc1 desc"] = "# of target jump hits"
+        sh["SrcDam"] = "128"  # full weapon damage (128 = 100 percent), like Blade Fury / Blade Sentinel
+        sh["MinDam"] = "30"
+        sh["MaxDam"] = "45"
+        for _n, (_mn, _mx) in enumerate(zip((5, 12, 25, 38, 50,), (7, 15, 31, 47, 62,)), start=1):
+            sh[f"MinLevDam{_n}"] = str(_mn)
+            sh[f"MaxLevDam{_n}"] = str(_mx)
+        sh["DmgSymPerCalc"] = "(skill('Blade Sentinel'.blvl)+skill('Blade Fury'.blvl)+skill('Blade Shield'.blvl))*par8"
+    if "inferno sentry" in by_desc:
+        sh_d = by_desc["inferno sentry"]
+        # Same display type Blade Fury uses (descdam 24 = physical skill damage incl. weapon damage), so the
+        # character screen shows the skill's damage; pnma/pxma include the weapon portion and synergies.
+        sh_d["descdam"] = "24"
+        sh_d["descmissile1"] = ""
+        _set_dsc_line(sh_d, "desc", 1, "75", "StrSkill4", "", "pnma", "pxma")
+        _set_dsc_line(sh_d, "desc", 2, "74", "StrSkill11", "", "ln34/par5", "")
+        _set_dsc_line(sh_d, "desc", 3, "74", "WeapDamsk", "", "128*100/128", "")
+        for _i in range(4, 6):
+            _set_dsc_line(sh_d, "desc", _i, "", "", "", "", "")
+        _set_dsc_line(sh_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
+        for _i in range(2, 6):
+            _set_dsc_line(sh_d, "dsc2", _i, "", "", "", "", "")
+        _clear_dsc3_synergies(sh_d, "Skillname273")
+        _set_dsc_line(sh_d, "dsc3", 2, "76", "Damplev", "Skillname258", "par8", "")
+        _set_dsc_line(sh_d, "dsc3", 3, "76", "Damplev", "Skillname267", "par8", "")
+        _set_dsc_line(sh_d, "dsc3", 4, "76", "Damplev", "Skillname278", "par8", "")
+
+    # Step 5e: Flow (Psychic Hammer slot, Id 253) - passive chance NOT to consume orbs when using a Finishing Move.
+    #   Uses the vanilla (Mosaic) stat item_charge_noconsume: 20% at Lvl 1 -> 50% at Lvl 20 (30/19 per level),
+    #   capped at 75% with lots of +skills.  (Trap casts always clear orbs; a trap keep-roll was tried and could not be
+    #   made to work.)
+    if "Psychic Hammer" in by_name:
+        fl = by_name["Psychic Hammer"]
+        for k in ("srvstfunc", "srvdofunc", "stsuccessonly", "stsound", "tgtoverlay", "tgtsound", "castoverlay",
+                  "cltstfunc", "cltdofunc", "UseAttackRate", "LineOfSight", "TargetableOnly", "SearchEnemyNear",
+                  "KeepCursorStateOnKill", "rightskill", "leftskill", "mana", "lvlmana", "minmana", "manashift",
+                  "calc1", "*calc1 desc", "calc2", "*calc2 desc", "calc3", "*calc3 desc", "calc4", "*calc4 desc",
+                  "Param1", "*Param1 Description", "Param3", "*Param3 Description", "Param4", "*Param4 Description",
+                  "Param5", "*Param5 Description", "Param6", "*Param6 Description",
+                  "MinDam", "MaxDam", "EType", "EMin", "EMax") + tuple(
+                      f"{p}{n}" for p in ("MinLevDam", "MaxLevDam", "EMinLev", "EMaxLev") for n in range(1, 6)):
+            if k in fl:
+                fl[k] = ""
+        fl["range"] = "none"
+        fl["passive"] = "1"
+        fl["aitype"] = "10"
+        fl["UseAttackRate"] = "1"
+        fl["leftskill"] = "0"
+        fl["rightskill"] = "0"
+        fl["minmana"] = "0"
+        fl["manashift"] = "8"
+        fl["mana"] = "0"
+        fl["lvlmana"] = "0"
+        fl["passivestate"] = "ass_flow_passive"  # every passive skill in D2R requires a passivestate to attach passivestat1..5
+        fl["passivestat1"] = "item_charge_noconsume"
+        fl["passivecalc1"] = "min(75, 20 + (lvl-1)*30/19)"
+        fl["HitShift"] = "8"
+    if "psychic hammer" in by_desc:
+        fl_d = by_desc["psychic hammer"]
+        fl_d["descdam"] = ""
+        _set_dsc_line(fl_d, "desc", 1, "74", "ModFlowNoConsume", "", "min(75, 20 + (lvl-1)*30/19)", "")
+        for _i in range(2, 6):
+            _set_dsc_line(fl_d, "desc", _i, "", "", "", "", "")
+        for _i in range(1, 6):
+            _set_dsc_line(fl_d, "dsc2", _i, "", "", "", "", "")
+
+    # Step 5f: Lethality (Claw Mastery slot, Id 252) - universal melee mastery: +Attack Rating % and +Damage % only
+    #   (no Critical/Deadly Strike).  Toned down from vanilla Claw Mastery (30+10 AR, 35+4 dmg, 0-25 crit):
+    #   +30% AR +8/lvl (182% at 20), +25% damage +4/lvl (101% at 20) -- just under the Barbarian weapon masteries.
+    if "Claw Mastery" in by_name:
+        lm = by_name["Claw Mastery"]
+        lm["passiveitype"] = "mele"  # all melee weapons (claws, daggers, swords, staves, polearms...)
+        lm["itypea1"] = ""
+        lm["passivestat1"] = "passive_mastery_melee_th"
+        lm["passivecalc1"] = "ln12"
+        lm["passivestat2"] = "passive_mastery_melee_dmg"
+        lm["passivecalc2"] = "ln34"
+        lm["passivestat3"] = ""
+        lm["passivecalc3"] = ""
+        lm["Param1"] = "30"
+        lm["Param2"] = "8"
+        lm["Param3"] = "25"
+        lm["Param4"] = "4"
+        for k in ("Param5", "*Param5 Description", "Param6", "*Param6 Description"):
+            lm[k] = ""
+    if "claw mastery" in by_desc:
+        lm_d = by_desc["claw mastery"]
+        _set_dsc_line(lm_d, "desc", 1, "74", "StrSkill22", "", "ln12", "")
+        _set_dsc_line(lm_d, "desc", 2, "74", "StrSkillDamagePercent", "", "ln34", "")
+        for _i in range(3, 6):
+            _set_dsc_line(lm_d, "desc", _i, "", "", "", "", "")
+
+    # Step 5g: Burst of Speed (Quickness, Id 258) & Fade (Id 267) - short strategic boosts instead of near-permanent buffs:
+    #   20s (500 frames) at Lvl 1 -> 40s (1000 frames) at Lvl 20, linear (+500/19 frames per level).
+    _short_buff_len = "par5+(lvl-1)*par6/19"
+    for _sk, _sd in (("Quickness", "quickness"), ("Fade", "fade")):
+        if _sk in by_name:
+            _b = by_name[_sk]
+            _b["Param5"] = "500"
+            _b["Param6"] = "500"
+            _b["*Param6 Description"] = "Duration added from Lvl 1 to Lvl 20"
+            _b["auralencalc"] = _short_buff_len
+        if _sd in by_desc:
+            by_desc[_sd]["desccalca1"] = _short_buff_len
+
+    # Step 6: Reorganize Assassin Tree 1 (Traps & Blades, SkillPage=1) and Tree 3 (Martial Arts, SkillPage=3)
+    # into the Staggered 8-Level Ladder (leaving Tree 2: Shadow Disciplines untouched):
+    #   - Tree 3 (Martial Arts, SkillPage=3):
+    #       Row 1 (Lvl 1):  Tiger Strike (Col 2), Dragon Talon (Col 3)
+    #       Row 2 (Lvl 8):  Fists of Fire (Col 1)
+    #       Row 3 (Lvl 16): Blades of Ice (Col 1, req Fists of Fire), Dragon Claw (Col 2, req Tiger Strike)
+    #       Row 4 (Lvl 24): Claws of Thunder (Col 1, req Blades of Ice), Dragon Tail (Col 3, req Dragon Talon)
+    #       Row 5 (Lvl 32): Cobra Strike (Col 2, req Dragon Claw), Dragon Flight (Col 3, req Dragon Tail)
+    #       Row 6 (Lvl 40): Omnislash / Royal Strike (Col 1, req Claws of Thunder & Cobra Strike)
+    #   - Tree 1 (Traps & Blades, SkillPage=1):
+    #       Row 1 (Lvl 1):  Caltrops / Shock Field (Col 2), Blade Sentinel (Col 3)
+    #       Row 2 (Lvl 8):  Shrapnel Sentry / Fire Trauma (Col 2, req Caltrops)
+    #       Row 3 (Lvl 16): Fire Sentry / Wake of Fire Sentry (Col 1, req Shrapnel Sentry), Blade Fury (Col 3, req Blade Sentinel)
+    #       Row 4 (Lvl 24): Ice Sentry / Death Sentry (Col 1, req Fire Sentry)
+    #       Row 5 (Lvl 32): Lightning Sentry (Col 1, req Ice Sentry), Blade Shield (Col 3, req Blade Fury)
+    #       Row 6 (Lvl 40): Soul Siphon Sentry / Charged Bolt Sentry (Col 2, req Shrapnel Sentry & Blade Shield),
+    #                       Shuriken / Inferno Sentry (Col 3, req Blade Shield)
+    ass_tree_layout = [
+        # (skill_name, skilldesc_name, reqlevel, page, row, col, reqskill1, reqskill2)
+        ("Shock Field", "shock field", "1", "1", "1", "2", "", ""),
+        ("Blade Sentinel", "blade sentinel", "1", "1", "1", "3", "", ""),
+        ("Fire Trauma", "fire trauma", "8", "1", "2", "2", "Shock Field", ""),
+        ("Wake of Fire Sentry", "wake of fire sentry", "16", "1", "3", "1", "Fire Trauma", ""),
+        ("Blade Fury", "blade fury", "16", "1", "3", "3", "Blade Sentinel", ""),
+        ("Death Sentry", "death sentry", "24", "1", "4", "1", "Wake of Fire Sentry", ""),
+        ("Lightning Sentry", "lightning sentry", "32", "1", "5", "1", "Death Sentry", ""),
+        ("Blade Shield", "blade shield", "32", "1", "5", "3", "Blade Fury", ""),
+        ("Charged Bolt Sentry", "charged bolt sentry", "40", "1", "6", "2", "Fire Trauma", "Blade Shield"),
+        ("Inferno Sentry", "inferno sentry", "40", "1", "6", "3", "Blade Shield", ""),
+        ("Tiger Strike", "tiger strike", "1", "3", "1", "2", "", ""),
+        ("Dragon Talon", "dragon talon", "1", "3", "1", "3", "", ""),
+        ("Fists of Fire", "fists of fire", "8", "3", "2", "1", "", ""),
+        ("Blades of Ice", "blades of ice", "16", "3", "3", "1", "Fists of Fire", ""),
+        ("Dragon Claw", "dragon claw", "16", "3", "3", "2", "Tiger Strike", ""),
+        ("Claws of Thunder", "claws of thunder", "24", "3", "4", "1", "Blades of Ice", ""),
+        ("Dragon Tail", "dragon tail", "24", "3", "4", "3", "Dragon Talon", ""),
+        ("Cobra Strike", "cobra strike", "32", "3", "5", "2", "Dragon Claw", ""),
+        ("Dragon Flight", "dragon flight", "32", "3", "5", "3", "Dragon Tail", ""),
+        ("Royal Strike", "royal strike", "40", "3", "6", "1", "Claws of Thunder", "Cobra Strike"),
+    ]
+    for sk_name, desc_name, req_lvl, pg, s_row, s_col, req1, req2 in ass_tree_layout:
+        if sk_name in by_name:
+            sk_r = by_name[sk_name]
+            sk_r["reqlevel"] = req_lvl
+            sk_r["reqskill1"] = req1
+            sk_r["reqskill2"] = req2
+            sk_r["reqskill3"] = ""
+        if desc_name in by_desc:
+            d_r = by_desc[desc_name]
+            d_r["SkillPage"] = pg
+            d_r["SkillRow"] = s_row
+            d_r["SkillColumn"] = s_col
+            d_r["ListRow"] = pg
 
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
@@ -4113,7 +6401,7 @@ def build_skill_strings(cfg: dict) -> str:
         (0, "skillld154", "stuns nearby enemies and lowers their\nphysical and magic resistance"),
         (0, "skillsd155", "restores life"),
         (0, "skillld155", "restores life to you and your party"),
-        # Assassin Overhaul Strings (Shrapnel Sentry, Tiger Strike, Fire Sentry & Fists of Fire)
+        # Assassin Overhaul Strings (Shrapnel Sentry, Tiger Strike, Fire Sentry & Flamestrike)
         (0, "Skillname252", "Shrapnel Sentry"),
         (0, "Skillan252", "Shrapnel Sentry"),
         (0, "Skillsd252", "trap that fires spinning razor blades"),
@@ -4123,32 +6411,137 @@ def build_skill_strings(cfg: dict) -> str:
             "deploys a sentry that fires spinning razor blades at enemies\nconsumes Tiger Strike charges to increase\nshots, velocity, range, and open wounds",
         ),
         (61059, "ModShrapnelSentryMaxTraps", "Maximum Active Shrapnel Sentries: %d"),
-        (0, "Skillsd255", "Charge-up Skill - increases physical melee damage"),
+        (0, "Skillsd255", "Charge-up Skill - boosts melee damage and empowers Shrapnel Sentry"),
         (
             0,
             "Skillld255",
-            "Charge-up Skill\n\nincreases physical damage of melee attacks\nand builds up to 3 physical orbs on hit\nrelease orbs with a finishing move or Shrapnel Sentry",
+            "Charge-up Skill\n\nbuilds up to 3 physical orbs that boost melee damage\nrelease charges with a finishing move or cast Shrapnel Sentry",
         ),
+        (61064, "ModTigerStrikeOrb1", "Charge 1 Finisher - Shockwave Ring: %d-%d"),
+        (61065, "ModTigerStrikeOrb2", "Charge 2 Finisher - Heavy Shockwave: %d-%d"),
+        (61066, "ModTigerStrikeOrb3", "Charge 3 Finisher - Max Shockwave: %d-%d"),
+        (61067, "ModTigerStrikeHoldBuff", "Held Charge Bonus: +%d%% Damage per Orb"),
         (0, "Skillname263", "Fire Sentry"),
         (0, "Skillan263", "Fire Sentry"),
         (0, "Skillsd263", "trap that fires exploding fireballs"),
         (
             0,
             "Skillld263",
-            "deploys a sentry that fires exploding fireballs\nconsumes Fists of Fire charges to increase\nshots, range, velocity, and stun on impact",
+            "deploys a sentry that fires exploding fireballs\nconsumes Flamestrike charges to increase\nshots, range, velocity, and stun on impact",
         ),
         (61057, "ModFireSentryMaxTraps", "Maximum Active Fire Sentries: %d"),
         (61058, "ModFireSentryChargedShots", "Charged Shots (1+ Orbs): %d"),
-        (0, "Skillsd260", "Charge-up Skill - fire melee & explosive finishers"),
+        (0, "Skillname260", "Flamestrike"),
+        (0, "Skillan260", "Flamestrike"),
+        (0, "Skillsd260", "Charge-up Skill - adds fire damage and empowers Fire Sentry"),
         (
             0,
             "Skillld260",
-            "Charge-up Skill\n\nbuilds up to 3 fire orbs that add fire damage to melee attacks\nfinishing moves release 1 orb for a fire explosion, 2 orbs for\nburning ground, or 3 orbs for a crashing meteor\nor cast Fire Sentry to empower the trap",
+            "Charge-up Skill\n\nbuilds up to 3 fire orbs that add fire damage to melee attacks\nrelease charges with a finishing move or cast Fire Sentry",
         ),
         (61060, "ModFistsOfFireOrb1", "Charge 1 Finisher - Fire Explosion: %d-%d"),
         (61061, "ModFistsOfFireOrb2", "Charge 2 Finisher - Burning Ground: %d-%d per second"),
         (61062, "ModFistsOfFireOrb3", "Charge 3 Finisher - Crashing Meteor: %d-%d"),
         (61063, "ModFistsOfFireHoldBuff", "Held Charge Bonus: +%d-%d Fire Damage per Orb"),
+        (0, "Skillname262", "Soul Siphon Sentry"),
+        (0, "Skillan262", "Soul Siphon Sentry"),
+        (0, "Skillsd262", "trap that fires piercing unholy bolts"),
+        (
+            0,
+            "Skillld262",
+            "deploys a sentry that fires piercing unholy bolts\ndealing magic damage to enemies\nconsumes Cobra Strike charges to increase\nshots, velocity, range, and apply small-radius life tap",
+        ),
+        (0, "Skillsd266", "Charge-up Skill - shreds defense and empowers Soul Siphon Sentry"),
+        (
+            0,
+            "Skillld266",
+            "Charge-up Skill\n\nbuilds up to 3 soul orbs that shred monster defense per hit\nrelease charges with a finishing move or cast Soul Siphon Sentry",
+        ),
+        (61068, "ModCobraStrikeOrb1", "Charge 1 Finisher - Life Steal: %+d%% | Soul-Hex: -%d Defense"),
+        (61069, "ModCobraStrikeOrb2", "Charge 2 Finisher - Life & Mana Steal: %+d%% | Soul-Hex: -%d Defense"),
+        (61070, "ModCobraStrikeOrb3", "Charge 3 Finisher - Life & Mana Steal: %+d%% | Soul-Hex: -%d Defense"),
+        (61071, "ModCobraStrikeHoldBuff", "Held Charge Bonus: -%d to Monster Defense Per Hit per Orb"),
+        (61072, "ModSoulSiphonMaxTraps", "Maximum Active Soul Siphon Sentries: %d"),
+        (61073, "ModCobraSynergyPerLev", "%s: +%d%% Finisher Leech & Defense Shred per Level"),
+        (0, "Skillname277", "Ice Sentry"),
+        (0, "Skillan277", "Ice Sentry"),
+        (0, "Skillsd277", "trap that fires arctic blast streams"),
+        (
+            0,
+            "Skillld277",
+            "deploys a sentry that fires freezing arctic blast streams\nconsumes Blades of Ice charges to increase\nrange, duration, and freeze enemies solid in place",
+        ),
+        (0, "Skillsd275", "Charge-up Skill - adds cold damage and empowers Ice Sentry"),
+        (
+            0,
+            "Skillld275",
+            "Charge-up Skill\n\nbuilds up to 3 ice orbs that add cold damage to melee attacks\nrelease charges with a finishing move or cast Ice Sentry",
+        ),
+        (61074, "ModBladesOfIceOrb1", "Charge 1 Finisher - Ice Blast: %d-%d"),
+        (61075, "ModBladesOfIceOrb2", "Charge 2 Finisher - Ice Blast & Bolts: %d-%d"),
+        (61076, "ModBladesOfIceOrb3", "Charge 3 Finisher - Frozen Orb Bolt: %d-%d"),
+        (61077, "ModBladesOfIceHoldBuff", "Held Charge Bonus: +%d-%d Cold Damage per Orb"),
+        (61078, "ModIceSentryMaxTraps", "Maximum Active Ice Sentries: %d"),
+        (61079, "ModIceSentryChargedShots", "Charged Shots (2+ Orbs): %d"),
+        (0, "Skillname270", "Electrocute"),
+        (0, "Skillan270", "Electrocute"),
+        (0, "Skillsd270", "Charge-up Skill - adds lightning damage and empowers Lightning Sentry"),
+        (
+            0,
+            "Skillld270",
+            "Charge-up Skill\n\nbuilds up to 3 lightning orbs that add lightning damage to melee attacks\nrelease charges with a finishing move or cast Lightning Sentry",
+        ),
+        (0, "Skillsd272", "trap that shoots piercing lightning bolts"),
+        (
+            0,
+            "Skillld272",
+            "deploys a sentry that shoots piercing lightning bolts\nconsumes Electrocute charges to increase\nrange, duration, and blind enemies with searing flashes",
+        ),
+        (61080, "ModClawsOfThunderOrb1", "Charge 1 Finisher - Charged Bolts: %d-%d"),
+        (61081, "ModClawsOfThunderOrb2", "Charge 2 Finisher - Lightning Nova: %d-%d"),
+        (61082, "ModClawsOfThunderOrb3", "Charge 3 Finisher - Chain Lightning: %d-%d"),
+        (61083, "ModClawsOfThunderHoldBuff", "Held Charge Bonus: +%d-%d Lightning Damage per Orb"),
+        (61084, "ModLightningSentryMaxTraps", "Maximum Active Lightning Sentries: %d"),
+        (61085, "ModLightningSentryChargedShots", "Charged Shots (2+ Orbs): %d"),
+        (61090, "ModWhirlFireShred", "Nearby Enemies: -%d%% Fire Resistance"),
+        (61091, "ModWhirlColdShred", "Nearby Enemies: -%d%% Cold Resistance"),
+        (61092, "ModWhirlLightShred", "Nearby Enemies: -%d%% Lightning Resistance"),
+        (61093, "ModCaltropsDamage", "Physical Damage per Second: %d-%d"),
+        (61094, "ModCaltropsSlow", "Slows Enemies by %d%%"),
+        (61095, "ModShurikenDamage", "Adds Physical Damage per Hit: %d-%d"),
+        (61096, "ModFlowNoConsume", "Chance Not to Consume Orbs when Using a Finishing Move: %d%%"),
+        (0, "Skillname254", "Flow"),
+        (0, "Skillan254", "Flow"),
+        (0, "Skillsd254", "Passive - chance to keep your orbs when using a finishing move"),
+        (0, "Skillld254", "Passive\n\ngives a chance that using a finishing move\ndoes not consume the orbs you are holding"),
+        (0, "Skillname253", "Lethality"),
+        (0, "Skillan253", "Lethality"),
+        (0, "Skillsd253", "Passive - improves attack rating and damage with melee weapons"),
+        (0, "Skillld253", "Passive\n\nimproves your attack rating and damage\nwith all melee weapons"),
+        (0, "Skillname257", "Caltrops"),
+        (0, "Skillan257", "Caltrops"),
+        (0, "Skillsd257", "scatters spiked caltrops that damage enemies"),
+        (
+            0,
+            "Skillld257",
+            "throws a cluster of spiked caltrops onto the ground\nthat damage enemies walking over them",
+        ),
+        (0, "Skillname273", "Shuriken"),
+        (0, "Skillan273", "Shuriken"),
+        (0, "Skillsd273", "hurls a heavy shuriken that bounces between enemies"),
+        (
+            0,
+            "Skillld273",
+            "hurls a heavy razor-sharp shuriken that bounces\nbetween nearby enemies, slicing through each\nfor heavy physical damage",
+        ),
+        (0, "Skillname281", "Omnislash"),
+        (0, "Skillan281", "Omnislash"),
+        (0, "Skillsd281", "Spin through nearby enemies while keeping your held orbs"),
+        (
+            0,
+            "Skillld281",
+            "Does not release orbs\n\nspin through nearby enemies, striking with your weapon\nand any held orb damage; enemies near you\ntemporarily lose elemental resistance",
+        ),
     ]
     entries = upsert_string_entries(entries, updates)
     return write_strings_json("skills.json", entries)
@@ -4875,6 +7268,167 @@ def _build_baskilltree_pair() -> str:
     return f"{dst_hd}, {dst_low}"
 
 
+def _build_asskilltree_pair() -> str:
+    """
+    Build data/hd/global/ui/spells/skill_trees/asskilltree.sprite and .lowend.sprite
+    with reorganized Frame 0 (Martial Arts, SkillPage=3) and Frame 2 (Traps & Blades, SkillPage=1),
+    leaving Frame 1 (Shadow Disciplines, SkillPage=2) untouched:
+      - Frame 0 (Martial Arts, SkillPage=3):
+          * Col 1 (x=109): Row 2 (Fists of Fire) -> Row 3 (Blades of Ice) -> Row 4 (Claws of Thunder) -> Row 6 (Omnislash)
+          * Col 2 (x=371): Row 1 (Tiger Strike) -> Row 3 (Dragon Claw) -> Row 5 (Cobra Strike) -> diagonal to Row 6 Col 1 (Omnislash)
+          * Col 3 (x=631): Row 1 (Dragon Talon) -> Row 4 (Dragon Tail) -> Row 5 (Dragon Flight)
+      - Frame 2 (Traps & Blades, SkillPage=1):
+          * Col 1 (x=109): Row 3 (Fire Sentry) -> Row 4 (Ice Sentry) -> Row 5 (Lightning Sentry)
+          * Col 2 (x=371): Row 1 (Caltrops) -> Row 2 (Shrapnel Sentry) -> Row 6 (Soul Siphon Sentry)
+          * Col 3 (x=631): Row 1 (Blade Sentinel) -> Row 3 (Blade Fury) -> Row 5 (Blade Shield) -> Row 6 (Shuriken)
+                           plus diagonal from Row 5 Col 3 (Blade Shield) to Row 6 Col 2 (Soul Siphon Sentry)
+    """
+    import os
+    import subprocess
+    from mod_builder.common import MOD_ROOT, VANILLA_ROOT
+
+    src_hd = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/skill_trees/asskilltree.sprite")
+    src_low = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/skill_trees/asskilltree.lowend.sprite")
+    with open(src_hd, "rb") as f:
+        raw_hd = bytearray(f.read())
+    with open(src_low, "rb") as f:
+        raw_low = bytearray(f.read())
+
+    hdr_hd = raw_hd[:40]
+    px_hd = bytearray(raw_hd[40:])
+    W, H, fw = 2691, 1169, 897
+
+    ROW_Y = {1: 125, 2: 305, 3: 481, 4: 662, 5: 841, 6: 1017}
+    COL_X = {1: 109, 2: 371, 3: 631}
+
+    def copy_rect(
+        src_f: int,
+        src_x: int,
+        src_y: int,
+        dst_f: int,
+        dst_x: int,
+        dst_y: int,
+        w: int,
+        h: int,
+        transparent_skip: bool = False,
+    ) -> None:
+        for dy in range(h):
+            sy = src_y + dy
+            ty = dst_y + dy
+            if not (0 <= sy < H and 0 <= ty < H):
+                continue
+            s_off = (sy * W + src_f * fw + src_x) * 4
+            d_off = (ty * W + dst_f * fw + dst_x) * 4
+            if not transparent_skip:
+                px_hd[d_off : d_off + w * 4] = raw_hd[40 + s_off : 40 + s_off + w * 4]
+            else:
+                for dx in range(w):
+                    if raw_hd[40 + s_off + dx * 4 + 3] > 0:
+                        px_hd[d_off + dx * 4 : d_off + (dx + 1) * 4] = raw_hd[
+                            40 + s_off + dx * 4 : 40 + s_off + (dx + 1) * 4
+                        ]
+
+    def clear_rect(dst_f: int, dst_x: int, dst_y: int, w: int, h: int) -> None:
+        zero = b"\x00" * (w * 4)
+        for dy in range(h):
+            ty = dst_y + dy
+            if 0 <= ty < H:
+                d_off = (ty * W + dst_f * fw + dst_x) * 4
+                px_hd[d_off : d_off + w * 4] = zero
+
+    def draw_box(dst_f: int, col: int, row: int) -> None:
+        x = COL_X[col]
+        y = ROW_Y[row]
+        top_h = min(135, H - y)
+        copy_rect(0, 371, 125, dst_f, x, y, 217, top_h, transparent_skip=True)
+        rem_h = min(21, max(0, H - (y + 135)))
+        if rem_h > 0:
+            copy_rect(0, 631, 976, dst_f, x, y + 135, 217, rem_h, transparent_skip=True)
+
+    def draw_v_arrow(dst_f: int, col: int, r_start: int, r_end: int) -> None:
+        x = COL_X[col] + 40
+        y_start = ROW_Y[r_start] + 152
+        y_end = ROW_Y[r_end] + 4
+        gap = y_end - y_start
+        if r_end == r_start + 1:
+            copy_rect(0, 149, 845 - gap, dst_f, x, y_start, 75, gap, transparent_skip=True)
+        else:
+            copy_rect(0, 411, 633, dst_f, x, y_start, 75, 20, transparent_skip=True)
+            body_h = (y_end - 25) - (y_start + 20)
+            for dy in range(body_h):
+                sy = 653 + int(dy * 342 / max(1, body_h - 1))
+                copy_rect(0, 411, sy, dst_f, x, y_start + 20 + dy, 75, 1, transparent_skip=True)
+            copy_rect(0, 411, 996, dst_f, x, y_end - 25, 75, 25, transparent_skip=True)
+
+    # 1. Rebuild Frame 0 (Martial Arts, SkillPage=3)
+    clear_rect(0, 0, 120, fw, H - 120)
+    for col, row in [(2, 1), (3, 1), (1, 2), (1, 3), (2, 3), (1, 4), (3, 4), (2, 5), (3, 5), (1, 6)]:
+        draw_box(0, col, row)
+
+    draw_v_arrow(0, 1, 2, 3)
+    draw_v_arrow(0, 1, 3, 4)
+    draw_v_arrow(0, 2, 1, 3)
+    draw_v_arrow(0, 2, 3, 5)
+    draw_v_arrow(0, 1, 4, 6)
+    # Cobra Strike (Col 2, Row 5) -> Omnislash (Col 1, Row 6): down-left diagonal (same art as Frame 2's Blade Shield -> Soul Siphon)
+    copy_rect(1, 260, 180, 0, 260, 892, 109, 134, transparent_skip=True)
+    draw_v_arrow(0, 3, 1, 4)
+    draw_v_arrow(0, 3, 4, 5)
+
+    # 2. Rebuild Frame 2 (Traps & Blades, SkillPage=1)
+    clear_rect(2, 0, 120, fw, H - 120)
+    for col, row in [(2, 1), (3, 1), (2, 2), (1, 3), (3, 3), (1, 4), (1, 5), (3, 5), (2, 6), (3, 6)]:
+        draw_box(2, col, row)
+
+    draw_v_arrow(2, 1, 3, 4)
+    draw_v_arrow(2, 1, 4, 5)
+    draw_v_arrow(2, 2, 1, 2)
+    draw_v_arrow(2, 2, 2, 6)
+    draw_v_arrow(2, 3, 1, 3)
+    draw_v_arrow(2, 3, 3, 5)
+    draw_v_arrow(2, 3, 5, 6)
+    copy_rect(1, 260, 180, 2, 522, 892, 109, 134, transparent_skip=True)
+    # Shrapnel Sentry (Col 2, Row 2) -> Fire Sentry (Col 1, Row 3): down-left diagonal
+    copy_rect(1, 260, 180, 2, 260, 356, 109, 134, transparent_skip=True)
+
+    dst_hd = os.path.join(MOD_ROOT, "data/hd/global/ui/spells/skill_trees/asskilltree.sprite")
+    os.makedirs(os.path.dirname(dst_hd), exist_ok=True)
+    with open(dst_hd, "wb") as f:
+        f.write(hdr_hd + px_hd)
+
+    hdr_low = raw_low[:40]
+    W_low, H_low = 1347, 584
+    px_low = subprocess.check_output(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgba",
+            "-s",
+            f"{W}x{H}",
+            "-i",
+            "-",
+            "-vf",
+            f"scale={W_low}:{H_low}:flags=lanczos",
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgba",
+            "-",
+        ],
+        input=bytes(px_hd),
+    )
+
+    dst_low = os.path.join(MOD_ROOT, "data/hd/global/ui/spells/skill_trees/asskilltree.lowend.sprite")
+    with open(dst_low, "wb") as f:
+        f.write(hdr_low + px_low)
+
+    return f"{dst_hd}, {dst_low}"
+
+
 def _build_barbarian_state_machine() -> str:
     """Add 3D HD PLRMODE_SEQUENCE (modeId=18) states for Barbarian Shield Charge (skillIndex 139 & 107).
 
@@ -5005,9 +7559,12 @@ def _build_barbarian_state_machine() -> str:
 
 
 def _build_assassin_state_machine() -> str:
-    """Update data/hd/character/player/assassin/assassin_state_machine.json so Attack1 (modeId=7)
-    and all 5 Charge-Up skills bind 'ht2_sequence' for Dual Claws (ht2) while preserving standard
-    1H/2H melee attack bindings (hth, ht1, 1hs, 1ht, 2hs, 2ht, stf).
+    """Update data/hd/character/player/assassin/assassin_state_machine.json so:
+    1. Attack1 (modeId=7) and all 5 Charge-Up skills (plus Dragon Claw) bind 'ht2_sequence' for Dual Claws (ht2)
+       while preserving standard 1H/2H melee attack bindings (hth, ht1, 1hs, 1ht, 2hs, 2ht, stf).
+    2. Omnislash (skillIndex=280, Zeal/Fend multi-strike finisher) has both stepIndex=0 (FirstAttack, stateId=32)
+       and stepIndex=1 (FollowUpAttack, stateId=67) states supporting all weapon types (1H, 2H, and Dual Claws
+       alternating between right-hand ht2_attack1/5 and left-hand ht2_attack2/3 slashes).
     """
     import json
     import os
@@ -5019,7 +7576,7 @@ def _build_assassin_state_machine() -> str:
     with open(src_path, "r", encoding="utf-8") as f:
         sm = json.load(f)
 
-    target_skills = {254, 259, 260, 265, 269, 274, 280}
+    target_skills = {254, 259, 260, 265, 269, 274}
     fallback_bindings = {
         "hth": ["hth_attack1", "hth_attack2"],
         "ht1": ["ht1_attack1", "ht1_attack2"],
@@ -5029,6 +7586,31 @@ def _build_assassin_state_machine() -> str:
         "2ht": ["2ht_attack1", "2ht_attack2"],
         "stf": ["stf_attack1", "stf_attack2"],
     }
+    omnislash_first_bindings = {
+        "hth": ["hth_attack1", "hth_attack2", "hth_attack3"],
+        "ht1": ["ht1_attack1", "ht1_attack2", "ht1_attack3"],
+        "ht2": ["ht2_sequence"],
+        "1hs": ["1hs_attack1", "1hs_attack2"],
+        "1ht": ["1ht_attack1", "1ht_attack2"],
+        "2hs": ["2hs_attack1", "2hs_attack2"],
+        "2ht": ["2ht_attack1", "2ht_attack2"],
+        "stf": ["stf_attack1", "stf_attack2"],
+        "bow": ["bow_attack1", "bow_attack2"],
+        "xbw": ["xbw_attack1", "xbw_attack2"],
+    }
+    omnislash_followup_bindings = {
+        "hth": ["hth_attack2", "hth_attack3", "hth_attack1"],
+        "ht1": ["ht1_attack2", "ht1_attack3", "ht1_attack1"],
+        "ht2": ["ht2_attack2", "ht2_attack1", "ht2_attack3", "ht2_attack5"],
+        "1hs": ["1hs_attack2", "1hs_attack1"],
+        "1ht": ["1ht_attack2", "1ht_attack1"],
+        "2hs": ["2hs_attack2", "2hs_attack1"],
+        "2ht": ["2ht_attack2", "2ht_attack1"],
+        "stf": ["stf_attack2", "stf_attack1"],
+        "bow": ["bow_attack2", "bow_attack1"],
+        "xbw": ["xbw_attack2", "xbw_attack1"],
+    }
+
     for st in sm["states"]:
         if st.get("modeId") == 7 and st.get("skillIndex") == -1:
             b = st.setdefault("animationBindings", {})
@@ -5039,6 +7621,87 @@ def _build_assassin_state_machine() -> str:
             for wk, wv in fallback_bindings.items():
                 if wk not in b:
                     b[wk] = wv
+        elif st.get("modeId") == 18 and st.get("skillIndex") == 280 and st.get("stepIndex") == 0:
+            # Whirlwind-engine Omnislash: looping spin (loopCount=0) using the Assassin's claw whirlwind clips;
+            # other weapon classes loop their normal attack clips.
+            st["loopCount"] = 0
+            # The claw whirlwind clips are the only spin clips the Assassin skeleton has; every other weapon
+            # class reuses the single-claw spin (weapon is simply held in the posed hand).
+            st["animationBindings"] = {
+                "hth": ["ht1_whirlwind"],
+                "ht1": ["ht1_whirlwind"],
+                "ht2": ["ht2_whirlwind"],
+                "1hs": ["ht1_whirlwind"],
+                "1ht": ["ht1_whirlwind"],
+                "2hs": ["ht1_whirlwind"],
+                "2ht": ["ht1_whirlwind"],
+                "stf": ["ht1_whirlwind"],
+            }
+
+    followup_state_id = 67
+    followup_state_name = "AnimationState048"
+    sm["states"].append(
+        {
+            "type": "AnimationState",
+            "name": followup_state_name,
+            "_name": "Omnislash_FollowUpAttack",
+            "audioId": "",
+            "loopCount": 1,
+            "stateId": followup_state_id,
+            "enableVfxAttributes": False,
+            "modeId": 18,
+            "skillIndex": 280,
+            "stepIndex": 1,
+            "animationBindings": omnislash_followup_bindings,
+            "enterEvents": [],
+            "exitEvents": [],
+            "exitBlendType": 0,
+        }
+    )
+
+    all_state_ids = [s["stateId"] for s in sm["states"]]
+    fast_omnislash_targets = {1, 32, followup_state_id}
+
+    for tg in sm["transitions"]:
+        base_name = tg["name"]
+        from_id = tg.get("from")
+        if from_id == 32:
+            for s_item in tg["settings"]:
+                if s_item.get("to") in fast_omnislash_targets:
+                    s_item["crossfadeSeconds"] = 0.05
+        tg["settings"].append(
+            {
+                "type": "AnimationTransitionItem",
+                "name": f"{base_name}_transition{followup_state_id:03d}",
+                "crossfadeSeconds": 0.05 if from_id == 32 else 0.2,
+                "to": followup_state_id,
+            }
+        )
+
+    group_name = f"{followup_state_name}_transitiongroup"
+    followup_settings = []
+    for idx, to_id in enumerate(all_state_ids):
+        t_name = (
+            f"{group_name}_transition"
+            if idx == 0
+            else f"{group_name}_transition{to_id:03d}"
+        )
+        followup_settings.append(
+            {
+                "type": "AnimationTransitionItem",
+                "name": t_name,
+                "crossfadeSeconds": 0.05 if to_id in fast_omnislash_targets else 0.2,
+                "to": to_id,
+            }
+        )
+    sm["transitions"].append(
+        {
+            "type": "AnimationTransitionGroup",
+            "name": group_name,
+            "from": followup_state_id,
+            "settings": followup_settings,
+        }
+    )
 
     dst_path = os.path.join(
         MOD_ROOT, "data/hd/character/player/assassin/assassin_state_machine.json"
@@ -5050,11 +7713,103 @@ def _build_assassin_state_machine() -> str:
     return dst_path
 
 
+def _build_chargeboltsentry_hd() -> str:
+    """Replace chargeboltsentry's and deathsentry's 3D lightning-rod turret assets in D2R HD with the
+    non-lightning mechanical rotary turret (wakeofdestruction/torso.model + skeleton + animations)
+    and preload their respective missile VFX.
+    """
+    import json
+    import os
+    from mod_builder.common import MOD_ROOT, VANILLA_ROOT
+
+    wod_def_path = os.path.join(VANILLA_ROOT, "data/hd/character/enemy/wakeofdestruction.json")
+    wod_sm_path = os.path.join(
+        VANILLA_ROOT, "data/hd/character/enemy/wakeofdestruction/wakeofdestruction_state_machine.json"
+    )
+    if not (os.path.exists(wod_def_path) and os.path.exists(wod_sm_path)):
+        return ""
+
+    out_files = []
+    turret_specs = [
+        (
+            "chargeboltsentry",
+            [("BoltSentry_Seq", 306), ("SentryLightning_Seq", 313)],
+            [
+                "data/hd/missiles/unholy_bolt.json",
+                "data/hd/missiles/bone_spirit_explode.json",
+                "data/hd/missiles/sentrylightningbolt.json",
+                "data/hd/missiles/lightning_strike.json",
+            ],
+        ),
+        (
+            "deathsentry",
+            [("DeathSentry_Seq", 312)],
+            [
+                "data/hd/missiles/expansion_arctic_blast_ice.json",
+                "data/hd/missiles/expansion_arctic_blast_ice_2.json",
+            ],
+        ),
+    ]
+    for unit_name, seq_specs, preload_missiles in turret_specs:
+        with open(wod_def_path, "r", encoding="utf-8") as f:
+            u_def = json.load(f)
+        u_def["name"] = unit_name
+        sm_rel = f"data/hd/character/enemy/{unit_name}/{unit_name}_state_machine.json"
+        u_def["dependencies"]["json"] = [{"path": sm_rel}] + [
+            {"path": mp} for mp in preload_missiles
+        ]
+        for ent in u_def.get("entities", []):
+            if ent.get("name") == "entity_root":
+                for comp in ent.get("components", []):
+                    if comp.get("type") == "UnitRootComponent":
+                        comp["state_machine_filename"] = sm_rel
+                    elif comp.get("type") == "DefinitionPreloadComponent":
+                        comp["missiles"] = [
+                            {
+                                "type": "UnitDefinitionListEntry",
+                                "name": f"Root_UnitDefinitionList_Entry{idx + 1}",
+                                "filename": mp,
+                            }
+                            for idx, mp in enumerate(preload_missiles)
+                        ]
+
+        with open(wod_sm_path, "r", encoding="utf-8") as f:
+            u_sm = json.load(f)
+        u_sm["name"] = f"{unit_name}_statemachine"
+        new_states = []
+        for st in u_sm.get("states", []):
+            if st.get("modeId") == 14 and st.get("skillIndex") == 281:
+                for seq_name, skill_idx in seq_specs:
+                    st_copy = dict(st)
+                    st_copy["_name"] = seq_name
+                    st_copy["skillIndex"] = skill_idx
+                    new_states.append(st_copy)
+            else:
+                new_states.append(st)
+        u_sm["states"] = new_states
+
+        dst_def = os.path.join(MOD_ROOT, f"data/hd/character/enemy/{unit_name}.json")
+        dst_sm = os.path.join(MOD_ROOT, sm_rel)
+        os.makedirs(os.path.dirname(dst_def), exist_ok=True)
+        os.makedirs(os.path.dirname(dst_sm), exist_ok=True)
+        with open(dst_def, "w", encoding="utf-8") as f:
+            json.dump(u_def, f, indent=2)
+            f.write("\n")
+        with open(dst_sm, "w", encoding="utf-8") as f:
+            json.dump(u_sm, f, indent=2)
+            f.write("\n")
+        out_files.extend([dst_def, dst_sm])
+    return ", ".join(out_files)
+
+
 def _build_animdata() -> str:
-    """Update AIA1HT2 and AIA2HT2 in data/global/animdata.d2 and data/global/eanimdata.d2
-    to have fpc=16, spd=227, and two melee hit triggers (frames 5 and 11, matching the two
-    claw slices of ht2_sequence), while keeping all other weapon classes (HT1, 1HS, 1HT,
-    2HS, 2HT, STF, HTH) at 1 melee hit trigger per A1 swing.
+    """Update animdata.d2 and eanimdata.d2 so:
+    1. AIA1HT2 has fpc=16, spd=227, and two melee hit triggers (frames 5 and 11, matching the two
+       claw slices of ht2_sequence) for Dual-Claw Normal Attack & Charge-Up skills.
+    2. AIA2* (AIA2HT2, AIA2HT1, AIA21HS, AIA21HT, AIA22HS, AIA22HT, AIA2STF, AIA2HTH) has fpc=16,
+       spd=256, and four rapid melee hit triggers (frames 4, 7, 10, 13) for Omnislash (anim/seqtrans='A2'),
+       allowing srvdofunc=1 to execute 4 rapid weapon strikes and release all 3 pending Martial Arts
+       charge tiers (Charge 3 -> Charge 2 -> Charge 1) in a single sequence.
     """
     import os
     import struct
@@ -5079,8 +7834,8 @@ def _build_animdata() -> str:
                 pos += 160
             buckets.append(recs)
 
-        # Modify AIA1HT2 and AIA2HT2 in-place to fire two melee hit events (frames 5 and 11)
-        for target_name in ("AIA1HT2", "AIA2HT2"):
+        # 1. Modify AIA1HT2 in-place to fire two melee hit events (frames 5 and 11) for Dual-Claw Normal Attack & Charge-Up skills.
+        for target_name in ("AIA1HT2",):
             b_idx = sum(ord(c) for c in target_name) & 0xFF
             name_bytes = target_name.encode("ascii").ljust(8, b"\x00")
             new_recs = []
@@ -5127,8 +7882,366 @@ def build_pettype(cfg: dict) -> str:
     return write_excel_tsv("pettype.txt", headers, rows)
 
 
+def _build_asskillicon_pair() -> str:
+    """
+    Build data/hd/global/ui/spells/assassin/asskillicon.sprite and .lowend.sprite
+    with custom normal & pressed frames for the 8 updated Assassin skill icons:
+      - IconCel  0 (frames  0,  1): Shrapnel Sentry (Sentry triangle with eye + Blade Fury shuriken on top)
+      - IconCel  2 (frames  2,  3): Caltrops (AI-generated spiked caltrops silhouette stamped in silver plate)
+      - IconCel  6 (frames  6,  7): Soul Siphon Sentry (Sentry triangle with eye + curled Cobra hood on top)
+      - IconCel 12 (frames 12, 13): Lightning Sentry (Vanilla Charged Bolt Sentry icon from Cel 6)
+      - IconCel 14 (frames 14, 15): Shuriken (Single large symmetric 8-pointed shuriken + motion arcs)
+      - IconCel 16 (frames 16, 17): Ice Sentry (Sentry triangle with eye + radiating frozen bolt on top)
+      - IconCel 56 (frames 56, 57): Omnislash (AI-generated rapid multi-sword slash silhouette stamped in silver plate)
+      - IconCel 58 (frames 58, 59): Electrocute (Simple white-plate thunderbolt stamped on Assassin dark stone tile)
+    """
+    import math
+    import os
+    import subprocess
+    from mod_builder.common import MOD_ROOT, VANILLA_ROOT
+
+    d2r_root = os.path.dirname(MOD_ROOT)
+    assets_dir = os.path.join(d2r_root, "assets", "skill_icons")
+    ass_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.sprite")
+    ass_low_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.lowend.sprite")
+    bar_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/barbarian/baskillicon.sprite")
+    sor_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/sorceress/soskillicon.sprite")
+
+    with open(ass_src, "rb") as f:
+        raw_hd = f.read()
+    with open(ass_low_src, "rb") as f:
+        raw_low = f.read()
+    with open(bar_src, "rb") as f:
+        bar_raw = f.read()[40:]
+    with open(sor_src, "rb") as f:
+        sor_raw = f.read()[40:]
+
+    hdr_hd = raw_hd[:40]
+    ass_raw = raw_hd[40:]
+    out_hd = bytearray(ass_raw)
+
+    hdr_low = raw_low[:40]
+    out_low = bytearray(raw_low[40:])
+
+    fw, fh, nframes = 132, 130, 60
+    row_bytes = nframes * fw * 4
+    plate_x0, plate_x1 = 19, 112
+    plate_y0, plate_y1 = 19, 111
+    plate_w = plate_x1 - plate_x0
+    plate_h = plate_y1 - plate_y0
+
+    # 1. Reconstruct clean silver-plate templates (normal & pressed) from Barbarian passive cels
+    donor_cels = (2, 4, 6, 16, 18, 20, 30, 38, 44)
+    silver_tmpls = [bytearray(fw * fh * 4), bytearray(fw * fh * 4)]
+    for pressed in (0, 1):
+        st = silver_tmpls[pressed]
+        g_min = 112 if pressed else 136
+        g_max = 172 if pressed else 198
+        for y in range(fh):
+            in_plate_y = plate_y0 <= y < plate_y1
+            for x in range(fw):
+                in_plate = in_plate_y and (plate_x0 <= x < plate_x1)
+                clean_silver = []
+                samples = []
+                for dc in donor_cels:
+                    soff = y * row_bytes + ((dc + pressed) * fw + x) * 4
+                    r, g, b, a = bar_raw[soff : soff + 4]
+                    samples.append((r + g + b, r, g, b, a))
+                    if in_plate and (r - b) <= 0 and g_min <= g <= g_max:
+                        clean_silver.append((r + g + b, r, g, b, a))
+                if clean_silver:
+                    clean_silver.sort(key=lambda t: t[0])
+                    _, r, g, b, a = clean_silver[len(clean_silver) // 2]
+                else:
+                    samples.sort(key=lambda t: t[0])
+                    _, r, g, b, a = samples[-2]
+                st[(y * fw + x) * 4 : (y * fw + x) * 4 + 4] = bytes((r, g, b, a))
+
+    # 2. Reconstruct clean dark-brown stone button templates (normal & pressed) from Assassin cels
+    brown_tmpls = [bytearray(fw * fh * 4), bytearray(fw * fh * 4)]
+    ass_donors = tuple(range(0, 60, 2))
+    for pressed in (0, 1):
+        bt = brown_tmpls[pressed]
+        for y in range(fh):
+            for x in range(fw):
+                brown = []
+                samples = []
+                for dc in ass_donors:
+                    soff = y * row_bytes + ((dc + pressed) * fw + x) * 4
+                    r, g, b, a = ass_raw[soff : soff + 4]
+                    samples.append((r + g + b, r, g, b, a))
+                    if (r - b) >= 14 and 20 <= g <= 68:
+                        brown.append((r + g + b, r, g, b, a))
+                if brown:
+                    brown.sort(key=lambda t: t[0])
+                    _, r, g, b, a = brown[len(brown) // 2]
+                else:
+                    samples.sort(key=lambda t: t[0])
+                    _, r, g, b, a = samples[len(samples) // 3]
+                bt[(y * fw + x) * 4 : (y * fw + x) * 4 + 4] = bytes((r, g, b, a))
+
+    def is_fg_pixel(r: int, g: int, b: int, pressed: int) -> bool:
+        g_thr = 56 if pressed else 68
+        if (r - b) <= 13 and g >= g_thr:
+            return True
+        if (r + g + b) < 92 and (r - b) <= 18:
+            return True
+        return False
+
+    def sample_bilinear(raw_buf: bytes, cel: int, sx: float, sy: float):
+        ix, iy = int(math.floor(sx)), int(math.floor(sy))
+        fx, fy = sx - ix, sy - iy
+        rgba = [0.0, 0.0, 0.0, 0.0]
+        for oy in (0, 1):
+            for ox in (0, 1):
+                cx = max(0, min(fw - 1, ix + ox))
+                cy = max(0, min(fh - 1, iy + oy))
+                wt = ((1.0 - fx) if ox == 0 else fx) * ((1.0 - fy) if oy == 0 else fy)
+                soff = (cy * row_bytes) + (cel * fw + cx) * 4
+                for c in range(4):
+                    rgba[c] += raw_buf[soff + c] * wt
+        return [int(round(v)) for v in rgba]
+
+    def stamp_sentry_triangle(buf: bytearray, pressed: int) -> None:
+        sh = 2 if pressed else 0
+        for y in range(62 + sh, 108 + sh):
+            half_w = (y - (60 + sh)) * 0.72 + 4.0
+            for x in range(plate_x0, plate_x1):
+                if abs(x - (65.5 + sh)) <= half_w:
+                    soff = (y * row_bytes) + ((6 + pressed) * fw + x) * 4
+                    r, g, b, _ = ass_raw[soff : soff + 4]
+                    if is_fg_pixel(r, g, b, pressed):
+                        doff = (y * fw + x) * 4
+                        buf[doff : doff + 4] = bytes((r, g, b, 255))
+
+    def stamp_silver_mask(base_buf: bytearray, mask, pressed: int) -> bytearray:
+        out = bytearray(base_buf)
+        st = silver_tmpls[pressed]
+        bright = 0.84 if pressed else 1.0
+        for y in range(plate_y0, plate_y1):
+            for x in range(plate_x0, plate_x1):
+                m = mask[y][x]
+                m_tl = mask[y - 1][x - 1]
+                m_br = mask[y + 1][x + 1]
+                m_max = max(m, mask[y - 1][x], mask[y + 1][x], mask[y][x - 1], mask[y][x + 1])
+                if m_max <= 0.05:
+                    continue
+                p_off = (y * fw + x) * 4
+                br_r, br_g, br_b, _ = out[p_off : p_off + 4]
+                if m <= 0.12:
+                    t = min(1.0, (m_max - 0.05) / 0.5)
+                    out[p_off : p_off + 4] = bytes(
+                        (
+                            int(br_r * (1.0 - 0.88 * t)),
+                            int(br_g * (1.0 - 0.88 * t)),
+                            int(br_b * (1.0 - 0.88 * t)),
+                            255,
+                        )
+                    )
+                    continue
+                sr, sg, sb, _ = st[p_off : p_off + 4]
+                if m_tl < 0.35:
+                    sr = min(255, sr + int(48 * bright))
+                    sg = min(255, sg + int(48 * bright))
+                    sb = min(255, sb + int(48 * bright))
+                elif m_br < 0.35:
+                    sr = max(0, sr - int(42 * bright))
+                    sg = max(0, sg - int(42 * bright))
+                    sb = max(0, sb - int(42 * bright))
+                alpha_t = min(1.0, (m - 0.12) / 0.45)
+                r = int(br_r * (1.0 - alpha_t) + sr * alpha_t)
+                g = int(br_g * (1.0 - alpha_t) + sg * alpha_t)
+                b = int(br_b * (1.0 - alpha_t) + sb * alpha_t)
+                out[p_off : p_off + 4] = bytes((r, g, b, 255))
+        return out
+
+    def stamp_ai_jpg(filename: str, pressed: int, crop_margin: float = 0.06) -> bytearray:
+        img_path = os.path.join(assets_dir, filename)
+        keep_frac = 1.0 - 2.0 * crop_margin
+        art_px = subprocess.check_output(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-i",
+                img_path,
+                "-vf",
+                f"crop=iw*{keep_frac:.2f}:ih*{keep_frac:.2f}:iw*{crop_margin:.2f}:ih*{crop_margin:.2f},scale={plate_w}:{plate_h}:flags=lanczos",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "rgb24",
+                "-",
+            ]
+        )
+        sh = 2 if pressed else 0
+        mask = [[0.0] * fw for _ in range(fh)]
+        for py in range(plate_h):
+            sy = py - sh
+            if not (0 <= sy < plate_h):
+                continue
+            for px_i in range(plate_w):
+                sx = px_i - sh
+                if not (0 <= sx < plate_w):
+                    continue
+                if min(px_i, plate_w - 1 - px_i, py, plate_h - 1 - py) < 2:
+                    continue
+                aoff = (sy * plate_w + sx) * 3
+                lum = (art_px[aoff] + art_px[aoff + 1] + art_px[aoff + 2]) / (3.0 * 255.0)
+                mask[plate_y0 + py][plate_x0 + px_i] = max(0.0, min(1.0, (lum - 0.35) / 0.35))
+        return stamp_silver_mask(brown_tmpls[pressed], mask, pressed)
+
+    fw_low, fh_low = 67, 65
+    row_bytes_low = nframes * fw_low * 4
+
+    def write_frame_pair(fidx: int, buf_hd: bytearray) -> None:
+        for y in range(fh):
+            row_off = y * row_bytes + fidx * fw * 4
+            out_hd[row_off : row_off + fw * 4] = buf_hd[y * fw * 4 : (y + 1) * fw * 4]
+        buf_low = subprocess.check_output(
+            [
+                "ffmpeg",
+                "-v",
+                "error",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "rgba",
+                "-s",
+                f"{fw}x{fh}",
+                "-i",
+                "-",
+                "-vf",
+                "scale=66:65:flags=lanczos",
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "rgba",
+                "-",
+            ],
+            input=bytes(buf_hd),
+        )
+        for y in range(fh_low):
+            row_off_low = y * row_bytes_low + fidx * fw_low * 4
+            out_low[row_off_low : row_off_low + 66 * 4] = buf_low[y * 66 * 4 : (y + 1) * 66 * 4]
+
+    for pressed in (0, 1):
+        sh = 2 if pressed else 0
+
+        # 1. Shrapnel Sentry (IconCel 0): Sentry triangle + Blade Fury shuriken over top
+        f_shrapnel = bytearray(brown_tmpls[pressed])
+        for y in range(19 + sh, 68 + sh):
+            for x in range(38 + sh, 94 + sh):
+                dx = (x - (65.5 + sh)) * 1.22
+                dy = (y - (41.0 + sh)) * 1.22
+                if dx > 3.0 and dy > 3.0:
+                    dx = -dx
+                sx = 46.5 + sh + dx
+                sy = 48.0 + sh + dy
+                if 18 <= sx <= 76 and 18 <= sy <= 78 and math.hypot(dx, dy) <= 28.5:
+                    r, g, b, _ = sample_bilinear(ass_raw, 10 + pressed, sx, sy)
+                    if is_fg_pixel(r, g, b, pressed):
+                        doff = (y * fw + x) * 4
+                        f_shrapnel[doff : doff + 4] = bytes((r, g, b, 255))
+        stamp_sentry_triangle(f_shrapnel, pressed)
+        write_frame_pair(0 + pressed, f_shrapnel)
+
+        # 2. Caltrops (IconCel 2): AI-generated spiked caltrops silhouette
+        write_frame_pair(2 + pressed, stamp_ai_jpg("caltrops.jpg", pressed, crop_margin=0.06))
+
+        # 3. Lightning Sentry (IconCel 12): Copy vanilla Charged Bolt Sentry icon from Cel 6
+        f_light = bytearray(fw * fh * 4)
+        for y in range(fh):
+            soff = (y * row_bytes) + (6 + pressed) * fw * 4
+            f_light[y * fw * 4 : (y + 1) * fw * 4] = ass_raw[soff : soff + fw * 4]
+        write_frame_pair(12 + pressed, f_light)
+
+        # 4. Soul Siphon Sentry (IconCel 6): Sentry triangle + curled Cobra Strike hood over top
+        f_siphon = bytearray(brown_tmpls[pressed])
+        for y in range(19 + sh, 80 + sh):
+            for x in range(32 + sh, 98 + sh):
+                if (y - sh) > 58 and abs((x - sh) - 65.5) > ((y - sh) - 50) * 0.85 + 11.0:
+                    continue
+                sx = 64.0 + sh + (x - (65.5 + sh)) * 1.18
+                sy = 50.0 + sh + (y - (46.0 + sh)) * 1.18
+                if 20 <= sx - sh <= 104 and 19 <= sy - sh <= 83:
+                    if 28 <= (sy - sh) <= 36 and ((sx - sh) < 51 or (sx - sh) > 75):
+                        continue
+                    if ((sx - sh) < 34 and (sy - sh) < 61) or ((sx - sh) > 94):
+                        continue
+                    r, g, b, _ = sample_bilinear(ass_raw, 50 + pressed, sx, sy)
+                    if is_fg_pixel(r, g, b, pressed):
+                        doff = (y * fw + x) * 4
+                        f_siphon[doff : doff + 4] = bytes((r, g, b, 255))
+        stamp_sentry_triangle(f_siphon, pressed)
+        write_frame_pair(6 + pressed, f_siphon)
+
+        # 5. Shuriken (IconCel 14): Single large symmetric 8-pointed shuriken + motion arcs
+        f_shuriken = bytearray(brown_tmpls[pressed])
+        for y in range(plate_y0, plate_y1):
+            for x in range(plate_x0, plate_x1):
+                if ((x - sh) > 76 and (y - sh) < 55) or ((x - sh) < 52 and (y - sh) > 78):
+                    soff = (y * row_bytes) + ((10 + pressed) * fw + x) * 4
+                    r, g, b, _ = ass_raw[soff : soff + 4]
+                    if is_fg_pixel(r, g, b, pressed):
+                        doff = (y * fw + x) * 4
+                        f_shuriken[doff : doff + 4] = bytes((r, g, b, 255))
+        for y in range(plate_y0, plate_y1):
+            for x in range(plate_x0, plate_x1):
+                dx = (x - (65.5 + sh)) / 1.40
+                dy = (y - (65.0 + sh)) / 1.40
+                if dx > 3.0 and dy > 3.0:
+                    dx = -dx
+                sx = 46.5 + sh + dx
+                sy = 48.5 + sh + dy
+                if 18 <= sx - sh <= 76 and 18 <= sy - sh <= 79 and math.hypot(dx, dy) <= 29.0:
+                    r, g, b, _ = sample_bilinear(ass_raw, 10 + pressed, sx, sy)
+                    if is_fg_pixel(r, g, b, pressed):
+                        doff = (y * fw + x) * 4
+                        f_shuriken[doff : doff + 4] = bytes((r, g, b, 255))
+        write_frame_pair(14 + pressed, f_shuriken)
+
+        # 6. Ice Sentry (IconCel 16): Sentry triangle + radiating frozen bolt on top
+        f_ice = bytearray(brown_tmpls[pressed])
+        for y in range(19 + sh, 68 + sh):
+            for x in range(34 + sh, 98 + sh):
+                sx = 65.5 + sh + (x - (65.5 + sh)) * 1.55
+                sy = 65.0 + sh + (y - (41.0 + sh)) * 1.55
+                if 20 <= sx - sh <= 110 and 20 <= sy - sh <= 110 and math.hypot(sx - (65.5 + sh), sy - (65.0 + sh)) <= 44.0:
+                    r, g, b, _ = sample_bilinear(ass_raw, 52 + pressed, sx, sy)
+                    if is_fg_pixel(r, g, b, pressed):
+                        doff = (y * fw + x) * 4
+                        f_ice[doff : doff + 4] = bytes((r, g, b, 255))
+        stamp_sentry_triangle(f_ice, pressed)
+        write_frame_pair(16 + pressed, f_ice)
+
+        # 7. Omnislash (IconCel 56): AI-generated multi-sword flurry silhouette
+        write_frame_pair(56 + pressed, stamp_ai_jpg("omnislash.jpg", pressed, crop_margin=0.06))
+
+        # 8. Electrocute (IconCel 58): Simple white-plate thunderbolt on Assassin dark brown tile
+        f_electro = bytearray(brown_tmpls[pressed])
+        for y in range(plate_y0, plate_y1):
+            for x in range(plate_x0, plate_x1):
+                soff = (y * row_bytes) + ((26 + pressed) * fw + x) * 4
+                r, g, b, _ = sor_raw[soff : soff + 4]
+                if is_fg_pixel(r, g, b, pressed):
+                    doff = (y * fw + x) * 4
+                    f_electro[doff : doff + 4] = bytes((r, g, b, 255))
+        write_frame_pair(58 + pressed, f_electro)
+
+    dst_hd = os.path.join(MOD_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.sprite")
+    dst_low = os.path.join(MOD_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.lowend.sprite")
+    os.makedirs(os.path.dirname(dst_hd), exist_ok=True)
+    with open(dst_hd, "wb") as f:
+        f.write(hdr_hd + out_hd)
+    with open(dst_low, "wb") as f:
+        f.write(hdr_low + out_low)
+    return f"{dst_hd}, {dst_low}"
+
+
 def build_skills_all(cfg: dict) -> str:
     from mod_builder.affixes import build_itemstatcost
+    from mod_builder.common import update_mod_hd_missiles_json
     from mod_builder.weapons_armor import build_missiles
 
     p0 = build_itemstatcost(cfg)
@@ -5145,4 +8258,22 @@ def build_skills_all(cfg: dict) -> str:
     p12 = build_pettype(cfg)
     p13 = _build_assassin_state_machine()
     p14 = _build_animdata()
-    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}"
+    p15 = update_mod_hd_missiles_json([
+        ("shock field on ground", "expansion_fire_spikes_ground"),
+        ("inferno sentry 1", "expansion_shockwave"),
+        ("inferno sentry 2", "expansion_shockwave"),
+        ("progressive radius damage", "expansion_shockwave"),
+        ("unholybolt_2", "null"),
+        ("unholybolt_3", "null"),
+        ("unholybolt_4", "null"),
+        ("sentrychargedbolt", "unholy_bolt"),
+        ("catapult cold ball on", "ice_orb"),
+        ("catapult cold ball", "ice_bolt"),
+        ("catapult cold explosion", "ice_bolt"),
+        ("frozenhorror_arcticblast_2", "null"),
+        ("sentrylightningbolt_2", "null"),
+    ])
+    p16 = _build_chargeboltsentry_hd()
+    p17 = _build_asskilltree_pair()
+    p18 = _build_asskillicon_pair()
+    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}"

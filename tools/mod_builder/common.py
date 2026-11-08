@@ -207,3 +207,26 @@ def update_mod_hd_items_json(additions: List[Tuple[str, str]]) -> str:
     return mod_path
 
 
+def update_mod_hd_missiles_json(additions: List[Tuple[str, str]]) -> str:
+    """
+    Read data/hd/missiles/missiles.json from VANILLA_ROOT, update existing keys in-place
+    (normalizing spaces to underscores to match missiles.json key naming), and write to MOD_ROOT.
+    """
+    mod_path = os.path.join(MOD_ROOT, "data/hd/missiles/missiles.json")
+    src_path = os.path.join(VANILLA_ROOT, "data/hd/missiles/missiles.json")
+    with open(src_path, "r", encoding="utf-8") as f:
+        missiles_dict = json.load(f)
+
+    for m_name, asset in additions:
+        key = m_name if m_name in missiles_dict else m_name.replace(" ", "_")
+        missiles_dict[key] = asset
+
+    os.makedirs(os.path.dirname(mod_path), exist_ok=True)
+    text = json.dumps(missiles_dict, indent=4)
+    text = text.replace("\r\n", "\n").replace("\n", "\r\n") + "\r\n"
+    with open(mod_path, "wb") as f:
+        f.write(text.encode("utf-8"))
+    return mod_path
+
+
+

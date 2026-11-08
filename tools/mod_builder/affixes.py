@@ -171,9 +171,43 @@ def build_itemstatcost(cfg: dict) -> str:
             r["op stat1"] = "firemindam"
             r["op stat2"] = "firemaxdam"
             r["op stat3"] = "firemaxdam"
+        elif st == "item_absorb_crush":
+            # Constant 1 base stat on Blades of Ice (ass_boi_passive) for item_crush_damage (op=2)
+            r["Signed"] = "1"
+            r["Send Bits"] = "8"
+        elif st == "item_crush_damage":
+            # Stored inside progressive_cold (aurastat2) so coldmindam (+1x) and coldmaxdam (+2x) scale per orb and clear on state removal
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["op"] = "2"
+            r["op param"] = "0"
+            r["op base"] = "item_absorb_crush"
+            r["op stat1"] = "coldmindam"
+            r["op stat2"] = "coldmaxdam"
+            r["op stat3"] = "coldmaxdam"
+        elif st == "item_absorb_thrust":
+            # Constant 1 base stat on Claws of Thunder (ass_cot_passive) for item_thrust_damage_percent (op=2)
+            r["Signed"] = "1"
+            r["Send Bits"] = "8"
+        elif st == "item_thrust_damage_percent":
+            # Stored inside progressive_lightning (aurastat2) so lightmaxdam (+7*clc3 per orb) scales per orb and clears on state removal
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["op"] = "2"
+            r["op param"] = "0"
+            r["op base"] = "item_absorb_thrust"
+            r["op stat1"] = "lightmaxdam"
+            r["op stat2"] = ""
+            r["op stat3"] = ""
         elif st == "item_pierce":
             # Enable Send Other so trap pets (infernosentry at 3 Tiger Strike charges) sync 33% Pierce to the client
             r["Send Other"] = "1"
+        elif st == "item_damagetargetac":
+            # Allow -50 / -100 / -150 Monster Defense Per Hit on Cobra Strike (progressive_steal)
+            # without overflowing 8-bit signed Send Bits (-128..+127) or getting wiped by weapon-only damagerelated=1
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["damagerelated"] = ""
         elif st == "item_attackertakesdamage":
             # Revert Patch 2.4's attackedinmelee back to damagedinmelee so missed and blocked
             # swings do NOT trigger Thorns; only landed melee hits reflect damage.

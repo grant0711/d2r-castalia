@@ -924,8 +924,11 @@ def _configure_player_summons(row: dict, mon_id: str) -> bool:
 
     if mon_id == "wakeofdestruction":
         row["aidist"] = "25"
-        row["aip2"] = "20"
-        row["aip3"] = "25"
+        for sfx in ("", "(N)", "(H)"):
+            row[f"aidel{sfx}"] = "11"
+            row[f"aip2{sfx}"] = "14"
+            row[f"aip3{sfx}"] = "18"
+            row[f"aip4{sfx}"] = "15"
         row["SendSkills"] = "31"
         row["Skill2"] = "Wake of Fire Sentry"
         row["Skill3"] = "Fists of Fire"
@@ -955,6 +958,73 @@ def _configure_player_summons(row: dict, mon_id: str) -> bool:
         row["Sk2mode"] = "S1"
         row["Sk2lvl"] = "0"
         row["Skill3"] = "Tiger Strike"
+        row["Skill4"] = "Ass Trap Charge Consume"
+        row["Skill5"] = "Shock Field"
+        return True
+
+    if mon_id == "chargeboltsentry":
+        row["Code"] = "e9"
+        row["MonStatsEx"] = "wakeofdestruction"
+        row["aidist"] = "25"
+        for sfx in ("", "(N)", "(H)"):
+            row[f"aidel{sfx}"] = "5"
+            row[f"aip2{sfx}"] = "5"
+            row[f"aip3{sfx}"] = "6"
+            row[f"aip4{sfx}"] = "25"
+        row["SendSkills"] = "31"
+        row["Skill1"] = "BoltSentry"
+        row["Sk1mode"] = "S2"
+        row["Sk1lvl"] = "1"
+        row["Skill2"] = "Charged Bolt Sentry"
+        row["Sk2mode"] = "S1"
+        row["Sk2lvl"] = "0"
+        row["Skill3"] = "Cobra Strike"
+        row["Skill4"] = "Ass Trap Charge Consume"
+        row["Skill5"] = "Fire Trauma"
+        return True
+
+    if mon_id == "lightningsentry":
+        row["Code"] = "e9"
+        row["MonStatsEx"] = "wakeofdestruction"
+        row["AI"] = "AssassinSentry"
+        row["aidist"] = "25"
+        for sfx in ("", "(N)", "(H)"):
+            row[f"aidel{sfx}"] = "7"
+            row[f"aip1{sfx}"] = "100"
+            row[f"aip2{sfx}"] = "8"
+            row[f"aip3{sfx}"] = "9"
+            row[f"aip4{sfx}"] = "25"
+        row["SendSkills"] = "31"
+        row["Skill1"] = "sentry lightning"
+        row["Sk1mode"] = "S2"
+        row["Sk1lvl"] = "1"
+        row["Skill2"] = "Lightning Sentry"
+        row["Sk2mode"] = "S1"
+        row["Sk2lvl"] = "0"
+        row["Skill3"] = "Claws of Thunder"
+        row["Skill4"] = "Ass Trap Charge Consume"
+        row["Skill5"] = "Wake of Fire Sentry"
+        return True
+
+    if mon_id == "deathsentry":
+        row["Code"] = "e9"
+        row["MonStatsEx"] = "wakeofdestruction"
+        row["AI"] = "AssassinSentry"
+        row["aidist"] = "25"
+        for sfx in ("", "(N)", "(H)"):
+            row[f"aidel{sfx}"] = "1"
+            row[f"aip1{sfx}"] = "100"
+            row[f"aip2{sfx}"] = "1"
+            row[f"aip3{sfx}"] = "1"
+            row[f"aip4{sfx}"] = "25"
+        row["SendSkills"] = "31"
+        row["Skill1"] = "mon death sentry"
+        row["Sk1mode"] = "S2"
+        row["Sk1lvl"] = "1"
+        row["Skill2"] = "Death Sentry"
+        row["Sk2mode"] = "S1"
+        row["Sk2lvl"] = "0"
+        row["Skill3"] = "Blades of Ice"
         row["Skill4"] = "Ass Trap Charge Consume"
         row["Skill5"] = "Wake of Fire Sentry"
         return True

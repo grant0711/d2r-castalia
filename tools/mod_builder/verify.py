@@ -238,7 +238,7 @@ def verify_all(cfg: dict = None) -> List[str]:
         or ft_sk.get("sumskill1") != "mon inferno sentry"
         or ft_sk.get("sumskill2") != "Fire Trauma"
         or ft_sk.get("sumskill3") != "Tiger Strike"
-        or ft_sk.get("sumskill4") != "Wake of Fire Sentry"
+        or ft_sk.get("sumskill4") != "Shock Field"
         or ft_sk.get("sumskill5") != "Ass Trap Charge Consume"
     ):
         raise AssertionError(

@@ -564,6 +564,54 @@ def verify_all(cfg: dict = None) -> List[str]:
         elif code == "ci1":
             if r.get("NightmareUpgrade") != "ci2" or r.get("HellUpgrade") != "ci3":
                 raise AssertionError("armor.txt (ci1): expected NightmareUpgrade=ci2, HellUpgrade=ci3")
+
+    # Verify automagic.txt staffmod groups (303, 305, 310..315) against skills.txt reqlevel tiers (1, 8, 16, 24, 32, 40)
+    _, auto_rows = _read_mod_tsv("automagic.txt")
+    _, sk_rows_for_auto = _read_mod_tsv("skills.txt")
+    sk_req_by_id = {int(r["*Id"]): (r.get("charclass", ""), int(r.get("reqlevel") or "0"), r["skill"]) for r in sk_rows_for_auto if r.get("*Id")}
+    grp_to_cls = {"303": "sor", "305": "nec", "310": "sor", "311": "nec", "312": "pal", "313": "bar", "314": "dru", "315": "ass"}
+    bracket_to_reqcap = {("1", "7"): 1, ("8", "13"): 8, ("14", "20"): 16, ("21", "28"): 24, ("29", "36"): 32, ("37", ""): 40}
+    seen_by_grp_bracket = {(g, b): set() for g in grp_to_cls for b in bracket_to_reqcap}
+
+    for r in auto_rows:
+        grp = r.get("group", "")
+        if grp not in grp_to_cls:
+            continue
+        cls_code = grp_to_cls[grp]
+        bkey = (r.get("level", ""), r.get("maxlevel", ""))
+        if bkey not in bracket_to_reqcap:
+            raise AssertionError(f"automagic.txt (group={grp}): unexpected ilvl bracket {bkey}")
+        req_cap = bracket_to_reqcap[bkey]
+        row_ranges = []
+        for idx in (1, 2, 3):
+            if r.get(f"mod{idx}code") == "skill-rand":
+                lo = int(r[f"mod{idx}min"])
+                hi = int(r[f"mod{idx}max"])
+                if lo > hi:
+                    raise AssertionError(f"automagic.txt (group={grp}): lo={lo} > hi={hi}")
+                for prev_lo, prev_hi in row_ranges:
+                    if not (hi < prev_lo or lo > prev_hi):
+                        raise AssertionError(
+                            f"automagic.txt (group={grp}, bracket={bkey}): overlapping skill-rand ranges [{lo},{hi}] and [{prev_lo},{prev_hi}]"
+                        )
+                row_ranges.append((lo, hi))
+                for sid in range(lo, hi + 1):
+                    s_cls, s_req, s_name = sk_req_by_id.get(sid, ("", 999, "?"))
+                    if s_cls != cls_code or s_req > req_cap:
+                        raise AssertionError(
+                            f"automagic.txt (group={grp}, bracket={bkey}, req_cap={req_cap}): leaked skill {sid} ({s_name}, class={s_cls}, reqlevel={s_req})"
+                        )
+                    seen_by_grp_bracket[(grp, bkey)].add(sid)
+
+    for (grp, bkey), seen_ids in seen_by_grp_bracket.items():
+        cls_code = grp_to_cls[grp]
+        req_cap = bracket_to_reqcap[bkey]
+        expected_ids = {sid for sid, (c, rq, _) in sk_req_by_id.items() if c == cls_code and rq <= req_cap}
+        if seen_ids != expected_ids:
+            missing = sorted(expected_ids - seen_ids)
+            raise AssertionError(
+                f"automagic.txt (group={grp}, bracket={bkey}, req_cap={req_cap}): missing unlocked skills {missing}"
+            )
         elif code == "ci2":
             if r.get("NightmareUpgrade") != "xxx" or r.get("HellUpgrade") != "ci3":
                 raise AssertionError("armor.txt (ci2): expected NightmareUpgrade=xxx, HellUpgrade=ci3")

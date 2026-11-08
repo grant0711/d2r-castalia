@@ -127,6 +127,20 @@ ASSASSIN_STATES = [
     ("ass_whirl_shred", {"curable": "1"}),
     ("ass_fof_passive", {}),
     ("ass_flow_passive", {}),
+    (
+        "ass_shadow_bind",
+        {
+            "curse": "1",
+            "curable": "1",
+            "overlay1": "cloaked",
+            "castoverlay": "psychic_hammer_hit",
+            "colorpri": "85",
+            "colorshift": "73",
+            "light-r": "140",
+            "light-g": "110",
+            "light-b": "180",
+        },
+    ),
     ("ass_ts_passive", {}),
     ("ass_cobra_debuff", {"curable": "1", "curse": "1"}),
     ("ass_boi_passive", {}),
@@ -6180,6 +6194,78 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         if _sd in by_desc:
             by_desc[_sd]["desccalca1"] = _short_buff_len
 
+    # Step 5h: Shadow Bind (Shadow Warrior slot, Id 268, Col 2 Row 4) - Pinpoint single-target Shadow Hex that works
+    #   on Super Uniques and Act Bosses (aurafilter=3, same as Decrepify). Pins the target nearly in place
+    #   (velocitypercent: -60% -> -90%) and slows its Attack/Cast speed and Attack Rating (-25% -> -54%) for 6s -> 13.6s.
+    if "Shadow Warrior" in by_name:
+        sb = by_name["Shadow Warrior"]
+        for k in list(sb.keys()):
+            if k.startswith(("aurastat", "passivestat", "passivecalc")) or k in (
+                    "srvdofunc", "srvstfunc", "cltdofunc", "cltstfunc", "aurastate", "auralencalc", "summon", "pettype",
+                    "petmax", "summode", "sumumod", "sumskill1", "sumsk1calc", "stsound", "LineOfSight", "localdelay",
+                    "lvlmana", "mana", "minmana", "InTown", "Param1", "*Param1 Description", "Param2",
+                    "*Param2 Description", "Param3", "*Param3 Description", "Param5", "*Param5 Description",
+                    "Param6", "*Param6 Description", "passive", "passivestate", "passiveitype",
+                    "passivereqweaponcount", "itypea1"):
+                sb[k] = ""
+        sb["srvdofunc"] = "30"
+        sb["cltstfunc"] = "18"
+        sb["cltdofunc"] = "30"
+        sb["aurafilter"] = "3"  # hits all monsters including Champions, Uniques, Super Uniques, and Act Bosses
+        sb["auratargetstate"] = "ass_shadow_bind"
+        sb["auralencalc"] = "par3+(lvl-1)*par4"
+        sb["aurarangecalc"] = "3"  # tight pinpoint radius (~2 yards) around cursor so it targets a single boss/elite
+        sb["aurastat1"] = "velocitypercent"
+        sb["aurastatcalc1"] = "-dm12"
+        sb["aurastat2"] = "attackrate"
+        sb["aurastatcalc2"] = "-dm56"
+        sb["aurastat3"] = "other_animrate"
+        sb["aurastatcalc3"] = "-dm56"
+        sb["aurastat4"] = "item_tohit_percent"
+        sb["aurastatcalc4"] = "-dm56"
+        sb["stsound"] = "assassin_psychichammer"
+        sb["castoverlay"] = "psychic_hammer_curse"
+        sb["range"] = "none"
+        sb["anim"] = "SC"
+        sb["seqtrans"] = "SC"
+        sb["monanim"] = "SC"
+        sb["UseAttackRate"] = "1"
+        sb["LineOfSight"] = "4"
+        sb["reqlevel"] = "24"
+        sb["reqskill1"] = "Cloak of Shadows"
+        sb["reqskill2"] = "Weapon Block"
+        sb["leftskill"] = "0"
+        sb["rightskill"] = "1"
+        sb["minmana"] = "1"
+        sb["manashift"] = "8"
+        sb["mana"] = "12"
+        sb["lvlmana"] = "0"
+        sb["interrupt"] = "1"
+        sb["Param1"] = "60"
+        sb["*Param1 Description"] = "Enemy Move Speed Slow % Min"
+        sb["Param2"] = "95"
+        sb["*Param2 Description"] = "Enemy Move Speed Slow % Max"
+        sb["Param3"] = "150"
+        sb["*Param3 Description"] = "Duration baseline (frames)"
+        sb["Param4"] = "10"
+        sb["*Param4 Description"] = "Duration per level (frames)"
+        sb["Param5"] = "25"
+        sb["*Param5 Description"] = "Enemy Attack/Cast Speed & AR Slow % Min"
+        sb["Param6"] = "60"
+        sb["*Param6 Description"] = "Enemy Attack/Cast Speed & AR Slow % Max"
+        sb["HitShift"] = "8"
+        sb["aitype"] = "2"
+    if "shadow warrior" in by_desc:
+        sb_d = by_desc["shadow warrior"]
+        _set_dsc_line(sb_d, "desc", 1, "74", "ModShadowBindMove", "", "dm12", "")
+        _set_dsc_line(sb_d, "desc", 2, "74", "ModShadowBindAttack", "", "dm56", "")
+        _set_dsc_line(sb_d, "desc", 3, "74", "ModShadowBindAR", "", "dm56", "")
+        _set_dsc_line(sb_d, "desc", 4, "36", "StrSkillDurationSingular", "StrSkill20", "par3+(lvl-1)*par4", "25")
+        _set_dsc_line(sb_d, "desc", 5, "", "", "", "", "")
+        _set_dsc_line(sb_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
+        for _i in range(2, 6):
+            _set_dsc_line(sb_d, "dsc2", _i, "", "", "", "", "")
+
     # Step 6: Reorganize Assassin Tree 1 (Traps & Blades, SkillPage=1) and Tree 3 (Martial Arts, SkillPage=3)
     # into the Staggered 8-Level Ladder (leaving Tree 2: Shadow Disciplines untouched):
     #   - Tree 3 (Martial Arts, SkillPage=3):
@@ -6219,6 +6305,17 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ("Cobra Strike", "cobra strike", "32", "3", "5", "2", "Dragon Claw", ""),
         ("Dragon Flight", "dragon flight", "32", "3", "5", "3", "Dragon Tail", ""),
         ("Royal Strike", "royal strike", "40", "3", "6", "1", "Claws of Thunder", "Cobra Strike"),
+        # Tree 2 (Shadow Disciplines, SkillPage=2):
+        ("Claw Mastery", "claw mastery", "1", "2", "1", "3", "", ""),
+        ("Cloak of Shadows", "cloak of shadows", "8", "2", "2", "1", "", ""),
+        ("Weapon Block", "weapon block", "8", "2", "2", "2", "Claw Mastery", ""),
+        ("Shadow Warrior", "shadow warrior", "16", "2", "3", "1", "Cloak of Shadows", ""),
+        ("Quickness", "quickness", "16", "2", "3", "3", "Claw Mastery", ""),
+        ("Mind Blast", "mind blast", "24", "2", "4", "1", "Shadow Warrior", ""),
+        ("Fade", "fade", "32", "2", "5", "2", "Weapon Block", ""),
+        ("Venom", "venom", "32", "2", "5", "3", "Quickness", ""),
+        ("Shadow Master", "shadow master", "40", "2", "6", "1", "Fade", "Mind Blast"),
+        ("Psychic Hammer", "psychic hammer", "40", "2", "6", "3", "Venom", ""),
     ]
     for sk_name, desc_name, req_lvl, pg, s_row, s_col, req1, req2 in ass_tree_layout:
         if sk_name in by_name:
@@ -6233,6 +6330,57 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             d_r["SkillRow"] = s_row
             d_r["SkillColumn"] = s_col
             d_r["ListRow"] = pg
+
+    # Step 6b: Assassin Mana Cost Balancing across all 3 trees:
+    #   - Physical & Sustain Charge-Ups (Tiger Strike, Cobra Strike): very low flat mana (1 - 1.5)
+    #   - Elemental Charge-Ups (Fists of Fire, Blades of Ice, Claws of Thunder): low but higher than physical (2.5->4.9 to 3.5->5.9)
+    #   - Physical & Sustain Traps (Caltrops, Shrapnel Sentry, Soul Siphon Sentry): moderate mana (5->9.8 to 10->19.5)
+    #   - Elemental Traps (Fire Sentry, Ice Sentry, Lightning Sentry): high mana scaling (18->46.5, 22->50.5, 25->63)
+    #   - Blade Skills (Blade Sentinel, Blade Fury, Blade Shield, Shuriken): substantial mana costs
+    #   - Short-Term Strategic Bursts (Burst of Speed, Fade, Venom): high mana consumption (25->53.5, 30->68, 25->53.5)
+    ass_mana_table = [
+        # (skill_name, manashift, mana, lvlmana, minmana)
+        # 1. Charge-Ups
+        ("Tiger Strike", "8", "1", "0", "1"),           # 1.0 flat
+        ("Cobra Strike", "7", "3", "0", "1"),           # 1.5 flat
+        ("Fists of Fire", "5", "20", "1", "2"),         # 2.5 at Lvl 1 -> 4.9 at Lvl 20
+        ("Blades of Ice", "5", "24", "1", "3"),         # 3.0 at Lvl 1 -> 5.4 at Lvl 20
+        ("Claws of Thunder", "5", "28", "1", "3"),      # 3.5 at Lvl 1 -> 5.9 at Lvl 20
+        # 2. Finishers
+        ("Dragon Claw", "8", "4", "0", "4"),            # 4.0 flat
+        ("Dragon Talon", "8", "6", "0", "6"),           # 6.0 flat
+        ("Dragon Tail", "8", "10", "0", "10"),          # 10.0 flat
+        ("Dragon Flight", "8", "18", "0", "18"),        # 18.0 flat
+        ("Royal Strike", "8", "8", "0", "8"),           # 8.0 flat (Omnislash)
+        # 3. Physical & Sustain Traps (considerably cheaper than Elemental Traps)
+        ("Shock Field", "6", "20", "1", "5"),           # Caltrops: 5.0 at Lvl 1 -> 9.8 at Lvl 20
+        ("Fire Trauma", "7", "16", "1", "8"),           # Shrapnel Sentry: 8.0 at Lvl 1 -> 17.5 at Lvl 20
+        ("Charged Bolt Sentry", "7", "20", "1", "10"),  # Soul Siphon Sentry: 10.0 at Lvl 1 -> 19.5 at Lvl 20
+        # 4. Elemental Traps (require a large mana pool when heavily invested)
+        ("Wake of Fire Sentry", "7", "36", "3", "18"),  # Fire Sentry: 18.0 at Lvl 1 -> 46.5 at Lvl 20
+        ("Death Sentry", "7", "44", "3", "22"),         # Ice Sentry: 22.0 at Lvl 1 -> 50.5 at Lvl 20
+        ("Lightning Sentry", "8", "25", "2", "25"),     # Lightning Sentry: 25.0 at Lvl 1 -> 63.0 at Lvl 20
+        # 5. Blade Skills
+        ("Blade Sentinel", "8", "12", "1", "12"),       # Blade Sentinel: 12.0 at Lvl 1 -> 31.0 at Lvl 20
+        ("Blade Fury", "6", "12", "1", "3"),            # Blade Fury: 3.0/blade (~12.5/s) at Lvl 1 -> 7.8/blade (~32/s) at Lvl 20
+        ("Blade Shield", "8", "30", "2", "30"),         # Blade Shield: 30.0 at Lvl 1 -> 68.0 at Lvl 20
+        ("Inferno Sentry", "7", "44", "3", "22"),       # Shuriken: 22.0 at Lvl 1 -> 50.5 at Lvl 20
+        # 6. Shadow Disciplines Active Skills & Short-Term Bursts
+        ("Quickness", "7", "50", "3", "25"),            # Burst of Speed: 25.0 at Lvl 1 -> 53.5 at Lvl 20
+        ("Fade", "8", "30", "2", "30"),                 # Fade: 30.0 at Lvl 1 -> 68.0 at Lvl 20
+        ("Venom", "7", "50", "3", "25"),                # Venom: 25.0 at Lvl 1 -> 53.5 at Lvl 20
+        ("Cloak of Shadows", "7", "30", "1", "15"),     # Cloak of Shadows: 15.0 at Lvl 1 -> 24.5 at Lvl 20
+        ("Shadow Warrior", "7", "30", "1", "15"),       # Shadow Bind: 15.0 at Lvl 1 -> 24.5 at Lvl 20
+        ("Mind Blast", "7", "36", "1", "18"),           # Mind Blast: 18.0 at Lvl 1 -> 27.5 at Lvl 20
+        ("Shadow Master", "8", "40", "1", "40"),        # Shadow Master: 40.0 at Lvl 1 -> 59.0 at Lvl 20
+    ]
+    for _sk_name, _ms, _m, _lvlm, _minm in ass_mana_table:
+        if _sk_name in by_name:
+            _r = by_name[_sk_name]
+            _r["manashift"] = _ms
+            _r["mana"] = _m
+            _r["lvlmana"] = _lvlm
+            _r["minmana"] = _minm
 
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
@@ -6518,6 +6666,17 @@ def build_skill_strings(cfg: dict) -> str:
         (0, "Skillan253", "Lethality"),
         (0, "Skillsd253", "Passive - improves attack rating and damage with melee weapons"),
         (0, "Skillld253", "Passive\n\nimproves your attack rating and damage\nwith all melee weapons"),
+        (61097, "ModShadowBindMove", "Enemy Movement Speed: -%d%%"),
+        (61098, "ModShadowBindAttack", "Enemy Attack and Cast Speed: -%d%%"),
+        (61099, "ModShadowBindAR", "Enemy Attack Rating: -%d%%"),
+        (0, "Skillname269", "Shadow Bind"),
+        (0, "Skillan269", "Shadow Bind"),
+        (0, "Skillsd269", "binds a target in shadow, slowing its movement and attacks"),
+        (
+            0,
+            "Skillld269",
+            "binds a target in tendrils of shadow\ncrippling its movement speed, attack speed, and accuracy\neffective against unique monsters and bosses",
+        ),
         (0, "Skillname257", "Caltrops"),
         (0, "Skillan257", "Caltrops"),
         (0, "Skillsd257", "scatters spiked caltrops that damage enemies"),
@@ -7138,6 +7297,30 @@ def _build_baskilltree_pair() -> str:
             d_off = (ty * W + dst_f * fw + dst_x) * 4
             px_hd[d_off : d_off + w * 4] = raw_hd[40 + s_off : 40 + s_off + w * 4]
 
+    def copy_rect_hflip(
+        src_f: int,
+        src_x: int,
+        src_y: int,
+        dst_f: int,
+        dst_x: int,
+        dst_y: int,
+        w: int,
+        h: int,
+    ) -> None:
+        for dy in range(h):
+            sy = src_y + dy
+            ty = dst_y + dy
+            if not (0 <= sy < H and 0 <= ty < H):
+                continue
+            s_off = (sy * W + src_f * fw + src_x) * 4
+            d_off = (ty * W + dst_f * fw + dst_x) * 4
+            for dx in range(w):
+                sx_rev = w - 1 - dx
+                if raw_hd[40 + s_off + sx_rev * 4 + 3] > 0:
+                    px_hd[d_off + dx * 4 : d_off + (dx + 1) * 4] = raw_hd[
+                        40 + s_off + sx_rev * 4 : 40 + s_off + (sx_rev + 1) * 4
+                    ]
+
     def clear_rect(dst_f: int, dst_x: int, dst_y: int, w: int, h: int) -> None:
         zero = b"\x00" * (w * 4)
         for dy in range(h):
@@ -7328,6 +7511,30 @@ def _build_asskilltree_pair() -> str:
                             40 + s_off + dx * 4 : 40 + s_off + (dx + 1) * 4
                         ]
 
+    def copy_rect_hflip(
+        src_f: int,
+        src_x: int,
+        src_y: int,
+        dst_f: int,
+        dst_x: int,
+        dst_y: int,
+        w: int,
+        h: int,
+    ) -> None:
+        for dy in range(h):
+            sy = src_y + dy
+            ty = dst_y + dy
+            if not (0 <= sy < H and 0 <= ty < H):
+                continue
+            s_off = (sy * W + src_f * fw + src_x) * 4
+            d_off = (ty * W + dst_f * fw + dst_x) * 4
+            for dx in range(w):
+                sx_rev = w - 1 - dx
+                if raw_hd[40 + s_off + sx_rev * 4 + 3] > 0:
+                    px_hd[d_off + dx * 4 : d_off + (dx + 1) * 4] = raw_hd[
+                        40 + s_off + sx_rev * 4 : 40 + s_off + (sx_rev + 1) * 4
+                    ]
+
     def clear_rect(dst_f: int, dst_x: int, dst_y: int, w: int, h: int) -> None:
         zero = b"\x00" * (w * 4)
         for dy in range(h):
@@ -7375,7 +7582,24 @@ def _build_asskilltree_pair() -> str:
     draw_v_arrow(0, 3, 1, 4)
     draw_v_arrow(0, 3, 4, 5)
 
-    # 2. Rebuild Frame 2 (Traps & Blades, SkillPage=1)
+    # 2. Rebuild Frame 1 (Shadow Disciplines, SkillPage=2)
+    clear_rect(1, 0, 120, fw, H - 120)
+    for col, row in [(3, 1), (1, 2), (2, 2), (1, 3), (3, 3), (1, 4), (2, 5), (3, 5), (1, 6), (3, 6)]:
+        draw_box(1, col, row)
+
+    draw_v_arrow(1, 1, 2, 3)  # Cloak of Shadows (c1,r2) -> Shadow Bind (c1,r3)
+    draw_v_arrow(1, 1, 3, 4)  # Shadow Bind (c1,r3) -> Mind Blast (c1,r4)
+    draw_v_arrow(1, 1, 4, 6)  # Mind Blast (c1,r4) -> Shadow Master (c1,r6)
+    draw_v_arrow(1, 2, 2, 5)  # Weapon Block (c2,r2) -> Fade (c2,r5)
+    draw_v_arrow(1, 3, 1, 3)  # Lethality (c3,r1) -> Burst of Speed (c3,r3)
+    draw_v_arrow(1, 3, 3, 5)  # Burst of Speed (c3,r3) -> Venom (c3,r5)
+    draw_v_arrow(1, 3, 5, 6)  # Venom (c3,r5) -> Flow (c3,r6)
+    # Lethality (Col 3, Row 1) -> Weapon Block (Col 2, Row 2): down-left diagonal
+    copy_rect(1, 260, 180, 1, 522, 180, 109, 134, transparent_skip=True)
+    # Fade (Col 2, Row 5) -> Shadow Master (Col 1, Row 6): down-left diagonal
+    copy_rect(1, 260, 180, 1, 260, 892, 109, 134, transparent_skip=True)
+
+    # 3. Rebuild Frame 2 (Traps & Blades, SkillPage=1)
     clear_rect(2, 0, 120, fw, H - 120)
     for col, row in [(2, 1), (3, 1), (2, 2), (1, 3), (3, 3), (1, 4), (1, 5), (3, 5), (2, 6), (3, 6)]:
         draw_box(2, col, row)
@@ -8228,6 +8452,15 @@ def _build_asskillicon_pair() -> str:
                     doff = (y * fw + x) * 4
                     f_electro[doff : doff + 4] = bytes((r, g, b, 255))
         write_frame_pair(58 + pressed, f_electro)
+
+        # 9. Lethality (IconCel 20): Crossed broadsword and Assassin claw plate
+        write_frame_pair(20 + pressed, stamp_ai_jpg("lethality.jpg", pressed, crop_margin=0.06))
+
+        # 10. Flow (IconCel 22): Hooded Assassin silhouette with swirling speed/flow arcs
+        write_frame_pair(22 + pressed, stamp_ai_jpg("flow.jpg", pressed, crop_margin=0.06))
+
+        # 11. Shadow Bind (IconCel 38): Monster bound by swirling shadow tendrils around its limbs/feet
+        write_frame_pair(38 + pressed, stamp_ai_jpg("shadow_bind.jpg", pressed, crop_margin=0.06))
 
     dst_hd = os.path.join(MOD_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.sprite")
     dst_low = os.path.join(MOD_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.lowend.sprite")

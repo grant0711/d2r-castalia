@@ -169,15 +169,55 @@ def build_itemtypes(cfg: dict) -> str:
     return write_excel_tsv("itemtypes.txt", headers, rows)
 
 
-# Contiguous Skill ID ranges per class and tier (Tiers 1..6 corresponding to reqlevel 1 / 8 / 16 / 24 / 32 / 40)
-CLASS_SKILL_TIERS: Dict[str, List[ tuple ]] = {
+# Exact Skill IDs per class and tier (Tiers 1..6 corresponding to reqlevel 1 / 8 / 16 / 24 / 32 / 40 in skills.txt).
+# Preserving vanilla *Id values in skills.txt keeps all C++ engine skill-ID handlers, 3D HD state machine skillIndex
+# bindings, and Unique/Set/Affix references intact, while decomposing each tier into maximal contiguous [lo, hi]
+# 'skill-rand' intervals in automagic.txt guarantees 0% higher-tier leakage and 100% tier coverage at every ilvl bracket.
+CLASS_SKILL_TIERS: Dict[str, List[tuple]] = {
     "sor": [(36, 40), (41, 45), (46, 50), (51, 55), (56, 60), (61, 65)],
     "nec": [(66, 70), (71, 75), (76, 80), (81, 85), (86, 90), (91, 95)],
     "pal": [(96, 100), (101, 105), (106, 110), (111, 115), (116, 120), (121, 125)],
-    "bar": [(126, 131), (132, 138), (139, 142), (143, 146), (147, 150), (151, 155)],
     "dru": [(221, 225), (226, 230), (231, 235), (236, 240), (241, 245), (246, 250)],
-    "ass": [(251, 255), (256, 260), (261, 265), (266, 270), (271, 275), (276, 280)],
 }
+
+CLASS_SKILL_ID_SETS: Dict[str, List[List[int]]] = {
+    "sor": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["sor"]],
+    "nec": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["nec"]],
+    "pal": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["pal"]],
+    "dru": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["dru"]],
+    "bar": [
+        [126, 127, 128, 133, 135, 138, 142],  # Tier 1 (reqlevel  1)
+        [132, 134, 137, 141],                 # Tier 2 (reqlevel  8)
+        [130, 131, 140, 144, 145, 148],       # Tier 3 (reqlevel 16)
+        [136, 143, 146, 155],                 # Tier 4 (reqlevel 24)
+        [129, 139, 149, 150, 152],            # Tier 5 (reqlevel 32)
+        [147, 151, 153, 154],                 # Tier 6 (reqlevel 40)
+    ],
+    "ass": [
+        [252, 254, 255, 256, 257],            # Tier 1 (reqlevel  1): Lethality, Tiger Strike, Dragon Talon, Caltrops, Blade Sentinel
+        [251, 259, 263, 264],                 # Tier 2 (reqlevel  8): Shrapnel Sentry, Fists of Fire, Weapon Block, Cloak of Shadows
+        [258, 260, 262, 266, 268, 274],       # Tier 3 (reqlevel 16): Burst of Speed, Dragon Claw, Fire Sentry, Blade Fury, Shadow Bind, Blades of Ice
+        [269, 270, 273, 276],                 # Tier 4 (reqlevel 24): Electrocute, Dragon Tail, Mind Blast, Ice Sentry
+        [265, 267, 271, 275, 277, 278],       # Tier 5 (reqlevel 32): Cobra Strike, Fade, Lightning Sentry, Dragon Flight, Blade Shield, Venom
+        [253, 261, 272, 279, 280],            # Tier 6 (reqlevel 40): Flow, Soul Siphon Sentry, Shuriken, Shadow Master, Omnislash
+    ],
+}
+
+
+def _to_intervals(skill_ids: List[int]) -> List[tuple]:
+    s = sorted(set(skill_ids))
+    if not s:
+        return []
+    out: List[tuple] = []
+    lo = hi = s[0]
+    for x in s[1:]:
+        if x == hi + 1:
+            hi = x
+        else:
+            out.append((lo, hi))
+            lo = hi = x
+    out.append((lo, hi))
+    return out
 
 # Progression brackets (K = 1..6): (bracket_idx_1based, min_alvl, max_alvl, levelreq)
 STAFFMOD_BRACKETS = [
@@ -227,95 +267,100 @@ def _build_class_staffmod_rows(headers: List[str], group: str, cls: str) -> List
     """
     Build progressive 1-skill, 2-skill, and 3-skill 'skill-rand' rows for a class across the 6 brackets.
     Disjoint [min_id, max_id] tier partitions on multi-skill rows guarantee an item never rolls duplicate skills,
-    while spanning Tiers 1..K so every unlocked tier (1..6 in Bracket 6) can spawn!
+    while spanning Tiers 1..K so every unlocked tier (1..6 in Bracket 6) can spawn without leaking locked higher-tier skills!
     """
-    tiers = CLASS_SKILL_TIERS[cls]
+    tier_sets = CLASS_SKILL_ID_SETS[cls]
     out: List[Dict[str, str]] = []
 
-    def span(t_lo: int, t_hi: int) -> tuple:
-        return (tiers[t_lo - 1][0], tiers[t_hi - 1][1])
+    def union_ids(t_lo: int, t_hi: int) -> List[int]:
+        res: List[int] = []
+        for t_idx in range(t_lo - 1, t_hi):
+            res.extend(tier_sets[t_idx])
+        return sorted(set(res))
 
-    for k, min_lvl, max_lvl, lreq in STAFFMOD_BRACKETS:
-        full_lo, full_hi = span(1, k)
-        top_lo, top_hi = span(max(1, k - 1), k)
+    def emit_1skill(min_lvl: str, max_lvl: str, lreq: str, base_freq: int, id_list: List[int]) -> None:
+        ivs = _to_intervals(id_list)
+        for lo, hi in ivs:
+            f = str(max(1, (base_freq * (hi - lo + 1) + 2) // 5)) if len(ivs) > 1 else str(base_freq)
+            out.append(
+                _make_auto_row(
+                    headers, group, min_lvl, max_lvl, lreq, f,
+                    [("skill-rand", slvl, lo, hi)],
+                )
+            )
 
-        # 1. Single-skill rolls: half from full Tiers 1..k pool, half weighted to top Tiers (k-1..k)
-        for slvl, freq in (("1", "4"), ("2", "3"), ("3", "1")):
+    def emit_2skill(min_lvl: str, max_lvl: str, lreq: str, freq: str, s1: str, s2: str, ids1: List[int], ids2: List[int]) -> None:
+        ivs1 = _to_intervals(ids1)
+        ivs2 = _to_intervals(ids2)
+        n = max(len(ivs1), len(ivs2))
+        for i in range(n):
+            a_lo, a_hi = ivs1[i % len(ivs1)]
+            b_lo, b_hi = ivs2[i % len(ivs2)]
             out.append(
                 _make_auto_row(
                     headers, group, min_lvl, max_lvl, lreq, freq,
-                    [("skill-rand", slvl, full_lo, full_hi)],
+                    [("skill-rand", s1, a_lo, a_hi), ("skill-rand", s2, b_lo, b_hi)],
                 )
             )
-            if k >= 2:
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [("skill-rand", slvl, top_lo, top_hi)],
-                    )
-                )
 
-        # 2. Two-skill & Three-skill rolls (strictly disjoint skill ID ranges!)
+    def emit_3skill(min_lvl: str, max_lvl: str, lreq: str, freq: str, s1: str, s2: str, s3: str, ids1: List[int], ids2: List[int], ids3: List[int]) -> None:
+        ivs1 = _to_intervals(ids1)
+        ivs2 = _to_intervals(ids2)
+        ivs3 = _to_intervals(ids3)
+        n = max(len(ivs1), len(ivs2), len(ivs3))
+        for i in range(n):
+            a_lo, a_hi = ivs1[i % len(ivs1)]
+            b_lo, b_hi = ivs2[i % len(ivs2)]
+            c_lo, c_hi = ivs3[i % len(ivs3)]
+            out.append(
+                _make_auto_row(
+                    headers, group, min_lvl, max_lvl, lreq, freq,
+                    [
+                        ("skill-rand", s1, a_lo, a_hi),
+                        ("skill-rand", s2, b_lo, b_hi),
+                        ("skill-rand", s3, c_lo, c_hi),
+                    ],
+                )
+            )
+
+    for k, min_lvl, max_lvl, lreq in STAFFMOD_BRACKETS:
+        full_ids = union_ids(1, k)
+        top_ids = union_ids(max(1, k - 1), k)
+
+        # 1. Single-skill rolls: half from full Tiers 1..k pool, half weighted to top Tiers (k-1..k)
+        for slvl, freq in (("1", 4), ("2", 3), ("3", 1)):
+            emit_1skill(min_lvl, max_lvl, lreq, freq, full_ids)
+            if k >= 2:
+                emit_1skill(min_lvl, max_lvl, lreq, freq, top_ids)
+
+        # 2. Two-skill & Three-skill rolls (strictly disjoint skill ID sets!)
         if k == 1:
-            # Split Tier 1 into two disjoint halves: first 3 skills vs remaining skills
-            mid = full_lo + 2
+            t1_ids = union_ids(1, 1)
+            mid_idx = max(1, len(t1_ids) // 2)
+            t1a, t1b = t1_ids[:mid_idx], t1_ids[mid_idx:]
             for s1, s2, freq in (("1", "1", "4"), ("2", "1", "2"), ("2", "2", "1"), ("3", "2", "1")):
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [("skill-rand", s1, full_lo, mid), ("skill-rand", s2, mid + 1, full_hi)],
-                    )
-                )
+                emit_2skill(min_lvl, max_lvl, lreq, freq, s1, s2, t1a, t1b)
         elif k == 2:
-            # Tier 2 vs Tier 1 (disjoint), plus 3-skill (Tier 2 + Tier 1a + Tier 1b)
-            t2_lo, t2_hi = span(2, 2)
-            t1_lo, t1_hi = span(1, 1)
-            t1_mid = t1_lo + 2
+            t2_ids = union_ids(2, 2)
+            t1_ids = union_ids(1, 1)
+            mid_idx = max(1, len(t1_ids) // 2)
+            t1a, t1b = t1_ids[:mid_idx], t1_ids[mid_idx:]
             for s1, s2, freq in (("1", "1", "3"), ("2", "1", "2"), ("2", "2", "2"), ("3", "2", "1"), ("3", "3", "1")):
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [("skill-rand", s1, t2_lo, t2_hi), ("skill-rand", s2, t1_lo, t1_hi)],
-                    )
-                )
+                emit_2skill(min_lvl, max_lvl, lreq, freq, s1, s2, t2_ids, t1_ids)
             for s1, s2, s3, freq in (("2", "1", "1", "2"), ("2", "2", "1", "1"), ("3", "2", "1", "1"), ("3", "2", "2", "1")):
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [
-                            ("skill-rand", s1, t2_lo, t2_hi),
-                            ("skill-rand", s2, t1_lo, t1_mid),
-                            ("skill-rand", s3, t1_mid + 1, t1_hi),
-                        ],
-                    )
-                )
+                emit_3skill(min_lvl, max_lvl, lreq, freq, s1, s2, s3, t2_ids, t1a, t1b)
         else:
-            # k >= 3 (Tiers 1..k unlocked):
-            # Disjoint 2-skill partition A: Tier k + Tiers 1..(k-1)
-            tk_lo, tk_hi = span(k, k)
-            low_a_lo, low_a_hi = span(1, k - 1)
-            # Disjoint 2-skill partition B: Tiers (k-1)..k + Tiers 1..(k-2)
-            hi_b_lo, hi_b_hi = span(k - 1, k)
-            low_b_lo, low_b_hi = span(1, k - 2)
+            tk_ids = union_ids(k, k)
+            low_a_ids = union_ids(1, k - 1)
+            hi_b_ids = union_ids(k - 1, k)
+            low_b_ids = union_ids(1, k - 2)
             for s1, s2, freq in (("1", "1", "2"), ("2", "1", "2"), ("2", "2", "2"), ("3", "2", "1"), ("3", "3", "1")):
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [("skill-rand", s1, tk_lo, tk_hi), ("skill-rand", s2, low_a_lo, low_a_hi)],
-                    )
-                )
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [("skill-rand", s1, hi_b_lo, hi_b_hi), ("skill-rand", s2, low_b_lo, low_b_hi)],
-                    )
-                )
-            # Disjoint 3-skill partition across all unlocked Tiers 1..k:
-            # Slot 1: Tier k | Slot 2: Tiers mid..k-1 | Slot 3: Tiers 1..(mid-1)
+                emit_2skill(min_lvl, max_lvl, lreq, freq, s1, s2, tk_ids, low_a_ids)
+                emit_2skill(min_lvl, max_lvl, lreq, freq, s1, s2, hi_b_ids, low_b_ids)
             mid_tier = max(2, (k + 1) // 2)
-            p1_lo, p1_hi = span(k, k)
-            p2_lo, p2_hi = span(mid_tier, k - 1)
-            p3_lo, p3_hi = span(1, mid_tier - 1)
+            p1_ids = union_ids(k, k)
+            p2_ids = union_ids(mid_tier, k - 1)
+            p3_ids = union_ids(1, mid_tier - 1)
             for s1, s2, s3, freq in (
                 ("1", "1", "1", "2"),
                 ("2", "2", "1", "2"),
@@ -324,16 +369,7 @@ def _build_class_staffmod_rows(headers: List[str], group: str, cls: str) -> List
                 ("3", "3", "2", "1"),
                 ("3", "3", "3", "1"),
             ):
-                out.append(
-                    _make_auto_row(
-                        headers, group, min_lvl, max_lvl, lreq, freq,
-                        [
-                            ("skill-rand", s1, p1_lo, p1_hi),
-                            ("skill-rand", s2, p2_lo, p2_hi),
-                            ("skill-rand", s3, p3_lo, p3_hi),
-                        ],
-                    )
-                )
+                emit_3skill(min_lvl, max_lvl, lreq, freq, s1, s2, s3, p1_ids, p2_ids, p3_ids)
     return out
 
 

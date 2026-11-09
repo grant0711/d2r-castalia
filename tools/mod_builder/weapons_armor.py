@@ -319,18 +319,31 @@ def _scale_pair(row: Dict[str, str], min_col: str, max_col: str, mult: float, lo
 
 
 def _scale_axe_pair(row: Dict[str, str], min_col: str, max_col: str, mult: float) -> None:
+    """
+    Scale Axe damage with a wide ~1:5 min-to-max spread (33.8% to 166.2% of scaled average)
+    anchored so the highest-damage Axe in the game (Decapitator, 7bt, avg=153.45) hits
+    exactly 255 max damage (52-255) and every other Axe scales proportionally below 255.
+    """
     if not row.get(min_col) or not row.get(max_col):
         return
     vmin = int(row[min_col])
     vmax = int(row[max_col])
     avg = ((vmin + vmax) / 2.0) * mult
-    hi = max(3, int(round(2.0 * avg - 1.0)))
-    if hi > 255:
-        lo = max(1, min(254, int(round(2.0 * avg - 255.0))))
-        hi = 255
-    else:
-        lo = 1
-    row[min_col] = str(lo)
+    high_pct = 255.0 / 153.45  # 1.661779... -> Decapitator (avg 153.45) = 255 max
+    low_pct = 2.0 - high_pct   # 0.338221... -> preserves 100% of scaled average damage
+    lo, hi = _spread_bounds(avg, low_pct, high_pct)
+    row[min_col] = lo
+    row[max_col] = hi
+
+
+def _scale_flail_pair(row: Dict[str, str], min_col: str, max_col: str, mult: float) -> None:
+    if not row.get(min_col) or not row.get(max_col):
+        return
+    vmin = int(row[min_col])
+    vmax = int(row[max_col])
+    avg = ((vmin + vmax) / 2.0) * mult
+    hi = min(255, max(3, int(round(2.0 * avg - 1.0))))
+    row[min_col] = "1"
     row[max_col] = str(hi)
 
 
@@ -475,7 +488,7 @@ def build_weapons(cfg: dict) -> str:
             row["StrBonus"] = "175"
             row["DexBonus"] = ""
             if code in ("fla", "9fl", "7fl"):
-                _scale_axe_pair(row, "mindam", "maxdam", 1.15)
+                _scale_flail_pair(row, "mindam", "maxdam", 1.15)
             else:
                 _scale_pair(row, "mindam", "maxdam", 1.15, 0.85, 1.15)
 

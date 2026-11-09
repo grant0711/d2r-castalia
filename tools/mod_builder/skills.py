@@ -190,7 +190,13 @@ def build_states(cfg: dict) -> str:
             max_id = sid
 
     all_new_states = (
-        [(st_name, {"aura": "1"} if st_name == "pal_dismiss_aura" else {}) for st_name in PALADIN_PASSIVE_STATES]
+        [
+            (
+                st_name,
+                {"aura": "1", "onsound": "paladin_aura_prayer"} if st_name == "pal_dismiss_aura" else {},
+            )
+            for st_name in PALADIN_PASSIVE_STATES
+        ]
         + list(BARBARIAN_STATES)
         + list(ASSASSIN_STATES)
     )
@@ -4291,7 +4297,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         new_desc["SkillPage"] = "0"
         new_desc["SkillRow"] = "0"
         new_desc["SkillColumn"] = "0"
-        new_desc["ListRow"] = "0"
+        new_desc["ListRow"] = "3"
         new_desc["IconCel"] = "40"
         new_desc["str name"] = "ModDismissAuraName"
         new_desc["str short"] = "ModDismissAuraDesc"
@@ -4311,13 +4317,14 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         new_sk["aurastate"] = "pal_dismiss_aura"
         new_sk["auratargetstate"] = "pal_dismiss_aura"
         new_sk["aurarangecalc"] = "ln12"
-        new_sk["aurastat1"] = "lightradius"
-        new_sk["aurastatcalc1"] = "0"
+        new_sk["aurastat1"] = "maxstamina"
+        new_sk["aurastatcalc1"] = "1"
         new_sk["Param1"] = "16"
         new_sk["*Param1 Description"] = "Radius baseline"
         new_sk["Param2"] = "2"
         new_sk["*Param2 Description"] = "Radius per level"
         new_sk["immediate"] = "1"
+        new_sk["enhanceable"] = "1"
         new_sk["attackrank"] = "1"
         new_sk["range"] = "none"
         new_sk["monanim"] = "xx"
@@ -4327,7 +4334,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         new_sk["leftskill"] = "0"
         new_sk["rightskill"] = "1"
         new_sk["minmana"] = "0"
-        new_sk["manashift"] = "8"
+        new_sk["manashift"] = "4"
         new_sk["mana"] = "0"
         new_sk["lvlmana"] = "0"
         new_sk["interrupt"] = "1"
@@ -4336,7 +4343,8 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         new_sk["perdelay"] = "10"
         new_sk["InGame"] = "1"
         new_sk["HitShift"] = "8"
-        new_sk["cost add"] = "0"
+        new_sk["cost mult"] = "15"
+        new_sk["cost add"] = "60"
         new_sk["*eol"] = "0"
         s_rows.append(new_sk)
 

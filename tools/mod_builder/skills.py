@@ -190,7 +190,7 @@ def build_states(cfg: dict) -> str:
             max_id = sid
 
     all_new_states = (
-        [(st_name, {}) for st_name in PALADIN_PASSIVE_STATES]
+        [(st_name, {"aura": "1"} if st_name == "pal_dismiss_aura" else {}) for st_name in PALADIN_PASSIVE_STATES]
         + list(BARBARIAN_STATES)
         + list(ASSASSIN_STATES)
     )
@@ -857,6 +857,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     # active self-only -50% Base Weapon Damage (item_slash_damage_percent & item_crush_damage_percent = -50 via op=11 on min/maxdamage),
     # and zero passive Mana Recovery (Mana Recovery is purely an active property of Meditation!).
     medi = by_name["Meditation"]
+    medi["immediate"] = "1"
     medi["perdelay"] = "10"
     medi["aurastatcalc1"] = RAMP34
     medi["aurastat2"] = ""
@@ -4309,13 +4310,20 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         new_sk["aurafilter"] = "73731"
         new_sk["aurastate"] = "pal_dismiss_aura"
         new_sk["auratargetstate"] = "pal_dismiss_aura"
-        new_sk["aurarangecalc"] = "1"
+        new_sk["aurarangecalc"] = "ln12"
+        new_sk["aurastat1"] = "lightradius"
+        new_sk["aurastatcalc1"] = "0"
+        new_sk["Param1"] = "16"
+        new_sk["*Param1 Description"] = "Radius baseline"
+        new_sk["Param2"] = "2"
+        new_sk["*Param2 Description"] = "Radius per level"
         new_sk["immediate"] = "1"
-        new_sk["attackrank"] = "0"
+        new_sk["attackrank"] = "1"
         new_sk["range"] = "none"
         new_sk["monanim"] = "xx"
         new_sk["reqlevel"] = "1"
-        new_sk["restrict"] = "1"
+        new_sk["maxlvl"] = "20"
+        new_sk["restrict"] = ""
         new_sk["leftskill"] = "0"
         new_sk["rightskill"] = "1"
         new_sk["minmana"] = "0"
@@ -4325,7 +4333,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         new_sk["interrupt"] = "1"
         new_sk["InTown"] = "1"
         new_sk["aura"] = "1"
-        new_sk["perdelay"] = "50"
+        new_sk["perdelay"] = "10"
         new_sk["InGame"] = "1"
         new_sk["HitShift"] = "8"
         new_sk["cost add"] = "0"

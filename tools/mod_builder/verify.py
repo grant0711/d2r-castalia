@@ -20,6 +20,7 @@ from mod_builder.common import (
     VANILLA_STRINGS,
     load_config,
     read_excel_tsv,
+    read_strings_json,
 )
 
 
@@ -668,6 +669,22 @@ def verify_all(cfg: dict = None) -> List[str]:
     for req_key in ("wm2", "bml", "um1", "opl", "vk1", "ky2", "ky3", "z00"):
         if req_key not in mod_item_names:
             raise AssertionError(f"item-names.json: missing '{req_key}' (cross-module overwrite!)")
+
+    # Verify zero existing vanilla keys in monsters.json are overwritten (prevents clobbering
+    # rare item prefixes like GhoulRI or interactive objects like TrappDoor)
+    van_mon_strings = {
+        e["Key"]: e["enUS"]
+        for e in read_strings_json("monsters.json")
+        if isinstance(e, dict) and "Key" in e
+    }
+    with open(os.path.join(MOD_STRINGS, "monsters.json"), "r", encoding="utf-8-sig") as f:
+        for e in json.load(f):
+            if isinstance(e, dict) and "Key" in e:
+                mk = e["Key"]
+                if mk in van_mon_strings and e.get("enUS") != van_mon_strings[mk]:
+                    raise AssertionError(
+                        f"monsters.json: existing vanilla key {mk!r} was overwritten ({van_mon_strings[mk]!r} -> {e.get('enUS')!r})"
+                    )
 
     # Verify zero custom string ID (>= 60000) collisions across all JSON string tables
     seen_custom_ids: Dict[int, str] = {}

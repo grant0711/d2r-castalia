@@ -1073,39 +1073,16 @@ def _get_descstr_pool() -> tuple[dict[str, str], list[tuple[int, str, str]]]:
     """
     Return (van_desc_en, pool) where pool is a deterministic list of (id, Key, source_file)
     for .tbl-backed string keys (id < 23000) safe to use in monstats.txt DescStr.
+    Strictly uses the 108 legacy unused D2bnetHelp* keys from bnet.json so that zero
+    existing vanilla keys in monsters.json (which also holds rare item affixes like GhoulRI
+    and interactive object names like TrappDoor) are ever overwritten.
     """
     m_str = read_strings_json("monsters.json")
     b_str = read_strings_json("bnet.json")
-    _, mon_rows = read_tsv("monstats.txt")
-    _, su_rows = read_tsv("superuniques.txt")
-    _, hire_rows = read_tsv("hireling.txt")
 
     van_desc_en = {e["Key"]: e["enUS"] for e in m_str}
 
-    protected_keys = set()
-    for r in mon_rows:
-        if r.get("NameStr", "").strip():
-            protected_keys.add(r["NameStr"].strip())
-    for r in su_rows:
-        if r.get("Name", "").strip():
-            protected_keys.add(r["Name"].strip())
-    for r in hire_rows:
-        if r.get("HireDesc", "").strip():
-            protected_keys.add(r["HireDesc"].strip())
-
-    protected_prefixes = (
-        "unique", "monsterunique", "champ", "Undead", "Demon", "minion", "Dummy",
-        "Baal", "Necro", "Druid", "UI", "Ui", "darkwanderer",
-    )
-    for e in m_str:
-        k = e["Key"]
-        if any(k.startswith(p) for p in protected_prefixes):
-            protected_keys.add(k)
-
     pool: list[tuple[int, str, str]] = []
-    for e in m_str:
-        if e["Key"] not in protected_keys and e["id"] < 23000:
-            pool.append((e["id"], e["Key"], "monsters.json"))
     for e in b_str:
         if e["Key"].startswith("D2bnetHelp") and e["id"] < 23000:
             pool.append((e["id"], e["Key"], "bnet.json"))

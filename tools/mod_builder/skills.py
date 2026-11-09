@@ -3050,7 +3050,7 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     # - Charge 1 Finisher Release: fistsoffireexplode (Instant AoE Fire Explosion = 2x of 1 Held Orb)
     # - Charge 2 Finisher Release: fistsoffirefirewall (Wide AoE Burning Ground carpet = 2x of 2 Held Orbs/sec)
     # - Charge 3 Finisher Release: royalstrikemeteorcenter -> royalstrikemeteor + royalstrikemeteorfire (Crashing Meteor = 2x of 3 Held Orbs)
-    fof_syn_expr = "9*skill('Blades of Ice'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
+    fof_syn_expr = "12*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl) + 6*skill('Claws of Thunder'.blvl)"
     if "fistsoffireexplode" in rows_by_name:
         ffe = rows_by_name["fistsoffireexplode"]
         ffe["CollideType"] = "3"
@@ -3588,7 +3588,7 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     #    - Charge 1 Finisher Release: bladesoficeexplode (Compact AoE Ice Blast + Solid Freeze = 2x of 1 Held Orb)
     #    - Charge 2 Finisher Release: royalstrikechaosice -> bladesoficeexplode (Ice Blast + 12 Radiating Ice Bolts = 2x of 2 Held Orbs)
     #    - Charge 3 Finisher Release: catapult cold ball on (Full Frozen Orb -> catapult cold ball = 3x of 1 Held Orb per bolt)
-    boi_syn_expr = "9*skill('Fists of Fire'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Death Sentry'.blvl)"
+    boi_syn_expr = "12*skill('Death Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Claws of Thunder'.blvl)"
     if "bladesoficeexplode" in rows_by_name:
         bie = rows_by_name["bladesoficeexplode"]
         bie["pCltDoFunc"] = "1"
@@ -3931,7 +3931,7 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     #    - Charge 2 Finisher: clawsofthundernova (360-degree Lightning Nova, 2x of 2 Held Orbs)
     #    - Charge 3 Finisher: royalstrikechainlightning (Chain Lightning, 2x of 3 Held Orbs)
     #    - Lightning Sentry: sentrylightningbolt (piercing bolt, Charge 1+ extends range) + sentrylightningbolt2 (Charge 3 blinds hit monsters)
-    cot_syn_expr = "9*skill('Fists of Fire'.blvl) + 9*skill('Blades of Ice'.blvl) + 6*skill('Lightning Sentry'.blvl)"
+    cot_syn_expr = "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)"
     if "clawsofthunderbolt" in rows_by_name:
         cotb = rows_by_name["clawsofthunderbolt"]
         cotb["Skill"] = ""
@@ -4525,7 +4525,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ts["Param1"] = "8"
         ts["Param2"] = "8"
         ts["calc1"] = (
-            "par1 + 3*max(0,lvl-1) + 6*max(0,lvl-5) + 3*max(0,lvl-10) + 3*skill('Dragon Talon'.blvl) + 2*skill('Fire Trauma'.blvl) + 2*skill('Cobra Strike'.blvl)"
+            "par1 + 3*max(0,lvl-1) + 6*max(0,lvl-5) + 3*max(0,lvl-10) + 3*skill('Dragon Talon'.blvl) + 2*skill('Fire Trauma'.blvl)"
         )
         ts["*calc1 desc"] = "Held Charge Damage % per Orb"
         ts["calc2"] = (
@@ -4537,7 +4537,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         )
         ts["*calc3 desc"] = "Charge 1 Shockwave Ring Max Physical Damage"
         ts["calc4"] = (
-            "12*skill('Dragon Talon'.blvl) + 6*skill('Fire Trauma'.blvl) + 6*skill('Cobra Strike'.blvl)"
+            "12*skill('Dragon Talon'.blvl) + 6*skill('Fire Trauma'.blvl)"
         )
         ts["*calc4 desc"] = "Total Synergy Bonus (%)"
         ts["calc5"] = "5"
@@ -4556,7 +4556,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     snap_ts = "max(stat('progressive_damage'.accr), stat('item_kickdamage'.accr))"
     ts_m = "skill('Tiger Strike'.blvl)"
     ss_c = "skill('Ass Trap Charge Consume'.blvl)"
-    ss_trap_syn = "(skill('Shock Field'.blvl) + skill('Inferno Sentry'.blvl))"
+    ss_trap_syn = "(skill('Shock Field'.blvl) + skill('Tiger Strike'.blvl))"
 
     if "Fire Trauma" in by_name:
         ft = by_name["Fire Trauma"]
@@ -4596,7 +4596,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft["sumskill3"] = "Tiger Strike"
         ft["sumsk3calc"] = ts_m
         ft["sumskill4"] = "Shock Field"
-        ft["sumsk4calc"] = "skill('Shock Field'.blvl) + 4 * skill('Inferno Sentry'.blvl)"
+        ft["sumsk4calc"] = "skill('Shock Field'.blvl)"
         ft["sumskill5"] = "Ass Trap Charge Consume"
         ft["sumsk5calc"] = snap_ts
         ft["LineOfSight"] = "4"
@@ -4639,7 +4639,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft["*calc1 desc"] = "Base Physical Damage Level Ramp (%)"
         ft["calc2"] = ""
         ft["*calc2 desc"] = ""
-        ft["calc3"] = "4*skill('Shock Field'.blvl) + 4*skill('Tiger Strike'.blvl) + 16*skill('Inferno Sentry'.blvl)"
+        ft["calc3"] = "4*skill('Shock Field'.blvl) + 4*skill('Tiger Strike'.blvl)"
         ft["*calc3 desc"] = "Total Synergy Bonus (%)"
         ft["DmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
         ft["aitype"] = "3"
@@ -4703,10 +4703,10 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ts_d["dsc3texta3"] = "Damplev"
         ts_d["dsc3textb3"] = "Skillname252"
         ts_d["dsc3calca3"] = "6"
-        ts_d["dsc3line4"] = "76"
-        ts_d["dsc3texta4"] = "Damplev"
-        ts_d["dsc3textb4"] = "Skillname266"
-        ts_d["dsc3calca4"] = "6"
+        ts_d["dsc3line4"] = ""
+        ts_d["dsc3texta4"] = ""
+        ts_d["dsc3textb4"] = ""
+        ts_d["dsc3calca4"] = ""
 
     if "fire trauma" in by_desc:
         ft_d = by_desc["fire trauma"]
@@ -4747,10 +4747,10 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft_d["dsc3texta3"] = "Damplev"
         ft_d["dsc3textb3"] = "Skillname255"
         ft_d["dsc3calca3"] = "4"
-        ft_d["dsc3line4"] = "76"
-        ft_d["dsc3texta4"] = "Damplev"
-        ft_d["dsc3textb4"] = "Skillname273"
-        ft_d["dsc3calca4"] = "16"
+        ft_d["dsc3line4"] = ""
+        ft_d["dsc3texta4"] = ""
+        ft_d["dsc3textb4"] = ""
+        ft_d["dsc3calca4"] = ""
         ft_d["dsc3line5"] = ""
         ft_d["dsc3texta5"] = ""
         ft_d["dsc3textb5"] = ""
@@ -4788,7 +4788,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         )
         fof["*calc3 desc"] = "Min Fire Damage per Orb (Max = 2 * clc3)"
         fof["calc4"] = (
-            "9*skill('Blades of Ice'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
+            "12*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl) + 6*skill('Claws of Thunder'.blvl)"
         )
         fof["*calc4 desc"] = "Total Synergy Bonus (%)"
         fof["EType"] = ""
@@ -4864,7 +4864,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wof["*calc1 desc"] = "Base Fire Damage Level Ramp (%)"
         wof["calc2"] = ""
         wof["*calc2 desc"] = ""
-        wof["calc3"] = "9*skill('Death Sentry'.blvl) + 9*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl)"
+        wof["calc3"] = "12*skill('Fists of Fire'.blvl) + 6*skill('Death Sentry'.blvl) + 6*skill('Lightning Sentry'.blvl)"
         wof["*calc3 desc"] = "Total Synergy Bonus (%)"
         wof["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
 
@@ -4908,15 +4908,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         fof_d["dsc3calca1"] = "2"
         fof_d["dsc3line2"] = "76"
         fof_d["dsc3texta2"] = "Firedplev"
-        fof_d["dsc3textb2"] = "Skillname275"
-        fof_d["dsc3calca2"] = "9"
+        fof_d["dsc3textb2"] = "Skillname263"
+        fof_d["dsc3calca2"] = "12"
         fof_d["dsc3line3"] = "76"
         fof_d["dsc3texta3"] = "Firedplev"
-        fof_d["dsc3textb3"] = "Skillname270"
-        fof_d["dsc3calca3"] = "9"
+        fof_d["dsc3textb3"] = "Skillname275"
+        fof_d["dsc3calca3"] = "6"
         fof_d["dsc3line4"] = "76"
         fof_d["dsc3texta4"] = "Firedplev"
-        fof_d["dsc3textb4"] = "Skillname263"
+        fof_d["dsc3textb4"] = "Skillname270"
         fof_d["dsc3calca4"] = "6"
 
     if "wake of fire sentry" in by_desc:
@@ -4933,15 +4933,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wof_d["dsc3calca1"] = "2"
         wof_d["dsc3line2"] = "76"
         wof_d["dsc3texta2"] = "Firedplev"
-        wof_d["dsc3textb2"] = "Skillname277"
-        wof_d["dsc3calca2"] = "9"
+        wof_d["dsc3textb2"] = "Skillname260"
+        wof_d["dsc3calca2"] = "12"
         wof_d["dsc3line3"] = "76"
         wof_d["dsc3texta3"] = "Firedplev"
-        wof_d["dsc3textb3"] = "Skillname272"
-        wof_d["dsc3calca3"] = "9"
+        wof_d["dsc3textb3"] = "Skillname277"
+        wof_d["dsc3calca3"] = "6"
         wof_d["dsc3line4"] = "76"
         wof_d["dsc3texta4"] = "Firedplev"
-        wof_d["dsc3textb4"] = "Skillname260"
+        wof_d["dsc3textb4"] = "Skillname272"
         wof_d["dsc3calca4"] = "6"
 
     wof_shots_calc = f"par8 + (({wof_c} >= 1) ? (3 + {fof_m} / 10) : 0)"
@@ -4961,7 +4961,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wods["*calc1 desc"] = "Wake of Fire Sentry Level"
         wods["calc2"] = "100 + 22*max(0,clc1-1) + 32*max(0,clc1-5) + 46*max(0,clc1-10) + 68*max(0,clc1-15)"
         wods["*calc2 desc"] = "Base Fire Damage Level Ramp (%)"
-        wods["calc3"] = "100 + 9*skill('Fire Trauma'.blvl) + 6*skill('Fists of Fire'.blvl)"
+        wods["calc3"] = "100 + 12*skill('Fists of Fire'.blvl) + 6*skill('Fire Trauma'.blvl)"
         wods["*calc3 desc"] = "Total Synergy Multiplier (%)"
         wods["calc4"] = wof_shots_calc
 
@@ -5014,9 +5014,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cs["cltmissilec"] = "unholybolt4"
         cs["Param1"] = "45"
         cs["Param2"] = "6"
-        cs["calc1"] = (
-            "ln12 + 3*skill('Dragon Claw'.blvl) + 2*skill('Charged Bolt Sentry'.blvl) + 2*skill('Fists of Fire'.blvl)"
-        )
+        cs["calc1"] = "ln12 + 3*skill('Dragon Claw'.blvl) + 2*skill('Charged Bolt Sentry'.blvl)"
         cs["*calc1 desc"] = "Finisher Life & Mana Steal %"
         cs["calc2"] = (
             "((50 + 15*max(0,lvl-1) + 25*max(0,lvl-8) + 40*max(0,lvl-16) + 55*max(0,lvl-22)) * (100 + clc4)) / 100"
@@ -5024,9 +5022,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cs["*calc2 desc"] = "Soul-Hex Wave Flat Defense Shred per Orb"
         cs["calc3"] = "10 + lvl / 2"
         cs["*calc3 desc"] = "Soul-Hex Wave % Defense Shred per Orb"
-        cs["calc4"] = (
-            "12*skill('Dragon Claw'.blvl) + 6*skill('Charged Bolt Sentry'.blvl) + 6*skill('Fists of Fire'.blvl)"
-        )
+        cs["calc4"] = "12*skill('Dragon Claw'.blvl) + 6*skill('Charged Bolt Sentry'.blvl)"
         cs["*calc4 desc"] = "Total Synergy Bonus (%)"
         cs["aurastat2"] = "item_damagetargetac"
         cs["aurastatcalc2"] = "-50"
@@ -5070,15 +5066,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cs_d["dsc3texta3"] = "ModCobraSynergyPerLev"
         cs_d["dsc3textb3"] = "Skillname262"
         cs_d["dsc3calca3"] = "6"
-        cs_d["dsc3line4"] = "76"
-        cs_d["dsc3texta4"] = "ModCobraSynergyPerLev"
-        cs_d["dsc3textb4"] = "Skillname260"
-        cs_d["dsc3calca4"] = "6"
+        cs_d["dsc3line4"] = ""
+        cs_d["dsc3texta4"] = ""
+        cs_d["dsc3textb4"] = ""
+        cs_d["dsc3calca4"] = ""
 
     snap_cs = "max(stat('progressive_steal'.accr), stat('item_kickdamage'.accr))"
     cs_m = "skill('Cobra Strike'.blvl)"
     cs_c = "skill('Ass Trap Charge Consume'.blvl)"
-    cs_trap_syn = "(skill('Fire Trauma'.blvl) + skill('Shock Field'.blvl))"
+    cs_trap_syn = "(skill('Fire Trauma'.blvl) + skill('Cobra Strike'.blvl))"
 
     if "Charged Bolt Sentry" in by_name:
         cbs = by_name["Charged Bolt Sentry"]
@@ -5107,7 +5103,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cbs["sumskill3"] = "Cobra Strike"
         cbs["sumsk3calc"] = cs_m
         cbs["sumskill4"] = "Fire Trauma"
-        cbs["sumsk4calc"] = "skill('Fire Trauma'.blvl) + skill('Shock Field'.blvl)"
+        cbs["sumsk4calc"] = "skill('Fire Trauma'.blvl)"
         cbs["sumskill5"] = "Ass Trap Charge Consume"
         cbs["sumsk5calc"] = snap_cs
         cbs["Param1"] = "9"
@@ -5128,7 +5124,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cbs["EMaxLev5"] = "0"
         cbs["calc1"] = "100 + 14*max(0,lvl-1) + 18*max(0,lvl-5) + 26*max(0,lvl-10) + 38*max(0,lvl-15)"
         cbs["*calc1 desc"] = "Base Magic Damage Level Ramp (%)"
-        cbs["calc3"] = "9*skill('Fire Trauma'.blvl) + 9*skill('Shock Field'.blvl) + 6*skill('Cobra Strike'.blvl)"
+        cbs["calc3"] = "15*skill('Cobra Strike'.blvl) + 9*skill('Fire Trauma'.blvl)"
         cbs["*calc3 desc"] = "Total Synergy Bonus (%)"
         cbs["calc4"] = ""
         cbs["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
@@ -5167,7 +5163,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             " + 26*max(0,skill('Charged Bolt Sentry'.blvl)-10) + 38*max(0,skill('Charged Bolt Sentry'.blvl)-15)"
         )
         bs_sk["*calc2 desc"] = "Base Magic Damage Level Ramp (%)"
-        bs_sk["calc3"] = "100 + 9*skill('Fire Trauma'.blvl) + 6*skill('Cobra Strike'.blvl)"
+        bs_sk["calc3"] = "100 + 15*skill('Cobra Strike'.blvl) + 9*skill('Fire Trauma'.blvl)"
         bs_sk["*calc3 desc"] = "Total Synergy Multiplier (%)"
         bs_sk["calc4"] = cs_shots_calc
 
@@ -5204,16 +5200,16 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cbs_d["dsc3calca1"] = "2"
         cbs_d["dsc3line2"] = "76"
         cbs_d["dsc3texta2"] = "Magdplev"
-        cbs_d["dsc3textb2"] = "Skillname257"
-        cbs_d["dsc3calca2"] = "9"
+        cbs_d["dsc3textb2"] = "Skillname266"
+        cbs_d["dsc3calca2"] = "15"
         cbs_d["dsc3line3"] = "76"
         cbs_d["dsc3texta3"] = "Magdplev"
         cbs_d["dsc3textb3"] = "Skillname252"
         cbs_d["dsc3calca3"] = "9"
-        cbs_d["dsc3line4"] = "76"
-        cbs_d["dsc3texta4"] = "Magdplev"
-        cbs_d["dsc3textb4"] = "Skillname266"
-        cbs_d["dsc3calca4"] = "6"
+        cbs_d["dsc3line4"] = ""
+        cbs_d["dsc3texta4"] = ""
+        cbs_d["dsc3textb4"] = ""
+        cbs_d["dsc3calca4"] = ""
         cbs_d["dsc3line5"] = ""
         cbs_d["dsc3texta5"] = ""
         cbs_d["dsc3textb5"] = ""
@@ -5250,7 +5246,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         )
         cot["*calc3 desc"] = "Held Max Lightning Damage per Orb (Min = +1, Max = clc3)"
         cot["calc4"] = (
-            "9*skill('Fists of Fire'.blvl) + 9*skill('Blades of Ice'.blvl) + 6*skill('Lightning Sentry'.blvl)"
+            "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)"
         )
         cot["*calc4 desc"] = "Total Synergy Bonus (%)"
         cot["EType"] = ""
@@ -5319,15 +5315,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cot_d["dsc3calca1"] = "2"
         cot_d["dsc3line2"] = "76"
         cot_d["dsc3texta2"] = "Ltngdplev"
-        cot_d["dsc3textb2"] = "Skillname260"
-        cot_d["dsc3calca2"] = "9"
+        cot_d["dsc3textb2"] = "Skillname272"
+        cot_d["dsc3calca2"] = "12"
         cot_d["dsc3line3"] = "76"
         cot_d["dsc3texta3"] = "Ltngdplev"
-        cot_d["dsc3textb3"] = "Skillname275"
-        cot_d["dsc3calca3"] = "9"
+        cot_d["dsc3textb3"] = "Skillname260"
+        cot_d["dsc3calca3"] = "6"
         cot_d["dsc3line4"] = "76"
         cot_d["dsc3texta4"] = "Ltngdplev"
-        cot_d["dsc3textb4"] = "Skillname272"
+        cot_d["dsc3textb4"] = "Skillname275"
         cot_d["dsc3calca4"] = "6"
 
     snap_cot = "max(stat('progressive_lightning'.accr), stat('item_kickdamage'.accr))"
@@ -5383,7 +5379,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ls["EMaxLev5"] = "0"
         ls["calc1"] = "100 + 15*max(0,lvl-1) + 20*max(0,lvl-5) + 28*max(0,lvl-10) + 40*max(0,lvl-15)"
         ls["*calc1 desc"] = "Base Lightning Damage Level Ramp (%)"
-        ls["calc3"] = "9*skill('Wake of Fire Sentry'.blvl) + 9*skill('Death Sentry'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+        ls["calc3"] = "12*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Death Sentry'.blvl)"
         ls["*calc3 desc"] = "Total Synergy Bonus (%)"
         ls["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
 
@@ -5411,7 +5407,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sl["*calc1 desc"] = "Lightning Sentry Skill Level"
         sl["calc2"] = "100 + 15*max(0,clc1-1) + 20*max(0,clc1-5) + 28*max(0,clc1-10) + 40*max(0,clc1-15)"
         sl["*calc2 desc"] = "Base Lightning Damage Level Ramp (%)"
-        sl["calc3"] = "100 + 9*skill('Wake of Fire Sentry'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+        sl["calc3"] = "100 + 12*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
         sl["*calc3 desc"] = "Total Synergy Multiplier (%)"
         sl["calc4"] = ls_shots_calc
 
@@ -5451,17 +5447,17 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ls_d["dsc3calca1"] = "2"
         ls_d["dsc3line2"] = "76"
         ls_d["dsc3texta2"] = "Ltngdplev"
-        ls_d["dsc3textb2"] = "Skillname263"
-        ls_d["dsc3calca2"] = "9"
+        ls_d["dsc3textb2"] = "Skillname270"
+        ls_d["dsc3calca2"] = "12"
         ls_d["dsc3calcb2"] = ""
         ls_d["dsc3line3"] = "76"
         ls_d["dsc3texta3"] = "Ltngdplev"
-        ls_d["dsc3textb3"] = "Skillname277"
-        ls_d["dsc3calca3"] = "9"
+        ls_d["dsc3textb3"] = "Skillname263"
+        ls_d["dsc3calca3"] = "6"
         ls_d["dsc3calcb3"] = ""
         ls_d["dsc3line4"] = "76"
         ls_d["dsc3texta4"] = "Ltngdplev"
-        ls_d["dsc3textb4"] = "Skillname270"
+        ls_d["dsc3textb4"] = "Skillname277"
         ls_d["dsc3calca4"] = "6"
         ls_d["dsc3calcb4"] = ""
         ls_d["dsc3line5"] = ""
@@ -5499,7 +5495,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         )
         boi["*calc3 desc"] = "Held Min Cold Damage per Orb (Max = 2 * clc3)"
         boi["calc4"] = (
-            "9*skill('Fists of Fire'.blvl) + 9*skill('Claws of Thunder'.blvl) + 6*skill('Death Sentry'.blvl)"
+            "12*skill('Death Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Claws of Thunder'.blvl)"
         )
         boi["*calc4 desc"] = "Total Synergy Bonus (%)"
         boi["EType"] = ""
@@ -5572,15 +5568,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         boi_d["dsc3calca1"] = "2"
         boi_d["dsc3line2"] = "76"
         boi_d["dsc3texta2"] = "Colddplev"
-        boi_d["dsc3textb2"] = "Skillname260"
-        boi_d["dsc3calca2"] = "9"
+        boi_d["dsc3textb2"] = "Skillname277"
+        boi_d["dsc3calca2"] = "12"
         boi_d["dsc3line3"] = "76"
         boi_d["dsc3texta3"] = "Colddplev"
-        boi_d["dsc3textb3"] = "Skillname270"
-        boi_d["dsc3calca3"] = "9"
+        boi_d["dsc3textb3"] = "Skillname260"
+        boi_d["dsc3calca3"] = "6"
         boi_d["dsc3line4"] = "76"
         boi_d["dsc3texta4"] = "Colddplev"
-        boi_d["dsc3textb4"] = "Skillname277"
+        boi_d["dsc3textb4"] = "Skillname270"
         boi_d["dsc3calca4"] = "6"
 
     snap_boi = "max(stat('progressive_cold'.accr), stat('item_kickdamage'.accr))"
@@ -5643,7 +5639,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ds["EMaxLev5"] = "0"
         ds["calc1"] = "100 + 18*max(0,lvl-1) + 24*max(0,lvl-5) + 34*max(0,lvl-10) + 48*max(0,lvl-15)"
         ds["*calc1 desc"] = "Base Cold Damage Level Ramp (%)"
-        ds["calc3"] = "9*skill('Wake of Fire Sentry'.blvl) + 9*skill('Lightning Sentry'.blvl) + 6*skill('Blades of Ice'.blvl)"
+        ds["calc3"] = "12*skill('Blades of Ice'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Lightning Sentry'.blvl)"
         ds["*calc3 desc"] = "Total Synergy Bonus (%)"
         ds["EDmgSymPerCalc"] = "(clc1 * (100 + clc3)) / 100 - 100"
 
@@ -5673,7 +5669,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         mds["*calc1 desc"] = "Ice Sentry Skill Level"
         mds["calc2"] = "100 + 18*max(0,clc1-1) + 24*max(0,clc1-5) + 34*max(0,clc1-10) + 48*max(0,clc1-15)"
         mds["*calc2 desc"] = "Ice Sentry Level Multiplier (%)"
-        mds["calc3"] = "100 + 9*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl)"
+        mds["calc3"] = "100 + 12*skill('Blades of Ice'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
         mds["*calc3 desc"] = "Synergy Multiplier (%)"
         mds["calc4"] = ds_shots_calc
 
@@ -5713,17 +5709,17 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ds_d["dsc3calca1"] = "2"
         ds_d["dsc3line2"] = "76"
         ds_d["dsc3texta2"] = "Colddplev"
-        ds_d["dsc3textb2"] = "Skillname263"
-        ds_d["dsc3calca2"] = "9"
+        ds_d["dsc3textb2"] = "Skillname275"
+        ds_d["dsc3calca2"] = "12"
         ds_d["dsc3calcb2"] = ""
         ds_d["dsc3line3"] = "76"
         ds_d["dsc3texta3"] = "Colddplev"
-        ds_d["dsc3textb3"] = "Skillname272"
-        ds_d["dsc3calca3"] = "9"
+        ds_d["dsc3textb3"] = "Skillname263"
+        ds_d["dsc3calca3"] = "6"
         ds_d["dsc3calcb3"] = ""
         ds_d["dsc3line4"] = "76"
         ds_d["dsc3texta4"] = "Colddplev"
-        ds_d["dsc3textb4"] = "Skillname275"
+        ds_d["dsc3textb4"] = "Skillname272"
         ds_d["dsc3calca4"] = "6"
         ds_d["dsc3calcb4"] = ""
 
@@ -6086,7 +6082,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sh["*Param4 Description"] = "# of target jump hits per level"
         sh["Param5"] = "4"
         sh["*Param5 Description"] = "Every # levels, increase target jump"
-        sh["Param8"] = "6"
+        sh["Param8"] = "18"
         sh["*Param8 Description"] = "Damage synergy"
         sh["calc1"] = "ln34/par5"
         sh["*calc1 desc"] = "# of target jump hits"
@@ -6096,7 +6092,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         for _n, (_mn, _mx) in enumerate(zip((5, 12, 25, 38, 50,), (7, 15, 31, 47, 62,)), start=1):
             sh[f"MinLevDam{_n}"] = str(_mn)
             sh[f"MaxLevDam{_n}"] = str(_mx)
-        sh["DmgSymPerCalc"] = "(skill('Blade Sentinel'.blvl)+skill('Blade Fury'.blvl)+skill('Blade Shield'.blvl))*par8"
+        sh["DmgSymPerCalc"] = "skill('Blade Fury'.blvl)*par8"
     if "inferno sentry" in by_desc:
         sh_d = by_desc["inferno sentry"]
         # Same display type Blade Fury uses (descdam 24 = physical skill damage incl. weapon damage), so the
@@ -6112,9 +6108,43 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         for _i in range(2, 6):
             _set_dsc_line(sh_d, "dsc2", _i, "", "", "", "", "")
         _clear_dsc3_synergies(sh_d, "Skillname273")
-        _set_dsc_line(sh_d, "dsc3", 2, "76", "Damplev", "Skillname258", "par8", "")
-        _set_dsc_line(sh_d, "dsc3", 3, "76", "Damplev", "Skillname267", "par8", "")
-        _set_dsc_line(sh_d, "dsc3", 4, "76", "Damplev", "Skillname278", "par8", "")
+        _set_dsc_line(sh_d, "dsc3", 2, "76", "Damplev", "Skillname267", "par8", "")
+
+    # Blade Sentinel (Id 257) <-> Blade Shield (Id 277) (+20%/lvl each -> +400% max synergy)
+    # Blade Fury (Id 266) <-> Shuriken (Inferno Sentry, Id 272) (Blade Fury gets +20%/lvl -> +400% max synergy)
+    if "Blade Sentinel" in by_name:
+        bsn = by_name["Blade Sentinel"]
+        bsn["Param8"] = "20"
+        bsn["DmgSymPerCalc"] = "skill('Blade Shield'.blvl)*par8"
+    if "blade sentinel" in by_desc:
+        bsn_d = by_desc["blade sentinel"]
+        _clear_dsc3_synergies(bsn_d, "Skillname258")
+        _set_dsc_line(bsn_d, "dsc3", 2, "76", "Damplev", "Skillname278", "par8", "")
+
+    if "Blade Shield" in by_name:
+        bsh = by_name["Blade Shield"]
+        bsh["Param8"] = "20"
+        bsh["DmgSymPerCalc"] = "skill('Blade Sentinel'.blvl)*par8"
+    if "blade shield" in by_desc:
+        bsh_d = by_desc["blade shield"]
+        _clear_dsc3_synergies(bsh_d, "Skillname278")
+        _set_dsc_line(bsh_d, "dsc3", 2, "76", "Damplev", "Skillname258", "par8", "")
+
+    if "Blade Fury" in by_name:
+        bf = by_name["Blade Fury"]
+        bf["Param8"] = "20"
+        bf["DmgSymPerCalc"] = "skill('Inferno Sentry'.blvl)*par8"
+    if "blade fury" in by_desc:
+        bf_d = by_desc["blade fury"]
+        _clear_dsc3_synergies(bf_d, "Skillname267")
+        _set_dsc_line(bf_d, "dsc3", 2, "76", "Damplev", "Skillname273", "par8", "")
+
+    # Mind Blast (Id 273) — remove leftover vanilla Psychic Hammer (now Flow) conversion synergy
+    if "Mind Blast" in by_name:
+        mb = by_name["Mind Blast"]
+        mb["calc1"] = "dm56"
+        mb["Param8"] = ""
+        mb["*Param8 Description"] = ""
 
     # Step 5e: Flow (Psychic Hammer slot, Id 253) - passive chance NOT to consume orbs when using a Finishing Move.
     #   Uses the vanilla (Mosaic) stat item_charge_noconsume: 20% at Lvl 1 -> 50% at Lvl 20 (30/19 per level),

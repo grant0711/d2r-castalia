@@ -1821,7 +1821,7 @@ def build_experience(cfg: dict) -> str:
 
 def build_charstats(cfg: dict) -> str:
     headers, rows = read_tsv("charstats.txt")
-    playable = {"Amazon", "Sorceress", "Necromancer", "Paladin", "Barbarian", "Druid", "Assassin"}
+    playable = {"Amazon", "Sorceress", "Necromancer", "Paladin", "Barbarian", "Druid", "Assassin", "Warlock"}
     for row in rows:
         cls = row.get("class", "").strip()
         if not cls or cls == "Expansion":
@@ -1840,13 +1840,14 @@ def build_charstats(cfg: dict) -> str:
         # 1. 2 Skill Points per Level-Up
         row["SkillsPerLevel"] = "2"
 
-        # 2. +75% LifePerLevel (1.75x) & -25% LifePerVitality (0.75x) so base HP scales moderately with Level
-        row["LifePerLevel"] = scale_int(row["LifePerLevel"], 1.75)
-        row["LifePerVitality"] = scale_int(row["LifePerVitality"], 0.75)
+        # 2. Double previous mod LifePerLevel (2 * 1.75x = 3.5x vanilla -> +7.00 HP/lvl for Barb/Pal/Ama/Ass/War,
+        #    +5.00 HP/lvl for Nec/Dru, +3.50 HP/lvl for Sorc) & restore vanilla LifePerVitality (1.0x)
+        row["LifePerLevel"] = str(int(scale_int(row["LifePerLevel"], 1.75)) * 2)
 
-        # 3. -25% ManaPerLevel (0.75x), +50% ManaPerMagic (1.50x), and slower base ManaRegen (160s for full bar)
-        row["ManaPerLevel"] = scale_int(row["ManaPerLevel"], 0.75)
-        row["ManaPerMagic"] = scale_int(row["ManaPerMagic"], 1.50)
+        # 3. Double previous mod ManaPerLevel (2 * 0.75x = 1.5x vanilla -> +1.50 Mana/lvl for Barb,
+        #    +2.00 Mana/lvl for Pal/Ama/Ass/War, +3.00 Mana/lvl for Sorc/Nec/Dru), restore vanilla ManaPerMagic (1.0x),
+        #    and keep slower base ManaRegen (160s for full bar)
+        row["ManaPerLevel"] = str(int(scale_int(row["ManaPerLevel"], 0.75)) * 2)
         row["ManaRegen"] = "160"
 
         # 4. Tactical Stamina Curve & +11% Base Run Velocity (9 -> 10 sub-tiles/sec, keeping WalkVelocity at 6)

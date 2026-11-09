@@ -1860,9 +1860,6 @@ def build_charstats(cfg: dict) -> str:
         row["HealthPotionPercent"] = "100"
         row["ManaPotionPercent"] = "100"
 
-        # 6. Grant innate "Dismiss Aura" (Skill 8) to Paladin so Quick Cast can toggle off active auras
-        if cls == "Paladin":
-            row["Skill 8"] = "Dismiss Aura"
 
     return write_tsv("charstats.txt", headers, rows)
 

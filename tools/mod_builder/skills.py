@@ -109,7 +109,6 @@ PALADIN_PASSIVE_STATES = [
     "pal_redemption",
     "pal_salvation",
     "hp_cooldown",
-    "pal_dismiss_aura",
 ]
 
 BARBARIAN_STATES = [
@@ -190,13 +189,7 @@ def build_states(cfg: dict) -> str:
             max_id = sid
 
     all_new_states = (
-        [
-            (
-                st_name,
-                {"aura": "1", "onsound": "paladin_aura_prayer"} if st_name == "pal_dismiss_aura" else {},
-            )
-            for st_name in PALADIN_PASSIVE_STATES
-        ]
+        [(st_name, {}) for st_name in PALADIN_PASSIVE_STATES]
         + list(BARBARIAN_STATES)
         + list(ASSASSIN_STATES)
     )
@@ -4289,65 +4282,6 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         if sdesc_key in by_desc:
             by_desc[sdesc_key]["HireableIconCel"] = str(frame_idx)
 
-    # Append universal "Dismiss Aura" (Id 429) so Paladins have an innate 0-mana empty aura
-    # in the General Skills row (ListRow=0) to cleanly toggle off active mana-draining auras with Quick Cast!
-    if "dismiss aura" not in by_desc:
-        new_desc = {h: "" for h in d_headers}
-        new_desc["skilldesc"] = "dismiss aura"
-        new_desc["SkillPage"] = "0"
-        new_desc["SkillRow"] = "0"
-        new_desc["SkillColumn"] = "0"
-        new_desc["ListRow"] = "3"
-        new_desc["IconCel"] = "40"
-        new_desc["str name"] = "ModDismissAuraName"
-        new_desc["str short"] = "ModDismissAuraDesc"
-        new_desc["str long"] = "ModDismissAuraDesc"
-        new_desc["str alt"] = "ModDismissAuraName"
-        new_desc["*eol"] = "0"
-        d_rows.append(new_desc)
-
-    if "Dismiss Aura" not in by_name:
-        max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
-        new_sk = {h: "" for h in s_headers}
-        new_sk["skill"] = "Dismiss Aura"
-        new_sk["*Id"] = str(max_sid + 1)
-        new_sk["skilldesc"] = "dismiss aura"
-        new_sk["srvdofunc"] = "65"
-        new_sk["aurafilter"] = "73731"
-        new_sk["aurastate"] = "pal_dismiss_aura"
-        new_sk["auratargetstate"] = "pal_dismiss_aura"
-        new_sk["aurarangecalc"] = "ln12"
-        new_sk["aurastat1"] = "maxstamina"
-        new_sk["aurastatcalc1"] = "1"
-        new_sk["Param1"] = "16"
-        new_sk["*Param1 Description"] = "Radius baseline"
-        new_sk["Param2"] = "2"
-        new_sk["*Param2 Description"] = "Radius per level"
-        new_sk["immediate"] = "1"
-        new_sk["enhanceable"] = "1"
-        new_sk["attackrank"] = "1"
-        new_sk["range"] = "none"
-        new_sk["monanim"] = "xx"
-        new_sk["reqlevel"] = "1"
-        new_sk["maxlvl"] = "20"
-        new_sk["restrict"] = ""
-        new_sk["leftskill"] = "0"
-        new_sk["rightskill"] = "1"
-        new_sk["minmana"] = "0"
-        new_sk["manashift"] = "4"
-        new_sk["mana"] = "0"
-        new_sk["lvlmana"] = "0"
-        new_sk["interrupt"] = "1"
-        new_sk["InTown"] = "1"
-        new_sk["aura"] = "1"
-        new_sk["perdelay"] = "10"
-        new_sk["InGame"] = "1"
-        new_sk["HitShift"] = "8"
-        new_sk["cost mult"] = "15"
-        new_sk["cost add"] = "60"
-        new_sk["*eol"] = "0"
-        s_rows.append(new_sk)
-
     # Append 4 Barbarian Stamina helper skills (Ids 430, 431, 432, 433):
     #   - 430: Bar Stamina Drain (gated by stat('frenzy'.accr)>0; applies 2-frame bar_stamina_reflex EType=stam on Frenzy swings)
     #   - 431: Battle Trance Pulse (restores Find Item clc1 Stamina via 2-frame staminarecoverybonus surge when hit or on kill)
@@ -6502,8 +6436,6 @@ def build_skill_strings(cfg: dict) -> str:
         (0, "skillld104", "when active, aura bolsters the defense of you and your party\nand reduces physical damage taken from attacks"),
         (0, "skillsd115", "aura - increases movement speed and hit recovery"),
         (0, "skillld115", "when active, aura increases movement speed and hit recovery\nfor you and your party to swiftly reposition in battle"),
-        (61028, "ModDismissAuraName", "Dismiss Aura"),
-        (61029, "ModDismissAuraDesc", "deactivates your current active aura"),
         # Barbarian Stamina Pendulum ("Well-Rested vs. Exhaustion / Last Stand") Strings
         (61030, "ModBarStamRestore", "Stamina Restored: +%d"),
         (61031, "ModBarStamOnHitKill", "Stamina Restored on Hit or Kill: +%d"),

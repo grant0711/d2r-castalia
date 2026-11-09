@@ -2984,13 +2984,13 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         sfb_ms["HitFlags"] = "2"
         sfb_ms["HitShift"] = "8"
         sfb_ms["EType"] = "fire"
-        sfb_ms["EMin"] = "18"
+        sfb_ms["EMin"] = "14"
         sfb_ms["MinELev1"] = "0"
         sfb_ms["MinELev2"] = "0"
         sfb_ms["MinELev3"] = "0"
         sfb_ms["MinELev4"] = "0"
         sfb_ms["MinELev5"] = "0"
-        sfb_ms["EMax"] = "30"
+        sfb_ms["EMax"] = "24"
         sfb_ms["MaxELev1"] = "0"
         sfb_ms["MaxELev2"] = "0"
         sfb_ms["MaxELev3"] = "0"
@@ -3046,10 +3046,10 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         sfe_ms["ProgOverlay"] = ""
 
     # Fists of Fire (Flamestrike) Finishing Move Release Missiles (1 distinct effect per orb tier,
-    # scaled so 1/2/3 Held Orbs = 50% of Charge 1/2/3 Release at every skill level):
-    # - Charge 1 Finisher Release: fistsoffireexplode (Instant AoE Fire Explosion = 2x of 1 Held Orb)
-    # - Charge 2 Finisher Release: fistsoffirefirewall (Wide AoE Burning Ground carpet = 2x of 2 Held Orbs/sec)
-    # - Charge 3 Finisher Release: royalstrikemeteorcenter -> royalstrikemeteor + royalstrikemeteorfire (Crashing Meteor = 2x of 3 Held Orbs)
+    # with smooth Normal/Nightmare scaling across ELev1..3 and endgame acceleration in ELev4..5):
+    # - Charge 1 Finisher Release: fistsoffireexplode (Instant AoE Fire Explosion)
+    # - Charge 2 Finisher Release: fistsoffirefirewall (Wide AoE Burning Ground carpet)
+    # - Charge 3 Finisher Release: royalstrikemeteorcenter -> royalstrikemeteor + royalstrikemeteorfire (Crashing Meteor)
     fof_syn_expr = "12*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl) + 6*skill('Claws of Thunder'.blvl)"
     if "fistsoffireexplode" in rows_by_name:
         ffe = rows_by_name["fistsoffireexplode"]
@@ -3063,35 +3063,35 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         ffe["HitShift"] = "8"
         ffe["ApplyMastery"] = "1"
         ffe["EType"] = "fire"
-        ffe["EMin"] = "12"
-        ffe["MinELev1"] = "4"
-        ffe["MinELev2"] = "8"
-        ffe["MinELev3"] = "24"
-        ffe["MinELev4"] = "32"
-        ffe["MinELev5"] = "40"
-        ffe["EMax"] = "24"
-        ffe["MaxELev1"] = "8"
-        ffe["MaxELev2"] = "16"
-        ffe["MaxELev3"] = "48"
-        ffe["MaxELev4"] = "64"
-        ffe["MaxELev5"] = "80"
+        ffe["EMin"] = "8"
+        ffe["MinELev1"] = "2"
+        ffe["MinELev2"] = "3"
+        ffe["MinELev3"] = "5"
+        ffe["MinELev4"] = "14"
+        ffe["MinELev5"] = "24"
+        ffe["EMax"] = "16"
+        ffe["MaxELev1"] = "4"
+        ffe["MaxELev2"] = "6"
+        ffe["MaxELev3"] = "10"
+        ffe["MaxELev4"] = "28"
+        ffe["MaxELev5"] = "48"
         ffe["EDmgSymPerCalc"] = fof_syn_expr
     if "fistsoffirefirewall" in rows_by_name:
         ffw = rows_by_name["fistsoffirefirewall"]
         ffw["Range"] = "85"
         ffw["Size"] = "3"
-        ffw["EMin"] = "8"
-        ffw["MinELev1"] = "3"
-        ffw["MinELev2"] = "5"
-        ffw["MinELev3"] = "15"
-        ffw["MinELev4"] = "20"
-        ffw["MinELev5"] = "26"
-        ffw["EMax"] = "16"
-        ffw["MaxELev1"] = "6"
-        ffw["MaxELev2"] = "10"
-        ffw["MaxELev3"] = "30"
-        ffw["MaxELev4"] = "40"
-        ffw["MaxELev5"] = "52"
+        ffw["EMin"] = "5"
+        ffw["MinELev1"] = "1"
+        ffw["MinELev2"] = "2"
+        ffw["MinELev3"] = "3"
+        ffw["MinELev4"] = "9"
+        ffw["MinELev5"] = "15"
+        ffw["EMax"] = "10"
+        ffw["MaxELev1"] = "2"
+        ffw["MaxELev2"] = "4"
+        ffw["MaxELev3"] = "6"
+        ffw["MaxELev4"] = "18"
+        ffw["MaxELev5"] = "30"
         ffw["EDmgSymPerCalc"] = fof_syn_expr
     if "royalstrikemeteorcenter" in rows_by_name:
         rsmc = rows_by_name["royalstrikemeteorcenter"]
@@ -3102,35 +3102,35 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     if "royalstrikemeteor" in rows_by_name:
         rsm = rows_by_name["royalstrikemeteor"]
         rsm["sHitPar1"] = "9"
-        rsm["EMin"] = "36"
-        rsm["MinELev1"] = "12"
-        rsm["MinELev2"] = "24"
-        rsm["MinELev3"] = "72"
-        rsm["MinELev4"] = "96"
-        rsm["MinELev5"] = "120"
-        rsm["EMax"] = "72"
-        rsm["MaxELev1"] = "24"
-        rsm["MaxELev2"] = "48"
-        rsm["MaxELev3"] = "144"
-        rsm["MaxELev4"] = "192"
-        rsm["MaxELev5"] = "240"
+        rsm["EMin"] = "24"
+        rsm["MinELev1"] = "6"
+        rsm["MinELev2"] = "9"
+        rsm["MinELev3"] = "15"
+        rsm["MinELev4"] = "42"
+        rsm["MinELev5"] = "72"
+        rsm["EMax"] = "48"
+        rsm["MaxELev1"] = "12"
+        rsm["MaxELev2"] = "18"
+        rsm["MaxELev3"] = "30"
+        rsm["MaxELev4"] = "84"
+        rsm["MaxELev5"] = "144"
         rsm["EDmgSymPerCalc"] = fof_syn_expr
     if "royalstrikemeteorfire" in rows_by_name:
         rsmf = rows_by_name["royalstrikemeteorfire"]
         rsmf["Range"] = "75"
         rsmf["Size"] = "3"
-        rsmf["EMin"] = "4"
-        rsmf["MinELev1"] = "2"
-        rsmf["MinELev2"] = "3"
-        rsmf["MinELev3"] = "8"
-        rsmf["MinELev4"] = "10"
-        rsmf["MinELev5"] = "13"
-        rsmf["EMax"] = "8"
-        rsmf["MaxELev1"] = "3"
-        rsmf["MaxELev2"] = "5"
-        rsmf["MaxELev3"] = "15"
-        rsmf["MaxELev4"] = "20"
-        rsmf["MaxELev5"] = "26"
+        rsmf["EMin"] = "3"
+        rsmf["MinELev1"] = "1"
+        rsmf["MinELev2"] = "1"
+        rsmf["MinELev3"] = "2"
+        rsmf["MinELev4"] = "5"
+        rsmf["MinELev5"] = "8"
+        rsmf["EMax"] = "6"
+        rsmf["MaxELev1"] = "2"
+        rsmf["MaxELev2"] = "2"
+        rsmf["MaxELev3"] = "4"
+        rsmf["MaxELev4"] = "10"
+        rsmf["MaxELev5"] = "16"
         rsmf["EDmgSymPerCalc"] = fof_syn_expr
 
     # Step 2: Shrapnel Sentry (Tiger Strike 1/2/3 Charge Tier Upgrades via straight-line Blade Fury shuriken turret)
@@ -3182,13 +3182,13 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         bf3_ms["HitShift"] = "8"
         bf3_ms["SrcDamage"] = "128"
         bf3_ms["Half2HSrc"] = ""
-        bf3_ms["MinDamage"] = "14"
+        bf3_ms["MinDamage"] = "10"
         bf3_ms["MinLevDam1"] = "0"
         bf3_ms["MinLevDam2"] = "0"
         bf3_ms["MinLevDam3"] = "0"
         bf3_ms["MinLevDam4"] = "0"
         bf3_ms["MinLevDam5"] = "0"
-        bf3_ms["MaxDamage"] = "24"
+        bf3_ms["MaxDamage"] = "18"
         bf3_ms["MaxLevDam1"] = "0"
         bf3_ms["MaxLevDam2"] = "0"
         bf3_ms["MaxLevDam3"] = "0"
@@ -3217,9 +3217,9 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     ts_c123_syn = "skill('Tiger Strike'.clc6)"
     ts_ring_specs = [
         # (m_name, vel, rng, size, res_flags, kb, syn_calc, min_d, min1, min2, min3, min4, min5, max_d, max1, max2, max3, max4, max5)
-        ("inferno sentry 1",          "8", "7", "2", "4",  "",    ts_c123_syn, "4", "1", "3", "7", "11", "15", "8", "2", "5", "9", "15", "21"),
-        ("inferno sentry 2",          "8", "7", "2", "4",  "",    ts_c123_syn, "4", "1", "3", "7", "11", "15", "8", "2", "5", "9", "15", "21"),
-        ("progressive radius damage", "8", "7", "2", "13", "100", ts_c123_syn, "4", "1", "3", "7", "11", "15", "8", "2", "5", "9", "15", "21"),
+        ("inferno sentry 1",          "8", "7", "2", "4",  "",    ts_c123_syn, "4", "1", "2", "3", "7", "12", "8", "2", "3", "5", "12", "20"),
+        ("inferno sentry 2",          "8", "7", "2", "4",  "",    ts_c123_syn, "4", "1", "2", "3", "7", "12", "8", "2", "3", "5", "12", "20"),
+        ("progressive radius damage", "8", "7", "2", "13", "100", ts_c123_syn, "4", "1", "2", "3", "7", "12", "8", "2", "3", "5", "12", "20"),
     ]
     for (
         m_name, vel, rng, sz, rflags, kb, syn_calc,
@@ -3468,13 +3468,13 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         scb["HitShift"] = "8"
         scb["HitClass"] = ""
         scb["EType"] = "mag"
-        scb["EMin"] = "42"
+        scb["EMin"] = "32"
         scb["MinELev1"] = "0"
         scb["MinELev2"] = "0"
         scb["MinELev3"] = "0"
         scb["MinELev4"] = "0"
         scb["MinELev5"] = "0"
-        scb["EMax"] = "66"
+        scb["EMax"] = "50"
         scb["MaxELev1"] = "0"
         scb["MaxELev2"] = "0"
         scb["MaxELev3"] = "0"
@@ -3584,10 +3584,10 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         ssg["ExplosionMissile"] = ""
 
     # Step 4: Blades of Ice (progressive_cold, Id 274) <-> Ice Sentry (Death Sentry, Id 276)
-    # 1. Blades of Ice Finishing Move Release Missiles (scaled so 1/2/3 Held Orbs = 50% of Charge 1/2/3 Release):
-    #    - Charge 1 Finisher Release: bladesoficeexplode (Compact AoE Ice Blast + Solid Freeze = 2x of 1 Held Orb)
-    #    - Charge 2 Finisher Release: royalstrikechaosice -> bladesoficeexplode (Ice Blast + 12 Radiating Ice Bolts = 2x of 2 Held Orbs)
-    #    - Charge 3 Finisher Release: catapult cold ball on (Full Frozen Orb -> catapult cold ball = 3x of 1 Held Orb per bolt)
+    # 1. Blades of Ice Finishing Move Release Missiles (smooth Normal/Nightmare scaling across ELev1..3, endgame ramp in ELev4..5):
+    #    - Charge 1 Finisher Release: bladesoficeexplode (Compact AoE Ice Blast + Solid Freeze)
+    #    - Charge 2 Finisher Release: royalstrikechaosice -> bladesoficeexplode (Ice Blast + 12 Radiating Ice Bolts)
+    #    - Charge 3 Finisher Release: catapult cold ball on (Full Frozen Orb -> catapult cold ball)
     boi_syn_expr = "12*skill('Death Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Claws of Thunder'.blvl)"
     if "bladesoficeexplode" in rows_by_name:
         bie = rows_by_name["bladesoficeexplode"]
@@ -3609,18 +3609,18 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         bie["HitShift"] = "8"
         bie["ApplyMastery"] = "1"
         bie["EType"] = "cold"
-        bie["EMin"] = "16"
-        bie["MinELev1"] = "6"
-        bie["MinELev2"] = "8"
-        bie["MinELev3"] = "18"
-        bie["MinELev4"] = "28"
-        bie["MinELev5"] = "36"
-        bie["EMax"] = "32"
-        bie["MaxELev1"] = "12"
-        bie["MaxELev2"] = "16"
-        bie["MaxELev3"] = "36"
-        bie["MaxELev4"] = "56"
-        bie["MaxELev5"] = "72"
+        bie["EMin"] = "10"
+        bie["MinELev1"] = "3"
+        bie["MinELev2"] = "4"
+        bie["MinELev3"] = "6"
+        bie["MinELev4"] = "16"
+        bie["MinELev5"] = "26"
+        bie["EMax"] = "20"
+        bie["MaxELev1"] = "6"
+        bie["MaxELev2"] = "8"
+        bie["MaxELev3"] = "12"
+        bie["MaxELev4"] = "32"
+        bie["MaxELev5"] = "52"
         bie["EDmgSymPerCalc"] = boi_syn_expr
         bie["ELen"] = "50"
         bie["ELevLen1"] = "3"
@@ -3657,18 +3657,18 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         rsci["HitShift"] = "8"
         rsci["ApplyMastery"] = "1"
         rsci["EType"] = "frze"
-        rsci["EMin"] = "32"
-        rsci["MinELev1"] = "12"
-        rsci["MinELev2"] = "16"
-        rsci["MinELev3"] = "36"
-        rsci["MinELev4"] = "56"
-        rsci["MinELev5"] = "72"
-        rsci["EMax"] = "64"
-        rsci["MaxELev1"] = "24"
-        rsci["MaxELev2"] = "32"
-        rsci["MaxELev3"] = "72"
-        rsci["MaxELev4"] = "112"
-        rsci["MaxELev5"] = "144"
+        rsci["EMin"] = "20"
+        rsci["MinELev1"] = "6"
+        rsci["MinELev2"] = "8"
+        rsci["MinELev3"] = "12"
+        rsci["MinELev4"] = "32"
+        rsci["MinELev5"] = "52"
+        rsci["EMax"] = "40"
+        rsci["MaxELev1"] = "12"
+        rsci["MaxELev2"] = "16"
+        rsci["MaxELev3"] = "24"
+        rsci["MaxELev4"] = "64"
+        rsci["MaxELev5"] = "104"
         rsci["EDmgSymPerCalc"] = boi_syn_expr
         rsci["ELen"] = "65"
         rsci["ELevLen1"] = "4"
@@ -3779,18 +3779,18 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
             fcb["HitShift"] = "8"
             fcb["ApplyMastery"] = "1"
             fcb["EType"] = "cold"
-            fcb["EMin"] = "24"
-            fcb["MinELev1"] = "9"
-            fcb["MinELev2"] = "12"
-            fcb["MinELev3"] = "27"
-            fcb["MinELev4"] = "42"
-            fcb["MinELev5"] = "54"
-            fcb["EMax"] = "48"
-            fcb["MaxELev1"] = "18"
-            fcb["MaxELev2"] = "24"
-            fcb["MaxELev3"] = "54"
-            fcb["MaxELev4"] = "84"
-            fcb["MaxELev5"] = "108"
+            fcb["EMin"] = "15"
+            fcb["MinELev1"] = "4"
+            fcb["MinELev2"] = "6"
+            fcb["MinELev3"] = "9"
+            fcb["MinELev4"] = "24"
+            fcb["MinELev5"] = "39"
+            fcb["EMax"] = "30"
+            fcb["MaxELev1"] = "8"
+            fcb["MaxELev2"] = "12"
+            fcb["MaxELev3"] = "18"
+            fcb["MaxELev4"] = "48"
+            fcb["MaxELev5"] = "78"
             fcb["EDmgSymPerCalc"] = boi_syn_expr
             fcb["ELen"] = "75"
             fcb["ELevLen1"] = "5"
@@ -3846,13 +3846,13 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         fhab1["HitFlags"] = "2"
         fhab1["HitShift"] = "8"
         fhab1["EType"] = "cold"
-        fhab1["EMin"] = "24"
+        fhab1["EMin"] = "10"
         fhab1["MinELev1"] = "0"
         fhab1["MinELev2"] = "0"
         fhab1["MinELev3"] = "0"
         fhab1["MinELev4"] = "0"
         fhab1["MinELev5"] = "0"
-        fhab1["EMax"] = "38"
+        fhab1["EMax"] = "16"
         fhab1["MaxELev1"] = "0"
         fhab1["MaxELev2"] = "0"
         fhab1["MaxELev3"] = "0"
@@ -3927,9 +3927,9 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         fhab2["TravelSound"] = ""
 
     # 5. Claws of Thunder / Electrocute (Id 269) & Lightning Sentry (Id 271) Missiles:
-    #    - Charge 1 Finisher: clawsofthunderbolt (spread of 8..16 Charged Bolts, 1.5x of 1 Held Orb per bolt)
-    #    - Charge 2 Finisher: clawsofthundernova (360-degree Lightning Nova, 2x of 2 Held Orbs)
-    #    - Charge 3 Finisher: royalstrikechainlightning (Chain Lightning, 2x of 3 Held Orbs)
+    #    - Charge 1 Finisher: clawsofthunderbolt (spread of 8..16 Charged Bolts)
+    #    - Charge 2 Finisher: clawsofthundernova (360-degree Lightning Nova)
+    #    - Charge 3 Finisher: royalstrikechainlightning (Chain Lightning)
     #    - Lightning Sentry: sentrylightningbolt (piercing bolt, Charge 1+ extends range) + sentrylightningbolt2 (Charge 3 blinds hit monsters)
     cot_syn_expr = "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)"
     if "clawsofthunderbolt" in rows_by_name:
@@ -3943,12 +3943,12 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         cotb["MinELev3"] = "0"
         cotb["MinELev4"] = "0"
         cotb["MinELev5"] = "0"
-        cotb["EMax"] = "45"
-        cotb["MaxELev1"] = "15"
-        cotb["MaxELev2"] = "21"
-        cotb["MaxELev3"] = "40"
-        cotb["MaxELev4"] = "60"
-        cotb["MaxELev5"] = "78"
+        cotb["EMax"] = "30"
+        cotb["MaxELev1"] = "8"
+        cotb["MaxELev2"] = "12"
+        cotb["MaxELev3"] = "18"
+        cotb["MaxELev4"] = "42"
+        cotb["MaxELev5"] = "64"
         cotb["EDmgSymPerCalc"] = cot_syn_expr
 
     if "clawsofthundernova" in rows_by_name:
@@ -3962,12 +3962,12 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         cotn["MinELev3"] = "0"
         cotn["MinELev4"] = "0"
         cotn["MinELev5"] = "0"
-        cotn["EMax"] = "120"
-        cotn["MaxELev1"] = "40"
-        cotn["MaxELev2"] = "56"
-        cotn["MaxELev3"] = "108"
-        cotn["MaxELev4"] = "160"
-        cotn["MaxELev5"] = "208"
+        cotn["EMax"] = "80"
+        cotn["MaxELev1"] = "20"
+        cotn["MaxELev2"] = "30"
+        cotn["MaxELev3"] = "46"
+        cotn["MaxELev4"] = "110"
+        cotn["MaxELev5"] = "168"
         cotn["EDmgSymPerCalc"] = cot_syn_expr
 
     if "royalstrikechainlightning" in rows_by_name:
@@ -3989,12 +3989,12 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         rscl["MinELev3"] = "0"
         rscl["MinELev4"] = "0"
         rscl["MinELev5"] = "0"
-        rscl["EMax"] = "180"
-        rscl["MaxELev1"] = "60"
-        rscl["MaxELev2"] = "84"
-        rscl["MaxELev3"] = "162"
-        rscl["MaxELev4"] = "240"
-        rscl["MaxELev5"] = "312"
+        rscl["EMax"] = "120"
+        rscl["MaxELev1"] = "30"
+        rscl["MaxELev2"] = "45"
+        rscl["MaxELev3"] = "70"
+        rscl["MaxELev4"] = "165"
+        rscl["MaxELev5"] = "252"
         rscl["EDmgSymPerCalc"] = cot_syn_expr
 
     if "sentrylightningbolt" in rows_by_name:
@@ -4022,7 +4022,7 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         slb["MinELev3"] = "0"
         slb["MinELev4"] = "0"
         slb["MinELev5"] = "0"
-        slb["EMax"] = "84"
+        slb["EMax"] = "64"
         slb["MaxELev1"] = "0"
         slb["MaxELev2"] = "0"
         slb["MaxELev3"] = "0"
@@ -4535,18 +4535,18 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ts["cltmissileb"] = "inferno sentry 2"
         ts["srvmissilec"] = "progressive radius damage"
         ts["cltmissilec"] = "progressive radius damage"
-        ts["Param1"] = "8"
-        ts["Param2"] = "8"
+        ts["Param1"] = "6"
+        ts["Param2"] = "2"
         ts["calc1"] = (
-            "par1 + 3*max(0,lvl-1) + 6*max(0,lvl-5) + 3*max(0,lvl-10) + 3*skill('Dragon Talon'.blvl) + 2*skill('Fire Trauma'.blvl)"
+            "par1 + 2*max(0,lvl-1) + 1*max(0,lvl-8) + 2*max(0,lvl-16) + 4*max(0,lvl-22) + 2*skill('Dragon Talon'.blvl) + 1*skill('Fire Trauma'.blvl)"
         )
         ts["*calc1 desc"] = "Held Charge Damage % per Orb"
         ts["calc2"] = (
-            "((4 + 1*max(0,lvl-1) + 2*max(0,lvl-8) + 4*max(0,lvl-16) + 4*max(0,lvl-22) + 4*max(0,lvl-28)) * (100 + clc4)) / 100"
+            "((4 + 1*max(0,lvl-1) + 1*max(0,lvl-8) + 1*max(0,lvl-16) + 4*max(0,lvl-22) + 5*max(0,lvl-28)) * (100 + clc4)) / 100"
         )
         ts["*calc2 desc"] = "Charge 1 Shockwave Ring Min Physical Damage"
         ts["calc3"] = (
-            "((8 + 2*max(0,lvl-1) + 3*max(0,lvl-8) + 4*max(0,lvl-16) + 6*max(0,lvl-22) + 6*max(0,lvl-28)) * (100 + clc4)) / 100"
+            "((8 + 2*max(0,lvl-1) + 1*max(0,lvl-8) + 2*max(0,lvl-16) + 7*max(0,lvl-22) + 8*max(0,lvl-28)) * (100 + clc4)) / 100"
         )
         ts["*calc3 desc"] = "Charge 1 Shockwave Ring Max Physical Damage"
         ts["calc4"] = (
@@ -4636,19 +4636,19 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ft["EMaxLev4"] = ""
         ft["EMaxLev5"] = ""
         ft["EDmgSymPerCalc"] = ""
-        ft["MinDam"] = "14"
+        ft["MinDam"] = "10"
         ft["MinLevDam1"] = "0"
         ft["MinLevDam2"] = "0"
         ft["MinLevDam3"] = "0"
         ft["MinLevDam4"] = "0"
         ft["MinLevDam5"] = "0"
-        ft["MaxDam"] = "24"
+        ft["MaxDam"] = "18"
         ft["MaxLevDam1"] = "0"
         ft["MaxLevDam2"] = "0"
         ft["MaxLevDam3"] = "0"
         ft["MaxLevDam4"] = "0"
         ft["MaxLevDam5"] = "0"
-        ft["calc1"] = "100 + 18*max(0,lvl-1) + 24*max(0,lvl-5) + 38*max(0,lvl-10) + 58*max(0,lvl-15)"
+        ft["calc1"] = "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 16*max(0,lvl-16) + 30*max(0,lvl-22)"
         ft["*calc1 desc"] = "Base Physical Damage Level Ramp (%)"
         ft["calc2"] = ""
         ft["*calc2 desc"] = ""
@@ -4677,7 +4677,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         mis["Param8"] = "11"
         mis["calc1"] = "skill('Fire Trauma'.blvl)"
         mis["*calc1 desc"] = "Shrapnel Sentry Level"
-        mis["calc2"] = "100 + 18*max(0,clc1-1) + 24*max(0,clc1-5) + 38*max(0,clc1-10) + 58*max(0,clc1-15)"
+        mis["calc2"] = "100 + 10*max(0,clc1-1) + 6*max(0,clc1-8) + 16*max(0,clc1-16) + 30*max(0,clc1-22)"
         mis["*calc2 desc"] = "Base Physical Damage Level Ramp (%)"
         mis["calc3"] = "100 + 4*(skill('Shock Field'.blvl) + skill('Tiger Strike'.blvl))"
         mis["*calc3 desc"] = "Total Synergy Multiplier (%)"
@@ -4797,7 +4797,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         fof["calc2"] = "1"
         fof["*calc2 desc"] = "Min Fire Damage per Orb"
         fof["calc3"] = (
-            "((6 + 2*max(0,lvl-1) + 2*max(0,lvl-8) + 8*max(0,lvl-16) + 4*max(0,lvl-22) + 4*max(0,lvl-28)) * (100 + clc4)) / 100"
+            "((2 + (lvl-1)/2 + max(0,lvl-16) + 3*max(0,lvl-20) + 5*max(0,lvl-26)) * (100 + clc4)) / 100"
         )
         fof["*calc3 desc"] = "Min Fire Damage per Orb (Max = 2 * clc3)"
         fof["calc4"] = (
@@ -4861,19 +4861,19 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wof["sumsk4calc"] = "skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)"
         wof["sumskill5"] = "Ass Trap Charge Consume"
         wof["sumsk5calc"] = snap_fof
-        wof["EMin"] = "18"
+        wof["EMin"] = "14"
         wof["EMinLev1"] = "0"
         wof["EMinLev2"] = "0"
         wof["EMinLev3"] = "0"
         wof["EMinLev4"] = "0"
         wof["EMinLev5"] = "0"
-        wof["EMax"] = "30"
+        wof["EMax"] = "24"
         wof["EMaxLev1"] = "0"
         wof["EMaxLev2"] = "0"
         wof["EMaxLev3"] = "0"
         wof["EMaxLev4"] = "0"
         wof["EMaxLev5"] = "0"
-        wof["calc1"] = "100 + 22*max(0,lvl-1) + 32*max(0,lvl-5) + 46*max(0,lvl-10) + 68*max(0,lvl-15)"
+        wof["calc1"] = "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 18*max(0,lvl-16) + 36*max(0,lvl-22)"
         wof["*calc1 desc"] = "Base Fire Damage Level Ramp (%)"
         wof["calc2"] = ""
         wof["*calc2 desc"] = ""
@@ -4972,7 +4972,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         wods["aurarangecalc"] = f"({wof_c} >= 3) ? 6 : 0"
         wods["calc1"] = "skill('Wake of Fire Sentry'.blvl)"
         wods["*calc1 desc"] = "Wake of Fire Sentry Level"
-        wods["calc2"] = "100 + 22*max(0,clc1-1) + 32*max(0,clc1-5) + 46*max(0,clc1-10) + 68*max(0,clc1-15)"
+        wods["calc2"] = "100 + 10*max(0,clc1-1) + 6*max(0,clc1-8) + 18*max(0,clc1-16) + 36*max(0,clc1-22)"
         wods["*calc2 desc"] = "Base Fire Damage Level Ramp (%)"
         wods["calc3"] = "100 + 12*skill('Fists of Fire'.blvl) + 6*skill('Fire Trauma'.blvl)"
         wods["*calc3 desc"] = "Total Synergy Multiplier (%)"
@@ -5123,19 +5123,19 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cbs["*Param1 Description"] = "# of shots"
         cbs["HitShift"] = "8"
         cbs["EType"] = "mag"
-        cbs["EMin"] = "42"
+        cbs["EMin"] = "32"
         cbs["EMinLev1"] = "0"
         cbs["EMinLev2"] = "0"
         cbs["EMinLev3"] = "0"
         cbs["EMinLev4"] = "0"
         cbs["EMinLev5"] = "0"
-        cbs["EMax"] = "66"
+        cbs["EMax"] = "50"
         cbs["EMaxLev1"] = "0"
         cbs["EMaxLev2"] = "0"
         cbs["EMaxLev3"] = "0"
         cbs["EMaxLev4"] = "0"
         cbs["EMaxLev5"] = "0"
-        cbs["calc1"] = "100 + 14*max(0,lvl-1) + 18*max(0,lvl-5) + 26*max(0,lvl-10) + 38*max(0,lvl-15)"
+        cbs["calc1"] = "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 14*max(0,lvl-16) + 26*max(0,lvl-22)"
         cbs["*calc1 desc"] = "Base Magic Damage Level Ramp (%)"
         cbs["calc3"] = "15*skill('Cobra Strike'.blvl) + 9*skill('Fire Trauma'.blvl)"
         cbs["*calc3 desc"] = "Total Synergy Bonus (%)"
@@ -5172,8 +5172,8 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         bs_sk["calc1"] = "ln56"
         bs_sk["*calc1 desc"] = "Damage % returned as healing to attacker"
         bs_sk["calc2"] = (
-            "100 + 14*max(0,skill('Charged Bolt Sentry'.blvl)-1) + 18*max(0,skill('Charged Bolt Sentry'.blvl)-5)"
-            " + 26*max(0,skill('Charged Bolt Sentry'.blvl)-10) + 38*max(0,skill('Charged Bolt Sentry'.blvl)-15)"
+            "100 + 10*max(0,skill('Charged Bolt Sentry'.blvl)-1) + 6*max(0,skill('Charged Bolt Sentry'.blvl)-8)"
+            " + 14*max(0,skill('Charged Bolt Sentry'.blvl)-16) + 26*max(0,skill('Charged Bolt Sentry'.blvl)-22)"
         )
         bs_sk["*calc2 desc"] = "Base Magic Damage Level Ramp (%)"
         bs_sk["calc3"] = "100 + 15*skill('Cobra Strike'.blvl) + 9*skill('Fire Trauma'.blvl)"
@@ -5255,7 +5255,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cot["calc2"] = "64 / clc1"
         cot["*calc2 desc"] = "Charge 1 Finisher Charged Bolt Count"
         cot["calc3"] = (
-            "((30 + 10*max(0,lvl-1) + 4*max(0,lvl-8) + 13*max(0,lvl-16) + 13*max(0,lvl-22) + 12*max(0,lvl-28)) * (100 + clc4)) / 100"
+            "((10 + 2*max(0,lvl-1) + 2*max(0,lvl-16) + 8*max(0,lvl-20) + 14*max(0,lvl-26)) * (100 + clc4)) / 100"
         )
         cot["*calc3 desc"] = "Held Max Lightning Damage per Orb (Min = +1, Max = clc3)"
         cot["calc4"] = (
@@ -5384,13 +5384,13 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ls["EMinLev3"] = "0"
         ls["EMinLev4"] = "0"
         ls["EMinLev5"] = "0"
-        ls["EMax"] = "84"
+        ls["EMax"] = "64"
         ls["EMaxLev1"] = "0"
         ls["EMaxLev2"] = "0"
         ls["EMaxLev3"] = "0"
         ls["EMaxLev4"] = "0"
         ls["EMaxLev5"] = "0"
-        ls["calc1"] = "100 + 15*max(0,lvl-1) + 20*max(0,lvl-5) + 28*max(0,lvl-10) + 40*max(0,lvl-15)"
+        ls["calc1"] = "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 16*max(0,lvl-16) + 32*max(0,lvl-22)"
         ls["*calc1 desc"] = "Base Lightning Damage Level Ramp (%)"
         ls["calc3"] = "12*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Death Sentry'.blvl)"
         ls["*calc3 desc"] = "Total Synergy Bonus (%)"
@@ -5418,7 +5418,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sl["Param8"] = "7"
         sl["calc1"] = "skill('Lightning Sentry'.blvl)"
         sl["*calc1 desc"] = "Lightning Sentry Skill Level"
-        sl["calc2"] = "100 + 15*max(0,clc1-1) + 20*max(0,clc1-5) + 28*max(0,clc1-10) + 40*max(0,clc1-15)"
+        sl["calc2"] = "100 + 10*max(0,clc1-1) + 6*max(0,clc1-8) + 16*max(0,clc1-16) + 32*max(0,clc1-22)"
         sl["*calc2 desc"] = "Base Lightning Damage Level Ramp (%)"
         sl["calc3"] = "100 + 12*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
         sl["*calc3 desc"] = "Total Synergy Multiplier (%)"
@@ -5504,7 +5504,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         boi["calc2"] = "1"
         boi["*calc2 desc"] = "Cold Damage Unit per Orb"
         boi["calc3"] = (
-            "((8 + 3*max(0,lvl-1) + 1*max(0,lvl-8) + 5*max(0,lvl-16) + 5*max(0,lvl-22) + 4*max(0,lvl-28)) * (100 + clc4)) / 100"
+            "((3 + (lvl-1)/2 + max(0,lvl-16) + 3*max(0,lvl-20) + 5*max(0,lvl-26)) * (100 + clc4)) / 100"
         )
         boi["*calc3 desc"] = "Held Min Cold Damage per Orb (Max = 2 * clc3)"
         boi["calc4"] = (
@@ -5638,19 +5638,19 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ds["*Param1 Description"] = "# of shots"
         ds["HitShift"] = "8"
         ds["EType"] = "cold"
-        ds["EMin"] = "24"
+        ds["EMin"] = "10"
         ds["EMinLev1"] = "0"
         ds["EMinLev2"] = "0"
         ds["EMinLev3"] = "0"
         ds["EMinLev4"] = "0"
         ds["EMinLev5"] = "0"
-        ds["EMax"] = "38"
+        ds["EMax"] = "16"
         ds["EMaxLev1"] = "0"
         ds["EMaxLev2"] = "0"
         ds["EMaxLev3"] = "0"
         ds["EMaxLev4"] = "0"
         ds["EMaxLev5"] = "0"
-        ds["calc1"] = "100 + 18*max(0,lvl-1) + 24*max(0,lvl-5) + 34*max(0,lvl-10) + 48*max(0,lvl-15)"
+        ds["calc1"] = "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 16*max(0,lvl-16) + 32*max(0,lvl-22)"
         ds["*calc1 desc"] = "Base Cold Damage Level Ramp (%)"
         ds["calc3"] = "12*skill('Blades of Ice'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Lightning Sentry'.blvl)"
         ds["*calc3 desc"] = "Total Synergy Bonus (%)"
@@ -5680,7 +5680,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         mds["Param8"] = "25"
         mds["calc1"] = "skill('Death Sentry'.blvl)"
         mds["*calc1 desc"] = "Ice Sentry Skill Level"
-        mds["calc2"] = "100 + 18*max(0,clc1-1) + 24*max(0,clc1-5) + 34*max(0,clc1-10) + 48*max(0,clc1-15)"
+        mds["calc2"] = "100 + 10*max(0,clc1-1) + 6*max(0,clc1-8) + 16*max(0,clc1-16) + 32*max(0,clc1-22)"
         mds["*calc2 desc"] = "Ice Sentry Level Multiplier (%)"
         mds["calc3"] = "100 + 12*skill('Blades of Ice'.blvl) + 6*skill('Wake of Fire Sentry'.blvl)"
         mds["*calc3 desc"] = "Synergy Multiplier (%)"
@@ -5920,7 +5920,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
                 start=1,
             ):
                 sk_shred[f"aurastat{n_idx}"] = res_stat
-                sk_shred[f"aurastatcalc{n_idx}"] = f"-(2*skill('{orb_skill}'.blvl) + skill('Royal Strike'.blvl))"
+                sk_shred[f"aurastatcalc{n_idx}"] = f"-(skill('{orb_skill}'.blvl) + skill('Royal Strike'.blvl)/2)"
             # Visuals toned down: no client-side Battle Cry burst/overlay; only the state's monster tint remains.
             for k in ("cltdofunc", "cltstfunc", "cltmissilea", "cltmissileb", "cltmissilec", "castoverlay",
                       "srvoverlay", "tgtoverlay", "ItemCastOverlay", "*cltcalc1 desc"):
@@ -5944,6 +5944,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         rs["AttackNoMana"] = ""
         rs["SearchEnemyXY"] = ""
 
+    if "Dragon Tail" in by_name:
+        dtl = by_name["Dragon Tail"]
+        dtl["Param1"] = "40"
+        dtl["Param2"] = "12"
+
+    if "Dragon Flight" in by_name:
+        dfl = by_name["Dragon Flight"]
+        dfl["Param1"] = "75"
+        dfl["Param2"] = "20"
 
     if "royal strike" in by_desc:
         rs_d = by_desc["royal strike"]
@@ -5975,17 +5984,17 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         rs_d["descline3"] = "74"
         rs_d["desctexta3"] = "ModWhirlFireShred"
         rs_d["desctextb3"] = ""
-        rs_d["desccalca3"] = "2*skill('Fists of Fire'.blvl) + skill('Royal Strike'.blvl)"
+        rs_d["desccalca3"] = "skill('Fists of Fire'.blvl) + skill('Royal Strike'.blvl)/2"
         rs_d["desccalcb3"] = ""
         rs_d["descline4"] = "74"
         rs_d["desctexta4"] = "ModWhirlColdShred"
         rs_d["desctextb4"] = ""
-        rs_d["desccalca4"] = "2*skill('Blades of Ice'.blvl) + skill('Royal Strike'.blvl)"
+        rs_d["desccalca4"] = "skill('Blades of Ice'.blvl) + skill('Royal Strike'.blvl)/2"
         rs_d["desccalcb4"] = ""
         rs_d["descline5"] = "74"
         rs_d["desctexta5"] = "ModWhirlLightShred"
         rs_d["desctextb5"] = ""
-        rs_d["desccalca5"] = "2*skill('Claws of Thunder'.blvl) + skill('Royal Strike'.blvl)"
+        rs_d["desccalca5"] = "skill('Claws of Thunder'.blvl) + skill('Royal Strike'.blvl)/2"
         rs_d["desccalcb5"] = ""
         rs_d["dsc2line1"] = "36"
         rs_d["dsc2texta1"] = "StrSkill3"

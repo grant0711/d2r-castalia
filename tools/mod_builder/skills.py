@@ -6236,15 +6236,15 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         for _i in range(3, 6):
             _set_dsc_line(lm_d, "desc", _i, "", "", "", "", "")
 
-    # Step 5g: Burst of Speed (Quickness, Id 258) & Fade (Id 267) - short strategic boosts instead of near-permanent buffs:
-    #   20s (500 frames) at Lvl 1 -> 40s (1000 frames) at Lvl 20, linear (+500/19 frames per level).
-    _short_buff_len = "par5+(lvl-1)*par6/19"
+    # Step 5g: Burst of Speed (Quickness, Id 258) & Fade (Id 267):
+    #   22s (550 frames) at Lvl 1 -> 60s (1500 frames) at Lvl 20 (+2s / 50 frames per level).
+    _short_buff_len = "ln56"
     for _sk, _sd in (("Quickness", "quickness"), ("Fade", "fade")):
         if _sk in by_name:
             _b = by_name[_sk]
-            _b["Param5"] = "500"
-            _b["Param6"] = "500"
-            _b["*Param6 Description"] = "Duration added from Lvl 1 to Lvl 20"
+            _b["Param5"] = "550"
+            _b["Param6"] = "50"
+            _b["*Param6 Description"] = "Duration per level (frames)"
             _b["auralencalc"] = _short_buff_len
         if _sd in by_desc:
             by_desc[_sd]["desccalca1"] = _short_buff_len

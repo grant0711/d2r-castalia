@@ -7883,10 +7883,14 @@ def _build_assassin_state_machine() -> str:
 
     for st in sm["states"]:
         if st.get("modeId") == 13 and st.get("skillIndex") == -1:
-            # Bind State_Skill1 (S1, used exclusively by Shuriken) to the crisp 8-frame throwing clips (<wclass>_skill2)
+            # Bind State_Skill1 (S1, used exclusively by Shuriken) to the Blade Fury throwing clip (<wclass>_bladefury)
             b = st.setdefault("animationBindings", {})
+            bladefury_wclasses = {"hth", "bow", "1hs", "1ht", "stf", "2hs", "2ht", "xbw", "ht1", "ht2"}
             for wk in list(b.keys()):
-                b[wk] = [f"{wk}_skill2"]
+                if wk in bladefury_wclasses:
+                    b[wk] = [f"{wk}_bladefury"]
+                else:
+                    b[wk] = ["1hs_bladefury"]
         elif st.get("modeId") == 7 and st.get("skillIndex") == -1:
             b = st.setdefault("animationBindings", {})
             b["ht2"] = ["ht2_sequence"]

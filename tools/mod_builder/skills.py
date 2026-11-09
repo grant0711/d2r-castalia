@@ -4131,6 +4131,7 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
     # Shuriken (Inferno Sentry, Id 272): bouncing heavy throwing star, modeled on the reworked Blessed Hammer
     # (Chain Lightning mechanics: srvdofunc 26 / pSrvHitFunc 12).  Reuses the unused 'throwingstar' row, which already
     # has the expansion throwing-star HD visual.  No stun (ResultFlags 4 = GetHit only, no knockback/stun dmg func).
+    # Requires Attack Rating (ToHit=1), allows 2H weapons full 75% weapon damage (Half2HSrc=""), and uses NextDelay=10.
     if "throwingstar" in rows_by_name:
         ts_m = rows_by_name["throwingstar"]
         ts_m["pCltDoFunc"] = "1"
@@ -4149,16 +4150,28 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None
         ts_m["Range"] = "40"
         ts_m["Size"] = "2"
         ts_m["Pierce"] = ""
+        ts_m["ToHit"] = "1"
+        ts_m["Half2HSrc"] = ""
         ts_m["CollideKill"] = "1"
         ts_m["LastCollide"] = "1"
         ts_m["ClientCol"] = "1"
         ts_m["NextHit"] = "1"
-        ts_m["NextDelay"] = "4"
+        ts_m["NextDelay"] = "10"
         ts_m["Skill"] = "Inferno Sentry"
         ts_m["ResultFlags"] = "4"
         ts_m["EType"] = ""
         ts_m["TravelSound"] = "assassin_bladefury_throw_1"
         ts_m["HitSound"] = "assassin_bladefury_hit"
+
+    # Blade Fury (Id 266): allow 2H weapons to get full 75% weapon damage (Half2HSrc="") and increase blade velocity
+    for _bf_m in ("bladefury1", "bladefury2", "bladefragment1", "bladefragment2"):
+        if _bf_m in rows_by_name:
+            rows_by_name[_bf_m]["Half2HSrc"] = ""
+    for _bf_frag in ("bladefragment1", "bladefragment2"):
+        if _bf_frag in rows_by_name:
+            rows_by_name[_bf_frag]["Vel"] = "32"
+            rows_by_name[_bf_frag]["MaxVel"] = "32"
+            rows_by_name[_bf_frag]["Range"] = "30"
 
 # Appended frames 29..54 in data/hd/global/ui/spells/hireables/hrskillicon.sprite (and .lowend.sprite)
 # sliced directly from each class's native skillicon.sprite sheet at IconCel.
@@ -6073,6 +6086,8 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sh["manashift"] = "8"
         sh["mana"] = "20"
         sh["lvlmana"] = "1"
+        sh["UseAttackRate"] = "1"
+        sh["ToHitCalc"] = "lvl*10"
         sh["HitShift"] = "8"
         sh["Param1"] = "20"
         sh["*Param1 Description"] = "Radius of jump to next target"
@@ -6086,24 +6101,25 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sh["*Param8 Description"] = "Damage synergy"
         sh["calc1"] = "ln34/par5"
         sh["*calc1 desc"] = "# of target jump hits"
-        sh["SrcDam"] = "128"  # full weapon damage (128 = 100 percent), like Blade Fury / Blade Sentinel
-        sh["MinDam"] = "30"
-        sh["MaxDam"] = "45"
-        for _n, (_mn, _mx) in enumerate(zip((5, 12, 25, 38, 50,), (7, 15, 31, 47, 62,)), start=1):
+        sh["SrcDam"] = "96"  # 75% weapon damage (96/128 = 75%), matching Blade Fury (including 2H weapons)
+        sh["MinDam"] = "16"
+        sh["MaxDam"] = "24"
+        for _n, (_mn, _mx) in enumerate(zip((4, 6, 11, 15, 20,), (5, 8, 14, 19, 25,)), start=1):
             sh[f"MinLevDam{_n}"] = str(_mn)
             sh[f"MaxLevDam{_n}"] = str(_mx)
         sh["DmgSymPerCalc"] = "skill('Blade Fury'.blvl)*par8"
     if "inferno sentry" in by_desc:
         sh_d = by_desc["inferno sentry"]
-        # Same display type Blade Fury uses (descdam 24 = physical skill damage incl. weapon damage), so the
-        # character screen shows the skill's damage; pnma/pxma include the weapon portion and synergies.
+        # Same display type Blade Fury uses (descdam 24 = physical skill damage incl. weapon damage, descatt 1 = AR),
+        # so the character screen shows both the skill's damage and its Attack Rating.
         sh_d["descdam"] = "24"
+        sh_d["descatt"] = "1"
         sh_d["descmissile1"] = ""
         _set_dsc_line(sh_d, "desc", 1, "75", "StrSkill4", "", "pnma", "pxma")
-        _set_dsc_line(sh_d, "desc", 2, "74", "StrSkill11", "", "ln34/par5", "")
-        _set_dsc_line(sh_d, "desc", 3, "74", "WeapDamsk", "", "128*100/128", "")
-        for _i in range(4, 6):
-            _set_dsc_line(sh_d, "desc", _i, "", "", "", "", "")
+        _set_dsc_line(sh_d, "desc", 2, "74", "StrSkill22", "", "toht", "")
+        _set_dsc_line(sh_d, "desc", 3, "74", "StrSkill11", "", "ln34/par5", "")
+        _set_dsc_line(sh_d, "desc", 4, "74", "WeapDamsk", "", "96*100/128", "")
+        _set_dsc_line(sh_d, "desc", 5, "", "", "", "", "")
         _set_dsc_line(sh_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
         for _i in range(2, 6):
             _set_dsc_line(sh_d, "dsc2", _i, "", "", "", "", "")

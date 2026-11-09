@@ -301,6 +301,9 @@ WEAPON_VENDOR_BY_CODE: Dict[str, Tuple[str, str, str]] = {
 def _spread_bounds(avg: float, low_pct: float, high_pct: float) -> Tuple[str, str]:
     lo = max(1, int(round(avg * low_pct)))
     hi = max(lo + 1, int(round(avg * high_pct)))
+    if hi > 255:
+        lo = max(1, min(254, int(round(2.0 * avg - 255.0))))
+        hi = 255
     return str(lo), str(hi)
 
 
@@ -322,7 +325,12 @@ def _scale_axe_pair(row: Dict[str, str], min_col: str, max_col: str, mult: float
     vmax = int(row[max_col])
     avg = ((vmin + vmax) / 2.0) * mult
     hi = max(3, int(round(2.0 * avg - 1.0)))
-    row[min_col] = "1"
+    if hi > 255:
+        lo = max(1, min(254, int(round(2.0 * avg - 255.0))))
+        hi = 255
+    else:
+        lo = 1
+    row[min_col] = str(lo)
     row[max_col] = str(hi)
 
 

@@ -509,6 +509,12 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"weapons.txt ({code}): throwing weapon must be non-destructible and socketable"
                 )
+        for dcol in ("mindam", "maxdam", "2handmindam", "2handmaxdam", "minmisdam", "maxmisdam"):
+            dval = r.get(dcol, "")
+            if dval and int(dval) > 255:
+                raise AssertionError(
+                    f"weapons.txt ({code}, {r.get('name')}): {dcol}={dval} exceeds engine uint8_t limit (255) and will integer-rollover!"
+                )
         expected_weap_ap = {
             "staf": "310",
             "wand": "311",

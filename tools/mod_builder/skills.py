@@ -6077,8 +6077,8 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sh["ItemEffect"] = "1"
         sh["KeepCursorStateOnKill"] = "1"
         sh["range"] = "none"
-        sh["anim"] = "SC"
-        sh["seqtrans"] = "SC"
+        sh["anim"] = "S1"
+        sh["seqtrans"] = "S1"
         sh["monanim"] = "xx"
         sh["leftskill"] = "1"
         sh["rightskill"] = "1"
@@ -7882,7 +7882,12 @@ def _build_assassin_state_machine() -> str:
     }
 
     for st in sm["states"]:
-        if st.get("modeId") == 7 and st.get("skillIndex") == -1:
+        if st.get("modeId") == 13 and st.get("skillIndex") == -1:
+            # Bind State_Skill1 (S1, used exclusively by Shuriken) to the crisp 8-frame throwing clips (<wclass>_skill2)
+            b = st.setdefault("animationBindings", {})
+            for wk in list(b.keys()):
+                b[wk] = [f"{wk}_skill2"]
+        elif st.get("modeId") == 7 and st.get("skillIndex") == -1:
             b = st.setdefault("animationBindings", {})
             b["ht2"] = ["ht2_sequence"]
         elif st.get("modeId") == 18 and st.get("skillIndex") in target_skills:
@@ -8115,6 +8120,21 @@ def _build_animdata() -> str:
                     ev_bytes[5] = 1
                     ev_bytes[11] = 1
                     r = struct.pack("<8sII", name_bytes, 16, 227) + bytes(ev_bytes)
+                new_recs.append(r)
+            buckets[b_idx] = new_recs
+
+        # 2. Modify AIS1* (State_Skill1 / S1, used exclusively by Shuriken) to 8 frames at speed=292 (~6.7-7 frames per throw,
+        #    ~90% as fast as Blade Fury's 6-frame throw rate) with event=1 at frame 3.
+        for wcls in ("1HS", "1HT", "2HS", "2HT", "BOW", "HT1", "HT2", "HTH", "STF", "XBW"):
+            target_name = f"AIS1{wcls}"
+            b_idx = sum(ord(c) for c in target_name) & 0xFF
+            name_bytes = target_name.encode("ascii").ljust(8, b"\x00")
+            new_recs = []
+            for r in buckets[b_idx]:
+                if r[:8] == name_bytes:
+                    ev_bytes = bytearray(144)
+                    ev_bytes[3] = 1
+                    r = struct.pack("<8sII", name_bytes, 8, 292) + bytes(ev_bytes)
                 new_recs.append(r)
             buckets[b_idx] = new_recs
 

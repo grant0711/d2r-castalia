@@ -6410,7 +6410,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         ("Blade Sentinel", "8", "12", "1", "12"),       # Blade Sentinel: 12.0 at Lvl 1 -> 31.0 at Lvl 20
         ("Blade Fury", "6", "12", "1", "3"),            # Blade Fury: 3.0/blade (~12.5/s) at Lvl 1 -> 7.8/blade (~32/s) at Lvl 20
         ("Blade Shield", "8", "30", "2", "30"),         # Blade Shield: 30.0 at Lvl 1 -> 68.0 at Lvl 20
-        ("Inferno Sentry", "7", "44", "3", "22"),       # Shuriken: 22.0 at Lvl 1 -> 50.5 at Lvl 20
+        ("Inferno Sentry", "6", "20", "1", "5"),        # Shuriken: 5.0/throw (~18.5/s) at Lvl 1 -> 9.8/throw (~36/s) at Lvl 20
         # 6. Shadow Disciplines Active Skills & Short-Term Bursts
         ("Quickness", "7", "50", "3", "25"),            # Burst of Speed: 25.0 at Lvl 1 -> 53.5 at Lvl 20
         ("Fade", "8", "30", "2", "30"),                 # Fade: 30.0 at Lvl 1 -> 68.0 at Lvl 20

@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r11_sequences"
+    "variant": "r12_clips"
   },
   "afterglow": {
     "status": "tested",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "tested",
-    "variant": "r11_sequences"
+    "variant": "r12_clips"
   },
   "cryostasis": {
     "status": "tested",
-    "variant": "r11_sequences"
+    "variant": "r12_clips"
   },
   "equilibrium": {
     "status": "stub",
@@ -77,7 +77,7 @@
   },
   "overcharge": {
     "status": "stub",
-    "variant": "r11_sequences"
+    "variant": "r12_clips"
   },
   "permafrost": {
     "status": "stub",

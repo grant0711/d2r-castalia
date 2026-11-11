@@ -96,8 +96,8 @@
     "variant": "baseline"
   },
   "pyroclasm": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "final1"
   },
   "skyfall": {
     "status": "stub",

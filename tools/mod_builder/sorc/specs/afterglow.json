@@ -19,13 +19,15 @@
       }
     },
     "r9_no_vanilla_passive": {
-      "description": "R9: strip the vanilla mastery passive stats so the dial skill has no effect of its own yet",
+      "description": "R9: Echo passively grants +1% Fire/Cold/Lightning Skill Damage per Echo level while ANY stance is active (via op=2 on ironmaiden_level, set to 1 by all 3 stances)",
       "tables": {
         "skills.txt": {
           "Lightning Mastery": {
             "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": ""
+            "passivestat1": "item_absorb_slash_percent",
+            "passivecalc1": "lvl",
+            "passivestat2": "",
+            "passivecalc2": ""
           }
         }
       }

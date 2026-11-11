@@ -1726,15 +1726,27 @@
       ]
     },
     "anim_v3": {
-      "description": "anim_v3: every stance holds skill2 x6 (FCR from Fire stance shortens casts, including switching away from it)",
+      "description": "anim_v3: every stance holds skill2 x6; item_absorb_slash_percent configured as op=2 on ironmaiden_level for Echo cross-stance mastery bonus; skill_handofathena/skill_frenzy/skill_decrepify used as dedicated stance markers",
       "tables": {
+        "itemstatcost.txt": {
+          "item_absorb_slash_percent": {
+            "Signed": "1",
+            "Send Bits": "12",
+            "op": "2",
+            "op param": "0",
+            "op base": "ironmaiden_level",
+            "op stat1": "passive_fire_mastery",
+            "op stat2": "passive_cold_mastery",
+            "op stat3": "passive_ltng_mastery"
+          }
+        },
         "states.txt": {
           "sorc_stance_fire": {
             "_clone": "frozenarmor",
             "group": "13",
             "overlay1": "aura_holyfire_front",
             "overlay2": "aura_holyfire_back",
-            "stat": "",
+            "stat": "skill_handofathena",
             "armblue": "",
             "onsound": "",
             "offsound": ""
@@ -1744,7 +1756,7 @@
             "group": "13",
             "overlay1": "holyfreeze",
             "overlay2": "",
-            "stat": "",
+            "stat": "skill_frenzy",
             "armblue": "",
             "onsound": "",
             "offsound": ""
@@ -1754,7 +1766,7 @@
             "group": "13",
             "overlay1": "thunderstormback",
             "overlay2": "",
-            "stat": "",
+            "stat": "skill_decrepify",
             "armblue": "",
             "onsound": "",
             "offsound": ""

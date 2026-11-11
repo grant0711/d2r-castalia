@@ -1,11 +1,11 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r6_diag"
+    "variant": "r7_single_echo"
   },
   "afterglow": {
     "status": "wip",
-    "variant": "r0_single"
+    "variant": "r7_single_echo"
   },
   "backdraft": {
     "status": "stub",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "wip",
-    "variant": "r6_func18_missile"
+    "variant": "r7_single_echo"
   },
   "cryostasis": {
     "status": "wip",
-    "variant": "r6_chain_missile_visible"
+    "variant": "r7_single_echo"
   },
   "equilibrium": {
     "status": "stub",

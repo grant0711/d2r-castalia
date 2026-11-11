@@ -10,6 +10,13 @@
         "short": "[R0 test] duration source",
         "long": "R0 DIAGNOSTIC\nNo effect yet. Its TOTAL level (including +skills, not capped at 20)\nsets stance duration: 10s + 5s per level."
       }
+    },
+    "r7_single_echo": {
+      "description": "R7: Echo supplies its TOTAL level to the stance carry stats (no effect of its own)",
+      "strings": {
+        "short": "[R7 test] Echo (carry source)",
+        "long": "R7 DIAGNOSTIC\nNo effect of its own. Each total level adds +10 Strength to Conflagration and +50% Defense to Cryostasis."
+      }
     }
   }
 }

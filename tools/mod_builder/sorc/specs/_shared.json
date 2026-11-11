@@ -1198,6 +1198,33 @@
         "sorc_pulse_pen_fire": "expansion_shockwave",
         "sorc_pulse_ben_cold": "ice_orb"
       }
+    },
+    "r7_single_echo": {
+      "description": "R7: one combined boon/bust state per stance, mutually exclusive (group 13); Echo carries a share of the other stances' boons",
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "aura_holyfire_front",
+            "overlay2": "aura_holyfire_back",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "hexbanedebuff",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          }
+        }
+      }
     }
   }
 }

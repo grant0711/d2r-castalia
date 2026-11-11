@@ -1592,6 +1592,72 @@
           ]
         }
       ]
+    },
+    "anim_v1": {
+      "description": "anim_v1: stance cast animations locked in (Fire skill1 x3, Cold skill2 x3, Lightning cast x2; seqnum 4/6/13)",
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "aura_holyfire_front",
+            "overlay2": "aura_holyfire_back",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "holyfreeze",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_light": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "thunderstormback",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          }
+        }
+      },
+      "state_machine": [
+        {
+          "skillIndex": 52,
+          "steps": [
+            {
+              "binding": "skill1",
+              "loop": 3
+            }
+          ]
+        },
+        {
+          "skillIndex": 40,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 3
+            }
+          ]
+        },
+        {
+          "skillIndex": 58,
+          "steps": [
+            {
+              "binding": "cast",
+              "loop": 2
+            }
+          ]
+        }
+      ]
     }
   }
 }

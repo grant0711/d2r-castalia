@@ -17,6 +17,18 @@
         "short": "[R7 test] Echo (carry source)",
         "long": "R7 DIAGNOSTIC\nNo effect of its own. Each total level adds +10 Strength to Conflagration and +50% Defense to Cryostasis."
       }
+    },
+    "r9_no_vanilla_passive": {
+      "description": "R9: strip the vanilla mastery passive stats so the dial skill has no effect of its own yet",
+      "tables": {
+        "skills.txt": {
+          "Lightning Mastery": {
+            "passivestate": "",
+            "passivestat1": "",
+            "passivecalc1": ""
+          }
+        }
+      }
     }
   }
 }

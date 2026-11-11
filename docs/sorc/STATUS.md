@@ -9,8 +9,8 @@
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |
-| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | tested | r8_real_stances |
-| 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | baseline |
+| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | tested | r9_anim |
+| 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | r9_no_vanilla_passive |
 | 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | stub | baseline |
 | 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | stub | baseline |
 | 5.2 | 32 | **Brimstone Lance** (`brimstone_lance`) | Inferno (41) | line 2 (boss killer) | stub | baseline |
@@ -23,10 +23,10 @@
 | 1.2 | 1 | **Static Lance** (`static_lance`) | Lightning (49) | line 1 (levelling) | stub | baseline |
 | 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | Nova (48) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Phase Step** (`phase_step`) | Teleport (54) | utility (mobility) | stub | baseline |
-| 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | tested | r7_single_echo |
+| 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | tested | r9_no_vanilla_passive |
 | 3.2 | 16 | **Tesla Field** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | stub | baseline |
 | 3.3 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | stub | baseline |
-| 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | stub | r8_real_stances |
+| 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | stub | r9_anim |
 | 4.3 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | stub | baseline |
 | 5.2 | 32 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | stub | baseline |
 | 6.2 | 40 | **Heaven's Wrath** (`heavens_wrath`) | Charged Bolt (38) | capstone | stub | baseline |
@@ -39,8 +39,8 @@
 | 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | Frost Nova (44) | AoE 1 (levelling) | stub | baseline |
 | 3.1 | 16 | **Glacier Step** (`glacier_step`) | Chilling Armor (60) | utility (mobility) | stub | baseline |
 | 3.3 | 16 | **Permafrost** (`permafrost`) | Ice Blast (45) | combo (CC/AoE) | stub | baseline |
-| 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | tested | r8_real_stances |
-| 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | stub | baseline |
+| 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | tested | r9_anim |
+| 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | stub | r9_no_vanilla_passive |
 | 4.3 | 24 | **Brittle Touch** (`brittle_touch`) | Shiver Armor (50) | support passive | stub | baseline |
 | 5.1 | 32 | **Whiteout** (`whiteout`) | Blizzard (59) | AoE 2 (power spike) | stub | baseline |
 | 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | Glacial Spike (55) | line 2 (boss killer) | stub | baseline |

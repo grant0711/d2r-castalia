@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r4_roles"
+    "variant": "r5_targetstate"
   },
   "afterglow": {
     "status": "wip",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "wip",
-    "variant": "r4_swapped"
+    "variant": "r5_targetstate"
   },
   "cryostasis": {
     "status": "wip",
-    "variant": "r4_whirlwind"
+    "variant": "r5_targetstate"
   },
   "equilibrium": {
     "status": "stub",

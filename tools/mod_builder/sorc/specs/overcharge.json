@@ -232,6 +232,52 @@
         "short": "[R9 test] stat stance + animation test",
         "long": "R8 (Lightning stance) 60s + 10s/lvl, slow cast\nBOON: +50% lightning skill damage, +40% run/walk, +40% hit recovery, +30% dodge (evaluate)\nBUST: -50 Fire and Cold Resist\nR9 anim test C: SQ sequence animation (seqtrans SC, seqnum 12 like the Lightning spell)"
       }
+    },
+    "r13_seqnum": {
+      "description": "R13: SQ, cast x2, seqnum 13",
+      "tables": {
+        "skills.txt": {
+          "Energy Shield": {
+            "srvstfunc": "",
+            "srvdofunc": "18",
+            "aurastate": "sorc_stance_light",
+            "auralencalc": "1500+(skill('Energy Shield'.lvl)*250)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "light_cast_2",
+            "calc5": "",
+            "calc6": "",
+            "aurarangecalc": "",
+            "calc1": "",
+            "calc2": "",
+            "calc3": "",
+            "srvmissilea": "",
+            "anim": "SQ",
+            "seqtrans": "SC",
+            "localdelay": "",
+            "aurastat1": "passive_ltng_mastery",
+            "aurastat2": "item_fastermovevelocity",
+            "aurastat3": "item_fastergethitrate",
+            "aurastat4": "passive_dodge",
+            "aurastat5": "fireresist",
+            "aurastat6": "coldresist",
+            "aurastatcalc1": "50",
+            "aurastatcalc2": "40",
+            "aurastatcalc3": "40",
+            "aurastatcalc4": "30",
+            "aurastatcalc5": "-50",
+            "aurastatcalc6": "-50",
+            "petmax": "",
+            "prgoverlay": "",
+            "dosound": "",
+            "seqnum": "13"
+          }
+        }
+      },
+      "strings": {
+        "short": "[R9 test] stat stance + animation test",
+        "long": "R8 (Lightning stance) 60s + 10s/lvl, slow cast\nBOON: +50% lightning skill damage, +40% run/walk, +40% hit recovery, +30% dodge (evaluate)\nBUST: -50 Fire and Cold Resist\nR9 anim test C: SQ sequence animation (seqtrans SC, seqnum 12 like the Lightning spell)"
+      }
     }
   }
 }

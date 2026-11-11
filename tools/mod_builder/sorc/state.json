@@ -20,19 +20,19 @@
     "variant": "baseline"
   },
   "cinder_lance": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "p1_pierce_all"
   },
   "conduction": {
     "status": "stub",
     "variant": "baseline"
   },
   "conflagration": {
-    "status": "tested",
+    "status": "done",
     "variant": "anim_v3"
   },
   "cryostasis": {
-    "status": "tested",
+    "status": "done",
     "variant": "anim_v3"
   },
   "equilibrium": {
@@ -76,7 +76,7 @@
     "variant": "baseline"
   },
   "overcharge": {
-    "status": "stub",
+    "status": "done",
     "variant": "anim_v3"
   },
   "permafrost": {

@@ -3,6 +3,19 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "p1_pierce_all": {
+      "description": "P1: firebolt missile CollideKill=0 so the bolt passes through every enemy (single variable)",
+      "tables": {
+        "missiles.txt": {
+          "firebolt": {
+            "CollideKill": "0"
+          }
+        }
+      },
+      "strings": {
+        "short": "[P1 test] bolt pierces everything"
+      }
     }
   }
 }

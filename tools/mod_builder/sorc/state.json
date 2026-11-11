@@ -4,7 +4,7 @@
     "variant": "r7_single_echo"
   },
   "afterglow": {
-    "status": "wip",
+    "status": "tested",
     "variant": "r7_single_echo"
   },
   "backdraft": {
@@ -28,11 +28,11 @@
     "variant": "baseline"
   },
   "conflagration": {
-    "status": "wip",
+    "status": "tested",
     "variant": "r7_single_echo"
   },
   "cryostasis": {
-    "status": "wip",
+    "status": "tested",
     "variant": "r7_single_echo"
   },
   "equilibrium": {

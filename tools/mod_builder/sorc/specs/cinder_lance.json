@@ -48,6 +48,37 @@
       "strings": {
         "short": "[P3 test] scales: faster and farther per level"
       }
+    },
+    "p4a_stance_pop": {
+      "description": "P4a diagnostic: firebolt hit function 38 spawns N 'fireexplode' visuals around the impact, N from the skill's calc4 = 4 only while the Fire stance marker is on",
+      "tables": {
+        "missiles.txt": {
+          "firebolt": {
+            "CollideKill": "0",
+            "Vel": "18",
+            "MaxVel": "40",
+            "VelLev": "6",
+            "Range": "26",
+            "pSrvHitFunc": "38",
+            "pCltHitFunc": "46",
+            "sHitPar1": "0",
+            "sHitPar2": "0",
+            "cHitPar1": "0",
+            "cHitPar2": "0",
+            "HitSubMissile1": "fireexplode",
+            "CltHitSubMissile1": "fireexplode"
+          }
+        },
+        "skills.txt": {
+          "Fire Bolt": {
+            "calc4": "(stat('skill_handofathena'.accr)>0)?4:0",
+            "*calc4 desc": "Stance pop count"
+          }
+        }
+      },
+      "strings": {
+        "short": "[P4a test] stance-conditional impact pop"
+      }
     }
   }
 }

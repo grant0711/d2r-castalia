@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "anim_v1"
+    "variant": "anim_v2"
   },
   "afterglow": {
     "status": "tested",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "tested",
-    "variant": "anim_v1"
+    "variant": "anim_v2"
   },
   "cryostasis": {
     "status": "tested",
-    "variant": "anim_v1"
+    "variant": "anim_v2"
   },
   "equilibrium": {
     "status": "stub",
@@ -77,7 +77,7 @@
   },
   "overcharge": {
     "status": "stub",
-    "variant": "anim_v1"
+    "variant": "anim_v2"
   },
   "permafrost": {
     "status": "stub",

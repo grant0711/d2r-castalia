@@ -172,7 +172,7 @@ def _string_keys(slug: str) -> Tuple[str, str, str]:
     return (f"ModSorc_{slug}_name", f"ModSorc_{slug}_short", f"ModSorc_{slug}_long")
 
 
-def slot_texts(slot: dict, variant: str, status: str, override: dict) -> Tuple[str, str, str]:
+def slot_texts(slot: dict, variant: str, status: str, override: dict, label: bool = True) -> Tuple[str, str, str]:
     name = override.get("name", slot["name"])
     if status == "stub":
         short = override.get("short", f"[stub] {slot['role']} - acts as vanilla {slot['vname']}")
@@ -181,7 +181,7 @@ def slot_texts(slot: dict, variant: str, status: str, override: dict) -> Tuple[s
     else:
         short = override.get("short", slot["role"])
         long = override.get("long", slot["design"])
-    if variant != "baseline":
+    if variant != "baseline" and label:
         long += f"\n\n[test variant: {variant}]"
     return name, short, long
 
@@ -212,11 +212,18 @@ def string_updates() -> List[Tuple[int, str, str]]:
         slug = s["slug"]
         var = active_variant(slug, state)
         spec = load_spec(slug)
-        override = spec["variants"].get(var, {}).get("strings", {})
-        name, short, long = slot_texts(s, var, status_of(slug, state), override)
+        blk = spec["variants"].get(var, {})
+        override = blk.get("strings", {})
+        name, short, long = slot_texts(s, var, status_of(slug, state), override, not blk.get("no_label", False))
         k_name, k_short, k_long = _string_keys(slug)
         base = STRING_ID_BASE + i * 3
         out += [(base, k_name, name), (base + 1, k_short, short), (base + 2, k_long, long)]
+    # extra tooltip strings: variants' "strings_extra": {key: text}; ids are assigned from 63200 in sorted key order
+    extra: Dict[str, str] = {}
+    for _slug, _var, block in active_blocks():
+        extra.update(block.get("strings_extra", {}))
+    for i, key in enumerate(sorted(extra)):
+        out.append((STRING_ID_BASE + 200 + i, key, extra[key]))
     return out
 
 

@@ -17,7 +17,7 @@
   },
   "brittle_touch": {
     "status": "wip",
-    "variant": "ret1_passive"
+    "variant": "final1"
   },
   "cinder_lance": {
     "status": "wip",
@@ -25,15 +25,15 @@
   },
   "conduction": {
     "status": "wip",
-    "variant": "ret1_passive"
+    "variant": "final1"
   },
   "conflagration": {
     "status": "done",
-    "variant": "ret2"
+    "variant": "final1"
   },
   "cryostasis": {
     "status": "done",
-    "variant": "ret1"
+    "variant": "final1"
   },
   "equilibrium": {
     "status": "stub",
@@ -73,11 +73,11 @@
   },
   "kindling": {
     "status": "wip",
-    "variant": "ret1_no_vanilla_passive"
+    "variant": "final1"
   },
   "overcharge": {
     "status": "done",
-    "variant": "ret2"
+    "variant": "final1"
   },
   "permafrost": {
     "status": "stub",

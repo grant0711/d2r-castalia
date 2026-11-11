@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r5_targetstate"
+    "variant": "r6_diag"
   },
   "afterglow": {
     "status": "wip",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "wip",
-    "variant": "r5_targetstate"
+    "variant": "r6_func18_missile"
   },
   "cryostasis": {
     "status": "wip",
-    "variant": "r5_targetstate"
+    "variant": "r6_chain_missile_visible"
   },
   "equilibrium": {
     "status": "stub",

@@ -230,6 +230,45 @@
         "short": "[R5 test] chain + target-state pulse",
         "long": "R3 DIAGNOSTIC (Fire)\nBENEFIT: +500% Defense (holy-fire rings)\nPENALTY: -50% run speed x2, -100 Fire Resist (green swirl)"
       }
+    },
+    "r6_func18_missile": {
+      "description": "R6a: stance row do=18 applies BENEFIT itself; srvmissilea spawns a VISIBLE shockwave pulse whose helper applies the PENALTY via target-state",
+      "tables": {
+        "skills.txt": {
+          "Enchant": {
+            "srvstfunc": "",
+            "srvdofunc": "18",
+            "aurastate": "sorc_ben_fire",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "fire_cast_1",
+            "calc5": "",
+            "calc6": "",
+            "aurarangecalc": "",
+            "calc1": "",
+            "calc2": "",
+            "calc3": "",
+            "srvmissilea": "sorc_pulse_pen_fire",
+            "aurastat1": "item_armor_percent",
+            "aurastat2": "",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc1": "500",
+            "aurastatcalc2": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R6a test] func 18 + visible pulse",
+        "long": "R6a DIAGNOSTIC (Fire)\nBENEFIT from the row: +500% Defense, holy-fire rings\nA visible shockwave should appear at her feet; if it does, the PENALTY (slow, -100 Fire Resist, green swirl) is applied by it.\nNo shockwave = the missile never spawns from a func-18 row."
+      }
     }
   }
 }

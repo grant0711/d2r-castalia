@@ -231,6 +231,45 @@
         "short": "[R5 test] chain + target-state pulse",
         "long": "R3 DIAGNOSTIC (Cold)\nBENEFIT: +100 Strength (frost shell)\nPENALTY: slow, -100 Lightning/Poison Resist (purple swirl)"
       }
+    },
+    "r6_chain_missile_visible": {
+      "description": "R6b: R5 structure with a VISIBLE ice-orb pulse (chain = penalty; pulse = benefit via target-state)",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvstfunc": "",
+            "srvdofunc": "170",
+            "aurastate": "",
+            "auralencalc": "",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "ice_cast_1",
+            "calc5": "{id:Stance Penalty (Cold)}",
+            "calc6": "1",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "sorc_pulse_ben_cold",
+            "aurastat1": "",
+            "aurastat2": "",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc1": "",
+            "aurastatcalc2": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R6b test] chain + visible pulse",
+        "long": "R6b DIAGNOSTIC (Cold)\nPENALTY via chain (proven). A visible ice orb should appear at her feet; if it does, the BENEFIT (+100 Strength, frost shell) is applied by it.\nNo orb = the missile never spawns from the leap function."
+      }
     }
   }
 }

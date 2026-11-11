@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "p4e_hex_style"
+    "variant": "anim_v3"
   },
   "afterglow": {
     "status": "tested",
@@ -29,7 +29,7 @@
   },
   "conflagration": {
     "status": "done",
-    "variant": "p4e_hex_style"
+    "variant": "anim_v3_marker"
   },
   "cryostasis": {
     "status": "done",

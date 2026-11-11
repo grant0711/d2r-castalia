@@ -235,11 +235,20 @@ def hd_missile_pairs() -> List[Tuple[str, str]]:
     return pairs
 
 
-def animdata_speeds() -> Dict[str, int]:
+def animdata_speeds() -> Dict[str, object]:
     """{animdata record name prefix: playback speed} from active variants' "animdata" key
     (256 = normal; 128 = half speed, i.e. the animation takes twice as long)."""
-    out: Dict[str, int] = {}
+    out: Dict[str, object] = {}
     for _slug, _var, block in active_blocks():
-        for prefix, spd in block.get("animdata", {}).items():
-            out[prefix] = int(spd)
+        for prefix, cfg in block.get("animdata", {}).items():
+            out[prefix] = cfg  # int speed, or {"fpc": N, "spd": S, "events": "scale"}
     return out
+
+
+def state_machine_defs() -> List[dict]:
+    """Sequence-state definitions from active variants' "state_machine" key:
+    [{"skillIndex": 58, "steps": [{"binding": "cast", "loop": 1}, ...]}]"""
+    defs: List[dict] = []
+    for _slug, _var, block in active_blocks():
+        defs += block.get("state_machine", [])
+    return defs

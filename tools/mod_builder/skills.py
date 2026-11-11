@@ -8115,14 +8115,28 @@ def _build_animdata() -> str:
         # Sorceress experiments: per-prefix playback speed overrides (e.g. a slower stance cast animation)
         from mod_builder.sorc import engine as _sorc_engine
 
-        for _prefix, _spd in _sorc_engine.animdata_speeds().items():
+        for _prefix, _cfg in _sorc_engine.animdata_speeds().items():
             _pb = _prefix.encode("ascii")
             for _bi, _recs in enumerate(buckets):
                 _new = []
                 for _r in _recs:
                     if _r[:8].split(b"\x00")[0].startswith(_pb):
                         _r = bytearray(_r)
-                        struct.pack_into("<I", _r, 12, _spd)
+                        if isinstance(_cfg, dict):
+                            _old_fpc = struct.unpack_from("<I", _r, 8)[0]
+                            _fpc = int(_cfg.get("fpc", _old_fpc))
+                            struct.pack_into("<I", _r, 8, _fpc)
+                            struct.pack_into("<I", _r, 12, int(_cfg.get("spd", 256)))
+                            if _cfg.get("events") == "scale" and _old_fpc:
+                                _ev = bytes(_r[16:])
+                                _nev = bytearray(len(_ev))
+                                for _i, _b in enumerate(_ev):
+                                    if _b:
+                                        _j = min(len(_nev) - 1, round(_i * _fpc / _old_fpc))
+                                        _nev[_j] = _b
+                                _r[16:] = _nev
+                        else:
+                            struct.pack_into("<I", _r, 12, int(_cfg))
                         _r = bytes(_r)
                     _new.append(_r)
                 buckets[_bi] = _new
@@ -8567,4 +8581,7 @@ def build_skills_all(cfg: dict) -> str:
     from mod_builder.sorc.tree import build_soskilltree_pair
 
     p19 = build_soskilltree_pair()
-    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}"
+    from mod_builder.sorc.statemachine import build_sorceress_state_machine
+
+    p20 = build_sorceress_state_machine()
+    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}, {p20}"

@@ -1306,6 +1306,70 @@
           }
         }
       }
+    },
+    "r10_frames": {
+      "description": "R10: fire overlay front+back rings; animation experiments by frame count (SC 28, S1 40, events scaled) + SQ sequence states for Overcharge",
+      "animdata": {
+        "SOSC": {
+          "fpc": 28,
+          "spd": 256,
+          "events": "scale"
+        },
+        "SOS1": {
+          "fpc": 40,
+          "spd": 256,
+          "events": "scale"
+        }
+      },
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "aura_holyfire_front",
+            "overlay2": "aura_holyfire_back",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "holyfreeze",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_light": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "thunderstormback",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          }
+        }
+      },
+      "state_machine": [
+        {
+          "skillIndex": 58,
+          "steps": [
+            {
+              "binding": "cast",
+              "loop": 1
+            },
+            {
+              "binding": "cast",
+              "loop": 1
+            }
+          ]
+        }
+      ]
     }
   }
 }

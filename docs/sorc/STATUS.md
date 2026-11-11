@@ -9,7 +9,7 @@
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |
-| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | wip | r3_chain_missile |
+| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | wip | r4_swapped |
 | 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | baseline |
 | 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | stub | baseline |
 | 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | stub | baseline |
@@ -39,7 +39,7 @@
 | 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | Frost Nova (44) | AoE 1 (levelling) | stub | baseline |
 | 3.1 | 16 | **Glacier Step** (`glacier_step`) | Chilling Armor (60) | utility (mobility) | stub | baseline |
 | 3.3 | 16 | **Permafrost** (`permafrost`) | Ice Blast (45) | combo (CC/AoE) | stub | baseline |
-| 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | wip | r3_chain_missile |
+| 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | wip | r4_whirlwind |
 | 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | stub | baseline |
 | 4.3 | 24 | **Brittle Touch** (`brittle_touch`) | Shiver Armor (50) | support passive | stub | baseline |
 | 5.1 | 32 | **Whiteout** (`whiteout`) | Blizzard (59) | AoE 2 (power spike) | stub | baseline |

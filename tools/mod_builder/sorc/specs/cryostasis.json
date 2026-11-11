@@ -152,6 +152,46 @@
         "short": "[R3 test] chain + self-hit pulse",
         "long": "R3 DIAGNOSTIC (Cold)\nBENEFIT: +100 Strength (frost shell)\nPENALTY: slow, -100 Lightning/Poison Resist (purple swirl)"
       }
+    },
+    "r4_whirlwind": {
+      "description": "R4b: Whirlwind function 168 (applies aurastate AND casts calc6 skill) as a one-row dual-state primitive",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvstfunc": "",
+            "srvstopfunc": "",
+            "srvdofunc": "168",
+            "aurastate": "sorc_ben_cold",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "ice_cast_1",
+            "calc5": "100",
+            "calc6": "{id:Stance Penalty (Cold)}",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "",
+            "aurastat1": "strength",
+            "aurastat2": "",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc1": "100",
+            "aurastatcalc2": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R4b test] whirlwind function",
+        "long": "R4b DIAGNOSTIC (Cold)\nstance row applies BENEFIT itself (+100 Strength, frost shell) and chains PENALTY helper (slow, -100 Lightning/Poison Resist)\nWARNING: Whirlwind function - watch for spinning or movement."
+      }
     }
   }
 }

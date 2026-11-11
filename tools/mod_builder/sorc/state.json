@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r3_chain_missile"
+    "variant": "r4_roles"
   },
   "afterglow": {
     "status": "wip",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "wip",
-    "variant": "r3_chain_missile"
+    "variant": "r4_swapped"
   },
   "cryostasis": {
     "status": "wip",
-    "variant": "r3_chain_missile"
+    "variant": "r4_whirlwind"
   },
   "equilibrium": {
     "status": "stub",

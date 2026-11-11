@@ -9,9 +9,9 @@
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |
-| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | anim_v3_marker |
+| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | ret1 |
 | 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | r9_no_vanilla_passive |
-| 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | stub | baseline |
+| 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | wip | ret1_no_vanilla_passive |
 | 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | stub | baseline |
 | 5.2 | 32 | **Brimstone Lance** (`brimstone_lance`) | Inferno (41) | line 2 (boss killer) | stub | baseline |
 | 6.2 | 40 | **Pyre Hydra** (`pyre_hydra`) | Hydra (62) | capstone | stub | baseline |

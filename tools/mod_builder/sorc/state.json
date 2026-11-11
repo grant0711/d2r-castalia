@@ -29,7 +29,7 @@
   },
   "conflagration": {
     "status": "done",
-    "variant": "anim_v3_marker"
+    "variant": "ret1"
   },
   "cryostasis": {
     "status": "done",
@@ -72,8 +72,8 @@
     "variant": "r9_no_vanilla_passive"
   },
   "kindling": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "ret1_no_vanilla_passive"
   },
   "overcharge": {
     "status": "done",

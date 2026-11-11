@@ -3,6 +3,20 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "ret1_no_vanilla_passive": {
+      "description": "Kindling: strip Warmth's vanilla passive (mana regen); level now only feeds the Fire stance retaliation damage",
+      "tables": {
+        "skills.txt": {
+          "Warmth": {
+            "passivestate": "",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "passivestat2": "",
+            "passivecalc2": ""
+          }
+        }
+      }
     }
   }
 }

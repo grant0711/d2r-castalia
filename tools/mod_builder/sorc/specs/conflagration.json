@@ -870,6 +870,69 @@
         "short": "[R9 test] stat stance + animation test",
         "long": "R8 (Fire stance) 60s + 10s/lvl, slow cast\nBOON: +50% fire skill damage, +75% faster cast rate\nBUST: -30% physical damage resist (amplified damage)\nECHO: +1% cold and lightning skill damage per Echo level\nOverlay: burning ground\nR9 anim test A: normal cast animation (SC) with the whole SOSC speed halved"
       }
+    },
+    "ret1": {
+      "description": "R1 retaliation: Fire stance, when struck in melee (attackedinmelee, func 3 like Shiver Armor) burns the attacker; damage scales with Kindling (Warmth row) level",
+      "tables": {
+        "skills.txt": {
+          "Enchant": {
+            "srvstfunc": "",
+            "srvdofunc": "18",
+            "aurastate": "sorc_stance_fire",
+            "auralencalc": "1500+(skill('Enchant'.lvl)*250)",
+            "auraevent1": "attackedinmelee",
+            "auraeventfunc1": "3",
+            "castoverlay": "fire_cast_1",
+            "calc5": "",
+            "calc6": "",
+            "aurarangecalc": "",
+            "calc1": "",
+            "calc2": "",
+            "calc3": "",
+            "srvmissilea": "",
+            "anim": "SQ",
+            "seqtrans": "SC",
+            "localdelay": "",
+            "aurastat1": "passive_fire_mastery",
+            "aurastat2": "item_fastercastrate",
+            "aurastat3": "damageresist",
+            "aurastat4": "passive_cold_mastery",
+            "aurastat5": "passive_ltng_mastery",
+            "aurastat6": "skill_handofathena",
+            "aurastatcalc1": "50",
+            "aurastatcalc2": "75",
+            "aurastatcalc3": "-30",
+            "aurastatcalc4": "skill('Lightning Mastery'.lvl)",
+            "aurastatcalc5": "skill('Lightning Mastery'.lvl)",
+            "aurastatcalc6": "1",
+            "seqnum": "4",
+            "cltoverlaya": "fire_hit",
+            "EType": "fire",
+            "EMin": "30",
+            "EMax": "50",
+            "EMinLev1": "0",
+            "EMinLev2": "0",
+            "EMinLev3": "0",
+            "EMinLev4": "0",
+            "EMinLev5": "0",
+            "EMaxLev1": "0",
+            "EMaxLev2": "0",
+            "EMaxLev3": "0",
+            "EMaxLev4": "0",
+            "EMaxLev5": "0",
+            "EDmgSymPerCalc": "skill('Warmth'.lvl)*10",
+            "Param1": "45",
+            "Param2": "6",
+            "Param3": "3600",
+            "Param4": "300",
+            "HitShift": "7"
+          }
+        }
+      },
+      "strings": {
+        "short": "[R9 test] stat stance + animation test",
+        "long": "R8 (Fire stance) 60s + 10s/lvl, slow cast\nBOON: +50% fire skill damage, +75% faster cast rate\nBUST: -30% physical damage resist (amplified damage)\nECHO: +1% cold and lightning skill damage per Echo level\nOverlay: burning ground\nR9 anim test A: normal cast animation (SC) with the whole SOSC speed halved\nRETALIATION (test): melee attackers take 30-50 fire damage, +10% per Kindling level"
+      }
     }
   }
 }

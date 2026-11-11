@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "done",
-    "variant": "final2"
+    "variant": "final3"
   },
   "cryostasis": {
     "status": "done",
-    "variant": "final2"
+    "variant": "final3"
   },
   "equilibrium": {
     "status": "stub",
@@ -77,7 +77,7 @@
   },
   "overcharge": {
     "status": "done",
-    "variant": "final2"
+    "variant": "final3"
   },
   "permafrost": {
     "status": "stub",

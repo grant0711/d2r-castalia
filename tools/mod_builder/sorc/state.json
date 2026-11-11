@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "anim_v3"
+    "variant": "anim_v3_cltevent"
   },
   "afterglow": {
     "status": "tested",

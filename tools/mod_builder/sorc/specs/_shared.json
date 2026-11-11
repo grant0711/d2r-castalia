@@ -1930,6 +1930,82 @@
           ]
         }
       ]
+    },
+    "p4e_hex_style": {
+      "description": "P4e: Fire stance applies a burst-overlay debuff state (hex-style: func 36 on domissiledamage -> auratargetstate) to every monster our missiles hit",
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "aura_holyfire_front",
+            "overlay2": "aura_holyfire_back",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "holyfreeze",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_light": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "thunderstormback",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_fire_burst": {
+            "_clone": "hexbanedebuff",
+            "group": "",
+            "aura": "",
+            "curable": "",
+            "overlay1": "burning",
+            "castoverlay": "fire_explode",
+            "onsound": "",
+            "vfxweaponstate": ""
+          }
+        }
+      },
+      "state_machine": [
+        {
+          "skillIndex": 52,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 6
+            }
+          ]
+        },
+        {
+          "skillIndex": 40,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 6
+            }
+          ]
+        },
+        {
+          "skillIndex": 58,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 6
+            }
+          ]
+        }
+      ]
     }
   }
 }

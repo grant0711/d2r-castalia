@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "p4d_events"
+    "variant": "p4e_hex_style"
   },
   "afterglow": {
     "status": "tested",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "done",
-    "variant": "p4d_events"
+    "variant": "p4e_hex_style"
   },
   "cryostasis": {
     "status": "done",
-    "variant": "p4d_events"
+    "variant": "anim_v3"
   },
   "equilibrium": {
     "status": "stub",
@@ -77,7 +77,7 @@
   },
   "overcharge": {
     "status": "done",
-    "variant": "p4d_events"
+    "variant": "anim_v3"
   },
   "permafrost": {
     "status": "stub",

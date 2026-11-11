@@ -5,7 +5,7 @@
 
 | r.c | lvl | new skill | replaces (id) | role | status | variant |
 |---|---|---|---|---|---|---|
-| 1.2 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | wip | p2_fast |
+| 1.2 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | wip | p3_scaling |
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |

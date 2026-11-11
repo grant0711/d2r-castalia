@@ -42,3 +42,9 @@ d2r-sorc commit -m "cinder_lance v1: ..."   # checkpoint
 - Change one variable per variant; name the variant after it.
 - Always `log` what you saw before moving on, then `commit`.
 - Specs live in git, so any checkpoint is a `git checkout` away.
+
+## Design rule: investment must change the feel
+Skill levels must visibly change how a skill plays, not only its damage. Wherever a parameter can vary with skill level,
+scale it: projectile velocity (missile `Vel` + `VelLev`, capped by `MaxVel`), range (distance = Vel x Range, so speed growth also
+extends reach), AoE radius, duration of secondary effects, number of projectiles or hits. Level 1 should feel modest; around
+level 20 the skill should feel clearly stronger; +skills should keep pushing past 20.

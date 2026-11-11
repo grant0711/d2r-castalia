@@ -21,7 +21,7 @@
   },
   "cinder_lance": {
     "status": "wip",
-    "variant": "p2_fast"
+    "variant": "p3_scaling"
   },
   "conduction": {
     "status": "stub",

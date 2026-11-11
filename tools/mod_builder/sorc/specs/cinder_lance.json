@@ -31,6 +31,23 @@
       "strings": {
         "short": "[P2 test] pierce + fast bolt"
       }
+    },
+    "p3_scaling": {
+      "description": "P3: level scaling: Vel 18 +0.75/lvl (cap 40), Range 26 frames; distance grows with speed",
+      "tables": {
+        "missiles.txt": {
+          "firebolt": {
+            "CollideKill": "0",
+            "Vel": "18",
+            "MaxVel": "40",
+            "VelLev": "6",
+            "Range": "26"
+          }
+        }
+      },
+      "strings": {
+        "short": "[P3 test] scales: faster and farther per level"
+      }
     }
   }
 }

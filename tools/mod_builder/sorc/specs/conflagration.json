@@ -781,6 +781,50 @@
         "short": "[R9 test] stat stance + animation test",
         "long": "R8 (Fire stance) 60s + 10s/lvl, slow cast\nBOON: +50% fire skill damage, +75% faster cast rate\nBUST: -30% physical damage resist (amplified damage)\nECHO: +1% cold and lightning skill damage per Echo level\nOverlay: burning ground\nR9 anim test A: normal cast animation (SC) with the whole SOSC speed halved"
       }
+    },
+    "p4d_events": {
+      "description": "P4d: stance event doactive -> func 1 spawns fireexplode",
+      "tables": {
+        "skills.txt": {
+          "Enchant": {
+            "srvstfunc": "",
+            "srvdofunc": "18",
+            "aurastate": "sorc_stance_fire",
+            "auralencalc": "1500+(skill('Enchant'.lvl)*250)",
+            "auraevent1": "doactive",
+            "auraeventfunc1": "1",
+            "castoverlay": "fire_cast_1",
+            "calc5": "",
+            "calc6": "",
+            "aurarangecalc": "",
+            "calc1": "",
+            "calc2": "",
+            "calc3": "",
+            "srvmissilea": "fireexplode",
+            "anim": "SQ",
+            "seqtrans": "SC",
+            "localdelay": "",
+            "aurastat1": "passive_fire_mastery",
+            "aurastat2": "item_fastercastrate",
+            "aurastat3": "damageresist",
+            "aurastat4": "passive_cold_mastery",
+            "aurastat5": "passive_ltng_mastery",
+            "aurastat6": "skill_handofathena",
+            "aurastatcalc1": "50",
+            "aurastatcalc2": "75",
+            "aurastatcalc3": "-30",
+            "aurastatcalc4": "skill('Lightning Mastery'.lvl)",
+            "aurastatcalc5": "skill('Lightning Mastery'.lvl)",
+            "aurastatcalc6": "1",
+            "seqnum": "4",
+            "cltmissilea": "fireexplode"
+          }
+        }
+      },
+      "strings": {
+        "short": "[R9 test] stat stance + animation test",
+        "long": "R8 (Fire stance) 60s + 10s/lvl, slow cast\nBOON: +50% fire skill damage, +75% faster cast rate\nBUST: -30% physical damage resist (amplified damage)\nECHO: +1% cold and lightning skill damage per Echo level\nOverlay: burning ground\nR9 anim test A: normal cast animation (SC) with the whole SOSC speed halved"
+      }
     }
   }
 }

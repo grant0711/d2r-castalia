@@ -1858,6 +1858,78 @@
           ]
         }
       ]
+    },
+    "p4d_events": {
+      "description": "P4d event probes: Fire=doactive, Cold=domissileattack, Lightning=hitbymissile (vanilla-proven); state cltevent matches each",
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "aura_holyfire_front",
+            "overlay2": "aura_holyfire_back",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": "",
+            "cltevent": "doactive",
+            "clteventfunc": "1"
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "holyfreeze",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": "",
+            "cltevent": "domissileattack",
+            "clteventfunc": "1"
+          },
+          "sorc_stance_light": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "thunderstormback",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": "",
+            "cltevent": "hitbymissile",
+            "clteventfunc": "1"
+          }
+        }
+      },
+      "state_machine": [
+        {
+          "skillIndex": 52,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 6
+            }
+          ]
+        },
+        {
+          "skillIndex": 40,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 6
+            }
+          ]
+        },
+        {
+          "skillIndex": 58,
+          "steps": [
+            {
+              "binding": "skill2",
+              "loop": 6
+            }
+          ]
+        }
+      ]
     }
   }
 }

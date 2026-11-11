@@ -35,6 +35,45 @@
         "short": "[R0 test] stance state",
         "long": "R0 DIAGNOSTIC (Cold stance)\nBENEFIT: +100 Strength (Character sheet)\nPENALTY: -100 Lightning Resist, -100 Poison Resist\nDuration: 10s + 5s per total Afterglow level"
       }
+    },
+    "r1_leapchain": {
+      "description": "R1 leap-chain: srvstfunc 23 applies BENEFIT (aurastate); srvdofunc 170 casts hidden helper (calc5) that applies PENALTY",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvstfunc": "23",
+            "srvdofunc": "170",
+            "aurastate": "sorc_ben_cold",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "ice_cast_1",
+            "calc5": "{id:Stance Penalty (Cold)}",
+            "calc6": "1",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "",
+            "aurastat1": "strength",
+            "aurastatcalc1": "100",
+            "aurastat2": "",
+            "aurastatcalc2": "",
+            "aurastat3": "",
+            "aurastatcalc3": "",
+            "aurastat4": "",
+            "aurastatcalc4": "",
+            "aurastat5": "",
+            "aurastatcalc5": "",
+            "aurastat6": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R1 test] leap-chain stance",
+        "long": "R1 DIAGNOSTIC (Cold stance)\nBENEFIT state: +100 Strength, frost shell\nPENALTY state (hidden helper): -100 Lightning/Poison Resist, hex swirl"
+      }
     }
   }
 }

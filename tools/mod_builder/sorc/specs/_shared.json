@@ -28,6 +28,121 @@
           }
         }
       }
+    },
+    "r1_leapchain": {
+      "description": "R1: separate BENEFIT states (no group) and PENALTY states (group 14, exclusive), for the leap-chain test",
+      "tables": {
+        "states.txt": {
+          "sorc_ben_fire": {
+            "_clone": "frozenarmor",
+            "group": "",
+            "overlay1": "enchant",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_ben_cold": {
+            "_clone": "frozenarmor",
+            "group": "",
+            "overlay1": "frozenarmor",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_pen_fire": {
+            "_clone": "frozenarmor",
+            "group": "14",
+            "overlay1": "curseterror",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_pen_cold": {
+            "_clone": "frozenarmor",
+            "group": "14",
+            "overlay1": "hexbanedebuff",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          }
+        },
+        "skills.txt": {
+          "Stance Penalty (Fire)": {
+            "_clone": "Energy Shield",
+            "charclass": "",
+            "skilldesc": "",
+            "reqlevel": "1",
+            "reqskill1": "",
+            "reqskill2": "",
+            "mana": "0",
+            "minmana": "0",
+            "lvlmana": "0",
+            "srvdofunc": "23",
+            "aurastate": "sorc_pen_fire",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "",
+            "dosound": "",
+            "prgoverlay": "",
+            "stsound": "",
+            "enhanceable": "",
+            "leftskill": "1",
+            "rightskill": "1",
+            "aurastat1": "velocitypercent",
+            "aurastatcalc1": "-50",
+            "aurastat2": "fireresist",
+            "aurastatcalc2": "-100",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": ""
+          },
+          "Stance Penalty (Cold)": {
+            "_clone": "Energy Shield",
+            "charclass": "",
+            "skilldesc": "",
+            "reqlevel": "1",
+            "reqskill1": "",
+            "reqskill2": "",
+            "mana": "0",
+            "minmana": "0",
+            "lvlmana": "0",
+            "srvdofunc": "23",
+            "aurastate": "sorc_pen_cold",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "",
+            "dosound": "",
+            "prgoverlay": "",
+            "stsound": "",
+            "enhanceable": "",
+            "leftskill": "1",
+            "rightskill": "1",
+            "aurastat1": "lightresist",
+            "aurastatcalc1": "-100",
+            "aurastat2": "poisonresist",
+            "aurastatcalc2": "-100",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": ""
+          }
+        }
+      }
     }
   }
 }

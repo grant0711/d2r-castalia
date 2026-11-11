@@ -35,6 +35,45 @@
         "short": "[R0 test] stance state",
         "long": "R0 DIAGNOSTIC (Fire stance)\nBENEFIT: +500% Defense (see Character sheet)\nPENALTY: -50% run speed, -100 Fire Resist\nDuration: 10s + 5s per total Afterglow level"
       }
+    },
+    "r1_leapchain": {
+      "description": "R1 leap-chain: srvstfunc 23 applies BENEFIT (aurastate); srvdofunc 170 casts hidden helper (calc5) that applies PENALTY",
+      "tables": {
+        "skills.txt": {
+          "Enchant": {
+            "srvstfunc": "23",
+            "srvdofunc": "170",
+            "aurastate": "sorc_ben_fire",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "fire_cast_1",
+            "calc5": "{id:Stance Penalty (Fire)}",
+            "calc6": "1",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "",
+            "aurastat1": "item_armor_percent",
+            "aurastatcalc1": "500",
+            "aurastat2": "",
+            "aurastatcalc2": "",
+            "aurastat3": "",
+            "aurastatcalc3": "",
+            "aurastat4": "",
+            "aurastatcalc4": "",
+            "aurastat5": "",
+            "aurastatcalc5": "",
+            "aurastat6": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R1 test] leap-chain stance",
+        "long": "R1 DIAGNOSTIC (Fire stance)\nBENEFIT state: +500% Defense, flame wreath\nPENALTY state (hidden helper): -50% run speed, -100 Fire Resist, green swirl"
+      }
     }
   }
 }

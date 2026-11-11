@@ -136,6 +136,7 @@ def apply_table_patches(table: str, headers: List[str], rows: List[Dict[str, str
     by_key = {r[key_col]: r for r in rows if r.get(key_col)}
     id_col = _id_col(headers)
     count = 0
+    deferred = []  # (row, col, template) for values using {id:<key>} placeholders
     for slug, var, block in active_blocks():
         for key, patch in block.get("tables", {}).get(table, {}).items():
             patch = dict(patch)
@@ -156,7 +157,13 @@ def apply_table_patches(table: str, headers: List[str], rows: List[Dict[str, str
                 if col not in headers:
                     raise KeyError(f"[{slug}:{var}] {table}/{key}: unknown column '{col}'")
                 row[col] = str(val)
+                if "{id:" in row[col]:
+                    deferred.append((row, col, row[col]))
             count += 1
+    for row, col, tmpl in deferred:  # resolve '{id:<row key>}' to that row's id (rows may be created later)
+        def _sub(m):
+            return by_key[m.group(1)][id_col]
+        row[col] = re.sub(r"\{id:([^}]+)\}", _sub, tmpl)
     return count
 
 

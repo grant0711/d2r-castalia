@@ -47,6 +47,9 @@ def die(msg: str):
 
 
 def slot(slug: str) -> dict:
+    if slug == "_shared":
+        return {"slug": "_shared", "name": "shared rows", "tree": "-", "row": 0, "col": 0, "vid": 0,
+                "vname": "-", "role": "shared helper rows", "design": "states/stats/helper skills shared by several skills"}
     if slug not in BY_SLUG:
         die(f"unknown skill '{slug}'. Try: d2r-sorc map")
     return BY_SLUG[slug]

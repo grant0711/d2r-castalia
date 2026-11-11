@@ -3,6 +3,31 @@
   "variants": {
     "baseline": {
       "description": "shared helper rows (stance states, helper skills, stats) used by several Sorceress skills"
+    },
+    "r0_single": {
+      "description": "R0 control: one diagnostic state per stance (group 13 = mutually exclusive), exaggerated visible stats",
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "enchant",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "frozenarmor",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          }
+        }
+      }
     }
   }
 }

@@ -3,6 +3,13 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "r0_single": {
+      "description": "R0: Afterglow only supplies its total level to the stance duration formula (no effect of its own yet)",
+      "strings": {
+        "short": "[R0 test] duration source",
+        "long": "R0 DIAGNOSTIC\nNo effect yet. Its TOTAL level (including +skills, not capped at 20)\nsets stance duration: 10s + 5s per level."
+      }
     }
   }
 }

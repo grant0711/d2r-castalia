@@ -1,7 +1,11 @@
 {
+  "_shared": {
+    "status": "wip",
+    "variant": "r0_single"
+  },
   "afterglow": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "r0_single"
   },
   "backdraft": {
     "status": "stub",
@@ -24,12 +28,12 @@
     "variant": "baseline"
   },
   "conflagration": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "r0_single"
   },
   "cryostasis": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "r0_single"
   },
   "equilibrium": {
     "status": "stub",

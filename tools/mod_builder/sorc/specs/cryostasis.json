@@ -3,6 +3,38 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "r0_single": {
+      "description": "R0 control: single exaggerated diagnostic state; duration = 10s + 5s x TOTAL Afterglow level",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvdofunc": "23",
+            "srvstfunc": "",
+            "aurastate": "sorc_stance_cold",
+            "auralencalc": "250+(skill('Lightning Mastery'.lvl)*125)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "ice_cast_1",
+            "aurastat1": "strength",
+            "aurastatcalc1": "100",
+            "aurastat2": "lightresist",
+            "aurastatcalc2": "-100",
+            "aurastat3": "poisonresist",
+            "aurastatcalc3": "-100",
+            "aurastat4": "",
+            "aurastatcalc4": "",
+            "aurastat5": "",
+            "aurastatcalc5": "",
+            "aurastat6": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R0 test] stance state",
+        "long": "R0 DIAGNOSTIC (Cold stance)\nBENEFIT: +100 Strength (Character sheet)\nPENALTY: -100 Lightning Resist, -100 Poison Resist\nDuration: 10s + 5s per total Afterglow level"
+      }
     }
   }
 }

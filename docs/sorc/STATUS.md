@@ -5,11 +5,11 @@
 
 | r.c | lvl | new skill | replaces (id) | role | status | variant |
 |---|---|---|---|---|---|---|
-| 1.2 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | wip | p4a_stance_pop |
+| 1.2 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | wip | p3_scaling |
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |
-| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | anim_v3_marker |
+| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | p4b_event_pop |
 | 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | r9_no_vanilla_passive |
 | 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | stub | baseline |
 | 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | stub | baseline |

@@ -21,7 +21,7 @@
   },
   "cinder_lance": {
     "status": "wip",
-    "variant": "p4a_stance_pop"
+    "variant": "p3_scaling"
   },
   "conduction": {
     "status": "stub",
@@ -29,7 +29,7 @@
   },
   "conflagration": {
     "status": "done",
-    "variant": "anim_v3_marker"
+    "variant": "p4b_event_pop"
   },
   "cryostasis": {
     "status": "done",

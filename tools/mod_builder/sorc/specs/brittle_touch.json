@@ -3,6 +3,53 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "ret1_passive": {
+      "description": "Convert the vanilla castable row into a true passive; its level only empowers the stance retaliation",
+      "tables": {
+        "skills.txt": {
+          "Shiver Armor": {
+            "passive": "1",
+            "leftskill": "0",
+            "rightskill": "0",
+            "srvstfunc": "",
+            "srvdofunc": "",
+            "srvstopfunc": "",
+            "cltstfunc": "",
+            "cltdofunc": "",
+            "cltstopfunc": "",
+            "aurastate": "",
+            "auratargetstate": "",
+            "auralencalc": "",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "cltmissilea": "",
+            "srvmissilea": "",
+            "srvmissile": "",
+            "cltmissile": "",
+            "castoverlay": "",
+            "cltoverlaya": "",
+            "dosound": "",
+            "stsound": "",
+            "mana": "0",
+            "minmana": "0",
+            "lvlmana": "0",
+            "passivestate": "",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "aurastat1": "",
+            "aurastatcalc1": "",
+            "aurastat2": "",
+            "aurastatcalc2": "",
+            "EType": "",
+            "EMin": "",
+            "EMax": "",
+            "ELen": "",
+            "ELevLen2": "",
+            "ELevLen3": ""
+          }
+        }
+      }
     }
   }
 }

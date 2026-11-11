@@ -16,16 +16,16 @@
     "variant": "baseline"
   },
   "brittle_touch": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "ret1_passive"
   },
   "cinder_lance": {
     "status": "wip",
     "variant": "p3_scaling"
   },
   "conduction": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "ret1_passive"
   },
   "conflagration": {
     "status": "done",
@@ -33,7 +33,7 @@
   },
   "cryostasis": {
     "status": "done",
-    "variant": "anim_v3"
+    "variant": "ret1"
   },
   "equilibrium": {
     "status": "stub",
@@ -77,7 +77,7 @@
   },
   "overcharge": {
     "status": "done",
-    "variant": "anim_v3"
+    "variant": "ret1"
   },
   "permafrost": {
     "status": "stub",

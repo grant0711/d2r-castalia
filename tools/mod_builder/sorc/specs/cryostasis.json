@@ -437,6 +437,49 @@
         "short": "[R9 test] stat stance + animation test",
         "long": "R8 (Cold stance) 60s + 10s/lvl, slow cast\nBOON: +50% cold skill damage, +150% Defense\nBUST: -30% run speed, -25% physical damage resist\nECHO: +1% fire and lightning skill damage per Echo level\nOverlay: Holy Freeze ring\nR9 anim test B: S1 animation with SOS1 speed quartered"
       }
+    },
+    "r11_sequences": {
+      "description": "R11b: SQ sequence, steps cast -> cast -> cast",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvstfunc": "",
+            "srvdofunc": "18",
+            "aurastate": "sorc_stance_cold",
+            "auralencalc": "1500+(skill('Frozen Armor'.lvl)*250)",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "ice_cast_1",
+            "calc5": "",
+            "calc6": "",
+            "aurarangecalc": "",
+            "calc1": "",
+            "calc2": "",
+            "calc3": "",
+            "srvmissilea": "",
+            "anim": "SQ",
+            "seqtrans": "SC",
+            "localdelay": "",
+            "aurastat1": "passive_cold_mastery",
+            "aurastat2": "item_armor_percent",
+            "aurastat3": "item_fastermovevelocity",
+            "aurastat4": "damageresist",
+            "aurastat5": "passive_fire_mastery",
+            "aurastat6": "passive_ltng_mastery",
+            "aurastatcalc1": "50",
+            "aurastatcalc2": "150",
+            "aurastatcalc3": "-30",
+            "aurastatcalc4": "-25",
+            "aurastatcalc5": "skill('Lightning Mastery'.lvl)",
+            "aurastatcalc6": "skill('Lightning Mastery'.lvl)",
+            "seqnum": "12"
+          }
+        }
+      },
+      "strings": {
+        "short": "[R9 test] stat stance + animation test",
+        "long": "R8 (Cold stance) 60s + 10s/lvl, slow cast\nBOON: +50% cold skill damage, +150% Defense\nBUST: -30% run speed, -25% physical damage resist\nECHO: +1% fire and lightning skill damage per Echo level\nOverlay: Holy Freeze ring\nR9 anim test B: S1 animation with SOS1 speed quartered"
+      }
     }
   }
 }

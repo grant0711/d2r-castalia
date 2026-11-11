@@ -3,6 +3,201 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "p1_sprint": {
+      "description": "P1: high-speed sprint burst with burning wake (Blaze aurastate='blaze', srvdofunc=23); speed = 50% + 5%/lvl (+30% in Conflagration), sprint duration = 3s + 0.2s/lvl (+2s in Conflagration), fire trail duration = 3s + 0.3s/lvl (+3s in Conflagration)",
+      "tables": {
+        "missiles.txt": {
+          "blaze": {
+            "Range": "75+(lvl*8)+((stat('skill_handofathena'.accr)>0)?75:0)"
+          }
+        },
+        "skills.txt": {
+          "Blaze": {
+            "auralencalc": "75+(lvl-1)*5+((stat('skill_handofathena'.accr)>0)?50:0)",
+            "passivestat1": "velocitypercent",
+            "passivecalc1": "50+(lvl-1)*5+((stat('skill_handofathena'.accr)>0)?30:0)",
+            "calc1": "50+(lvl-1)*5+((stat('skill_handofathena'.accr)>0)?30:0)",
+            "*calc1 desc": "Run/Walk Speed %",
+            "calc2": "75+(lvl-1)*5+((stat('skill_handofathena'.accr)>0)?50:0)",
+            "*calc2 desc": "Sprint Duration (frames)",
+            "calc3": "75+(lvl*8)+((stat('skill_handofathena'.accr)>0)?75:0)",
+            "*calc3 desc": "Fire Trail Duration (frames)"
+          }
+        },
+        "skilldesc.txt": {
+          "blaze": {
+            "descline2": "36",
+            "desctexta2": "StrSkillBlazeDuration",
+            "desctextb2": "StrSkillBlazeDuration",
+            "desccalca2": "clc2",
+            "desccalcb2": "25",
+            "descline3": "74",
+            "desctexta3": "StrSkill89",
+            "desccalca3": "clc1",
+            "descline4": "36",
+            "desctexta4": "StrSkillFireDurationSingular",
+            "desctextb4": "StrSkill82",
+            "desccalca4": "clc3",
+            "desccalcb4": "25",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": "",
+            "dsc3textb2": "",
+            "dsc3calca2": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[P1 test] sprint burst leaving a burning trail (+speed & +duration in Conflagration)"
+      }
+    },
+    "p2_tactical_sprint": {
+      "description": "P2: flat 5s sprint duration (125 frames), 10s cooldown (localdelay=250), speed = 50% (+50% in Conflagration -> 100%), non-linear fire trail damage scaling with level",
+      "tables": {
+        "missiles.txt": {
+          "blaze": {
+            "Range": "125"
+          }
+        },
+        "skills.txt": {
+          "Blaze": {
+            "localdelay": "250",
+            "auralencalc": "125",
+            "passivestat1": "velocitypercent",
+            "passivecalc1": "50+((stat('skill_handofathena'.accr)>0)?50:0)",
+            "calc1": "50+((stat('skill_handofathena'.accr)>0)?50:0)",
+            "*calc1 desc": "Run/Walk Speed % (50%, +50% in Conflagration)",
+            "calc2": "125",
+            "*calc2 desc": "Sprint Duration (5s)",
+            "calc3": "125",
+            "*calc3 desc": "Fire Trail Duration (5s)",
+            "EMin": "6",
+            "EMinLev1": "4",
+            "EMinLev2": "8",
+            "EMinLev3": "14",
+            "EMinLev4": "22",
+            "EMinLev5": "32",
+            "EMax": "10",
+            "EMaxLev1": "5",
+            "EMaxLev2": "9",
+            "EMaxLev3": "16",
+            "EMaxLev4": "25",
+            "EMaxLev5": "36",
+            "EDmgSymPerCalc": ""
+          }
+        },
+        "skilldesc.txt": {
+          "blaze": {
+            "descline2": "36",
+            "desctexta2": "StrSkillBlazeDuration",
+            "desctextb2": "StrSkillBlazeDuration",
+            "desccalca2": "clc2",
+            "desccalcb2": "25",
+            "descline3": "74",
+            "desctexta3": "StrSkill89",
+            "desccalca3": "clc1",
+            "descline4": "36",
+            "desctexta4": "StrSkillFireDurationSingular",
+            "desctextb4": "StrSkill82",
+            "desccalca4": "clc3",
+            "desccalcb4": "25",
+            "descline6": "36",
+            "desctexta6": "StrSkillCastingDelaySingular",
+            "desctextb6": "StrSkillCastingDelayPlural",
+            "desccalca6": "250",
+            "desccalcb6": "25",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": "",
+            "dsc3textb2": "",
+            "dsc3calca2": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "tactical sprint leaving a burning wake",
+        "long": "burst forward for 5 seconds, leaving a burning trail behind you\n10 second cooldown\nConflagration doubles the movement speed bonus"
+      },
+      "no_label": true
+    },
+    "final1": {
+      "description": "final1: flat 3s sprint & trail duration (75 frames), 10s cooldown (localdelay=250), speed = 50% (+50% in Conflagration -> 100%), non-linear fire trail damage scaling with level",
+      "tables": {
+        "missiles.txt": {
+          "blaze": {
+            "Range": "75"
+          }
+        },
+        "skills.txt": {
+          "Blaze": {
+            "localdelay": "250",
+            "auralencalc": "75",
+            "passivestat1": "velocitypercent",
+            "passivecalc1": "50+((stat('skill_handofathena'.accr)>0)?50:0)",
+            "calc1": "50+((stat('skill_handofathena'.accr)>0)?50:0)",
+            "*calc1 desc": "Run/Walk Speed % (50%, +50% in Conflagration)",
+            "calc2": "75",
+            "*calc2 desc": "Sprint Duration (3s)",
+            "calc3": "75",
+            "*calc3 desc": "Fire Trail Duration (3s)",
+            "EMin": "6",
+            "EMinLev1": "4",
+            "EMinLev2": "8",
+            "EMinLev3": "14",
+            "EMinLev4": "22",
+            "EMinLev5": "32",
+            "EMax": "10",
+            "EMaxLev1": "5",
+            "EMaxLev2": "9",
+            "EMaxLev3": "16",
+            "EMaxLev4": "25",
+            "EMaxLev5": "36",
+            "EDmgSymPerCalc": ""
+          }
+        },
+        "skilldesc.txt": {
+          "blaze": {
+            "descline2": "36",
+            "desctexta2": "StrSkillBlazeDuration",
+            "desctextb2": "StrSkillBlazeDuration",
+            "desccalca2": "clc2",
+            "desccalcb2": "25",
+            "descline3": "74",
+            "desctexta3": "StrSkill89",
+            "desccalca3": "clc1",
+            "descline4": "36",
+            "desctexta4": "StrSkillFireDurationSingular",
+            "desctextb4": "StrSkill82",
+            "desccalca4": "clc3",
+            "desccalcb4": "25",
+            "descline6": "36",
+            "desctexta6": "StrSkillCastingDelaySingular",
+            "desctextb6": "StrSkillCastingDelayPlural",
+            "desccalca6": "250",
+            "desccalcb6": "25",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": "",
+            "dsc3textb2": "",
+            "dsc3calca2": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "tactical sprint leaving a burning wake",
+        "long": "burst forward for 3 seconds, leaving a burning trail behind you\n10 second cooldown\nConflagration doubles the movement speed bonus"
+      },
+      "no_label": true
     }
   }
 }

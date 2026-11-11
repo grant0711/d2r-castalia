@@ -40,8 +40,8 @@
     "variant": "r9_no_vanilla_passive"
   },
   "flashfire": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "final1"
   },
   "frost_dart": {
     "status": "stub",

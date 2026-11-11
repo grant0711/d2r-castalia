@@ -235,6 +235,9 @@ def build_itemstatcost(cfg: dict) -> str:
             mult_val, add_val = cost_tuning[st]
             r["Multiply"] = mult_val
             r["Add"] = add_val
+    from mod_builder.sorc import engine as sorc_engine
+
+    sorc_engine.apply_table_patches("itemstatcost.txt", headers, rows)
     return write_excel_tsv("itemstatcost.txt", headers, rows)
 
 

@@ -1,0 +1,351 @@
+#!/usr/bin/env python3
+"""
+d2r-sorc - one-skill-at-a-time experiment workflow for the Sorceress overhaul.
+
+  map [tree]                         the 1:1 map (vanilla row -> new skill), status, active variant
+  show <slug>                        design intent, variants, active patch, built-row diff vs vanilla, notes
+  use <slug> <variant>               switch the active variant (instant revert / A-B test)
+  variant <slug> <name> [--from V] [-m TEXT]
+                                     create a variant (copy of V, default baseline)
+  set <slug> <table>/<key>.<col>=<val> [-v VARIANT]
+                                     patch one column in a variant (use _clone=<key> for new rows)
+  unset <slug> <table>/<key>[.<col>] [-v VARIANT]
+  string <slug> name|short|long <text> [-v VARIANT]
+  status <slug> stub|wip|tested|done
+  log <slug> <text>                  append an observation (what you saw in game) to docs/sorc/<slug>.md
+  build                              rebuild skills tables + verify, print active experiments
+  char [--init|--stats|--level N]    reset the SORC character (skills refunded) - close the game first
+  commit [-m MSG]                    git commit all sorceress work (checkpoint)
+  revert <slug>                      restore this skill's spec + state from the last checkpoint
+  check                              validate the map/layout and regenerate docs/sorc/STATUS.md
+
+Typical loop:  variant -> set -> use -> build -> char -> (play, report) -> log -> status -> commit
+"""
+import argparse
+import csv
+import datetime
+import json
+import os
+import subprocess
+import sys
+
+ROOT = "/home/grant/games/d2r"
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+
+from mod_builder.sorc import engine  # noqa: E402
+from mod_builder.sorc.registry import BY_SLUG, PAGE, SLOTS, check_registry, slot_level  # noqa: E402
+
+DOCS = os.path.join(ROOT, "docs", "sorc")
+EXCEL = os.path.join(ROOT, "my-mod/data/global/excel")
+VANILLA = os.path.join(ROOT, "vanilla-reference/data/global/excel")
+SORC_PATHS = ["tools/mod_builder/sorc", "docs/sorc", "bin/d2r-sorc"]
+
+
+def die(msg: str):
+    print(f"error: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def slot(slug: str) -> dict:
+    if slug not in BY_SLUG:
+        die(f"unknown skill '{slug}'. Try: d2r-sorc map")
+    return BY_SLUG[slug]
+
+
+def variants_of(slug: str) -> dict:
+    return engine.load_spec(slug)["variants"]
+
+
+# ------------------------------------------------------------------------------ map
+def cmd_map(args):
+    state = engine.load_state()
+    trees = [args.tree] if args.tree else list(PAGE)
+    for tree in trees:
+        print(f"\n== {tree.upper()} (page {PAGE[tree]}) ==")
+        print(f"{'slug':16} {'new name':16} {'r.c':4} {'lvl':>3}  {'vanilla row':20} {'id':>3}  {'status':7} variant")
+        for s in sorted((x for x in SLOTS if x["tree"] == tree), key=lambda x: (x["row"], x["col"])):
+            print(f"{s['slug']:16} {s['name']:16} {s['row']}.{s['col']}  {slot_level(s):>3}  "
+                  f"{s['vname']:20} {s['vid']:>3}  {engine.status_of(s['slug'], state):7} "
+                  f"{engine.active_variant(s['slug'], state)}")
+
+
+# ------------------------------------------------------------------------------ show
+def read_rows(path: str, key: str) -> dict:
+    with open(path, encoding="latin-1") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    return {r[key]: r for r in rows if r.get(key)}
+
+
+def built_diff(s: dict, tables: dict):
+    """Print columns that differ between vanilla and the last build for the skill's rows."""
+    for table in ("skills.txt", "skilldesc.txt"):
+        key = engine.TABLE_KEYS[table]
+        try:
+            van, mod = read_rows(os.path.join(VANILLA, table), key), read_rows(os.path.join(EXCEL, table), key)
+        except FileNotFoundError:
+            continue
+        keys = [s["vname"]] if table == "skills.txt" else [s["vname"].lower()]
+        keys += [k for k in tables.get(table, {}) if k not in keys]
+        for k in keys:
+            if k not in mod:
+                continue
+            base = van.get(k, {})
+            diffs = [(c, base.get(c, "<new>"), v) for c, v in mod[k].items() if base.get(c) != v and not c.startswith("*")]
+            if diffs:
+                print(f"  [{table}] {k}:")
+                for c, a, b in diffs:
+                    print(f"      {c}: {a!r} -> {b!r}")
+
+
+def cmd_show(args):
+    s = slot(args.slug)
+    state = engine.load_state()
+    var = engine.active_variant(s["slug"], state)
+    spec = engine.load_spec(s["slug"])
+    print(f"{s['name']}  ({s['slug']})  [{s['tree']} r{s['row']}c{s['col']}, req lvl {slot_level(s)}, {s['role']}]")
+    print(f"replaces vanilla id {s['vid']} '{s['vname']}'   status: {engine.status_of(s['slug'], state)}")
+    print(f"\nDESIGN: {s['design']}")
+    print(f"\nVARIANTS (active: {var}):")
+    for name, v in spec["variants"].items():
+        mark = "*" if name == var else " "
+        print(f" {mark} {name}: {v.get('description', '')}")
+    active = spec["variants"][var]
+    print(f"\nACTIVE PATCH ({var}):")
+    print(json.dumps({k: active[k] for k in active if k != "description"}, indent=2) if len(active) > 1 else "  (none - vanilla behaviour)")
+    print("\nBUILT ROWS vs VANILLA (from last build):")
+    built_diff(s, active.get("tables", {}))
+    log = os.path.join(DOCS, f"{s['slug']}.md")
+    if os.path.exists(log):
+        print("\nNOTES (last 15 lines):")
+        print("".join(open(log).readlines()[-15:]))
+
+
+# ------------------------------------------------------------------------------ edit
+def get_variant(slug: str, name: str = None) -> tuple:
+    spec = engine.load_spec(slug)
+    name = name or engine.active_variant(slug)
+    if name not in spec["variants"]:
+        die(f"variant '{name}' not found for {slug}: {list(spec['variants'])}")
+    return spec, name
+
+
+def cmd_variant(args):
+    slot(args.slug)
+    spec = engine.load_spec(args.slug)
+    if args.name in spec["variants"]:
+        die(f"variant '{args.name}' already exists")
+    src = spec["variants"].get(args.src or "baseline")
+    if src is None:
+        die(f"source variant '{args.src}' not found")
+    new = json.loads(json.dumps(src))
+    new["description"] = args.m or f"copy of {args.src or 'baseline'}"
+    spec["variants"][args.name] = new
+    engine.save_spec(args.slug, spec)
+    print(f"created {args.slug}:{args.name} (use it with: d2r-sorc use {args.slug} {args.name})")
+
+
+def cmd_use(args):
+    slot(args.slug)
+    if args.variant not in variants_of(args.slug):
+        die(f"variant '{args.variant}' not found: {list(variants_of(args.slug))}")
+    state = engine.load_state()
+    state.setdefault(args.slug, {})["variant"] = args.variant
+    engine.save_state(state)
+    print(f"{args.slug} now uses variant '{args.variant}'. Run: d2r-sorc build")
+
+
+def parse_target(text: str):
+    """'skills.txt/Fire Bolt.mana' -> (table, key, col|None). The column is after the LAST '.'
+    only if the table/key part already contains a '/' and the remainder has no further '/'."""
+    if "/" not in text:
+        die("target must look like <table>/<key>[.<col>]")
+    table, rest = text.split("/", 1)
+    if table not in engine.TABLE_KEYS:
+        die(f"table must be one of {list(engine.TABLE_KEYS)}")
+    key, col = (rest.rsplit(".", 1) + [None])[:2] if "." in rest else (rest, None)
+    return table, key, col
+
+
+def cmd_set(args):
+    slot(args.slug)
+    if "=" not in args.assignment:
+        die("use <table>/<key>.<col>=<value>")
+    target, value = args.assignment.split("=", 1)
+    table, key, col = parse_target(target)
+    if not col:
+        die("set needs a column: <table>/<key>.<col>=<value>")
+    spec, name = get_variant(args.slug, args.v)
+    tbl = spec["variants"][name].setdefault("tables", {}).setdefault(table, {})
+    tbl.setdefault(key, {})[col] = value
+    engine.save_spec(args.slug, spec)
+    print(f"{args.slug}:{name}  {table}/{key}.{col} = {value!r}")
+
+
+def cmd_unset(args):
+    slot(args.slug)
+    table, key, col = parse_target(args.target)
+    spec, name = get_variant(args.slug, args.v)
+    tbl = spec["variants"][name].get("tables", {}).get(table, {})
+    if key not in tbl:
+        die("nothing to unset")
+    if col:
+        tbl[key].pop(col, None)
+        if not tbl[key]:
+            tbl.pop(key)
+    else:
+        tbl.pop(key)
+    engine.save_spec(args.slug, spec)
+    print(f"{args.slug}:{name}  removed {args.target}")
+
+
+def cmd_string(args):
+    slot(args.slug)
+    spec, name = get_variant(args.slug, args.v)
+    spec["variants"][name].setdefault("strings", {})[args.field] = args.text.replace("\\n", "\n")
+    engine.save_spec(args.slug, spec)
+    print(f"{args.slug}:{name} string {args.field} updated")
+
+
+def cmd_status(args):
+    slot(args.slug)
+    state = engine.load_state()
+    state.setdefault(args.slug, {})["status"] = args.value
+    engine.save_state(state)
+    write_status_doc()
+    print(f"{args.slug}: status = {args.value}")
+
+
+def cmd_log(args):
+    s = slot(args.slug)
+    os.makedirs(DOCS, exist_ok=True)
+    path = os.path.join(DOCS, f"{s['slug']}.md")
+    new = not os.path.exists(path)
+    with open(path, "a") as f:
+        if new:
+            f.write(f"# {s['name']} ({s['slug']}) - experiment log\n\nDesign: {s['design']}\n\n")
+        stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        f.write(f"- **{stamp}** [{engine.active_variant(s['slug'])}] {args.text}\n")
+    print(f"logged to {path}")
+
+
+# ------------------------------------------------------------------------------ build / docs
+def write_status_doc():
+    os.makedirs(DOCS, exist_ok=True)
+    state = engine.load_state()
+    lines = ["# Sorceress build status (generated by d2r-sorc; do not edit)\n"]
+    for tree in PAGE:
+        lines.append(f"\n## {tree.title()} (skill page {PAGE[tree]})\n")
+        lines.append("| r.c | lvl | new skill | replaces (id) | role | status | variant |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for s in sorted((x for x in SLOTS if x["tree"] == tree), key=lambda x: (x["row"], x["col"])):
+            lines.append(f"| {s['row']}.{s['col']} | {slot_level(s)} | **{s['name']}** (`{s['slug']}`) | "
+                         f"{s['vname']} ({s['vid']}) | {s['role']} | {engine.status_of(s['slug'], state)} | "
+                         f"{engine.active_variant(s['slug'], state)} |")
+    with open(os.path.join(DOCS, "STATUS.md"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def cmd_check(_args):
+    problems = check_registry()
+    state = engine.load_state()
+    for s in SLOTS:
+        v = engine.active_variant(s["slug"], state)
+        if v not in variants_of(s["slug"]):
+            problems.append(f"{s['slug']}: active variant '{v}' missing")
+        if engine.status_of(s["slug"], state) not in engine.STATUSES:
+            problems.append(f"{s['slug']}: bad status")
+    write_status_doc()
+    if problems:
+        die("; ".join(problems))
+    print("ok: 30 slots, 10 per tree, no cell collisions, variants resolve. docs/sorc/STATUS.md updated")
+
+
+def cmd_build(_args):
+    cmd_check(_args)
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "bin/d2r-build-mod.py"), "skills", "verify"],
+                       capture_output=True, text=True)
+    tail = (r.stdout + r.stderr).strip().splitlines()
+    if r.returncode != 0:
+        print("\n".join(tail[-12:]))
+        die("build/verify FAILED (the mod folder may be half-written; fix or `d2r-sorc use <slug> baseline`)")
+    print(tail[-1][:160] if tail else "built")
+    state = engine.load_state()
+    changed = [(s, engine.active_variant(s["slug"], state)) for s in SLOTS
+               if engine.active_variant(s["slug"], state) != "baseline"]
+    print("\nACTIVE EXPERIMENTS:" if changed else "\nNo experiments active (all baseline).")
+    for s, v in changed:
+        print(f"  {s['name']:16} variant={v}  ({variants_of(s['slug'])[v].get('description', '')})")
+    print("\nNext: d2r-sorc char   (refund skill points), then launch the game.")
+
+
+def cmd_char(args):
+    cmd = [sys.executable, os.path.join(ROOT, "bin/d2r-reset-sorc.py")]
+    if args.init:
+        cmd.append("--init")
+    if args.stats:
+        cmd.append("--stats")
+    if args.level:
+        cmd += ["--level", str(args.level)]
+    if subprocess.run(["pgrep", "-f", "D2RLoader.exe"], capture_output=True).returncode == 0:
+        print("warning: the game is running; the save is only read when the character loads.")
+    sys.exit(subprocess.call(cmd))
+
+
+def git(*a):
+    return subprocess.run(["git", "-C", ROOT, *a], capture_output=True, text=True)
+
+
+def cmd_commit(args):
+    write_status_doc()
+    git("add", *SORC_PATHS, "tools/mod_builder")
+    r = git("commit", "-m", args.m or "Sorceress checkpoint")
+    print((r.stdout or r.stderr).strip().splitlines()[0] if (r.stdout or r.stderr) else "nothing to commit")
+
+
+def cmd_revert(args):
+    s = slot(args.slug)
+    spec_rel = f"tools/mod_builder/sorc/specs/{s['slug']}.json"
+    r = git("checkout", "HEAD", "--", spec_rel)
+    if r.returncode != 0:
+        die(r.stderr.strip())
+    head_state = git("show", "HEAD:tools/mod_builder/sorc/state.json")
+    if head_state.returncode == 0:
+        old = json.loads(head_state.stdout).get(s["slug"])
+        state = engine.load_state()
+        if old:
+            state[s["slug"]] = old
+            engine.save_state(state)
+    print(f"{s['slug']} restored to last checkpoint. Run: d2r-sorc build")
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("map"); p.add_argument("tree", nargs="?", choices=list(PAGE)); p.set_defaults(f=cmd_map)
+    p = sub.add_parser("show"); p.add_argument("slug"); p.set_defaults(f=cmd_show)
+    p = sub.add_parser("use"); p.add_argument("slug"); p.add_argument("variant"); p.set_defaults(f=cmd_use)
+    p = sub.add_parser("variant"); p.add_argument("slug"); p.add_argument("name")
+    p.add_argument("--from", dest="src"); p.add_argument("-m"); p.set_defaults(f=cmd_variant)
+    p = sub.add_parser("set"); p.add_argument("slug"); p.add_argument("assignment"); p.add_argument("-v")
+    p.set_defaults(f=cmd_set)
+    p = sub.add_parser("unset"); p.add_argument("slug"); p.add_argument("target"); p.add_argument("-v")
+    p.set_defaults(f=cmd_unset)
+    p = sub.add_parser("string"); p.add_argument("slug"); p.add_argument("field", choices=["name", "short", "long"])
+    p.add_argument("text"); p.add_argument("-v"); p.set_defaults(f=cmd_string)
+    p = sub.add_parser("status"); p.add_argument("slug"); p.add_argument("value", choices=list(engine.STATUSES))
+    p.set_defaults(f=cmd_status)
+    p = sub.add_parser("log"); p.add_argument("slug"); p.add_argument("text"); p.set_defaults(f=cmd_log)
+    p = sub.add_parser("build"); p.set_defaults(f=cmd_build)
+    p = sub.add_parser("check"); p.set_defaults(f=cmd_check)
+    p = sub.add_parser("char"); p.add_argument("--init", action="store_true"); p.add_argument("--stats", action="store_true")
+    p.add_argument("--level", type=int); p.set_defaults(f=cmd_char)
+    p = sub.add_parser("commit"); p.add_argument("-m"); p.set_defaults(f=cmd_commit)
+    p = sub.add_parser("revert"); p.add_argument("slug"); p.set_defaults(f=cmd_revert)
+
+    args = ap.parse_args()
+    args.f(args)
+
+
+if __name__ == "__main__":
+    main()

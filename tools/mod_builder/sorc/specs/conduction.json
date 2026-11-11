@@ -1,0 +1,8 @@
+{
+  "slug": "conduction",
+  "variants": {
+    "baseline": {
+      "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "slug": "_shared",
+  "variants": {
+    "baseline": {
+      "description": "shared helper rows (stance states, helper skills, stats) used by several Sorceress skills"
+    }
+  }
+}

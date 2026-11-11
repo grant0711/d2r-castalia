@@ -204,6 +204,12 @@ CLASS_SKILL_ID_SETS: Dict[str, List[List[int]]] = {
 }
 
 
+# Sorceress tiers follow the 1:1 skill map (mod_builder/sorc/registry.py): tier k = skills whose tab row is k.
+from mod_builder.sorc.registry import SLOTS as _SORC_SLOTS  # noqa: E402
+
+CLASS_SKILL_ID_SETS["sor"] = [sorted(s["vid"] for s in _SORC_SLOTS if s["row"] == k) for k in range(1, 7)]
+
+
 def _to_intervals(skill_ids: List[int]) -> List[tuple]:
     s = sorted(set(skill_ids))
     if not s:
@@ -409,7 +415,13 @@ def build_automagic(cfg: dict) -> str:
     )
 
     # 3. Rebuild group 303 (Sorceress Orbs: innate +Life or +Mana in mod1 + 1-2 Sorceress skill-rand in mod2/mod3)
-    sor_tiers = CLASS_SKILL_TIERS["sor"]
+    # Sorceress tiers come from the 1:1 skill map and are NOT contiguous id blocks, so every skill pool is
+    # decomposed into maximal contiguous [lo, hi] intervals (one automagic row per interval).
+    sor_sets = CLASS_SKILL_ID_SETS["sor"]
+
+    def sor_union(t_lo: int, t_hi: int) -> List[int]:
+        return sorted({i for t in range(t_lo - 1, t_hi) for i in sor_sets[t]})
+
     orb_stat_tiers = [
         # (k, min_lvl, max_lvl, lreq, hp_min, hp_max, mana_min, mana_max)
         (1, "1", "7", "1", "5", "12", "5", "12"),
@@ -420,42 +432,45 @@ def build_automagic(cfg: dict) -> str:
         (6, "37", "", "30", "55", "80", "55", "80"),
     ]
     for k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi in orb_stat_tiers:
-        full_lo, full_hi = sor_tiers[0][0], sor_tiers[k - 1][1]
-        top_lo, top_hi = sor_tiers[max(0, k - 2)][0], sor_tiers[k - 1][1]
+        full_ids = sor_union(1, k)
         for base_stat, st_lo, st_hi in (("hp", hp_lo, hp_hi), ("mana", mp_lo, mp_hi)):
-            for slvl, freq in (("1", "3"), ("2", "2"), ("3", "1")):
-                rows.append(
-                    _make_auto_row(
-                        headers, "303", min_lvl, max_lvl, lreq, freq,
-                        [(base_stat, "", st_lo, st_hi), ("skill-rand", slvl, full_lo, full_hi)],
-                    )
-                )
-            if k >= 2:
-                tk_lo, tk_hi = sor_tiers[k - 1][0], sor_tiers[k - 1][1]
-                low_lo, low_hi = sor_tiers[0][0], sor_tiers[k - 2][1]
-                for s1, s2, freq in (("2", "1", "2"), ("2", "2", "1"), ("3", "2", "1"), ("3", "3", "1")):
+            for slvl, freq in (("1", 3), ("2", 2), ("3", 1)):
+                ivs = _to_intervals(full_ids)
+                for lo, hi in ivs:
+                    f = str(max(1, (freq * (hi - lo + 1) + 2) // 5)) if len(ivs) > 1 else str(freq)
                     rows.append(
                         _make_auto_row(
-                            headers, "303", min_lvl, max_lvl, lreq, freq,
-                            [
-                                (base_stat, "", st_lo, st_hi),
-                                ("skill-rand", s1, tk_lo, tk_hi),
-                                ("skill-rand", s2, low_lo, low_hi),
-                            ],
+                            headers, "303", min_lvl, max_lvl, lreq, f,
+                            [(base_stat, "", st_lo, st_hi), ("skill-rand", slvl, lo, hi)],
                         )
                     )
+            if k >= 2:
+                top_ivs = _to_intervals(sor_sets[k - 1])
+                low_ivs = _to_intervals(sor_union(1, k - 1))
+                pairs = ((("2", "1", "2"), ("2", "2", "1"), ("3", "2", "1"), ("3", "3", "1")))
+                for s1, s2, freq in pairs:
+                    for i in range(max(len(top_ivs), len(low_ivs))):
+                        t_lo, t_hi = top_ivs[i % len(top_ivs)]
+                        l_lo, l_hi = low_ivs[i % len(low_ivs)]
+                        rows.append(
+                            _make_auto_row(
+                                headers, "303", min_lvl, max_lvl, lreq, freq,
+                                [(base_stat, "", st_lo, st_hi), ("skill-rand", s1, t_lo, t_hi), ("skill-rand", s2, l_lo, l_hi)],
+                            )
+                        )
             else:
-                mid = full_lo + 2
-                rows.append(
-                    _make_auto_row(
-                        headers, "303", min_lvl, max_lvl, lreq, "2",
-                        [
-                            (base_stat, "", st_lo, st_hi),
-                            ("skill-rand", "2", full_lo, mid),
-                            ("skill-rand", "1", mid + 1, full_hi),
-                        ],
+                half = max(1, len(full_ids) // 2)
+                a_ivs = _to_intervals(full_ids[:half])
+                b_ivs = _to_intervals(full_ids[half:])
+                for i in range(max(len(a_ivs), len(b_ivs))):
+                    a_lo, a_hi = a_ivs[i % len(a_ivs)]
+                    b_lo, b_hi = b_ivs[i % len(b_ivs)]
+                    rows.append(
+                        _make_auto_row(
+                            headers, "303", min_lvl, max_lvl, lreq, "2",
+                            [(base_stat, "", st_lo, st_hi), ("skill-rand", "2", a_lo, a_hi), ("skill-rand", "1", b_lo, b_hi)],
+                        )
                     )
-                )
 
     # 4. Rebuild group 305 (Necromancer Shrunken Heads: innate dmg-pois in mod1 + 1-2 Necromancer skill-rand in mod2/mod3)
     nec_tiers = CLASS_SKILL_TIERS["nec"]

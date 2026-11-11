@@ -208,6 +208,9 @@ def build_states(cfg: dict) -> str:
         existing_states.add(st_name)
         next_id += 1
 
+    from mod_builder.sorc import engine as sorc_engine
+
+    sorc_engine.apply_table_patches("states.txt", headers, rows)
     return write_excel_tsv("states.txt", headers, rows)
 
 
@@ -6387,6 +6390,13 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             _r["lvlmana"] = _lvlm
             _r["minmana"] = _minm
 
+    # Sorceress 1:1 map layout + active experiment variants (see mod_builder/sorc/)
+    from mod_builder.sorc import engine as sorc_engine
+
+    sorc_engine.apply_layout(by_name, by_desc)
+    sorc_engine.apply_table_patches("skills.txt", s_headers, s_rows)
+    sorc_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
+
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
     return p_skills, p_desc
@@ -6705,6 +6715,9 @@ def build_skill_strings(cfg: dict) -> str:
             "Does not release orbs\n\nspin through nearby enemies, striking with your weapon\nand any held orb damage; enemies near you\ntemporarily lose elemental resistance",
         ),
     ]
+    from mod_builder.sorc import engine as sorc_engine
+
+    updates = list(updates) + sorc_engine.string_updates()
     entries = upsert_string_entries(entries, updates)
     return write_strings_json("skills.json", entries)
 
@@ -8536,4 +8549,7 @@ def build_skills_all(cfg: dict) -> str:
     p16 = _build_chargeboltsentry_hd()
     p17 = _build_asskilltree_pair()
     p18 = _build_asskillicon_pair()
-    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}"
+    from mod_builder.sorc.tree import build_soskilltree_pair
+
+    p19 = build_soskilltree_pair()
+    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}"

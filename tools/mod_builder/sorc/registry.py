@@ -113,7 +113,7 @@ SLOTS = [
          design="Empowers the Lightning stance retaliation: while Overcharge is active, attackers are shocked when they strike you; Conduction raises its damage and radius."),
     dict(slug="overcharge", tree="lightning", vid=58, vname="Energy Shield", name="Overcharge",
          row=4, col=2, role="STANCE",
-         design="Castable timed state (60s+10s/lvl). Benefits: a ring of 6 Charged Bolts on every cast, Faraday Shield (40% of enemy projectiles pass through). Penalty: single-target projectiles spray in a 30-degree cone. Single mutually exclusive state holding both boon and bust stats (group 13)."),
+         design="Castable timed state (60s+10s/lvl). Boons: +50% lightning skill damage, +40% run/walk, +40% hit recovery. Busts: -50 fire and cold resist. Melee attackers that hit you are shocked (empowered by Conduction). Single mutually exclusive state holding both boon and bust stats (group 13)."),
     dict(slug="stormcall", tree="lightning", vid=57, vname="Thunder Storm", name="Stormcall",
          row=4, col=3, role="AoE 2 (power spike)",
          design="Delayed (1s) strikes at 4 random spots near the cursor (r5 each). First big lightning AoE jump. In Overcharge the strike count doubles."),

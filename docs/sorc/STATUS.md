@@ -9,7 +9,7 @@
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |
-| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | ret1 |
+| 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | ret2 |
 | 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | r9_no_vanilla_passive |
 | 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | wip | ret1_no_vanilla_passive |
 | 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | stub | baseline |
@@ -26,7 +26,7 @@
 | 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | tested | r9_no_vanilla_passive |
 | 3.2 | 16 | **Tesla Field** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | stub | baseline |
 | 3.3 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | wip | ret1_passive |
-| 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | ret1 |
+| 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | ret2 |
 | 4.3 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | stub | baseline |
 | 5.2 | 32 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | stub | baseline |
 | 6.2 | 40 | **Heaven's Wrath** (`heavens_wrath`) | Charged Bolt (38) | capstone | stub | baseline |

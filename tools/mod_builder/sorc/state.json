@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r1_leapchain"
+    "variant": "r2_func18"
   },
   "afterglow": {
     "status": "wip",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "wip",
-    "variant": "r1_leapchain"
+    "variant": "r2a_func18"
   },
   "cryostasis": {
     "status": "wip",
-    "variant": "r1_leapchain"
+    "variant": "r2b_chain18"
   },
   "equilibrium": {
     "status": "stub",

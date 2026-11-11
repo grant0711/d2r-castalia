@@ -74,6 +74,45 @@
         "short": "[R1 test] leap-chain stance",
         "long": "R1 DIAGNOSTIC (Cold stance)\nBENEFIT state: +100 Strength, frost shell\nPENALTY state (hidden helper): -100 Lightning/Poison Resist, hex swirl"
       }
+    },
+    "r2b_chain18": {
+      "description": "R2b: leap-chain (170) to a func-18 helper that applies the PENALTY with stats",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvstfunc": "",
+            "srvdofunc": "170",
+            "aurastate": "",
+            "auralencalc": "",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "castoverlay": "ice_cast_1",
+            "calc5": "{id:Stance Penalty (Cold)}",
+            "calc6": "1",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "",
+            "aurastat1": "",
+            "aurastat2": "",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc1": "",
+            "aurastatcalc2": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": ""
+          }
+        }
+      },
+      "strings": {
+        "short": "[R2b test] chain to func-18 helper",
+        "long": "R2b DIAGNOSTIC (Cold)\nPENALTY only, applied by hidden helper: -50% run speed, -100 Lightning Resist, -100 Poison Resist, purple swirl\n(no benefit in this probe)"
+      }
     }
   }
 }

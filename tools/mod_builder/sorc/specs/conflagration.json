@@ -113,6 +113,45 @@
         "short": "[R2a test] func-18 single state",
         "long": "R2a DIAGNOSTIC (Fire)\nOne state: +500% Defense, -50% run speed, -100 Fire Resist\n(expect all three on the Character sheet / run speed)"
       }
+    },
+    "r3_chain_missile": {
+      "description": "R3: do=170; calc5 chains the PENALTY helper (func 18); srvmissilea spawns an invisible self-hit pulse that applies the BENEFIT helper",
+      "tables": {
+        "skills.txt": {
+          "Enchant": {
+            "srvstfunc": "",
+            "srvdofunc": "170",
+            "aurastate": "",
+            "auralencalc": "",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "calc5": "{id:Stance Penalty (Fire)}",
+            "calc6": "1",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "sorc_pulse_ben_fire",
+            "aurastat1": "",
+            "aurastat2": "",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc1": "",
+            "aurastatcalc2": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": "",
+            "castoverlay": "fire_cast_1"
+          }
+        }
+      },
+      "strings": {
+        "short": "[R3 test] chain + self-hit pulse",
+        "long": "R3 DIAGNOSTIC (Fire)\nBENEFIT: +500% Defense (holy-fire rings)\nPENALTY: -50% run speed x2, -100 Fire Resist (green swirl)"
+      }
     }
   }
 }

@@ -224,3 +224,12 @@ def manifest() -> List[dict]:
     state = load_state()
     return [{"slug": s["slug"], "name": s["name"], "variant": active_variant(s["slug"], state),
              "status": status_of(s["slug"], state)} for s in SLOTS]
+
+
+def hd_missile_pairs() -> List[Tuple[str, str]]:
+    """(missile name, HD effect) pairs declared by active variants under "hd_missiles".
+    New missile rows need an HD entry; "null" makes them invisible."""
+    pairs = []
+    for _slug, _var, block in active_blocks():
+        pairs += [(k, v) for k, v in block.get("hd_missiles", {}).items()]
+    return pairs

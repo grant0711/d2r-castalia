@@ -113,6 +113,45 @@
         "short": "[R2b test] chain to func-18 helper",
         "long": "R2b DIAGNOSTIC (Cold)\nPENALTY only, applied by hidden helper: -50% run speed, -100 Lightning Resist, -100 Poison Resist, purple swirl\n(no benefit in this probe)"
       }
+    },
+    "r3_chain_missile": {
+      "description": "R3: do=170; calc5 chains the PENALTY helper (func 18); srvmissilea spawns an invisible self-hit pulse that applies the BENEFIT helper",
+      "tables": {
+        "skills.txt": {
+          "Frozen Armor": {
+            "srvstfunc": "",
+            "srvdofunc": "170",
+            "aurastate": "",
+            "auralencalc": "",
+            "auraevent1": "",
+            "auraeventfunc1": "",
+            "calc5": "{id:Stance Penalty (Cold)}",
+            "calc6": "1",
+            "aurarangecalc": "0",
+            "calc1": "0",
+            "calc2": "0",
+            "calc3": "0",
+            "srvmissilea": "sorc_pulse_ben_cold",
+            "aurastat1": "",
+            "aurastat2": "",
+            "aurastat3": "",
+            "aurastat4": "",
+            "aurastat5": "",
+            "aurastat6": "",
+            "aurastatcalc1": "",
+            "aurastatcalc2": "",
+            "aurastatcalc3": "",
+            "aurastatcalc4": "",
+            "aurastatcalc5": "",
+            "aurastatcalc6": "",
+            "castoverlay": "ice_cast_1"
+          }
+        }
+      },
+      "strings": {
+        "short": "[R3 test] chain + self-hit pulse",
+        "long": "R3 DIAGNOSTIC (Cold)\nBENEFIT: +100 Strength (frost shell)\nPENALTY: slow, -100 Lightning/Poison Resist (purple swirl)"
+      }
     }
   }
 }

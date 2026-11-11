@@ -8545,7 +8545,7 @@ def build_skills_all(cfg: dict) -> str:
         ("catapult cold explosion", "ice_bolt"),
         ("frozenhorror_arcticblast_2", "null"),
         ("sentrylightningbolt_2", "null"),
-    ])
+    ] + __import__("mod_builder.sorc.engine", fromlist=["hd_missile_pairs"]).hd_missile_pairs())
     p16 = _build_chargeboltsentry_hd()
     p17 = _build_asskilltree_pair()
     p18 = _build_asskillicon_pair()

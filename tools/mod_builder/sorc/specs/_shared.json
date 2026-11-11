@@ -1225,6 +1225,46 @@
           }
         }
       }
+    },
+    "r8_real_stances": {
+      "description": "R8: real first-pass stat stances (mastery/FCR/FRW/FHR/dodge boons, resist busts), persistent floor overlays, slow S1 cast animation",
+      "animdata": {
+        "SOS1": 128
+      },
+      "tables": {
+        "states.txt": {
+          "sorc_stance_fire": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "spawnedflames",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_cold": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "holyfreeze",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          },
+          "sorc_stance_light": {
+            "_clone": "frozenarmor",
+            "group": "13",
+            "overlay1": "thunderstormback",
+            "overlay2": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "",
+            "offsound": ""
+          }
+        }
+      }
     }
   }
 }

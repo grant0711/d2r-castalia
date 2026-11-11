@@ -8112,6 +8112,21 @@ def _build_animdata() -> str:
                 new_recs.append(r)
             buckets[b_idx] = new_recs
 
+        # Sorceress experiments: per-prefix playback speed overrides (e.g. a slower stance cast animation)
+        from mod_builder.sorc import engine as _sorc_engine
+
+        for _prefix, _spd in _sorc_engine.animdata_speeds().items():
+            _pb = _prefix.encode("ascii")
+            for _bi, _recs in enumerate(buckets):
+                _new = []
+                for _r in _recs:
+                    if _r[:8].split(b"\x00")[0].startswith(_pb):
+                        _r = bytearray(_r)
+                        struct.pack_into("<I", _r, 12, _spd)
+                        _r = bytes(_r)
+                    _new.append(_r)
+                buckets[_bi] = _new
+
         out = bytearray()
         for recs in buckets:
             out += struct.pack("<I", len(recs))

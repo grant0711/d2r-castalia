@@ -233,3 +233,13 @@ def hd_missile_pairs() -> List[Tuple[str, str]]:
     for _slug, _var, block in active_blocks():
         pairs += [(k, v) for k, v in block.get("hd_missiles", {}).items()]
     return pairs
+
+
+def animdata_speeds() -> Dict[str, int]:
+    """{animdata record name prefix: playback speed} from active variants' "animdata" key
+    (256 = normal; 128 = half speed, i.e. the animation takes twice as long)."""
+    out: Dict[str, int] = {}
+    for _slug, _var, block in active_blocks():
+        for prefix, spd in block.get("animdata", {}).items():
+            out[prefix] = int(spd)
+    return out

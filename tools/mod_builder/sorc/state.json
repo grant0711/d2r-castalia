@@ -1,7 +1,7 @@
 {
   "_shared": {
     "status": "wip",
-    "variant": "r7_single_echo"
+    "variant": "r8_real_stances"
   },
   "afterglow": {
     "status": "tested",
@@ -29,11 +29,11 @@
   },
   "conflagration": {
     "status": "tested",
-    "variant": "r7_single_echo"
+    "variant": "r8_real_stances"
   },
   "cryostasis": {
     "status": "tested",
-    "variant": "r7_single_echo"
+    "variant": "r8_real_stances"
   },
   "equilibrium": {
     "status": "stub",
@@ -77,7 +77,7 @@
   },
   "overcharge": {
     "status": "stub",
-    "variant": "baseline"
+    "variant": "r8_real_stances"
   },
   "permafrost": {
     "status": "stub",

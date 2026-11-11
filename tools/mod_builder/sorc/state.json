@@ -21,7 +21,7 @@
   },
   "cinder_lance": {
     "status": "wip",
-    "variant": "p1_pierce_all"
+    "variant": "p2_fast"
   },
   "conduction": {
     "status": "stub",

@@ -16,6 +16,21 @@
       "strings": {
         "short": "[P1 test] bolt pierces everything"
       }
+    },
+    "p2_fast": {
+      "description": "P2: P1 plus firebolt Vel/MaxVel 32 (faster bolt, one new variable)",
+      "tables": {
+        "missiles.txt": {
+          "firebolt": {
+            "CollideKill": "0",
+            "Vel": "32",
+            "MaxVel": "32"
+          }
+        }
+      },
+      "strings": {
+        "short": "[P2 test] pierce + fast bolt"
+      }
     }
   }
 }

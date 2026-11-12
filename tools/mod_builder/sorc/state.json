@@ -9,7 +9,7 @@
   },
   "backdraft": {
     "status": "done",
-    "variant": "final1"
+    "variant": "final2"
   },
   "brimstone_lance": {
     "status": "stub",
@@ -68,8 +68,8 @@
     "variant": "baseline"
   },
   "ignition": {
-    "status": "stub",
-    "variant": "r9_no_vanilla_passive"
+    "status": "done",
+    "variant": "final1"
   },
   "kindling": {
     "status": "wip",
@@ -100,8 +100,8 @@
     "variant": "final1"
   },
   "skyfall": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "final1"
   },
   "spearbolt": {
     "status": "stub",

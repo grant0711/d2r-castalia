@@ -15,6 +15,38 @@
           }
         }
       }
+    },
+    "final1": {
+      "description": "final1: Passive dial that multiplies all active stance benefit stats by +2% per level (up to +40% at lvl 20)",
+      "no_label": true,
+      "strings": {
+        "name": "Ignition",
+        "short": "Passively amplifies the positive effects of any active Stance",
+        "long": "Passive — increases the positive benefit stats granted by Conflagration, Cryostasis, and Overcharge by +2% per level.\nStance penalties are not increased."
+      },
+      "strings_extra": {
+        "ModSorc_IgnitionBoon": "Stance Benefit Bonus: +%d%%"
+      },
+      "tables": {
+        "skills.txt": {
+          "Fire Mastery": {
+            "passivestate": "",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "calc1": "lvl * 2",
+            "*calc1 desc": "Stance benefit multiplier % (+2%/lvl)"
+          }
+        },
+        "skilldesc.txt": {
+          "fire mastery": {
+            "descline1": "74",
+            "desctexta1": "ModSorc_IgnitionBoon",
+            "desctextb1": "",
+            "desccalca1": "lvl * 2",
+            "desccalcb1": ""
+          }
+        }
+      }
     }
   }
 }

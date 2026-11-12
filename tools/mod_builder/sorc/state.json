@@ -8,8 +8,8 @@
     "variant": "r9_no_vanilla_passive"
   },
   "backdraft": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "final1"
   },
   "brimstone_lance": {
     "status": "stub",

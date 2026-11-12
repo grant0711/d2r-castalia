@@ -8,7 +8,7 @@
 | 1.2 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | wip | p3_scaling |
 | 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | done | final1 |
 | 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | done | final1 |
-| 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | stub | baseline |
+| 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | done | final1 |
 | 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | final4 |
 | 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | stub | r9_no_vanilla_passive |
 | 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | wip | final2 |

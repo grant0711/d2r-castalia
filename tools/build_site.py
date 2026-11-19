@@ -913,7 +913,7 @@ def build_site() -> str:
             )
 
             tables_html.append(
-                f'<table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#4a3c28" class="arreat-table" style="margin-top:14px;">'
+                f'<table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#4a3c28" class="arreat-table" style="margin-top:10px;">'
                 f'<tr bgcolor="#261e14">'
                 f'<th colspan="3" align="left" class="table-banner">{html.escape(cls_title)} — {html.escape(t_title)}</th>'
                 f'</tr>'
@@ -925,11 +925,12 @@ def build_site() -> str:
             )
 
         class_sections_html.append(
+            f'<div class="tab-panel" id="tab-class-{cls_code}">'
             f'<a name="class-{cls_code}"></a>'
             f'<div class="section-block">'
             f'<div class="section-title-bar">'
             f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; INTERACTIVE BUILD CALCULATOR</h2>'
-            f'<div class="section-sub">{html.escape(cls_subtitle)} — Left-Click to allocate (+1 pt), Right-Click to remove (-1 pt), Shift+Click for 5 pts</div>'
+            f'<div class="section-sub">{html.escape(cls_subtitle)} — Hover any icon for live stats; Left-Click to allocate (+1 pt), Right-Click to remove (-1 pt), Shift+Click for 5 pts</div>'
             f'</div>'
             f'<div class="calc-hud-bar" id="calc-hud-{cls_code}">'
             f'  <div class="calc-hud-left">'
@@ -952,7 +953,11 @@ def build_site() -> str:
             f'<table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">'
             f'<tr>{"".join(trees_row_html)}</tr>'
             f'</table>'
+            f'<details class="compendium-drawer">'
+            f'<summary>&#128214; Show Detailed 30-Skill Reference Compendium for {html.escape(cls_title)} (Level 1 / 8 / 16 / 20 Progression Tables)</summary>'
             f'{"".join(tables_html)}'
+            f'</details>'
+            f'</div>'
             f'</div>'
         )
 
@@ -1523,6 +1528,68 @@ def build_site() -> str:
     font-size: 10px;
     color: #786d5c;
   }}
+
+  /* Top Web 1.0 Arreat Summit Tab Bar & Single-View Panels */
+  .top-tab-bar {{
+    background: linear-gradient(180deg, #1b140c 0%, #0d0906 100%);
+    border-bottom: 2px ridge #7a633e;
+    padding: 8px 12px 0 12px;
+    text-align: center;
+    white-space: nowrap;
+    overflow-x: auto;
+  }}
+  .top-tab-btn {{
+    display: inline-block;
+    background: linear-gradient(180deg, #281d11 0%, #140e08 100%);
+    border: 2px outset #6e5838;
+    border-bottom: none;
+    color: #b8a472;
+    font-family: "Exocet", "Cinzel", "Palatino Linotype", Georgia, serif;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    padding: 7px 14px 6px 14px;
+    margin: 0 2px;
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+  }}
+  .top-tab-btn:hover {{
+    background: linear-gradient(180deg, #382817 0%, #1d150c 100%);
+    color: #ffffff;
+  }}
+  .top-tab-btn.active {{
+    background: linear-gradient(180deg, #4b361e 0%, #24190d 100%);
+    border-color: #c7b377;
+    color: #f0d890;
+    text-shadow: 0 0 8px #805500;
+    position: relative;
+    top: 1px;
+    padding-bottom: 7px;
+  }}
+  .tab-panel {{
+    display: none;
+  }}
+  .tab-panel.active {{
+    display: block;
+  }}
+  .compendium-drawer {{
+    margin-top: 14px;
+    background-color: #110d09;
+    border: 1px ridge #5c4b32;
+    padding: 8px 12px;
+  }}
+  .compendium-drawer summary {{
+    color: #f0d890;
+    font-family: "Palatino Linotype", Georgia, serif;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+  }}
+  .compendium-drawer summary:hover {{
+    color: #ffffff;
+  }}
 </style>
 </head>
 <body>
@@ -1536,7 +1603,19 @@ def build_site() -> str:
 <!-- TOP ARREAT SUMMIT BANNER -->
 <div class="top-banner">
   <h1>&#9876; THE CASTALIA COMPENDIUM &#9876;</h1>
-  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b> &nbsp;|&nbsp; Best Viewed at 1024x768 or Higher</div>
+  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b></div>
+</div>
+
+<!-- TOP ARREAT SUMMIT NAVIGATION TABS -->
+<div class="top-tab-bar" id="top-tab-bar">
+  <a href="#overview" class="top-tab-btn active" data-tab="tab-overview">&#9876; Overview &amp; Cube</a>
+  <a href="#char-generator" class="top-tab-btn" data-tab="tab-chargen">&#11015; Character Generator (.d2s)</a>
+  <a href="#class-pal" class="top-tab-btn" data-tab="tab-class-pal">Paladin</a>
+  <a href="#class-bar" class="top-tab-btn" data-tab="tab-class-bar">Barbarian</a>
+  <a href="#class-ass" class="top-tab-btn" data-tab="tab-class-ass">Assassin</a>
+  <a href="#class-sor" class="top-tab-btn" data-tab="tab-class-sor">Sorceress</a>
+  <a href="#gems-skulls" class="top-tab-btn" data-tab="tab-items">&#9874; Gems &amp; 33 Runes</a>
+  <a href="#monsters" class="top-tab-btn" data-tab="tab-world">Monsters &amp; Mercs</a>
 </div>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -1544,43 +1623,31 @@ def build_site() -> str:
   <!-- LEFT NAVIGATION SIDEBAR -->
   <td valign="top" class="sidebar-cell">
     <div class="nav-box">
-      <div class="nav-box-hdr">Quick Reference</div>
+      <div class="nav-box-hdr">Getting Started</div>
       <ul class="nav-list">
-        <li><a href="#quickstart">Who This Mod Is For</a></li>
-        <li><a href="#char-generator"><b class="d2-bright-gold">Join Campaign (.d2s)</b></a></li>
-        <li><a href="#cube-recipes">The 7 Cube Recipes</a></li>
-        <li><a href="#philosophy">Design Philosophy</a></li>
+        <li><a href="#overview" data-tab-link="tab-overview">Overview &amp; 7 Cube Recipes</a></li>
+        <li><a href="#char-generator" data-tab-link="tab-chargen"><b class="d2-bright-gold">Join Campaign (.d2s)</b></a></li>
+        <li><a href="#philosophy" data-tab-link="tab-overview">Design Philosophy</a></li>
       </ul>
     </div>
 
     <div class="nav-box">
-      <div class="nav-box-hdr">Items &amp; Economy</div>
+      <div class="nav-box-hdr">Class Calculators</div>
       <ul class="nav-list">
-        <li><a href="#gems-skulls">Gems &amp; Skulls (Lvl 1-60)</a></li>
-        <li><a href="#runes-33">The 33 Semantic Runes</a></li>
-        <li><a href="#crafting-rules">Cube Crafting &amp; Slots</a></li>
-        <li><a href="#lockboxes">Lockboxes &amp; Malus</a></li>
-        <li><a href="#mercenaries">10-Slot Mercenaries</a></li>
+        <li><a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-gold">Paladin</b> (30 Skills)</a></li>
+        <li><a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-gold">Barbarian</b> (30 Skills)</a></li>
+        <li><a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-gold">Assassin</b> (30 Skills)</a></li>
+        <li><a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-gold">Sorceress</b> (30 Skills)</a></li>
       </ul>
     </div>
 
     <div class="nav-box">
-      <div class="nav-box-hdr">Class Skill Trees</div>
+      <div class="nav-box-hdr">Items &amp; World</div>
       <ul class="nav-list">
-        <li><a href="#class-pal"><b class="d2-gold">Paladin</b> (30 Skills)</a></li>
-        <li><a href="#class-bar"><b class="d2-gold">Barbarian</b> (30 Skills)</a></li>
-        <li><a href="#class-ass"><b class="d2-gold">Assassin</b> (30 Skills)</a></li>
-        <li><a href="#class-sor"><b class="d2-gold">Sorceress</b> (30 Skills)</a></li>
-      </ul>
-    </div>
-
-    <div class="nav-box">
-      <div class="nav-box-hdr">World &amp; Monsters</div>
-      <ul class="nav-list">
-        <li><a href="#monsters">4 Monster Archetypes</a></li>
-        <li><a href="#dungeons">26 Optional Dungeons</a></li>
-        <li><a href="#gold-economy">The Gold Standard</a></li>
-        <li><a href="#notes">Theoretical Notes</a></li>
+        <li><a href="#gems-skulls" data-tab-link="tab-items">7 Gem &amp; Skull Families</a></li>
+        <li><a href="#runes-33" data-tab-link="tab-items">The 33 Semantic Runes</a></li>
+        <li><a href="#monsters" data-tab-link="tab-world">4 Monster Archetypes</a></li>
+        <li><a href="#mercenaries" data-tab-link="tab-world">10-Slot Mercenaries</a></li>
       </ul>
     </div>
 
@@ -1593,7 +1660,9 @@ def build_site() -> str:
   <!-- MAIN CONTENT AREA -->
   <td valign="top" class="content-cell">
 
-    <!-- QUICK START -->
+    <!-- TAB 1: OVERVIEW, 7 CUBE RECIPES & DESIGN PHILOSOPHY -->
+    <div class="tab-panel active" id="tab-overview">
+    <a name="overview"></a>
     <a name="quickstart"></a>
     <div class="section-block">
       <div class="section-title-bar">
@@ -1604,14 +1673,119 @@ def build_site() -> str:
       <div class="quote-box">
         <p style="margin-top:0;"><b>Castalia</b> is built for <b>veteran Diablo II players</b> who want to experiment with a reimagined skill and resource economy—experiencing a more grounded, tactical version of <i>Diablo II</i> rather than an overpowered power-fantasy.</p>
         <ul style="margin-bottom:0;">
-          <li><b>Playthrough-Focused (Solo or Co-op):</b> Designed to be played alone or with friends as a complete expedition from Act 1 Normal through Act 5 Hell. There is no artificial endgame treadmill; once your playthrough is complete, the journey is complete.</li>
+          <li><b>Playthrough-Focused (Solo or Co-op):</b> Designed to be played alone or with friends as a complete expedition from Act 1 Normal through Act 5 Hell. Need a starter character to join a friend's game? Open the <a href="#char-generator" data-tab-link="tab-chargen"><b class="d2-bright-gold">Character Generator (.d2s)</b></a> tab above.</li>
           <li><b>What You See Is How It Works:</b> Every monster prints its <span class="d2-gold">elemental vulnerability, resistance, and combat trait</span> directly beneath its health bar. Physical silhouettes tell the truth: if a monster is <b>small</b>, it is fast, numerous, and fragile; if it is <b>huge</b>, it is slow, solitary, and hits like a truck.</li>
           <li><b>Logical World Connections:</b> Town mystics and sages stock caster gear, heavy tower shields slow your block recovery (`-15% FBR`) in exchange for raw armor, and pulling on an enclosed greathelm narrows your light radius in the dark (`-2` to `-3` Light Radius).</li>
         </ul>
       </div>
 
-      <!-- CO-OP CAMPAIGN & CHARACTER SAVE (.D2S) GENERATOR -->
-      <a name="char-generator"></a>
+      <a name="cube-recipes"></a>
+      <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">
+        <tr bgcolor="#261e14">
+          <th colspan="3" align="left" class="table-banner">&#9874; THE 7 HORADRIC CUBE RECIPES (ALL YOU NEED TO PLAY)</th>
+        </tr>
+        <tr bgcolor="#1a140e" class="table-subhdr">
+          <th width="22%" align="left">Recipe Purpose</th>
+          <th width="38%" align="left">Horadric Cube Inputs</th>
+          <th width="40%" align="left">Resulting Output</th>
+        </tr>
+        <tr>
+          <td><span class="d2-orange">1. Craft Any Item</span></td>
+          <td><span class="d2-blue">Any Magic Item</span> + <b>1 Gem / Skull</b> + <span class="d2-orange">2 Runes</span></td>
+          <td><span class="d2-orange">Crafted Item</span> stamped with the Gem's stat + both Runes' stats <i>(scaled by Gem tier)</i> + <code>1–4</code> random affixes</td>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><span class="d2-orange">2. Distill a Unique / Set</span></td>
+          <td><span class="d2-unique">Any Unique</span> or <span class="d2-green">Set Item</span> + <span class="d2-blue">Blacksmith's Malus</span> + <span class="d2-blue">Magic Jewel</span></td>
+          <td><span class="d2-orange">Crafted Jewel</span> containing that Unique or Set item's <b>Top 4 signature stats</b></td>
+        </tr>
+        <tr>
+          <td><span class="d2-bright-gold">3. Punch Sockets</span></td>
+          <td><b>Unsocketed Weapon / Armor</b> + <span class="d2-blue">Blacksmith's Malus</span> + <b>Perfect Skull</b></td>
+          <td>Punches <b>1 to 2 Sockets</b> into the item <i>(works on Magic, Rare, Crafted, Set, or Unique)</i></td>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><span class="d2-bright-gold">4. Clear Sockets</span></td>
+          <td><b>Socketed Weapon / Armor</b> + <span class="d2-blue">Blacksmith's Malus</span> + <b>Perfect Skull</b></td>
+          <td><b>Clears all sockets</b> on the item <i>(destroying socketed contents so you can re-socket)</i></td>
+        </tr>
+        <tr>
+          <td><span class="d2-yellow">5. Upgrade Base Tier</span></td>
+          <td><b>Normal or Exceptional Item</b> + <span class="d2-yellow">Tempered Malus</span> <i>(Charsi Quest)</i></td>
+          <td>Upgrades base tier (<b>Normal &rarr; Exceptional</b> or <b>Exceptional &rarr; Elite</b>; strictly 3 per playthrough)</td>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><span class="d2-gold">6. Combine / Split Runes &amp; Gems</span></td>
+          <td><b>2x Identical Gems/Runes</b> <i>—or—</i> <span class="d2-orange">1x Rune</span> + <b>1x Gem</b></td>
+          <td><b>Upgrades 2-to-1</b> into next tier <i>—or—</i> <b>Splits</b> a Rune into lower runes (<code>50%</code> to <code>100%</code> recovery by Gem tier)</td>
+        </tr>
+        <tr>
+          <td><span class="d2-unique">7. Unlock a Lockbox</span></td>
+          <td><img src="img/items/lockbox_wood.png" width="22" height="22" align="absmiddle"> <b>Crude / Iron / Ornate Lockbox</b> + <img src="img/items/key_crude.png" width="22" height="22" align="absmiddle"> <b>Matching Key</b></td>
+          <td>Unlocks the <span class="d2-unique">Unique</span> or <span class="d2-green">Set</span> item sealed inside <i>(Keys sold by town vendors for 5k / 25k / 50k Gold)</i></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- CORE DESIGN PHILOSOPHY -->
+    <a name="philosophy"></a>
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>CORE DESIGN PRINCIPLES &amp; WORLD RULES</h2>
+        <div class="section-sub">First-principles itemization, an unbroken dungeon frame, and a real Gold standard</div>
+      </div>
+
+      <table width="100%" border="1" cellpadding="8" cellspacing="0" bordercolor="#4a3c28" class="arreat-table">
+        <tr>
+          <td width="50%" valign="top" bgcolor="#0e0b08">
+            <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles Over Flashcards <sup>(1)</sup></h3>
+            <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>270,000 crafting combinations</b> from first principles.</p>
+
+            <h3 class="d2-bright-gold">2. Keeping the World Intact <sup>(2)</sup></h3>
+            <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>
+          </td>
+          <td width="50%" valign="top" bgcolor="#0e0b08">
+            <h3 class="d2-bright-gold" style="margin-top:0;">3. Every Item Color Has Its Own Crown &amp; No Free Immunity Breakers <sup>(3)</sup></h3>
+            <ul>
+              <li><span class="d2-blue">Magic (Blue):</span> 2 affixes max, but rolls <b>1.33x higher single-stat ceilings</b> and exclusive binary traits (<i>Ignore Target's Defense, Knockback, Jeweler's</i>).</li>
+              <li><span class="d2-yellow">Rare (Yellow):</span> Up to 6 affixes with low-level junk tiers pruned out at higher levels.</li>
+              <li><span class="d2-orange">Crafted (Orange):</span> Stamps 1 Gem/Skull + 2 Runes onto any slot alongside 1–4 random rolls.</li>
+              <li><span class="d2-unique">Uniques</span> &amp; <span class="d2-green">Sets:</span> Distinct cross-class skills, auras, and procs—or distillable into Crafted Jewels.</li>
+              <li><b>No Free Immunity Breakers:</b> Sunder Charms and player <code>-Enemy Elemental Resistance %</code> pierce do not exist; overcoming <code>95%–99%</code> resistant monsters requires a multi-element, physical, or mercenary toolkit.</li>
+            </ul>
+
+            <h3 class="d2-bright-gold" id="gold-economy">4. The Combat Gold Standard <sup>(4)(5)(6)(7)</sup></h3>
+            <p>Vendors cap sell-back prices at <code>500g / 1,500g / 3,500g</code> so you never haul scrap metal back to town. Gold comes from killing monsters, popping Super Chests, and stacking <b>Gold Find</b>—and is spent on <b>75%-cost Equipment Repairs</b>, <b>Blacksmith's Maluses</b> (scaling with character level at the Gamble screen), <b>Lockbox Keys</b> (<code>5k / 25k / 50k</code>), <b>Charsi's Untempered Malus</b> (<code>100k</code>), and <b>Act-Partitioned Magic Vendors</b>.</p>
+          </td>
+        </tr>
+      </table>
+
+      <details class="compendium-drawer">
+        <summary>&#128218; Theoretical Influences &amp; Design Notes (1–7)</summary>
+        <div class="quote-box" style="font-size:11px; margin-top:8px; margin-bottom:0;">
+          <ol style="margin:4px 0 4px 18px; padding:0;">
+            <li><b>Combinatorial Grammar:</b> Inspired by Hermann Hesse's <i>Das Glasperlenspiel</i> (<i>The Glass Bead Game</i>, 1943), where a small, transparent alphabet of symbols yields near-infinite combinations without arbitrary exceptions.</li>
+            <li><b>The Magic Circle &amp; Diegetic Space:</b> Draws on Johan Huizinga's <i>Homo Ludens</i> (1938) and the concept of the <i>Magic Circle</i>—the fragile boundary that gives play-worlds their emotional gravity so long as instant escape hatches do not break the frame.</li>
+            <li><b>Pareto Frontiers &amp; Non-Dominated Strategies:</b> Rooted in multi-objective game theory and Pareto optimality, ensuring that Magic, Rare, Crafted, and Unique/Set items occupy distinct strengths rather than collapsing into a single dominant meta.</li>
+            <li><b>Bounded Rationality &amp; Signal-to-Noise:</b> Informed by Herbert Simon's <i>Bounded Rationality</i>, Daniel Kahneman's <i>System 1 / System 2</i> attention model, and Barry Schwartz's <i>The Paradox of Choice</i>.</li>
+            <li><b>Loss Aversion &amp; Asymmetric Tradeoffs:</b> Draws on Daniel Kahneman and Amos Tversky's <i>Prospect Theory</i> (1979), using voluntary vulnerabilities (Kiss-Curse items and Elemental Stances) to make build-defining power feel earned.</li>
+            <li><b>Homeostatic Flow:</b> Based on Mihaly Csikszentmihalyi's <i>Flow</i> (1990), coupling skill effectiveness to oscillating resource pendulums (Stamina, Aura Mana Upkeep, Held Combo Orbs, and Stance Dials).</li>
+            <li><b>Sound Money, Marginal Utility &amp; Reinforcement Schedules:</b> Draws on Carl Menger's theory of marginal utility (1871), intertemporal opportunity cost, and B.F. Skinner's reinforcement schedules—preventing extinction of reinforcement during dry loot streaks by anchoring Gold to combat.</li>
+          </ol>
+        </div>
+      </details>
+    </div>
+    </div>
+
+    <!-- TAB 2: CO-OP CAMPAIGN & CHARACTER SAVE (.D2S) GENERATOR -->
+    <div class="tab-panel" id="tab-chargen">
+    <a name="char-generator"></a>
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>CO-OP CAMPAIGN &amp; STARTER CHARACTER SAVE (<code>.d2s</code>) GENERATOR</h2>
+        <div class="section-sub">Generate a ready-to-play character with a unique party name, tier starter kit, and unlocked waypoints</div>
+      </div>
+
       <table width="100%" border="1" cellpadding="8" cellspacing="0" bordercolor="#7a633e" class="arreat-table" style="margin-bottom:14px;">
         <tr bgcolor="#2b1f12">
           <th colspan="2" align="left" class="table-banner">&#9876; JOIN A CO-OP CAMPAIGN OR GENERATE A STARTER CHARACTER SAVE (<code>.d2s</code>)</th>
@@ -1722,90 +1896,11 @@ def build_site() -> str:
           </td>
         </tr>
       </table>
-
-      <a name="cube-recipes"></a>
-      <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">
-        <tr bgcolor="#261e14">
-          <th colspan="3" align="left" class="table-banner">&#9874; THE 7 HORADRIC CUBE RECIPES (ALL YOU NEED TO PLAY)</th>
-        </tr>
-        <tr bgcolor="#1a140e" class="table-subhdr">
-          <th width="22%" align="left">Recipe Purpose</th>
-          <th width="38%" align="left">Horadric Cube Inputs</th>
-          <th width="40%" align="left">Resulting Output</th>
-        </tr>
-        <tr>
-          <td><span class="d2-orange">1. Craft Any Item</span></td>
-          <td><span class="d2-blue">Any Magic Item</span> + <b>1 Gem / Skull</b> + <span class="d2-orange">2 Runes</span></td>
-          <td><span class="d2-orange">Crafted Item</span> stamped with the Gem's stat + both Runes' stats <i>(scaled by Gem tier)</i> + <code>1–4</code> random affixes</td>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><span class="d2-orange">2. Distill a Unique / Set</span></td>
-          <td><span class="d2-unique">Any Unique</span> or <span class="d2-green">Set Item</span> + <span class="d2-blue">Blacksmith's Malus</span> + <span class="d2-blue">Magic Jewel</span></td>
-          <td><span class="d2-orange">Crafted Jewel</span> containing that Unique or Set item's <b>Top 4 signature stats</b></td>
-        </tr>
-        <tr>
-          <td><span class="d2-bright-gold">3. Punch Sockets</span></td>
-          <td><b>Unsocketed Weapon / Armor</b> + <span class="d2-blue">Blacksmith's Malus</span> + <b>Perfect Skull</b></td>
-          <td>Punches <b>1 to 2 Sockets</b> into the item <i>(works on Magic, Rare, Crafted, Set, or Unique)</i></td>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><span class="d2-bright-gold">4. Clear Sockets</span></td>
-          <td><b>Socketed Weapon / Armor</b> + <span class="d2-blue">Blacksmith's Malus</span> + <b>Perfect Skull</b></td>
-          <td><b>Clears all sockets</b> on the item <i>(destroying socketed contents so you can re-socket)</i></td>
-        </tr>
-        <tr>
-          <td><span class="d2-yellow">5. Upgrade Base Tier</span></td>
-          <td><b>Normal or Exceptional Item</b> + <span class="d2-yellow">Tempered Malus</span> <i>(Charsi Quest)</i></td>
-          <td>Upgrades base tier (<b>Normal &rarr; Exceptional</b> or <b>Exceptional &rarr; Elite</b>; strictly 3 per playthrough)</td>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><span class="d2-gold">6. Combine / Split Runes &amp; Gems</span></td>
-          <td><b>2x Identical Gems/Runes</b> <i>—or—</i> <span class="d2-orange">1x Rune</span> + <b>1x Gem</b></td>
-          <td><b>Upgrades 2-to-1</b> into next tier <i>—or—</i> <b>Splits</b> a Rune into lower runes (<code>50%</code> to <code>100%</code> recovery by Gem tier)</td>
-        </tr>
-        <tr>
-          <td><span class="d2-unique">7. Unlock a Lockbox</span></td>
-          <td><img src="img/items/lockbox_wood.png" width="22" height="22" align="absmiddle"> <b>Crude / Iron / Ornate Lockbox</b> + <img src="img/items/key_crude.png" width="22" height="22" align="absmiddle"> <b>Matching Key</b></td>
-          <td>Unlocks the <span class="d2-unique">Unique</span> or <span class="d2-green">Set</span> item sealed inside <i>(Keys sold by town vendors for 5k / 25k / 50k Gold)</i></td>
-        </tr>
-      </table>
+    </div>
     </div>
 
-    <!-- CORE DESIGN PHILOSOPHY -->
-    <a name="philosophy"></a>
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>CORE DESIGN PRINCIPLES &amp; WORLD RULES</h2>
-        <div class="section-sub">First-principles itemization, an unbroken dungeon frame, and a real Gold standard</div>
-      </div>
-
-      <table width="100%" border="1" cellpadding="8" cellspacing="0" bordercolor="#4a3c28" class="arreat-table">
-        <tr>
-          <td width="50%" valign="top" bgcolor="#0e0b08">
-            <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles Over Flashcards <sup>(1)</sup></h3>
-            <p>When you only memorize flashcards, every new problem requires a new card; when you understand the underlying rules of arithmetic, you can solve problems you have never seen before. Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>270,000 crafting combinations</b> from first principles.</p>
-
-            <h3 class="d2-bright-gold">2. Keeping the World Intact <sup>(2)</sup></h3>
-            <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>
-          </td>
-          <td width="50%" valign="top" bgcolor="#0e0b08">
-            <h3 class="d2-bright-gold" style="margin-top:0;">3. Every Item Color Has Its Own Crown &amp; No Free Immunity Breakers <sup>(3)</sup></h3>
-            <ul>
-              <li><span class="d2-blue">Magic (Blue):</span> 2 affixes max, but rolls <b>1.33x higher single-stat ceilings</b> and exclusive binary traits (<i>Ignore Target's Defense, Knockback, Jeweler's</i>).</li>
-              <li><span class="d2-yellow">Rare (Yellow):</span> Up to 6 affixes with low-level junk tiers pruned out at higher levels.</li>
-              <li><span class="d2-orange">Crafted (Orange):</span> Stamps 1 Gem/Skull + 2 Runes onto any slot alongside 1–4 random rolls.</li>
-              <li><span class="d2-unique">Uniques</span> &amp; <span class="d2-green">Sets:</span> Distinct cross-class skills, auras, and procs—or distillable into Crafted Jewels.</li>
-              <li><b>No Free Immunity Breakers:</b> Sunder Charms and player <code>-Enemy Elemental Resistance %</code> pierce do not exist; overcoming <code>95%–99%</code> resistant monsters requires a multi-element, physical, or mercenary toolkit.</li>
-            </ul>
-
-            <h3 class="d2-bright-gold" id="gold-economy">4. The Combat Gold Standard <sup>(4)(5)(6)(7)</sup></h3>
-            <p>Vendors cap sell-back prices at <code>500g / 1,500g / 3,500g</code> so you never haul scrap metal back to town. Gold comes from killing monsters, popping Super Chests, and stacking <b>Gold Find</b>—and is spent on <b>75%-cost Equipment Repairs</b>, <b>Blacksmith's Maluses</b> (scaling with character level at the Gamble screen), <b>Lockbox Keys</b> (<code>5k / 25k / 50k</code>), <b>Charsi's Untempered Malus</b> (<code>100k</code>), and <b>Act-Partitioned Magic Vendors</b>.</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <!-- GEMS, SKULLS & 33 RUNES -->
+    <!-- TAB 3: GEMS, SKULLS & 33 RUNES -->
+    <div class="tab-panel" id="tab-items">
     <a name="gems-skulls"></a>
     <div class="section-block">
       <div class="section-title-bar">
@@ -1844,8 +1939,10 @@ def build_site() -> str:
         {"".join(rune_rows_html)}
       </table>
     </div>
+    </div>
 
-    <!-- MONSTER ARCHETYPES & 10-SLOT MERCENARIES -->
+    <!-- TAB 4: MONSTER ARCHETYPES & 10-SLOT MERCENARIES -->
+    <div class="tab-panel" id="tab-world">
     <a name="monsters"></a>
     <a name="dungeons"></a>
     <a name="mercenaries"></a>
@@ -1918,31 +2015,13 @@ def build_site() -> str:
         </tr>
       </table>
     </div>
-
-    <!-- INTERACTIVE CLASS SKILL TREES & COMPENDIUM -->
-    {"".join(class_sections_html)}
-
-    <!-- THEORETICAL NOTES -->
-    <a name="notes"></a>
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>NOTES &amp; THEORETICAL INFLUENCES</h2>
-      </div>
-      <div class="quote-box" style="font-size:11px;">
-        <ol style="margin:4px 0 4px 18px; padding:0;">
-          <li><b>Combinatorial Grammar:</b> Inspired by Hermann Hesse's <i>Das Glasperlenspiel</i> (<i>The Glass Bead Game</i>, 1943), where a small, transparent alphabet of symbols yields near-infinite combinations without arbitrary exceptions.</li>
-          <li><b>The Magic Circle &amp; Diegetic Space:</b> Draws on Johan Huizinga's <i>Homo Ludens</i> (1938) and the concept of the <i>Magic Circle</i>—the fragile boundary that gives play-worlds their emotional gravity so long as instant escape hatches do not break the frame.</li>
-          <li><b>Pareto Frontiers &amp; Non-Dominated Strategies:</b> Rooted in multi-objective game theory and Pareto optimality, ensuring that Magic, Rare, Crafted, and Unique/Set items occupy distinct strengths rather than collapsing into a single dominant meta.</li>
-          <li><b>Bounded Rationality &amp; Signal-to-Noise:</b> Informed by Herbert Simon's <i>Bounded Rationality</i>, Daniel Kahneman's <i>System 1 / System 2</i> attention model, and Barry Schwartz's <i>The Paradox of Choice</i>.</li>
-          <li><b>Loss Aversion &amp; Asymmetric Tradeoffs:</b> Draws on Daniel Kahneman and Amos Tversky's <i>Prospect Theory</i> (1979), using voluntary vulnerabilities (Kiss-Curse items and Elemental Stances) to make build-defining power feel earned.</li>
-          <li><b>Homeostatic Flow:</b> Based on Mihaly Csikszentmihalyi's <i>Flow</i> (1990), coupling skill effectiveness to oscillating resource pendulums (Stamina, Aura Mana Upkeep, Held Combo Orbs, and Stance Dials).</li>
-          <li><b>Sound Money, Marginal Utility &amp; Reinforcement Schedules:</b> Draws on Carl Menger's theory of marginal utility (1871), intertemporal opportunity cost, and B.F. Skinner's reinforcement schedules—preventing extinction of reinforcement during dry loot streaks by anchoring Gold to combat.</li>
-        </ol>
-      </div>
     </div>
 
+    <!-- TABS 5-8: INTERACTIVE CLASS SKILL TREES & COMPENDIUM -->
+    {"".join(class_sections_html)}
+
     <div class="retro-footer">
-      &#9876; <b>THE CASTALIA COMPENDIUM</b> &#9876; &nbsp;|&nbsp; Built for <i>Diablo II: Resurrected</i> &nbsp;|&nbsp; Return to <a href="#quickstart">Top of Page</a>
+      &#9876; <b>THE CASTALIA COMPENDIUM</b> &#9876; &nbsp;|&nbsp; Built for <i>Diablo II: Resurrected</i>
     </div>
 
   </td>
@@ -2991,6 +3070,79 @@ var D2_CALC_DATA = {calc_payload_json};
   }}
 
   updateCharGenUI();
+
+  // =========================================================================
+  // TOP ARREAT SUMMIT TAB ROUTER (REDUCES PAGE DENSITY TO 1 FOCUSED PANEL)
+  // =========================================================================
+  var tabBtns = document.querySelectorAll(".top-tab-btn");
+  var tabPanels = document.querySelectorAll(".tab-panel");
+  var tabLinks = document.querySelectorAll("[data-tab-link]");
+
+  var HASH_TO_TAB = {{
+    "#overview": "tab-overview",
+    "#quickstart": "tab-overview",
+    "#cube-recipes": "tab-overview",
+    "#philosophy": "tab-overview",
+    "#gold-economy": "tab-overview",
+    "#notes": "tab-overview",
+    "#char-generator": "tab-chargen",
+    "#class-pal": "tab-class-pal",
+    "#class-bar": "tab-class-bar",
+    "#class-ass": "tab-class-ass",
+    "#class-sor": "tab-class-sor",
+    "#gems-skulls": "tab-items",
+    "#runes-33": "tab-items",
+    "#monsters": "tab-world",
+    "#dungeons": "tab-world",
+    "#mercenaries": "tab-world"
+  }};
+
+  function activateTab(tabId, skipScroll) {{
+    if (!tabId) return;
+    for (var i = 0; i < tabPanels.length; i++) {{
+      if (tabPanels[i].id === tabId) tabPanels[i].classList.add("active");
+      else tabPanels[i].classList.remove("active");
+    }}
+    for (var j = 0; j < tabBtns.length; j++) {{
+      if (tabBtns[j].getAttribute("data-tab") === tabId) tabBtns[j].classList.add("active");
+      else tabBtns[j].classList.remove("active");
+    }}
+    if (!skipScroll) window.scrollTo(0, 0);
+  }}
+
+  for (var tb = 0; tb < tabBtns.length; tb++) {{
+    tabBtns[tb].addEventListener("click", function(e) {{
+      var tid = this.getAttribute("data-tab");
+      if (tid) activateTab(tid, false);
+    }});
+  }}
+
+  for (var tl = 0; tl < tabLinks.length; tl++) {{
+    tabLinks[tl].addEventListener("click", function() {{
+      var tid = this.getAttribute("data-tab-link");
+      if (tid) activateTab(tid, true);
+    }});
+  }}
+
+  function syncTabFromLocation() {{
+    var h = (window.location.hash || "").toLowerCase();
+    var sp = new URLSearchParams(window.location.search || "");
+    if (HASH_TO_TAB[h]) {{
+      activateTab(HASH_TO_TAB[h], true);
+      return;
+    }}
+    if (h.indexOf("#sk-pal-") === 0) {{ activateTab("tab-class-pal", true); return; }}
+    if (h.indexOf("#sk-bar-") === 0) {{ activateTab("tab-class-bar", true); return; }}
+    if (h.indexOf("#sk-ass-") === 0) {{ activateTab("tab-class-ass", true); return; }}
+    if (h.indexOf("#sk-sor-") === 0) {{ activateTab("tab-class-sor", true); return; }}
+    if (sp.get("name") || sp.get("class") || sp.get("level") || sp.get("wp")) {{
+      activateTab("tab-chargen", true);
+      return;
+    }}
+  }}
+
+  window.addEventListener("hashchange", syncTabFromLocation);
+  syncTabFromLocation();
 }})();
 </script>
 </body>

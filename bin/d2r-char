@@ -1,0 +1,258 @@
+#!/usr/bin/env python3
+"""
+d2r-char - Unified Multi-Class Character Generator, Respec Utility & Starter-Kit CLI.
+
+Commands:
+  list                               List all characters in Saved Games/mods/custom with class, level,
+                                     pools (Life/Mana/Stamina), unspent points, gold, and waypoints.
+  create <NAME> --class <cls>        Generate a character from a starter template .d2s (preserving all
+         [--level N] [--wp TARGET]   equipped/inventory/personal-stash items such as Horadric Cube & runes)
+         [--stash-gold N] [--gold N] with authentic charstats.txt Life/Mana/Stamina pools, unspent stat &
+         [--template T]              skill points, and unlocked waypoints up to TARGET.
+         [--export PATH]
+  set <NAME> [--class <cls>]         Modify an existing character's level, waypoints, gold, or class in place
+      [--level N] [--wp TARGET]      while keeping all their items intact.
+      [--stash-gold N] [--gold N]
+      [--keep-skills] [--keep-stats]
+  reset <NAME> [--init] [--stats]    Refund all 30 skill points (and optionally reset attributes/level/WPs)
+        [--level N] [--wp TARGET]    on an existing character.
+        [--stash-gold N]
+  save-template <NAME> [--as T]      Save an in-game prepared character (e.g. holding a Horadric Cube and
+                                     starter runes in their Inventory / Personal Stash Tab 1) into
+                                     tools/char_templates/<T>.d2s for future `d2r-char create` runs.
+
+Waypoint TARGET examples:
+  start          Normal Act 1 (Rogue Encampment town WP only)
+  a1n .. a5n     Normal Act 1..5 (all WPs up through that Act unlocked)
+  a1nm .. a5nm   Nightmare Act 1..5 (all Normal WPs + NM WPs up through that Act unlocked)
+  a1h .. a5h     Hell Act 1..5 (all Normal & NM WPs + Hell WPs up through that Act unlocked)
+  all            All 39 Waypoints across Normal, Nightmare, and Hell unlocked
+
+Examples:
+  # Generate a Paladin at level 53 with WP to Act 3 NM and 500,000 stash gold:
+  ./bin/d2r-char create PALADIN --class pal --level 53 --wp a3nm --stash-gold 500000
+
+  # Refund all skill points on SORC (or reset to level 60 with all waypoints):
+  ./bin/d2r-char reset SORC
+  ./bin/d2r-char reset SORC --init --level 60
+"""
+import argparse
+import glob
+import os
+import shutil
+import subprocess
+import sys
+
+ROOT = "/home/grant/games/d2r"
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+
+from mod_builder.char_manager import (  # noqa: E402
+    DEFAULT_SAVE_DIR,
+    GOLD_STASH_MAX,
+    ID_TO_SHORT_CODE,
+    TEMPLATE_DIR,
+    TIER_TEMPLATE_SLOTS,
+    configure_character_d2s,
+    create_character_from_template,
+    inspect_character_d2s,
+    resolve_class,
+)
+
+
+def _warn_if_game_running() -> None:
+    if subprocess.run(["pgrep", "-f", "D2R.exe"], capture_output=True).returncode == 0:
+        print(
+            "warning: D2R.exe is currently running; close the game or sit at Character Select before modifying a character.",
+            file=sys.stderr,
+        )
+
+
+def _print_summary(tag: str, info: dict) -> None:
+    print(f"[{tag}] {info['name']} ({info['class_name']}, Lvl {info['level']}) -> {info['path']}")
+    print(
+        f"  Pools:   Life={info['life']:.0f}  Mana={info['mana']:.0f}  Stamina={info['stamina']:.0f}\n"
+        f"  Points:  Skill Pts={info['skill_pts']}  Stat Pts={info['stat_pts']}\n"
+        f"  Gold:    Stash={info['stash_gold']:,}  Inventory={info['inv_gold']:,}  Items={info['items']}\n"
+        f"  WPs:     {info['waypoints']}"
+    )
+    if info.get("template_used"):
+        print(f"  Tmpl:    {info['template_used']}")
+    if info.get("exported_to"):
+        print(f"  Export:  {info['exported_to']}")
+
+
+def cmd_list(args) -> None:
+    sdir = args.save_dir
+    files = sorted(glob.glob(os.path.join(sdir, "*.d2s")))
+    if not files:
+        print(f"No .d2s character saves found in {sdir}")
+        return
+    print(
+        f"{'NAME':12} {'CLASS':12} {'LVL':>3}  {'LIFE':>5} {'MANA':>5} {'STAM':>5}  "
+        f"{'SK_PTS':>6} {'ST_PTS':>6}  {'STASH_GOLD':>10}  {'ITEMS':>5}  {'WAYPOINTS'}"
+    )
+    print("-" * 98)
+    for p in files:
+        try:
+            info = inspect_character_d2s(p)
+            print(
+                f"{info['name']:12} {info['class_name']:12} {info['level']:>3}  "
+                f"{info['life']:>5.0f} {info['mana']:>5.0f} {info['stamina']:>5.0f}  "
+                f"{info['skill_pts']:>6} {info['stat_pts']:>6}  "
+                f"{info['stash_gold']:>10,}  {info['items']:>5}  {info['waypoints']}"
+            )
+        except Exception as exc:
+            print(f"{os.path.basename(p):12} [error: {exc}]")
+
+
+def cmd_create(args) -> None:
+    _warn_if_game_running()
+    info = create_character_from_template(
+        args.name,
+        args.cls,
+        level=args.level,
+        wp_target=args.wp,
+        stash_gold=args.stash_gold,
+        inv_gold=args.gold,
+        template_name=args.template,
+        save_dir=args.save_dir,
+        export_path=args.export,
+    )
+    _print_summary("d2r-char create", info)
+
+
+def cmd_set(args) -> None:
+    _warn_if_game_running()
+    d2s_path = os.path.join(args.save_dir, f"{args.name}.d2s")
+    if not os.path.exists(d2s_path):
+        print(f"error: {d2s_path} not found", file=sys.stderr)
+        sys.exit(1)
+    backup = d2s_path + ".bak_original"
+    if not os.path.exists(backup):
+        shutil.copy2(d2s_path, backup)
+
+    cls_id = resolve_class(args.cls)[0] if args.cls else None
+    info = configure_character_d2s(
+        d2s_path,
+        char_name=args.name,
+        class_id=cls_id,
+        level=args.level,
+        wp_target=args.wp,
+        reset_skills=not args.keep_skills,
+        reset_stats=not args.keep_stats,
+        stash_gold=args.stash_gold,
+        inv_gold=args.gold,
+    )
+    _print_summary("d2r-char set", info)
+
+
+def cmd_reset(args) -> None:
+    _warn_if_game_running()
+    d2s_path = os.path.join(args.save_dir, f"{args.name}.d2s")
+    if not os.path.exists(d2s_path):
+        print(f"error: {d2s_path} not found", file=sys.stderr)
+        sys.exit(1)
+    backup = d2s_path + ".bak_original"
+    if not os.path.exists(backup):
+        shutil.copy2(d2s_path, backup)
+
+    eff_level = args.level if (args.init or args.level is not None) else None
+    if args.init and eff_level is None:
+        eff_level = 60
+    eff_wp = args.wp if args.wp is not None else ("all" if args.init else None)
+    eff_stash_gold = args.stash_gold if args.stash_gold is not None else (GOLD_STASH_MAX if args.init else None)
+
+    info = configure_character_d2s(
+        d2s_path,
+        level=eff_level,
+        wp_target=eff_wp,
+        reset_skills=True,
+        reset_stats=bool(args.init or args.stats or eff_level is not None),
+        stash_gold=eff_stash_gold,
+    )
+    _print_summary("d2r-char reset", info)
+
+
+def cmd_save_template(args) -> None:
+    src_d2s = os.path.join(args.save_dir, f"{args.name}.d2s")
+    if not os.path.exists(src_d2s):
+        print(f"error: {src_d2s} not found", file=sys.stderr)
+        sys.exit(1)
+    info = inspect_character_d2s(src_d2s)
+    tmpl_name = args.as_name or ID_TO_SHORT_CODE.get(info["class_id"], "default")
+    os.makedirs(TEMPLATE_DIR, exist_ok=True)
+    dst_d2s = os.path.join(TEMPLATE_DIR, f"{tmpl_name}.d2s")
+    shutil.copy2(src_d2s, dst_d2s)
+    src_key = os.path.join(args.save_dir, f"{args.name}.key")
+    if os.path.exists(src_key):
+        shutil.copy2(src_key, os.path.join(TEMPLATE_DIR, f"{tmpl_name}.key"))
+    print(
+        f"[d2r-char save-template] Saved {src_d2s} ({info['class_name']}, {info['items']} items) -> {dst_d2s}"
+    )
+
+
+def cmd_templates(args) -> None:
+    print(f"{'TEMPLATE':16} {'STATUS':10} {'ITEMS':>5}  {'LEVEL BRACKET & DESCRIPTION'}")
+    print("-" * 92)
+    for slot_name, desc in TIER_TEMPLATE_SLOTS:
+        p = os.path.join(TEMPLATE_DIR, f"{slot_name}.d2s")
+        if os.path.exists(p):
+            info = inspect_character_d2s(p)
+            print(f"{slot_name:16} {'READY':10} {info['items']:>5}  {desc}")
+        else:
+            print(f"{slot_name:16} {'MISSING':10} {'-':>5}  {desc}")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--save-dir", default=DEFAULT_SAVE_DIR, help="Target Saved Games directory")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p_list = sub.add_parser("list", help="List all characters in Saved Games")
+    p_list.set_defaults(f=cmd_list)
+
+    p_create = sub.add_parser("create", help="Create a character from a starter template .d2s")
+    p_create.add_argument("name", help="Character name (up to 15 ASCII chars)")
+    p_create.add_argument("--class", "-c", dest="cls", required=True, help="Class (pal, bar, ass, sor, ama, nec, dru)")
+    p_create.add_argument("--level", "-l", type=int, default=1, help="Character level (1..99, default 1)")
+    p_create.add_argument("--wp", "-w", default="start", help="Waypoint target (start, a1n..a5n, a1nm..a5nm, a1h..a5h, all)")
+    p_create.add_argument("--stash-gold", type=int, default=None, help="Personal stash gold override (default: automatic by level bracket)")
+    p_create.add_argument("--gold", type=int, default=0, help="Inventory gold")
+    p_create.add_argument("--template", "-t", help="Template name in tools/char_templates/ (default: <class> or default)")
+    p_create.add_argument("--export", "-e", help="Optional path (.zip or directory) to export starter kit")
+    p_create.set_defaults(f=cmd_create)
+
+    p_set = sub.add_parser("set", help="Modify an existing character's level, WPs, gold, or class in place")
+    p_set.add_argument("name", help="Existing character name")
+    p_set.add_argument("--class", "-c", dest="cls", help="Optional new class (pal, bar, ass, sor, ama, nec, dru)")
+    p_set.add_argument("--level", "-l", type=int, help="New character level (1..99)")
+    p_set.add_argument("--wp", "-w", help="Waypoint target (start, a1n..a5n, a1nm..a5nm, a1h..a5h, all)")
+    p_set.add_argument("--stash-gold", type=int, help="Personal stash gold (0..2500000)")
+    p_set.add_argument("--gold", type=int, help="Inventory gold")
+    p_set.add_argument("--keep-skills", action="store_true", help="Do not refund allocated skill points")
+    p_set.add_argument("--keep-stats", action="store_true", help="Do not reset attributes to base")
+    p_set.set_defaults(f=cmd_set)
+
+    p_reset = sub.add_parser("reset", help="Refund all skill points (and optionally reset stats/level)")
+    p_reset.add_argument("name", nargs="?", default="SORC", help="Character name to reset (default: SORC)")
+    p_reset.add_argument("--init", action="store_true", help="Initialize to level N (default 60), max stash gold & all WPs")
+    p_reset.add_argument("--stats", action="store_true", help="Also reset attributes to base and refund stat points")
+    p_reset.add_argument("--level", "-l", type=int, help="Set character level (1..99)")
+    p_reset.add_argument("--wp", "-w", help="Optional waypoint target (e.g. a3nm, all)")
+    p_reset.add_argument("--stash-gold", type=int, help="Optional personal stash gold")
+    p_reset.set_defaults(f=cmd_reset)
+
+    p_tmpl = sub.add_parser("save-template", help="Save an in-game character as a template in tools/char_templates/")
+    p_tmpl.add_argument("name", help="Source character name in Saved Games")
+    p_tmpl.add_argument("--as", dest="as_name", help="Template filename without .d2s (default: <class_short_code>)")
+    p_tmpl.set_defaults(f=cmd_save_template)
+
+    p_tmpls = sub.add_parser("templates", help="List the 5 Gem/Skull tier template slots in tools/char_templates/")
+    p_tmpls.set_defaults(f=cmd_templates)
+
+    args = ap.parse_args()
+    args.f(args)
+
+
+if __name__ == "__main__":
+    main()

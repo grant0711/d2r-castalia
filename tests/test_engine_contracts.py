@@ -232,6 +232,54 @@ class TestEngineContracts(unittest.TestCase):
                 self.assertEqual(r.get("seqtrans"), "A1", f"{sname}: Charge-Up must use seqtrans='A1'")
                 self.assertEqual(r.get("seqnum"), "", f"{sname}: Charge-Up must have seqnum=''")
 
+            # Rule 6: Player skills using Ancients Escalation Hooks (srvdofunc=170 Korlic Leap / srvdofunc=168 Talic Whirlwind)
+            # must reference an existing skill *Id in calc5 (for 170) or calc6 (for 168), and match the class helper contract.
+            if r.get("charclass") and r.get("srvdofunc") == "170":
+                esc_id = r.get("calc5", "").strip()
+                esc_lvl = int(r.get("calc6") or "0")
+                self.assertIn(
+                    esc_id,
+                    idx["skills_by_id"],
+                    f"skills.txt ({sname}): srvdofunc=170 calc5={esc_id!r} does not match any *Id in skills.txt",
+                )
+                self.assertGreaterEqual(esc_lvl, 1, f"skills.txt ({sname}): srvdofunc=170 calc6 (level) must be >= 1")
+                target_sk = idx["skills_by_id"][esc_id]
+                if r.get("charclass") == "bar":
+                    self.assertEqual(
+                        target_sk.get("skill"),
+                        "Bar Stamina Reflex",
+                        f"skills.txt ({sname}): Barbarian srvdofunc=170 calc5={esc_id} resolved to {target_sk.get('skill')!r} instead of 'Bar Stamina Reflex'",
+                    )
+                    self.assertEqual(target_sk.get("EType"), "stam")
+                    self.assertEqual((target_sk.get("auraevent1"), target_sk.get("auraeventfunc1")), ("install", "3"))
+
+            if r.get("charclass") and r.get("srvdofunc") == "168":
+                esc_id = r.get("calc6", "").strip()
+                esc_lvl = int(r.get("calc2") or "0")
+                esc_pct = int(r.get("calc3") or "0")
+                self.assertIn(
+                    esc_id,
+                    idx["skills_by_id"],
+                    f"skills.txt ({sname}): srvdofunc=168 calc6={esc_id!r} does not match any *Id in skills.txt",
+                )
+                self.assertGreaterEqual(esc_lvl, 1, f"skills.txt ({sname}): srvdofunc=168 calc2 (level) must be >= 1")
+                self.assertTrue(1 <= esc_pct <= 100, f"skills.txt ({sname}): srvdofunc=168 calc3 (chance %) must be 1..100")
+                target_sk = idx["skills_by_id"][esc_id]
+                if r.get("charclass") == "bar":
+                    self.assertEqual(
+                        target_sk.get("skill"),
+                        "Bar Stamina Reflex",
+                        f"skills.txt ({sname}): Barbarian srvdofunc=168 calc6={esc_id} resolved to {target_sk.get('skill')!r} instead of 'Bar Stamina Reflex'",
+                    )
+                    self.assertEqual(target_sk.get("EType"), "stam")
+                    self.assertEqual((target_sk.get("auraevent1"), target_sk.get("auraeventfunc1")), ("install", "3"))
+                elif r.get("charclass") == "ass":
+                    self.assertEqual(
+                        target_sk.get("skill"),
+                        "Ass Whirl Shred",
+                        f"skills.txt ({sname}): Assassin srvdofunc=168 calc6={esc_id} resolved to {target_sk.get('skill')!r} instead of 'Ass Whirl Shred'",
+                    )
+
     def test_skilldesc_string_keys_and_format_guards(self):
         all_str_keys = load_all_string_keys()
         _, desc_rows = read_mod_tsv("skilldesc.txt")

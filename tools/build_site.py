@@ -9,6 +9,7 @@ for Castalia in /home/grant/games/d2r/docs/site/:
 - Generates index.html with authentic 1999/2000 Battle.net Compendium / Arreat Summit tables,
   sidebar navigation, interactive visual skill trees with hover tooltips, and full class guides.
 """
+import base64
 import html
 import json
 import os
@@ -17,6 +18,7 @@ import struct
 import zlib
 from typing import Dict, List, Tuple
 
+from mod_builder.char_manager import TEMPLATE_DIR, TIER_TEMPLATE_SLOTS
 from mod_builder.common import MOD_ROOT, MOD_STRINGS, VANILLA_ROOT
 from mod_builder.verify import _read_mod_tsv
 
@@ -975,6 +977,62 @@ def build_site() -> str:
 
     calc_payload_json = json.dumps({"skills": calc_skills_data, "missiles": calc_missiles_data}, separators=(",", ":"))
 
+    # Build character generator payload (6 base64 .d2s templates, charstats.txt pools, and experience.txt curve)
+    _, cstat_rows = _read_mod_tsv("charstats.txt")
+    _, exp_rows = _read_mod_tsv("experience.txt")
+    exp_by_lvl: Dict[int, int] = {1: 0}
+    for er in exp_rows:
+        lv_s = (er.get("Level") or "").strip()
+        if lv_s.isdigit():
+            exp_by_lvl[int(lv_s) + 1] = int(er.get("Amazon") or 0)
+    exp_table_arr = [exp_by_lvl.get(lv, 0) for lv in range(100)]
+
+    char_classes_data: Dict[str, dict] = {}
+    class_order = [
+        ("pal", 3, "Paladin"),
+        ("bar", 4, "Barbarian"),
+        ("ass", 6, "Assassin"),
+        ("sor", 1, "Sorceress"),
+        ("ama", 0, "Amazon"),
+        ("nec", 2, "Necromancer"),
+        ("dru", 5, "Druid"),
+    ]
+    cs_by_name = {r["class"]: r for r in cstat_rows if r.get("class")}
+    for c_short, c_id, c_name in class_order:
+        cr = cs_by_name.get(c_name, {})
+        if cr:
+            char_classes_data[c_short] = {
+                "id": c_id,
+                "name": c_name,
+                "str": int(cr.get("str") or 0),
+                "dex": int(cr.get("dex") or 0),
+                "int": int(cr.get("int") or 0),
+                "vit": int(cr.get("vit") or 0),
+                "stamina": int(cr.get("stamina") or 0),
+                "hpadd": int(cr.get("hpadd") or 0),
+                "LifePerLevel": int(cr.get("LifePerLevel") or 0),
+                "ManaPerLevel": int(cr.get("ManaPerLevel") or 0),
+                "StaminaPerLevel": int(cr.get("StaminaPerLevel") or 0),
+                "StatPerLevel": int(cr.get("StatPerLevel") or 5),
+                "SkillsPerLevel": int(cr.get("SkillsPerLevel") or 2),
+            }
+
+    tmpl_b64_map: Dict[str, str] = {}
+    for slot_name, _slot_desc in TIER_TEMPLATE_SLOTS:
+        tp = os.path.join(TEMPLATE_DIR, f"{slot_name}.d2s")
+        if os.path.exists(tp):
+            with open(tp, "rb") as tf:
+                tmpl_b64_map[slot_name] = base64.b64encode(tf.read()).decode("ascii")
+
+    char_gen_payload_json = json.dumps(
+        {
+            "classes": char_classes_data,
+            "exp": exp_table_arr,
+            "templates": tmpl_b64_map,
+        },
+        separators=(",", ":"),
+    )
+
     # Build 7 Gem & Skull Families table dynamically from gems.txt and misc.txt
     gem_families = [
         ("Ruby", "Fire", 'class="d2-red"', ["gcr", "gfr", "gsr", "glr", "gpr"]),
@@ -1489,6 +1547,7 @@ def build_site() -> str:
       <div class="nav-box-hdr">Quick Reference</div>
       <ul class="nav-list">
         <li><a href="#quickstart">Who This Mod Is For</a></li>
+        <li><a href="#char-generator"><b class="d2-bright-gold">Join Campaign (.d2s)</b></a></li>
         <li><a href="#cube-recipes">The 7 Cube Recipes</a></li>
         <li><a href="#philosophy">Design Philosophy</a></li>
       </ul>
@@ -1550,6 +1609,119 @@ def build_site() -> str:
           <li><b>Logical World Connections:</b> Town mystics and sages stock caster gear, heavy tower shields slow your block recovery (`-15% FBR`) in exchange for raw armor, and pulling on an enclosed greathelm narrows your light radius in the dark (`-2` to `-3` Light Radius).</li>
         </ul>
       </div>
+
+      <!-- CO-OP CAMPAIGN & CHARACTER SAVE (.D2S) GENERATOR -->
+      <a name="char-generator"></a>
+      <table width="100%" border="1" cellpadding="8" cellspacing="0" bordercolor="#7a633e" class="arreat-table" style="margin-bottom:14px;">
+        <tr bgcolor="#2b1f12">
+          <th colspan="2" align="left" class="table-banner">&#9876; JOIN A CO-OP CAMPAIGN OR GENERATE A STARTER CHARACTER SAVE (<code>.d2s</code>)</th>
+        </tr>
+        <tr>
+          <td width="56%" valign="top" bgcolor="#0e0b08">
+            <div style="margin-bottom:8px; color:#d8ccb8;">
+              Generate a ready-to-play <b>Castalia</b> character save (<code>.d2s</code>) seeded with your unique character name (required so two players never collide in TCP/IP multiplayer), authentic <code>charstats.txt</code> Life/Mana/Stamina pools, unspent Skill &amp; Stat points, completed quest rewards, Personal Stash Gold, and the tier-matched <b>Horadric Cube + Gems/Skulls + Runes</b> starter kit.
+            </div>
+
+            <table width="100%" border="0" cellpadding="4" cellspacing="0" style="font-size:12px;">
+              <tr>
+                <td width="34%"><b class="d2-bright-gold">1. Your Character Name:</b></td>
+                <td>
+                  <input type="text" id="cg-name" maxlength="15" placeholder="Enter unique name (e.g. Alex)"
+                         style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:210px; font-size:12px;">
+                  <span class="d2-dim">(2–15 letters, unique in party)</span>
+                </td>
+              </tr>
+              <tr>
+                <td><b class="d2-bright-gold">2. Character Class:</b></td>
+                <td>
+                  <select id="cg-class" style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:210px; font-size:12px;">
+                    <option value="pal">Paladin (Overhauled — 30 Skills)</option>
+                    <option value="bar">Barbarian (Overhauled — 30 Skills)</option>
+                    <option value="ass">Assassin (Overhauled — 30 Skills)</option>
+                    <option value="sor">Sorceress (Overhauled — 30 Skills)</option>
+                    <option value="ama">Amazon</option>
+                    <option value="nec">Necromancer</option>
+                    <option value="dru">Druid</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td><b class="d2-bright-gold">3. Character Level:</b></td>
+                <td>
+                  <input type="number" id="cg-level" min="1" max="99" value="30"
+                         style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:80px; font-size:12px;">
+                  <span class="d2-dim" id="cg-tier-preview">Tier 3 (Normal): Cube, Tome of ID, Normal Gems/Skulls, Lvl 28-38 Runes + 315,000g</span>
+                </td>
+              </tr>
+              <tr>
+                <td><b class="d2-bright-gold">4. Starting Act &amp; Difficulty:</b></td>
+                <td>
+                  <select id="cg-wp" style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:260px; font-size:12px;">
+                    <optgroup label="Normal Difficulty">
+                      <option value="a1n">Normal — Act 1 (Rogue Encampment)</option>
+                      <option value="a2n">Normal — Act 2 (Lut Gholein)</option>
+                      <option value="a3n">Normal — Act 3 (Kurast Docks)</option>
+                      <option value="a4n">Normal — Act 4 (Pandemonium Fortress)</option>
+                      <option value="a5n" selected>Normal — Act 5 (Harrogath)</option>
+                    </optgroup>
+                    <optgroup label="Nightmare Difficulty">
+                      <option value="a1nm">Nightmare — Act 1 (Rogue Encampment)</option>
+                      <option value="a2nm">Nightmare — Act 2 (Lut Gholein)</option>
+                      <option value="a3nm">Nightmare — Act 3 (Kurast Docks)</option>
+                      <option value="a4nm">Nightmare — Act 4 (Pandemonium Fortress)</option>
+                      <option value="a5nm">Nightmare — Act 5 (Harrogath)</option>
+                    </optgroup>
+                    <optgroup label="Hell Difficulty">
+                      <option value="a1h">Hell — Act 1 (Rogue Encampment)</option>
+                      <option value="a2h">Hell — Act 2 (Lut Gholein)</option>
+                      <option value="a3h">Hell — Act 3 (Kurast Docks)</option>
+                      <option value="a4h">Hell — Act 4 (Pandemonium Fortress)</option>
+                      <option value="a5h">Hell — Act 5 (Harrogath)</option>
+                      <option value="all">Hell — All 39 Waypoints &amp; Quests Completed</option>
+                    </optgroup>
+                  </select>
+                </td>
+              </tr>
+            </table>
+
+            <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <button type="button" id="cg-download-btn"
+                      style="background:linear-gradient(180deg, #4b3419 0%, #261a0c 100%); border:2px ridge #c7b377; color:#f0d890; font-weight:bold; font-size:13px; padding:6px 14px; cursor:pointer;">
+                &#11015; Generate &amp; Save .d2s Character File
+              </button>
+              <button type="button" id="cg-copy-link-btn" class="calc-reset-btn" style="padding:6px 10px;">
+                &#128279; Copy Pre-Filled Invite Link
+              </button>
+              <span id="cg-status-msg" class="d2-gold" style="font-size:11px;"></span>
+            </div>
+            <div style="margin-top:6px;" class="d2-dim">
+              Shareable Pre-Filled URL: <code id="cg-share-url" style="color:#a3957b;">?name=Alex&amp;class=pal&amp;level=30&amp;wp=a5n#char-generator</code>
+            </div>
+          </td>
+
+          <td width="44%" valign="top" bgcolor="#120e0a">
+            <div style="color:#f0d890; font-weight:bold; margin-bottom:6px;">&#128193; WHERE TO SAVE YOUR <code>.d2s</code> FILE (2-SECOND SHORTCUT)</div>
+            <p style="margin-top:0; margin-bottom:6px; font-size:11px; color:#d8ccb8;">
+              Click <b>Copy Windows Save Path</b> below, then when the <b>Save As</b> window opens (or in File Explorer), press <code>Ctrl+L</code>, paste (<code>Ctrl+V</code>), and hit <code>Enter</code> to jump directly into your Castalia save folder:
+            </p>
+            <div style="background:#080604; border:1px solid #5c4b32; padding:6px 8px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
+              <code id="cg-win-path" style="color:#00e600; font-size:11px; word-break:break-all;">%USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\custom</code>
+              <button type="button" id="cg-copy-win-btn" class="calc-reset-btn" style="white-space:nowrap;">&#128203; Copy Windows Save Path</button>
+            </div>
+            <div style="font-size:11px; color:#a8987e; line-height:1.45;">
+              <b>Automatic Level-Tier Starter Loadout Included:</b>
+              <ul style="margin:4px 0 0 18px; padding:0;">
+                <li><b>Lvl 1–9:</b> 4x Belt Minor Healing Potions (bare fresh start)</li>
+                <li><b>Lvl 10–14 (Chipped):</b> Cube, Tome of ID, 8 Chipped Gems/Skulls, 6 Runes + <code>60,000g</code></li>
+                <li><b>Lvl 15–29 (Flawed):</b> Cube, Tome of ID, 8 Flawed Gems/Skulls, 6 Runes + <code>240,000g</code></li>
+                <li><b>Lvl 30–44 (Normal):</b> Cube, Tome of ID, 8 Normal Gems/Skulls, 6 Runes + <code>315k–535kg</code></li>
+                <li><b>Lvl 45–59 (Flawless):</b> Cube, Tome of ID, 8 Flawless Gems/Skulls, 6 Runes + <code>535k–825kg</code></li>
+                <li><b>Lvl 60+ (Perfect):</b> Cube, Tome of ID, 8 Perfect Gems/Skulls, 6 Runes + <code>1.24M–1.45Mg</code></li>
+              </ul>
+            </div>
+          </td>
+        </tr>
+      </table>
 
       <a name="cube-recipes"></a>
       <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">
@@ -2436,6 +2608,389 @@ var D2_CALC_DATA = {calc_payload_json};
   updateClassUI("bar");
   updateClassUI("ass");
   updateClassUI("sor");
+
+  // =========================================================================
+  // CO-OP CAMPAIGN & CHARACTER SAVE (.D2S) GENERATOR (100% STATIC GITHUB PAGES)
+  // =========================================================================
+  var CHAR_GEN_DATA = {char_gen_payload_json};
+
+  var cgNameEl = document.getElementById("cg-name");
+  var cgClassEl = document.getElementById("cg-class");
+  var cgLevelEl = document.getElementById("cg-level");
+  var cgWpEl = document.getElementById("cg-wp");
+  var cgTierPrev = document.getElementById("cg-tier-preview");
+  var cgShareUrlEl = document.getElementById("cg-share-url");
+  var cgStatusEl = document.getElementById("cg-status-msg");
+  var cgDownloadBtn = document.getElementById("cg-download-btn");
+  var cgCopyLinkBtn = document.getElementById("cg-copy-link-btn");
+  var cgCopyWinBtn = document.getElementById("cg-copy-win-btn");
+
+  function defaultGoldForLevel(lvl) {{
+    if (lvl < 10) return 0;
+    if (lvl < 20) return 60000;
+    if (lvl < 30) return 240000;
+    if (lvl < 40) return 315000;
+    if (lvl < 50) return 535000;
+    if (lvl < 60) return 825000;
+    if (lvl < 70) return 1240000;
+    return 1450000;
+  }}
+
+  function tierKeyForLevel(lvl) {{
+    if (lvl < 10) return "default";
+    if (lvl < 15) return "tier1_chipped";
+    if (lvl < 30) return "tier2_flawed";
+    if (lvl < 45) return "tier3_normal";
+    if (lvl < 60) return "tier4_flawless";
+    return "tier5_perfect";
+  }}
+
+  function tierLabelForLevel(lvl) {{
+    var g = defaultGoldForLevel(lvl).toLocaleString();
+    if (lvl < 10) return "Bare Lvl 1-9: 4x Belt Minor Healing Potions (0g)";
+    if (lvl < 15) return "Tier 1 (Chipped): Cube, Tome of ID, Chipped Gems/Skulls, Lvl 4-12 Runes + " + g + "g";
+    if (lvl < 30) return "Tier 2 (Flawed): Cube, Tome of ID, Flawed Gems/Skulls, Lvl 12-26 Runes + " + g + "g";
+    if (lvl < 45) return "Tier 3 (Normal): Cube, Tome of ID, Normal Gems/Skulls, Lvl 28-38 Runes + " + g + "g";
+    if (lvl < 60) return "Tier 4 (Flawless): Cube, Tome of ID, Flawless Gems/Skulls, Lvl 38-52 Runes + " + g + "g";
+    return "Tier 5 (Perfect): Cube, Tome of ID, Perfect Gems/Skulls, Lvl 48-68 Runes + " + g + "g";
+  }}
+
+  function sanitizeCharName(raw) {{
+    return (raw || "").replace(/[^A-Za-z_-]/g, "").slice(0, 15);
+  }}
+
+  function buildShareableInviteUrl(fullAbsolute) {{
+    var nm = sanitizeCharName(cgNameEl ? cgNameEl.value : "") || "Alex";
+    var cls = cgClassEl ? cgClassEl.value : "pal";
+    var lvl = Math.max(1, Math.min(99, parseInt(cgLevelEl ? cgLevelEl.value : "30", 10) || 30));
+    var wp = cgWpEl ? cgWpEl.value : "a5n";
+    var qs = "?name=" + encodeURIComponent(nm) + "&class=" + encodeURIComponent(cls) + "&level=" + lvl + "&wp=" + encodeURIComponent(wp) + "#char-generator";
+    if (fullAbsolute && window.location) {{
+      var base = window.location.origin + window.location.pathname;
+      return base + qs;
+    }}
+    return qs;
+  }}
+
+  function updateCharGenUI() {{
+    var lvl = Math.max(1, Math.min(99, parseInt(cgLevelEl ? cgLevelEl.value : "30", 10) || 30));
+    if (cgTierPrev) cgTierPrev.textContent = tierLabelForLevel(lvl);
+    if (cgShareUrlEl) cgShareUrlEl.textContent = buildShareableInviteUrl(false);
+  }}
+
+  // Pre-fill form fields from URL query parameters (e.g. ?name=Alex&class=bar&level=55&wp=a3nm#char-generator)
+  (function applyUrlParams() {{
+    if (!window.location.search) return;
+    var sp = new URLSearchParams(window.location.search);
+    var hasParam = false;
+    if (sp.get("name") && cgNameEl) {{ cgNameEl.value = sanitizeCharName(sp.get("name")); hasParam = true; }}
+    if (sp.get("class") && cgClassEl) {{ cgClassEl.value = sp.get("class").toLowerCase(); hasParam = true; }}
+    if (sp.get("level") && cgLevelEl) {{ cgLevelEl.value = sp.get("level"); hasParam = true; }}
+    if (sp.get("wp") && cgWpEl) {{ cgWpEl.value = sp.get("wp").toLowerCase(); hasParam = true; }}
+    if (hasParam && cgStatusEl) {{
+      cgStatusEl.className = "d2-bright-gold";
+      cgStatusEl.textContent = "Pre-filled from invite link! Click 'Generate & Save .d2s Character File' to download.";
+    }}
+  }})();
+
+  // Client-side D2R v105 .d2s binary generator (static fallback when /api/char.d2s is offline)
+  var ACT_COMPLETED_QUEST_WORDS = {{
+    1: [[0,0x0001],[1,0x9001],[2,0x901D],[3,0x104D],[4,0x9019],[5,0x1015],[6,0x101D],[7,0x0001],[8,0x0001]],
+    2: [[8,0x0001],[9,0x1011],[10,0x1C79],[11,0x9005],[12,0x1181],[13,0x1005],[14,0x1C25],[15,0x0001],[16,0x0001]],
+    3: [[16,0x0001],[17,0x1001],[18,0x10FD],[19,0x13F9],[20,0x1001],[21,0x100D],[22,0x1381],[23,0x0001],[24,0x0001]],
+    4: [[24,0x0001],[25,0x1001],[26,0x1201],[27,0x1001],[28,0x0001],[32,0x0001]],
+    5: [[32,0x0001],[35,0x9021],[36,0x1001],[37,0x178D],[38,0x801E],[39,0x1029],[40,0x148D]]
+  }};
+  var ACT_CUMULATIVE_WPS = {{ 0: 0, 1: 9, 2: 18, 3: 27, 4: 30, 5: 39 }};
+  var ACT_TOWN_WP_BIT = {{ 1: 0, 2: 9, 3: 18, 4: 27, 5: 30 }};
+  var STAT_BITS = {{ 0:10, 1:10, 2:10, 3:10, 4:10, 5:8, 6:21, 7:21, 8:21, 9:21, 10:21, 11:21, 12:7, 13:32, 14:25, 15:25 }};
+
+  function b64ToUint8Array(b64) {{
+    var bin = window.atob(b64);
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }}
+
+  function findMarker(buf, str, start) {{
+    var s = start || 0;
+    for (var i = s; i <= buf.length - str.length; i++) {{
+      var ok = true;
+      for (var j = 0; j < str.length; j++) {{
+        if (buf[i + j] !== str.charCodeAt(j)) {{ ok = false; break; }}
+      }}
+      if (ok) return i;
+    }}
+    return -1;
+  }}
+
+  function parseWpCode(wpStr) {{
+    var s = (wpStr || "a1n").toLowerCase().replace(/[:-_]/g, "");
+    if (s === "all") return {{ diff: 2, act: 5, full: true }};
+    if (s === "start") return {{ diff: 0, act: 1, full: false }};
+    var act = parseInt(s.charAt(1), 10) || 1;
+    var dp = s.slice(2);
+    var full = false;
+    if (dp.slice(-4) === "done") {{ full = true; dp = dp.slice(0, -4) || "n"; }}
+    var diff = (dp === "h" || dp === "hell") ? 2 : ((dp === "nm" || dp === "nightmare") ? 1 : 0);
+    return {{ diff: diff, act: act, full: full }};
+  }}
+
+  function encodeGfSection(statsObj) {{
+    var bits = "";
+    function revBits(val, width) {{
+      var b = "";
+      var v = val >>> 0;
+      for (var i = 0; i < width; i++) {{
+        b += (v & 1) ? "1" : "0";
+        v = v >>> 1;
+      }}
+      return b;
+    }}
+    for (var sid = 0; sid <= 15; sid++) {{
+      if (statsObj[sid] !== undefined && statsObj[sid] !== null) {{
+        bits += revBits(sid, 9);
+        bits += revBits(statsObj[sid], STAT_BITS[sid]);
+      }}
+    }}
+    bits += "111111111";
+    while (bits.length % 8 !== 0) bits += "0";
+    var out = new Uint8Array(bits.length / 8);
+    for (var i = 0; i < out.length; i++) {{
+      var byteVal = 0;
+      for (var b = 0; b < 8; b++) {{
+        if (bits.charAt(i * 8 + b) === "1") byteVal |= (1 << b);
+      }}
+      out[i] = byteVal;
+    }}
+    return out;
+  }}
+
+  function generateD2sClientSide(cleanName, clsCode, level, wpCode) {{
+    var tKey = tierKeyForLevel(level);
+    var b64 = CHAR_GEN_DATA.templates[tKey] || CHAR_GEN_DATA.templates["default"];
+    var raw = b64ToUint8Array(b64);
+    var dv = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
+    var cs = CHAR_GEN_DATA.classes[clsCode] || CHAR_GEN_DATA.classes["pal"];
+
+    // 1. Set 16-byte Character Name (0x12B) & Class ID (24) & Level (27, 43)
+    for (var i = 0; i < 16; i++) raw[0x12B + i] = (i < cleanName.length) ? cleanName.charCodeAt(i) : 0;
+    raw[24] = cs.id;
+    raw[27] = level;
+    if (raw[43] !== 0) raw[43] = level;
+
+    // 2. Progression byte (21) & Active difficulty/town bytes (152..154)
+    var wp = parseWpCode(wpCode);
+    var progVal = Math.min(15, wp.diff * 5 + (wp.full ? wp.act : Math.max(0, wp.act - 1)));
+    if (wp.diff === 2 && wp.act === 5 && wp.full) progVal = 15;
+    raw[21] = progVal;
+    raw[26] = 0x1E;
+    var arrivalIdx = Math.min(4, wp.full ? wp.act : Math.max(0, wp.act - 1));
+    raw[152] = 0; raw[153] = 0; raw[154] = 0;
+    raw[152 + wp.diff] = 0x80 | arrivalIdx;
+
+    // 3. Woo! Quests & Quest Bonuses
+    var woo = findMarker(raw, "Woo!", 0);
+    var qSk = 0, qSt = 0, qLife = 0;
+    if (woo !== -1) {{
+      for (var d = 0; d < 3; d++) {{
+        var base = woo + 10 + d * 96;
+        for (var w = 0; w < 48; w++) dv.setUint16(base + w * 2, 0, true);
+        if (d <= wp.diff) {{
+          var maxAct = (d < wp.diff) ? 5 : wp.act;
+          var compFinal = (d < wp.diff) ? true : wp.full;
+          var compUpto = compFinal ? maxAct : (maxAct - 1);
+          dv.setUint16(base, 0x0001, true);
+          for (var a = 1; a <= compUpto; a++) {{
+            var pairs = ACT_COMPLETED_QUEST_WORDS[a] || [];
+            for (var p = 0; p < pairs.length; p++) {{
+              var wIdx = pairs[p][0], wVal = pairs[p][1];
+              dv.setUint16(base + wIdx * 2, dv.getUint16(base + wIdx * 2, true) | wVal, true);
+            }}
+          }}
+        }}
+        var q41 = dv.getUint16(base + 41 * 2, true);
+        dv.setUint16(base + 41 * 2, (q41 | 0x8001) & ~0x0002, true);
+        if (dv.getUint16(base + 1 * 2, true) & 1) qSk += 1;
+        if (dv.getUint16(base + 9 * 2, true) & 1) qSk += 1;
+        if (dv.getUint16(base + 17 * 2, true) & 1) qSt += 5;
+        if (dv.getUint16(base + 20 * 2, true) & 1) qLife += 20;
+        if (dv.getUint16(base + 25 * 2, true) & 1) qSk += 2;
+      }}
+    }}
+
+    // 4. WS Waypoints (using BigInt for 39-bit masks)
+    var ws = findMarker(raw, "WS", woo !== -1 ? woo : 0);
+    if (ws !== -1) {{
+      for (var d2 = 0; d2 < 3; d2++) {{
+        var off = ws + 8 + d2 * 24;
+        var mask = 1n;
+        if (d2 < wp.diff) {{
+          mask = (1n << 39n) - 1n;
+        }} else if (d2 === wp.diff) {{
+          if (!wp.full && wp.act === 1) {{
+            mask = 1n;
+          }} else if (wp.full) {{
+            var nWps = BigInt(ACT_CUMULATIVE_WPS[wp.act]);
+            mask = (1n << nWps) - 1n;
+            if (wp.act < 5) mask |= (1n << BigInt(ACT_TOWN_WP_BIT[wp.act + 1]));
+          }} else {{
+            var pWps = BigInt(ACT_CUMULATIVE_WPS[wp.act - 1] || 0);
+            var tBit = BigInt(ACT_TOWN_WP_BIT[wp.act]);
+            mask = ((1n << pWps) - 1n) | (1n << tBit);
+          }}
+        }}
+        raw[off] = 2; raw[off + 1] = 1;
+        for (var mb = 0; mb < 5; mb++) {{
+          raw[off + 2 + mb] = Number((mask >> BigInt(mb * 8)) & 0xFFn);
+        }}
+      }}
+    }}
+
+    // 5. Reroll Map Seed
+    if (woo >= 248) {{
+      var seedOff = (woo === 403) ? 155 : (woo - 162);
+      dv.setUint32(seedOff, Math.floor(Math.random() * 0x7FFFFFFD) + 1, true);
+    }}
+
+    // 6. Build gf stats & 30 zeroed skill points, preserving raw[jm:] bit-for-bit
+    var gf = findMarker(raw, "gf", ws !== -1 ? ws : 0);
+    var ifPos = findMarker(raw, "if", gf);
+    var jm = findMarker(raw, "JM", ifPos);
+    var life = cs.hpadd + cs.vit + (level - 1) * (cs.LifePerLevel / 4.0) + qLife;
+    var mana = cs.int + (level - 1) * (cs.ManaPerLevel / 4.0);
+    var stam = cs.stamina + (level - 1) * (cs.StaminaPerLevel / 4.0);
+    var statPts = (level - 1) * cs.StatPerLevel + qSt;
+    var skPts = Math.min(255, (level - 1) * cs.SkillsPerLevel + qSk);
+    var sGold = defaultGoldForLevel(level);
+    var statsObj = {{
+      0: cs.str,
+      1: cs.int,
+      2: cs.dex,
+      3: cs.vit,
+      6: Math.round(life * 256),
+      7: Math.round(life * 256),
+      8: Math.round(mana * 256),
+      9: Math.round(mana * 256),
+      10: Math.round(stam * 256),
+      11: Math.round(stam * 256),
+      12: level,
+      13: CHAR_GEN_DATA.exp[level] || 0
+    }};
+    if (statPts > 0) statsObj[4] = statPts;
+    if (skPts > 0) statsObj[5] = skPts;
+    if (sGold > 0) statsObj[15] = sGold;
+
+    var gfBytes = encodeGfSection(statsObj);
+    var tailLen = raw.length - jm;
+    var totalLen = gf + 2 + gfBytes.length + 2 + 30 + tailLen;
+    var rebuilt = new Uint8Array(totalLen);
+    rebuilt.set(raw.subarray(0, gf), 0);
+    rebuilt[gf] = 0x67; rebuilt[gf + 1] = 0x66; // 'gf'
+    rebuilt.set(gfBytes, gf + 2);
+    var newIf = gf + 2 + gfBytes.length;
+    rebuilt[newIf] = 0x69; rebuilt[newIf + 1] = 0x66; // 'if'
+    // 30 zero bytes for unallocated skills follow automatically
+    rebuilt.set(raw.subarray(jm), newIf + 2 + 30);
+
+    // 7. Recompute file length (offset 8) and 32-bit rotate-left checksum (offset 12)
+    var rdv = new DataView(rebuilt.buffer, rebuilt.byteOffset, rebuilt.byteLength);
+    rdv.setUint32(8, rebuilt.length, true);
+    rdv.setUint32(12, 0, true);
+    var csum = 0;
+    for (var ci = 0; ci < rebuilt.length; ci++) {{
+      csum = (((csum << 1) | (csum >>> 31)) >>> 0);
+      csum = ((csum + rebuilt[ci]) >>> 0);
+    }}
+    rdv.setUint32(12, csum, true);
+    return rebuilt;
+  }}
+
+  async function saveD2sBytes(bytes, filename) {{
+    if (window.showSaveFilePicker) {{
+      try {{
+        var handle = await window.showSaveFilePicker({{
+          suggestedName: filename,
+          types: [{{ description: "Diablo II Character Save (.d2s)", accept: {{ "application/octet-stream": [".d2s"] }} }}]
+        }});
+        var writable = await handle.createWritable();
+        await writable.write(bytes);
+        await writable.close();
+        return true;
+      }} catch (err) {{
+        if (err && err.name === "AbortError") return false;
+      }}
+    }}
+    var blob = new Blob([bytes], {{ type: "application/octet-stream" }});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() {{ document.body.removeChild(a); URL.revokeObjectURL(url); }}, 500);
+    return true;
+  }}
+
+  if (cgNameEl) cgNameEl.addEventListener("input", updateCharGenUI);
+  if (cgClassEl) cgClassEl.addEventListener("change", updateCharGenUI);
+  if (cgLevelEl) cgLevelEl.addEventListener("input", updateCharGenUI);
+  if (cgWpEl) cgWpEl.addEventListener("change", updateCharGenUI);
+
+  if (cgCopyLinkBtn) {{
+    cgCopyLinkBtn.addEventListener("click", function() {{
+      var fullUrl = buildShareableInviteUrl(true);
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(fullUrl);
+      }}
+      cgCopyLinkBtn.textContent = "✓ Copied Invite Link!";
+      setTimeout(function() {{ cgCopyLinkBtn.innerHTML = "&#128279; Copy Pre-Filled Invite Link"; }}, 3000);
+    }});
+  }}
+
+  if (cgCopyWinBtn) {{
+    cgCopyWinBtn.addEventListener("click", function() {{
+      var winPath = "%USERPROFILE%\\\\Saved Games\\\\Diablo II Resurrected\\\\mods\\\\custom";
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(winPath);
+      }}
+      cgCopyWinBtn.textContent = "✓ Copied! Paste (Ctrl+L, Ctrl+V) in Save As";
+      setTimeout(function() {{ cgCopyWinBtn.innerHTML = "&#128203; Copy Windows Save Path"; }}, 3500);
+    }});
+  }}
+
+  if (cgDownloadBtn) {{
+    cgDownloadBtn.addEventListener("click", async function() {{
+      var cleanName = sanitizeCharName(cgNameEl ? cgNameEl.value : "");
+      if (cleanName.length < 2) {{
+        if (cgStatusEl) {{
+          cgStatusEl.className = "d2-red";
+          cgStatusEl.textContent = "Please enter a unique character name (2–15 letters) first!";
+        }}
+        if (cgNameEl) cgNameEl.focus();
+        return;
+      }}
+      var clsCode = cgClassEl ? cgClassEl.value : "pal";
+      var lvl = Math.max(1, Math.min(99, parseInt(cgLevelEl ? cgLevelEl.value : "30", 10) || 30));
+      var wpCode = cgWpEl ? cgWpEl.value : "a5n";
+
+      try {{
+        var bytes = generateD2sClientSide(cleanName, clsCode, lvl, wpCode);
+        var saved = await saveD2sBytes(bytes, cleanName + ".d2s");
+        if (saved && cgStatusEl) {{
+          cgStatusEl.className = "d2-green";
+          cgStatusEl.textContent = "✓ Saved " + cleanName + ".d2s (" + bytes.length + " bytes)! Place in Saved Games\\\\Diablo II Resurrected\\\\mods\\\\custom";
+        }}
+      }} catch (err) {{
+        if (cgStatusEl) {{
+          cgStatusEl.className = "d2-red";
+          cgStatusEl.textContent = "Error: " + (err.message || String(err));
+        }}
+      }}
+    }});
+  }}
+
+  updateCharGenUI();
 }})();
 </script>
 </body>

@@ -857,31 +857,54 @@ def build_treasureclass(cfg: dict) -> str:
             by_tc[tc_opt] = opt_r
     rows.extend(opt_cloned_rows)
 
-    # TEMPORARY QA BOOST: Make Act 1 Blood Moor monsters drop Horadric Cube + Gems + Runes + Uniques
+    # TEMPORARY QA BOOST: Make Act 1 Blood Moor monsters drop all 5 Gem/Skull tiers + Tier Runes in equal proportions
     if econ.get("qa_blood_moor_boost", False):
-        if "QA Craft Kit" not in by_tc:
-            qac = _make_blank_row(headers, "QA Craft Kit")
-            qac["Picks"] = "-6"
+        if "QA Tier Kit Pool" not in by_tc:
+            qa_sub_tcs = [
+                ("QA Gems 1", [("gcr", "1"), ("gcb", "1"), ("gcy", "1"), ("gcg", "1"), ("gcv", "1"), ("gcw", "1"), ("skc", "2")]),
+                ("QA Gems 2", [("gfr", "1"), ("gfb", "1"), ("gfy", "1"), ("gfg", "1"), ("gfv", "1"), ("gfw", "1"), ("skf", "2")]),
+                ("QA Gems 3", [("gsr", "1"), ("gsb", "1"), ("gsy", "1"), ("gsg", "1"), ("gsv", "1"), ("gsw", "1"), ("sku", "2")]),
+                ("QA Gems 4", [("glr", "1"), ("glb", "1"), ("gly", "1"), ("glg", "1"), ("gzv", "1"), ("glw", "1"), ("skl", "2")]),
+                ("QA Gems 5", [("gpr", "1"), ("gpb", "1"), ("gpy", "1"), ("gpg", "1"), ("gpv", "1"), ("gpw", "1"), ("skz", "2")]),
+                ("QA Runes A", [("r01", "1"), ("r02", "1"), ("r03", "2"), ("r04", "1"), ("r05", "2"), ("r06", "1"), ("r07", "1"), ("r08", "1"), ("r10", "1"), ("r12", "1")]),
+                ("QA Runes B", [("r13", "1"), ("r14", "1"), ("r15", "1"), ("r16", "1"), ("r17", "1"), ("r18", "2"), ("r21", "1"), ("r22", "1")]),
+                ("QA Runes C", [("r23", "2"), ("r24", "2"), ("r25", "2"), ("r31", "1"), ("r33", "2")]),
+            ]
+            r17_idx = next(i for i, r in enumerate(rows) if r["Treasure Class"] == "Runes 17")
+            insert_offset = 1
+            for sub_name, sub_items in qa_sub_tcs:
+                sub_row = _make_blank_row(headers, sub_name)
+                sub_row["Picks"] = "1"
+                sub_row["NoDrop"] = "0"
+                _set_items(sub_row, sub_items)
+                rows.insert(r17_idx + insert_offset, sub_row)
+                by_tc[sub_name] = sub_row
+                insert_offset += 1
+
+            qac = _make_blank_row(headers, "QA Tier Kit Pool")
+            qac["Picks"] = "6"
             qac["NoDrop"] = "0"
-            qac["Unique"] = "1024"
             _set_items(
                 qac,
                 [
-                    ("box", "1"),
-                    ("Chipped Gem", "1"),
-                    ("Perfect Gem", "1"),
-                    ("Runes 3", "2"),
-                    ("Act 1 Equip B", "1"),
+                    ("QA Gems 1", "8"),
+                    ("QA Gems 2", "8"),
+                    ("QA Gems 3", "8"),
+                    ("QA Gems 4", "8"),
+                    ("QA Gems 5", "8"),
+                    ("QA Runes A", "12"),
+                    ("QA Runes B", "9"),
+                    ("QA Runes C", "9"),
                 ],
             )
-            r17_idx = next(i for i, r in enumerate(rows) if r["Treasure Class"] == "Runes 17")
-            rows.insert(r17_idx + 1, qac)
-            by_tc["QA Craft Kit"] = qac
-        for qa_tc in ("Act 1 H2H A", "Act 1 H2H B", "Act 1 Cast A", "Act 1 Miss A", "Quill 1"):
+            rows.insert(r17_idx + insert_offset, qac)
+            by_tc["QA Tier Kit Pool"] = qac
+
+        for qa_tc in ("Act 1 H2H A", "Act 1 H2H B", "Act 1 Cast A", "Act 1 Miss A", "Act 1 Champ A", "Act 1 Unique A", "Quill 1"):
             if qa_tc in by_tc:
                 by_tc[qa_tc]["Picks"] = "1"
                 by_tc[qa_tc]["NoDrop"] = "0"
-                _set_items(by_tc[qa_tc], [("QA Craft Kit", "1")])
+                _set_items(by_tc[qa_tc], [("QA Tier Kit Pool", "1")])
 
     tc_path = write_excel_tsv("treasureclassex.txt", headers, rows)
     obj_path = build_objects(cfg)

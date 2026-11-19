@@ -11,8 +11,11 @@ This document provides a technical orientation for developers working on **Casta
 ├── README.md                           # High-level overview, 7 Horadric Cube recipes & build command
 ├── bin/                                # Executable CLI entrypoints
 │   ├── d2r-build-mod.py                # Master pure-function build & verification pipeline
-│   ├── d2r-sorc                        # Interactive one-skill-at-a-time experiment CLI
-│   └── d2r-reset-sorc.py               # Offline test character (.d2s) respec & level utility
+│   ├── d2r-char                        # Multi-class character generator, respec/waypoint/gold & starter-kit CLI
+│   ├── d2r-sorc                        # Interactive one-skill-at-a-time Sorceress experiment CLI
+│   ├── d2r-mod                         # Offline mod launcher (D2RLoader default, --direct for direct D2R.exe)
+│   ├── d2r-qa-harness.py               # Automated X11 smoke-test harness
+│   └── setup/                          # One-time CASC extraction & Battle.net prefix setup scripts
 ├── assets/                             # Custom source artwork (white-on-black silhouettes & item icons)
 │   ├── skill_icons/                    # Custom skill icon silhouettes stamped onto class icon sprites
 │   └── items/                          # Custom Lockbox, Key, and Preparation Elixir artwork
@@ -129,4 +132,25 @@ Instead of tautological config assertions, the test suite under [`tests/`](file:
 1. [`tests/test_engine_contracts.py`](file:///home/grant/games/d2r/tests/test_engine_contracts.py) — Universal C++ engine contracts: referential integrity across all tables/strings, function-to-column coupling rules (`srvdofunc`/`cltdofunc` companion column requirements), the **Zero Elemental Pierce / Zero Sunder Charm** foundational boundary across all player skills, binary `uint8_t`/`int16_t` bounds, and `descline=19` format string guards.
 2. [`tests/test_skill_simulation.py`](file:///home/grant/games/d2r/tests/test_skill_simulation.py) & [`tests/calc_eval.py`](file:///home/grant/games/d2r/tests/calc_eval.py) — Parses and evaluates every D2R formula across `skills.txt`, `missiles.txt`, and `skilldesc.txt`, simulating reworked skills across neutral, matching-stance, and opposing-stance states (verifying cross-stance fizzle on offensive spells and hard `restrict=2, State1=sorc_stance_<tree>` gating on mobility utility skills).
 3. [`tests/test_skill_trees.py`](file:///home/grant/games/d2r/tests/test_skill_trees.py) — Skill tree prerequisite DAG, canonical `{1, 8, 16, 24, 32, 40}` level gates, and UI connector arrow geometry.
-4. [`tests/test_world_invariants.py`](file:///home/grant/games/d2r/tests/test_world_invariants.py), [`tests/test_item_invariants.py`](file:///home/grant/games/d2r/tests/test_item_invariants.py), [`tests/test_monster_invariants.py`](file:///home/grant/games/d2r/tests/test_monster_invariants.py) — Property-based world, economy, vendor, staffmod, affix, distillation, monster affinity, optional dungeon, and hireling invariants.
+4. [`tests/test_world_invariants.py`](file:///home/grant/games/d2r/tests/test_world_invariants.py), [`tests/test_item_invariants.py`](file:///home/grant/games/d2r/tests/test_item_invariants.py), [`tests/test_monster_invariants.py`](file:///home/grant/games/d2r/tests/test_monster_invariants.py), [`tests/test_char_manager.py`](file:///home/grant/games/d2r/tests/test_char_manager.py) — Property-based world, economy, vendor, staffmod, affix, distillation, monster affinity, optional dungeon, hireling, and `.d2s` character generator invariants.
+
+---
+
+## 5. Character & Starter-Kit Provisioning (`bin/d2r-char`)
+
+[`bin/d2r-char`](file:///home/grant/games/d2r/bin/d2r-char) (backed by [`tools/mod_builder/char_manager.py`](file:///home/grant/games/d2r/tools/mod_builder/char_manager.py) and starter `.d2s` templates in [`tools/char_templates/`](file:///home/grant/games/d2r/tools/char_templates)) generates or modifies character saves across all 7 classes while preserving 100% of the template's `JM` item section (equipped gear, belt potions, inventory Horadric Cube, and Personal Stash Tab 1 runes):
+
+```bash
+# List all characters in Saved Games/mods/custom:
+./bin/d2r-char list
+
+# Generate a Paladin at level 53 with waypoints through Act 3 Nightmare and 500,000 stash gold:
+./bin/d2r-char create PALADIN --class pal --level 53 --wp a3nm --stash-gold 500000
+
+# Refund all skill points (and optionally reset stats or level) on an existing test character:
+./bin/d2r-char reset SORC
+./bin/d2r-char set ASSASSIN --level 40 --wp a1nm --stash-gold 1000000
+
+# Ingest an in-game prepared character (holding a Horadric Cube & runes) as a reusable template:
+./bin/d2r-char save-template TESTER --as default
+```

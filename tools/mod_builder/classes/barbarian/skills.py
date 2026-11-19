@@ -64,13 +64,13 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     leap["*calc3 desc"] = "Stamina-scaled Leap Range"
     leap["aurarangecalc"] = "clc3"
     leap["calc4"] = ""
-    leap["calc5"] = "433"   # Cast Bar Stamina Reflex (Id 433) during leap
+    leap["calc5"] = by_name.get("Bar Stamina Reflex", {}).get("*Id", "432")  # Dynamically updated by append_barbarian_helper_skills
     leap["*calc5 desc"] = "Skill ID to cast when leap ends"
     leap["calc6"] = "1"     # sLvl 1 Bar Stamina Reflex (6-subtile drain radius, gentle per-monster drain)
     leap["*calc6 desc"] = "Level of cast skill ID"
 
     # Leap Attack (Id 143, Col 2 Row 4, Req Lvl 24, requires Leap):
-    # 0 Mana, uses srvdofunc=170 + calc5=433 (Bar Stamina Reflex at sLvl 10)
+    # 0 Mana, uses srvdofunc=170 + calc5=Bar Stamina Reflex (*Id 432 at sLvl 10)
     # Both Weapon Damage % (calc1) and AoE Shockwave Damage (DmgSymPerCalc) degrade smoothly via gradient with Stamina %.
     # AoE Landing Stun (calc4) is enabled ONLY when Stamina is >= 50% full (RESTED_PCT >= 50).
     lpat = by_name["Leap Attack"]
@@ -95,14 +95,14 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     lpat["calc2"] = f"90+((par7-90)*({RESTED_PCT}))/100"
     lpat["calc4"] = f"(({RESTED_PCT})>=50)?par6:0"
     lpat["*calc4 desc"] = "Landing Stun Length (Requires >= 50% Stamina)"
-    lpat["calc5"] = "433"   # Cast Bar Stamina Reflex (Id 433) during leap
+    lpat["calc5"] = by_name.get("Bar Stamina Reflex", {}).get("*Id", "432")  # Dynamically updated by append_barbarian_helper_skills
     lpat["*calc5 desc"] = "Skill ID to cast when leap ends"
     lpat["calc6"] = "10"    # sLvl 10 Bar Stamina Reflex (strong single-target/pack Stamina drain on landing)
     lpat["*calc6 desc"] = "Level of cast skill ID"
     lpat["DmgSymPerCalc"] = f"((75+skill('Leap'.blvl)*par8)*({RESTED_PCT}))/100-75"
 
     # Whirlwind (Id 151, Col 2 Row 6, Req Lvl 40, requires Leap Attack and Berserk):
-    # 0 Mana, uses srvdofunc=168 (Talic's Whirlwind) to cast Bar Stamina Reflex (Id 433 at sLvl 2).
+    # 0 Mana, uses srvdofunc=168 (Talic's Whirlwind) to cast Bar Stamina Reflex (*Id 432 at sLvl 2).
     # Damage % (calc1) degrades smoothly via gradient from Full Stamina (RAMP12 + Leap/Leap Attack synergies) down to -50% at Zero Stamina.
     ww = by_name["Whirlwind"]
     ww["reqlevel"] = "40"
@@ -126,7 +126,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ww["*calc4 desc"] = "Escalation 2 Skill Level"
     ww["calc5"] = "0"
     ww["*calc5 desc"] = "Chance To Cast Escalation 2 Skill"
-    ww["calc6"] = "433"   # Cast Bar Stamina Reflex (Id 433, EType=stam monster reflection) while spinning
+    ww["calc6"] = by_name.get("Bar Stamina Reflex", {}).get("*Id", "432")  # Dynamically updated by append_barbarian_helper_skills
     ww["*calc6 desc"] = "Escalation 1 Skill Id"
     ww["calc7"] = "0"
     ww["*calc7desc"] = "Escalation 2 Skill Id"
@@ -1284,17 +1284,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
 
 
 def apply_barbarian_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
-    """Apply Barbarian Leap, Leap Attack, War Cry, and Stamina Reflex missile updates."""
-    # 5. Barbarian Phase 1 Stamina Consumption & Sustain Missiles:
-    #    - leapknockback (Id 346): Spawns grimwardsmallstop on landing to drain Stamina on Leap
-    #    - leapattack (Id 685): Landing shockwave stun + spawns grimwardsmallstop to drain Stamina
-    #    - grimwardsmallstop (Id 251): Invisible self-hit Stamina Drain pulse (Skill = Bar Stamina Drain)
-    #    - grimwardlargestart (Id 255): Invisible self-hit Battle Trance Stamina Restore pulse (Skill = Battle Trance Pulse)
-    #    - grimwardmediumstart (Id 252): Totem of the Ancients startup that spawns both grimwardmedium (Enemy Debuff Totem)
-    #      and grimwardsmall (Friendly Proximity Stamina Emitter)
-    #    - grimwardmedium (Id 253): Totem of the Ancients body (Range=300 [12s], pulses srvdofunc=30 every 6 frames)
-    #    - grimwardsmall (Id 250): Stationary Totem Proximity Stamina Emitter (Range=300 [12s], pulses srvdofunc=22 every 10 frames)
-    #    - grimwardlarge (Id 256): Radial Totem Proximity Stamina Wave (pSrvHitFunc=18, CollideFriend=1, Skill = Bar Totem Stamina Pulse)
+    """Apply Barbarian Leap, Leap Attack, and War Cry missile updates."""
     if "leapknockback" in rows_by_name:
         lpk = rows_by_name["leapknockback"]
         lpk["pCltDoFunc"] = "1"
@@ -1327,31 +1317,6 @@ def apply_barbarian_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         lpa["ProgOverlay"] = ""
         lpa["Skill"] = "Leap Attack"
 
-    if "grimwardsmallstart" in rows_by_name:
-        gwss = rows_by_name["grimwardsmallstart"]
-        gwss["pCltDoFunc"] = "1"
-        gwss["pCltHitFunc"] = ""
-        gwss["pSrvDoFunc"] = "1"
-        gwss["pSrvHitFunc"] = "38"
-        gwss["sHitPar1"] = "0"
-        gwss["sHitPar2"] = "0"
-        gwss["cHitPar1"] = "0"
-        gwss["cHitPar2"] = "0"
-        gwss["Vel"] = "0"
-        gwss["MaxVel"] = "0"
-        gwss["Range"] = "1"
-        gwss["CelFile"] = "null"
-        gwss["AnimLen"] = "1"
-        gwss["CollideType"] = ""
-        gwss["CanDestroy"] = ""
-        gwss["LocalBlood"] = ""
-        gwss["NumDirections"] = "32"
-        gwss["Skill"] = "Leap"
-        gwss["AlwaysExplode"] = "1"
-        gwss["Explosion"] = "1"
-        gwss["HitSubMissile1"] = "leapknockback"
-        gwss["CltHitSubMissile1"] = ""
-
     if "warcry" in rows_by_name:
         wc_ms = rows_by_name["warcry"]
         wc_ms["pSrvDoFunc"] = "2"
@@ -1381,214 +1346,9 @@ def apply_barbarian_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         gws["AlwaysExplode"] = ""
         gws["CltHitSubMissile1"] = ""
 
-    if "grimwardsmallstop" in rows_by_name:
-        ms_drain = rows_by_name["grimwardsmallstop"]
-        ms_drain["pCltDoFunc"] = "1"
-        ms_drain["pSrvDoFunc"] = "14"
-        ms_drain["pSrvHitFunc"] = "27"
-        ms_drain["Param1"] = "1"
-        ms_drain["Param2"] = "68"
-        ms_drain["Vel"] = "0"
-        ms_drain["MaxVel"] = "0"
-        ms_drain["Range"] = "2"
-        ms_drain["InitSteps"] = "0"
-        ms_drain["CelFile"] = "null"
-        ms_drain["AnimLen"] = "1"
-        ms_drain["CollideType"] = ""
-        ms_drain["CollideKill"] = ""
-        ms_drain["CollideFriend"] = ""
-        ms_drain["LastCollide"] = ""
-        ms_drain["NextHit"] = ""
-        ms_drain["Size"] = "1"
-        ms_drain["HitShift"] = "8"
-        ms_drain["NumDirections"] = "1"
-        ms_drain["Skill"] = "Battle Trance Pulse"
-        ms_drain["CanDestroy"] = ""
-        ms_drain["AlwaysExplode"] = "1"
-        ms_drain["Explosion"] = ""
-
-    if "grimwardlargestart" in rows_by_name:
-        ms_trance = rows_by_name["grimwardlargestart"]
-        ms_trance["pCltDoFunc"] = "1"
-        ms_trance["pCltHitFunc"] = ""
-        ms_trance["pSrvDoFunc"] = "1"
-        ms_trance["pSrvHitFunc"] = "26"
-        ms_trance["sHitPar1"] = "2"
-        ms_trance["cHitPar1"] = "2"
-        ms_trance["Param1"] = ""
-        ms_trance["Param2"] = ""
-        ms_trance["Vel"] = "18"
-        ms_trance["MaxVel"] = "18"
-        ms_trance["Accel"] = ""
-        ms_trance["Range"] = "1"
-        ms_trance["InitSteps"] = "0"
-        ms_trance["CelFile"] = "null"
-        ms_trance["AnimLen"] = "1"
-        ms_trance["CollideType"] = ""
-        ms_trance["CollideKill"] = ""
-        ms_trance["CollideFriend"] = ""
-        ms_trance["LastCollide"] = ""
-        ms_trance["NextHit"] = ""
-        ms_trance["Size"] = "1"
-        ms_trance["NumDirections"] = "16"
-        ms_trance["Skill"] = "Battle Trance Pulse"
-        ms_trance["HitSubMissile1"] = "grimwardlarge"
-        ms_trance["HitSubMissile2"] = "grimwardsmallstop"
-        ms_trance["CltHitSubMissile1"] = ""
-        ms_trance["CanDestroy"] = "1"
-        ms_trance["AlwaysExplode"] = "1"
-
-    if "grimwardmediumstart" in rows_by_name:
-        gwms = rows_by_name["grimwardmediumstart"]
-        gwms["pSrvDoFunc"] = "1"
-        gwms["pSrvHitFunc"] = "26"
-        gwms["Range"] = "8"
-        gwms["HitSubMissile1"] = "grimwardmedium"
-        gwms["CltHitSubMissile1"] = "grimwardmedium"
-
-    if "grimwardmedium" in rows_by_name:
-        gwm = rows_by_name["grimwardmedium"]
-        gwm["pSrvDoFunc"] = "14"
-        gwm["Param1"] = "6"
-        gwm["Param2"] = "30"
-        gwm["Range"] = "250"
-        gwm["Skill"] = "Grim Ward"
-
-    if "grimwardlarge" in rows_by_name:
-        gwl = rows_by_name["grimwardlarge"]
-        gwl["pCltDoFunc"] = "1"
-        gwl["pCltHitFunc"] = ""
-        gwl["pSrvDoFunc"] = "14"
-        gwl["pSrvHitFunc"] = "27"
-        gwl["Param1"] = "1"
-        gwl["Param2"] = "18"
-        gwl["Vel"] = "0"
-        gwl["MaxVel"] = "0"
-        gwl["Accel"] = ""
-        gwl["Range"] = "2"
-        gwl["InitSteps"] = "0"
-        gwl["LoopAnim"] = "1"
-        gwl["CelFile"] = "null"
-        gwl["animrate"] = "1024"
-        gwl["AnimLen"] = "1"
-        gwl["AnimSpeed"] = "16"
-        gwl["CollideType"] = ""
-        gwl["CollideFriend"] = ""
-        gwl["LastCollide"] = ""
-        gwl["NextHit"] = ""
-        gwl["NextDelay"] = ""
-        gwl["Size"] = "1"
-        gwl["Trans"] = ""
-        gwl["NumDirections"] = "4"
-        gwl["Skill"] = "Battle Trance Pulse"
-        gwl["CanDestroy"] = "1"
-        gwl["AlwaysExplode"] = "1"
-        gwl["Explosion"] = "1"
-        gwl["CltHitSubMissile1"] = ""
-
-
-
 
 def append_barbarian_helper_skills(s_headers: List[str], s_rows: List[Dict[str, str]], by_name: Dict[str, Dict[str, str]]) -> None:
-    """Append hidden Barbarian Stamina helper skills (Ids 430..433)."""
-    # Append 4 Barbarian Stamina helper skills (Ids 430, 431, 432, 433):
-    #   - 430: Bar Stamina Drain (gated by stat('frenzy'.accr)>0; applies 2-frame bar_stamina_reflex EType=stam on Frenzy swings)
-    #   - 431: Battle Trance Pulse (restores Find Item clc1 Stamina via 2-frame staminarecoverybonus surge when hit or on kill)
-    #   - 432: Bar Totem Stamina Pulse (pulses stambarblue=1 and +5000% staminarecoverybonus in proximity to Totem of the Ancients)
-    #   - 433: Bar Stamina Reflex (applies auraeventfunc=3 Shiver Armor EType=stam reflection to nearby monsters via srvdofunc=30)
-    if "Bar Stamina Drain" not in by_name:
-        max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
-        sk_drain = {h: "" for h in s_headers}
-        sk_drain["skill"] = "Bar Stamina Drain"
-        sk_drain["*Id"] = str(max_sid + 1)
-        sk_drain["srvdofunc"] = "30"
-        sk_drain["aurafilter"] = "2"
-        sk_drain["auratargetstate"] = "bar_stamina_reflex"
-        sk_drain["auralencalc"] = "(stat('frenzy'.accr)>0)?2:0"
-        sk_drain["aurarangecalc"] = "5"
-        sk_drain["aurastat1"] = ""
-        sk_drain["aurastatcalc1"] = ""
-        sk_drain["aurastat2"] = ""
-        sk_drain["aurastatcalc2"] = ""
-        sk_drain["auraevent1"] = "install"
-        sk_drain["auraeventfunc1"] = "3"
-        sk_drain["range"] = "none"
-        sk_drain["monanim"] = "xx"
-        sk_drain["ItemEffect"] = "1"
-        sk_drain["reqlevel"] = "1"
-        sk_drain["InGame"] = "1"
-        sk_drain["HitShift"] = "7"
-        sk_drain["EType"] = "stam"
-        sk_drain["EMin"] = "12"
-        sk_drain["EMinLev1"] = "0"
-        sk_drain["EMinLev2"] = "0"
-        sk_drain["EMinLev3"] = "0"
-        sk_drain["EMinLev4"] = "0"
-        sk_drain["EMinLev5"] = "0"
-        sk_drain["EMax"] = "12"
-        sk_drain["EMaxLev1"] = "0"
-        sk_drain["EMaxLev2"] = "0"
-        sk_drain["EMaxLev3"] = "0"
-        sk_drain["EMaxLev4"] = "0"
-        sk_drain["EMaxLev5"] = "0"
-        sk_drain["*eol"] = "0"
-        s_rows.append(sk_drain)
-
-    if "Battle Trance Pulse" not in by_name:
-        max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
-        sk_trance = {h: "" for h in s_headers}
-        sk_trance["skill"] = "Battle Trance Pulse"
-        sk_trance["*Id"] = str(max_sid + 1)
-        sk_trance["srvdofunc"] = "18"
-        sk_trance["srvmissilea"] = "battlecommand"
-        sk_trance["aurafilter"] = "73731"
-        sk_trance["aurastate"] = "bar_trance_pulse"
-        sk_trance["auratargetstate"] = "bar_trance_pulse"
-        sk_trance["auralencalc"] = "2"
-        sk_trance["aurarangecalc"] = "15"
-        sk_trance["aurastat1"] = "staminarecoverybonus"
-        sk_trance["aurastatcalc1"] = "(skill('Find Item'.clc1)*7500*256)/max(256,stat('maxstamina'.accr))-100"
-        sk_trance["aurastat2"] = "item_staminadrainpct"
-        sk_trance["aurastatcalc2"] = "100"
-        sk_trance["aurastat3"] = "stamina"
-        sk_trance["aurastatcalc3"] = "skill('Find Item'.clc1)*256"
-        sk_trance["range"] = "none"
-        sk_trance["monanim"] = "xx"
-        sk_trance["ItemEffect"] = "1"
-        sk_trance["reqlevel"] = "1"
-        sk_trance["InGame"] = "1"
-        sk_trance["HitShift"] = "8"
-        sk_trance["*eol"] = "0"
-        s_rows.append(sk_trance)
-
-    if "Bar Totem Stamina Pulse" not in by_name:
-        max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
-        sk_totem = {h: "" for h in s_headers}
-        sk_totem["skill"] = "Bar Totem Stamina Pulse"
-        sk_totem["*Id"] = str(max_sid + 1)
-        sk_totem["srvdofunc"] = "65"
-        sk_totem["srvmissilea"] = "grimwardlarge"
-        sk_totem["cltdofunc"] = "25"
-        sk_totem["cltmissilea"] = "grimwardlarge"
-        sk_totem["aurafilter"] = "73731"
-        sk_totem["aurastate"] = "bar_totem_stamina"
-        sk_totem["auratargetstate"] = "bar_totem_stamina"
-        sk_totem["auralencalc"] = "250"
-        sk_totem["aurarangecalc"] = "skill('Grim Ward'.ln12)"
-        sk_totem["aurastat1"] = "staminarecoverybonus"
-        sk_totem["aurastatcalc1"] = "5000"
-        sk_totem["aurastat2"] = "item_staminadrainpct"
-        sk_totem["aurastatcalc2"] = "100"
-        sk_totem["perdelay"] = "15"
-        sk_totem["range"] = "none"
-        sk_totem["monanim"] = "xx"
-        sk_totem["ItemEffect"] = "1"
-        sk_totem["reqlevel"] = "1"
-        sk_totem["InGame"] = "1"
-        sk_totem["HitShift"] = "8"
-        sk_totem["*eol"] = "0"
-        s_rows.append(sk_totem)
-
+    """Append hidden Barbarian Stamina helper skill: Bar Stamina Reflex (EType=stam monster reflection)."""
     if "Bar Stamina Reflex" not in by_name:
         max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
         sk_reflex = {h: "" for h in s_headers}
@@ -1630,6 +1390,17 @@ def append_barbarian_helper_skills(s_headers: List[str], s_rows: List[Dict[str, 
         sk_reflex["EMaxLev5"] = "0"
         sk_reflex["*eol"] = "0"
         s_rows.append(sk_reflex)
+        by_name["Bar Stamina Reflex"] = sk_reflex
+
+    # Dynamically bind Leap (srvdofunc=170 -> calc5), Leap Attack (srvdofunc=170 -> calc5),
+    # and Whirlwind (srvdofunc=168 -> calc6) to the actual *Id of Bar Stamina Reflex
+    reflex_id = by_name["Bar Stamina Reflex"]["*Id"]
+    if "Leap" in by_name:
+        by_name["Leap"]["calc5"] = reflex_id
+    if "Leap Attack" in by_name:
+        by_name["Leap Attack"]["calc5"] = reflex_id
+    if "Whirlwind" in by_name:
+        by_name["Whirlwind"]["calc6"] = reflex_id
 
 
 

@@ -299,6 +299,102 @@ class TestSkillSimulation(unittest.TestCase):
             "sucfireballexplode: Range must evaluate > 0 when Ass Trap Charge Consume == 3",
         )
 
+    def test_barbarian_stamina_pendulum_behavioral_contracts(self):
+        """
+        Simulate all 3 Barbarian Stamina Pendulum skill families across Full Stamina (100%),
+        Half Stamina (50%), and Empty Stamina (0%):
+          1. Stamina Spenders (Leap, Leap Attack, Whirlwind) -> degrade as Stamina falls
+          2. Well-Rested Skills (Bash, Stun/Shield Slam, Concentrate) -> scale UP with current Stamina %
+          3. Exhaustion / Last Stand Skills (Double Swing, Double Throw, Frenzy, Berserk) -> scale UP with missing Stamina %
+        """
+        idx = get_indexed_tables()
+        skills_by_name = idx["skills_by_name"]
+
+        full_stam = {"stamina": 25600, "maxstamina": 25600, "toblock": 50}
+        half_stam = {"stamina": 12800, "maxstamina": 25600, "toblock": 50}
+        empty_stam = {"stamina": 0, "maxstamina": 25600, "toblock": 50}
+
+        # 1. Stamina Spenders degrade monotonically as Stamina falls
+        for sk_name, col in (
+            ("Leap", "calc1"),
+            ("Leap", "calc2"),
+            ("Leap", "calc3"),
+            ("Leap Attack", "calc1"),
+            ("Leap Attack", "calc2"),
+            ("Leap Attack", "DmgSymPerCalc"),
+            ("Whirlwind", "calc1"),
+        ):
+            row = skills_by_name[sk_name]
+            expr = row.get(col, "")
+            v_full = eval_d2_expr(expr, row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+            v_half = eval_d2_expr(expr, row, slvl=10, stats=half_stam, skills_by_name=skills_by_name)
+            v_empty = eval_d2_expr(expr, row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name)
+            self.assertGreater(
+                v_full,
+                v_half,
+                f"Barbarian {sk_name}.{col}: Full Stamina ({v_full}) must be > Half Stamina ({v_half})",
+            )
+            self.assertGreater(
+                v_half,
+                v_empty,
+                f"Barbarian {sk_name}.{col}: Half Stamina ({v_half}) must be > Empty Stamina ({v_empty})",
+            )
+
+        # Leap Attack Landing Stun (calc4) requires >= 50% Stamina
+        lpat_row = skills_by_name["Leap Attack"]
+        self.assertGreater(
+            eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=half_stam, skills_by_name=skills_by_name),
+            0,
+        )
+        self.assertEqual(
+            eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name),
+            0,
+        )
+
+        # 2. Well-Rested Skills increase monotonically with Current Stamina %
+        for sk_name, col in (
+            ("Bash", "calc1"),
+            ("Stun", "calc1"),
+            ("Stun", "ELenSymPerCalc"),
+            ("Concentrate", "calc1"),
+            ("Concentrate", "aurastatcalc1"),
+        ):
+            row = skills_by_name[sk_name]
+            expr = row.get(col, "")
+            v_full = eval_d2_expr(expr, row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+            v_empty = eval_d2_expr(expr, row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name)
+            self.assertGreater(
+                v_full,
+                v_empty,
+                f"Barbarian Well-Rested {sk_name}.{col}: Full Stamina ({v_full}) must be > Empty Stamina ({v_empty})",
+            )
+
+        # 3. Exhaustion / Last Stand Skills increase monotonically as Stamina is depleted (and boost further with Bloodlust)
+        empty_with_bloodlust = {"stamina": 0, "maxstamina": 25600, "skill_chillingarmor": 1}
+        for sk_name in ("Double Swing", "Double Throw", "Frenzy", "Berserk"):
+            row = skills_by_name[sk_name]
+            expr = row.get("calc1", "")
+            v_full = eval_d2_expr(expr, row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+            v_empty = eval_d2_expr(expr, row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name)
+            v_blust = eval_d2_expr(
+                expr,
+                row,
+                slvl=10,
+                skill_levels={"Grim Ward": 10},
+                stats=empty_with_bloodlust,
+                skills_by_name=skills_by_name,
+            )
+            self.assertGreater(
+                v_empty,
+                v_full,
+                f"Barbarian Exhaustion {sk_name}.calc1: Empty Stamina ({v_empty}) must be > Full Stamina ({v_full})",
+            )
+            self.assertGreater(
+                v_blust,
+                v_empty,
+                f"Barbarian Exhaustion {sk_name}.calc1: Bloodlust active ({v_blust}) must be > unbuffed Empty Stamina ({v_empty})",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
-# Launch Diablo II: Resurrected directly in Offline Mode (-uid osi -mod custom -txt)
-# Uses libd2r_offline.so so D2R immediately sees it is offline without connecting to Battle.net.
+# Launch Diablo II: Resurrected in Offline Mode (-uid osi -mod custom -txt)
+# Default: launches via D2RLoader.exe (in-game Mod Selector & TCP/IP enabled).
+# Pass --direct to launch D2R.exe directly with '-uid osi -mod custom -txt -resetofflinemaps'.
 source "/home/grant/games/d2r/bin/d2r-common.sh"
+
+DIRECT_MODE=0
+if [ "${1:-}" = "--direct" ]; then
+    DIRECT_MODE=1
+    shift
+fi
 
 ensure_proton
 export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
@@ -18,10 +25,18 @@ if [ -f "${SAVED_BASE}/TESTER.d2s" ] && [ ! -f "${SAVED_MOD}/TESTER.d2s" ]; then
     cp -a "${SAVED_BASE}/"TESTER.* "${SAVED_MOD}/" 2>/dev/null || true
 fi
 
-D2R_LOADER_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2RLoader.exe'
-echo "[d2r-mod] Launching D2RLoader.exe (in-game Mod Selector & TCP/IP enabled)..."
-echo "[d2r-mod] Config: ${GAME_DIR}/d2rloader/config/d2rloader.toml"
-echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
 export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
 cd "${GAME_DIR}"
-run_proton "${D2R_LOADER_EXE}" "$@"
+
+if [ "${DIRECT_MODE}" = "1" ]; then
+    D2R_WIN_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2R.exe'
+    echo "[d2r-mod] Launching D2R.exe directly in Offline Mode with '-uid osi -mod custom -txt -resetofflinemaps'..."
+    echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
+    run_proton "${D2R_WIN_EXE}" -uid osi -mod custom -txt -resetofflinemaps "$@"
+else
+    D2R_LOADER_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2RLoader.exe'
+    echo "[d2r-mod] Launching D2RLoader.exe (in-game Mod Selector & TCP/IP enabled)..."
+    echo "[d2r-mod] Config: ${GAME_DIR}/d2rloader/config/d2rloader.toml"
+    echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
+    run_proton "${D2R_LOADER_EXE}" "$@"
+fi

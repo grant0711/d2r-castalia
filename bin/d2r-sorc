@@ -292,15 +292,13 @@ def cmd_build(_args):
 
 
 def cmd_char(args):
-    cmd = [sys.executable, os.path.join(ROOT, "bin/d2r-reset-sorc.py")]
+    cmd = [sys.executable, os.path.join(ROOT, "bin/d2r-char"), "reset", "SORC"]
     if args.init:
         cmd.append("--init")
     if args.stats:
         cmd.append("--stats")
     if args.level:
         cmd += ["--level", str(args.level)]
-    if subprocess.run(["pgrep", "-f", "D2RLoader.exe"], capture_output=True).returncode == 0:
-        print("warning: the game is running; the save is only read when the character loads.")
     sys.exit(subprocess.call(cmd))
 
 

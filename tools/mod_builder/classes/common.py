@@ -93,9 +93,7 @@ PALADIN_PASSIVE_STATES = [
 BARBARIAN_STATES = [
     ("bar_second_wind", {"castoverlay": "shoutstart", "overlay1": "innersight"}),
     ("bar_battle_trance", {"group": "11", "aura": "1", "overlay1": "battlecommand", "castoverlay": "battlecommandcast"}),
-    ("bar_trance_pulse", {"overlay1": "innersight"}),
     ("bar_totem_debuff", {"group": "10", "aura": "1", "overlay1": "bloodlust_state", "castoverlay": "battleorderscast"}),
-    ("bar_totem_stamina", {"stambarblue": "1", "overlay1": "innersight"}),
     ("bar_stamina_reflex", {"curable": "1", "curse": "1"}),
     ("bar_warcry_debuff", {"overlay1": "battlecry", "onsound": "barbarian_battlecry_state"}),
 ]

@@ -7,7 +7,7 @@ set -euo pipefail
 
 D2R_ROOT="/home/grant/games/d2r"
 GAME_DIR="${D2R_ROOT}/game/Diablo II Resurrected"
-EXTRACTOR="${D2R_ROOT}/bin/d2r-casc-extract"
+EXTRACTOR="${D2R_ROOT}/bin/setup/d2r-casc-extract"
 VANILLA_REF="${D2R_ROOT}/vanilla-reference"
 MOD_MPQ="${GAME_DIR}/mods/custom/custom.mpq"
 

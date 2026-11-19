@@ -1,4 +1,5 @@
 {
+  "mod_name": "castalia",
   "austerity_level": 1.0,
   "economy": {
     "zero_white_monster_drops": true,

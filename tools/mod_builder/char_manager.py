@@ -24,14 +24,21 @@ import struct
 import zipfile
 from typing import Dict, List, Optional, Tuple
 
-from mod_builder.common import MOD_EXCEL, MOD_ROOT, VANILLA_EXCEL
+from mod_builder.common import D2R_PLATFORM_ROOT, MOD_EXCEL, MOD_NAME, MOD_ROOT, REPO_ROOT, VANILLA_EXCEL
 
-D2R_ROOT = os.path.dirname(MOD_ROOT)
+D2R_ROOT = D2R_PLATFORM_ROOT
 DEFAULT_SAVE_DIR = os.path.join(
-    D2R_ROOT,
-    "prefixes/acct1/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected/mods/custom",
+    D2R_PLATFORM_ROOT,
+    f"prefixes/acct1/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected/mods/{MOD_NAME}",
 )
-TEMPLATE_DIR = os.path.join(D2R_ROOT, "tools/char_templates")
+TEMPLATE_DIR = os.path.join(REPO_ROOT, "tools/char_templates")
+
+
+def save_dir_for_mod(mod_name: str = MOD_NAME) -> str:
+    return os.path.join(
+        D2R_PLATFORM_ROOT,
+        f"prefixes/acct1/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected/mods/{mod_name}",
+    )
 
 # D2R Class IDs (byte 24 in .d2s) and charstats.txt / experience.txt row names
 CLASS_INFO: Dict[str, Tuple[int, str]] = {
@@ -481,7 +488,8 @@ def compute_completed_quest_bonuses(raw: bytes) -> Tuple[int, int, int]:
 
 
 def describe_wp_progress(raw: bytes) -> str:
-    ws = raw.find(b"WS")
+    woo = raw.find(b"Woo!")
+    ws = raw.find(b"WS", woo if woo != -1 else 0)
     if ws == -1:
         return "?"
     diff_labels = ("N", "NM", "H")

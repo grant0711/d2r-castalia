@@ -9,12 +9,13 @@ import argparse
 import os
 import sys
 
-sys.path.insert(0, "/home/grant/games/d2r/tools")
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
 
 from build_site import build_site
 from mod_builder.affixes import build_affixes_all, print_affix_summary
 from mod_builder.books_shrines import build_books, build_books_shrines, build_shrines
-from mod_builder.common import load_config
+from mod_builder.common import ensure_modinfo_json, load_config
 from mod_builder.cubemain import build_cubemain
 from mod_builder.gamble_npc import build_gamble, build_gamble_npc, build_npc
 from mod_builder.gems_runes import build_gems_runes
@@ -59,6 +60,7 @@ def main():
     )
     args = parser.parse_args()
     cfg = load_config()
+    ensure_modinfo_json()
 
     targets = list(STEPS.keys()) if "all" in args.targets else args.targets
     extra_steps = {

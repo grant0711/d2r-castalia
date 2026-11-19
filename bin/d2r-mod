@@ -1,28 +1,38 @@
 #!/usr/bin/env bash
-# Launch Diablo II: Resurrected in Offline Mode (-uid osi -mod custom -txt)
+# Launch Diablo II: Resurrected in Offline Mode (-uid osi -mod <MOD_NAME> -txt)
 # Default: launches via D2RLoader.exe (in-game Mod Selector & TCP/IP enabled).
-# Pass --direct to launch D2R.exe directly with '-uid osi -mod custom -txt -resetofflinemaps'.
+# Pass --direct to launch D2R.exe directly with '-uid osi -mod <MOD_NAME> -txt -resetofflinemaps'.
+# Pass --mod <NAME> to launch a different mod installed under game/Diablo II Resurrected/mods/<NAME>/.
 source "/home/grant/games/d2r/bin/d2r-common.sh"
 
+MOD_NAME="${D2R_MOD_NAME:-castalia}"
 DIRECT_MODE=0
-if [ "${1:-}" = "--direct" ]; then
-    DIRECT_MODE=1
-    shift
-fi
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --direct)
+            DIRECT_MODE=1
+            shift
+            ;;
+        --mod)
+            MOD_NAME="$2"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
 
 ensure_proton
 export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
 link_shared_game_dir "${WINEPREFIX}"
 
-# Ensure mods/custom save directory has Settings.json and offline test character if not already present
+# Ensure mods/<MOD_NAME> save directory has Settings.json if not already present
 SAVED_BASE="${WINEPREFIX}/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected"
-SAVED_MOD="${SAVED_BASE}/mods/custom"
+SAVED_MOD="${SAVED_BASE}/mods/${MOD_NAME}"
 mkdir -p "${SAVED_MOD}"
 if [ -f "${SAVED_BASE}/Settings.json" ] && [ ! -f "${SAVED_MOD}/Settings.json" ]; then
     cp -a "${SAVED_BASE}/Settings.json" "${SAVED_MOD}/"
-fi
-if [ -f "${SAVED_BASE}/TESTER.d2s" ] && [ ! -f "${SAVED_MOD}/TESTER.d2s" ]; then
-    cp -a "${SAVED_BASE}/"TESTER.* "${SAVED_MOD}/" 2>/dev/null || true
 fi
 
 export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
@@ -30,13 +40,13 @@ cd "${GAME_DIR}"
 
 if [ "${DIRECT_MODE}" = "1" ]; then
     D2R_WIN_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2R.exe'
-    echo "[d2r-mod] Launching D2R.exe directly in Offline Mode with '-uid osi -mod custom -txt -resetofflinemaps'..."
-    echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
-    run_proton "${D2R_WIN_EXE}" -uid osi -mod custom -txt -resetofflinemaps "$@"
+    echo "[d2r-mod] Launching D2R.exe directly in Offline Mode with '-uid osi -mod ${MOD_NAME} -txt -resetofflinemaps'..."
+    echo "[d2r-mod] Mod directory: ${GAME_DIR}/mods/${MOD_NAME}/${MOD_NAME}.mpq"
+    run_proton "${D2R_WIN_EXE}" -uid osi -mod "${MOD_NAME}" -txt -resetofflinemaps "$@"
 else
     D2R_LOADER_EXE='C:\Program Files (x86)\Diablo II Resurrected\D2RLoader.exe'
-    echo "[d2r-mod] Launching D2RLoader.exe (in-game Mod Selector & TCP/IP enabled)..."
+    echo "[d2r-mod] Launching D2RLoader.exe (in-game Mod Selector & TCP/IP enabled, default_mod=${MOD_NAME})..."
     echo "[d2r-mod] Config: ${GAME_DIR}/d2rloader/config/d2rloader.toml"
-    echo "[d2r-mod] Editing directory: /home/grant/games/d2r/my-mod"
+    echo "[d2r-mod] Mod directory: ${GAME_DIR}/mods/${MOD_NAME}/${MOD_NAME}.mpq"
     run_proton "${D2R_LOADER_EXE}" "$@"
 fi

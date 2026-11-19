@@ -43,7 +43,7 @@ import shutil
 import subprocess
 import sys
 
-ROOT = "/home/grant/games/d2r"
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
 from mod_builder.char_manager import (  # noqa: E402
@@ -56,7 +56,9 @@ from mod_builder.char_manager import (  # noqa: E402
     create_character_from_template,
     inspect_character_d2s,
     resolve_class,
+    save_dir_for_mod,
 )
+from mod_builder.common import MOD_NAME  # noqa: E402
 
 
 def _warn_if_game_running() -> None:
@@ -205,7 +207,8 @@ def cmd_templates(args) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--save-dir", default=DEFAULT_SAVE_DIR, help="Target Saved Games directory")
+    ap.add_argument("--mod", default=MOD_NAME, help=f"Target mod name under Saved Games/mods/ (default: {MOD_NAME})")
+    ap.add_argument("--save-dir", default=None, help="Target Saved Games directory override")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p_list = sub.add_parser("list", help="List all characters in Saved Games")
@@ -251,6 +254,8 @@ def main() -> None:
     p_tmpls.set_defaults(f=cmd_templates)
 
     args = ap.parse_args()
+    if not args.save_dir:
+        args.save_dir = save_dir_for_mod(args.mod)
     args.f(args)
 
 

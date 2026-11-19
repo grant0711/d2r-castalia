@@ -1705,7 +1705,7 @@ def build_site() -> str:
               Click <b>Copy Windows Save Path</b> below, then when the <b>Save As</b> window opens (or in File Explorer), press <code>Ctrl+L</code>, paste (<code>Ctrl+V</code>), and hit <code>Enter</code> to jump directly into your Castalia save folder:
             </p>
             <div style="background:#080604; border:1px solid #5c4b32; padding:6px 8px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-              <code id="cg-win-path" style="color:#00e600; font-size:11px; word-break:break-all;">%USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\custom</code>
+              <code id="cg-win-path" style="color:#00e600; font-size:11px; word-break:break-all;">%USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\castalia</code>
               <button type="button" id="cg-copy-win-btn" class="calc-reset-btn" style="white-space:nowrap;">&#128203; Copy Windows Save Path</button>
             </div>
             <div style="font-size:11px; color:#a8987e; line-height:1.45;">
@@ -2950,7 +2950,7 @@ var D2_CALC_DATA = {calc_payload_json};
 
   if (cgCopyWinBtn) {{
     cgCopyWinBtn.addEventListener("click", function() {{
-      var winPath = "%USERPROFILE%\\\\Saved Games\\\\Diablo II Resurrected\\\\mods\\\\custom";
+      var winPath = "%USERPROFILE%\\\\Saved Games\\\\Diablo II Resurrected\\\\mods\\\\castalia";
       if (navigator.clipboard && navigator.clipboard.writeText) {{
         navigator.clipboard.writeText(winPath);
       }}
@@ -2979,7 +2979,7 @@ var D2_CALC_DATA = {calc_payload_json};
         var saved = await saveD2sBytes(bytes, cleanName + ".d2s");
         if (saved && cgStatusEl) {{
           cgStatusEl.className = "d2-green";
-          cgStatusEl.textContent = "✓ Saved " + cleanName + ".d2s (" + bytes.length + " bytes)! Place in Saved Games\\\\Diablo II Resurrected\\\\mods\\\\custom";
+          cgStatusEl.textContent = "✓ Saved " + cleanName + ".d2s (" + bytes.length + " bytes)! Place in Saved Games\\\\Diablo II Resurrected\\\\mods\\\\castalia";
         }}
       }} catch (err) {{
         if (cgStatusEl) {{

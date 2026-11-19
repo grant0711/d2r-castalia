@@ -1,6 +1,6 @@
 # Castalia — Developer Architecture & Pipeline Handbook
 
-This document provides a technical orientation for developers working on **Castalia** (`/home/grant/games/d2r`). Everything in the mod is generated deterministically from pristine vanilla tables (`vanilla-reference/`) into `my-mod/data/`, verified by an automated invariant suite (`tools/mod_builder/verify.py`), and published to the strategy guide website (`docs/site/index.html`).
+This document provides a technical orientation for developers working on **Castalia** (`d2r-castalia`). Everything in the mod is generated deterministically from pristine vanilla tables (`vanilla-reference/`) into `castalia/data/` (`game/Diablo II Resurrected/mods/castalia/castalia.mpq/data/`), verified by an automated invariant suite (`tools/mod_builder/verify.py`), and published to the strategy guide website (`docs/site/index.html`).
 
 ---
 
@@ -56,14 +56,14 @@ This document provides a technical orientation for developers working on **Casta
 │   ├── sorc/                           # Sorceress status dashboard (STATUS.md) & per-skill experiment logs
 │   └── site/                           # Auto-generated strategy guide & interactive skill calculator (index.html)
 ├── vanilla-reference/                  # Read-only pristine D2R extracted tables and sprites
-└── my-mod/                             # Compiled mod output symlinked into D2R's mods/custom/custom.mpq
+└── castalia/                           # Compiled mod output symlinked into D2R's mods/castalia/castalia.mpq
 ```
 
 ---
 
 ## 2. The Pure-Function Build & Verification Pipeline
 
-Never hand-edit files inside `my-mod/data/`. Every file in `my-mod/data/` is deterministically generated from `vanilla-reference/` by running:
+Never hand-edit files inside `castalia/data/`. Every file in `castalia/data/` is deterministically generated from `vanilla-reference/` (configured by `"mod_name": "castalia"` in `tools/mod_builder/mod_config.json`) by running:
 
 ```bash
 python3 /home/grant/games/d2r/bin/d2r-build-mod.py
@@ -76,9 +76,13 @@ python3 /home/grant/games/d2r/bin/d2r-build-mod.py skills
 python3 /home/grant/games/d2r/bin/d2r-build-mod.py gems cubemain
 ```
 
+### Working on Multiple Mods Side-by-Side
+- The D2R game folder (`game/Diablo II Resurrected/mods/<mod_name>/<mod_name>.mpq`) and save folder (`Saved Games/Diablo II Resurrected/mods/<mod_name>/`) isolate each mod by `<mod_name>`.
+- `tools/mod_builder/mod_config.json` sets `"mod_name": "castalia"` (overridable via `D2R_MOD_NAME=<name>`), and `./bin/d2r-mod [--mod <name>]` and `./bin/d2r-char [--mod <name>]` can launch or manage saves for any mod installed under `mods/`.
+
 ### How `tools/build_site.py` Eliminates Documentation Drift
 - `tools/build_site.py` contains **zero hardcoded skill descriptions, rune stats, or gem stats**.
-- Instead, it reads the compiled `.txt` and `.json` files in `my-mod/data/` (`skills.txt`, `skilldesc.txt`, `missiles.txt`, `gems.txt`, `misc.txt`, `properties.txt`, `itemstatcost.txt`, `skills.json`, `item-modifiers.json`, `item-runes.json`), composites the in-game stone skill tree plates (`img/trees/<cls>_frame_0..2.png`), and embeds a real-time JavaScript D2R integer formula evaluator into `docs/site/index.html`.
+- Instead, it reads the compiled `.txt` and `.json` files in `castalia/data/` (`skills.txt`, `skilldesc.txt`, `missiles.txt`, `gems.txt`, `misc.txt`, `properties.txt`, `itemstatcost.txt`, `skills.json`, `item-modifiers.json`, `item-runes.json`), composites the in-game stone skill tree plates (`img/trees/<cls>_frame_0..2.png`), and embeds a real-time JavaScript D2R integer formula evaluator into `docs/site/index.html`.
 - Whenever a skill formula, synergy, gem, or rune is changed in Python or JSON specs, running `d2r-build-mod.py` or `d2r-sorc build` automatically updates the website and interactive skill calculator.
 
 ---
@@ -141,7 +145,7 @@ Instead of tautological config assertions, the test suite under [`tests/`](file:
 [`bin/d2r-char`](file:///home/grant/games/d2r/bin/d2r-char) (backed by [`tools/mod_builder/char_manager.py`](file:///home/grant/games/d2r/tools/mod_builder/char_manager.py) and starter `.d2s` templates in [`tools/char_templates/`](file:///home/grant/games/d2r/tools/char_templates)) generates or modifies character saves across all 7 classes while preserving 100% of the template's `JM` item section (equipped gear, belt potions, inventory Horadric Cube, and Personal Stash Tab 1 runes):
 
 ```bash
-# List all characters in Saved Games/mods/custom:
+# List all characters in Saved Games/mods/castalia:
 ./bin/d2r-char list
 
 # Generate a Paladin at level 53 with waypoints through Act 3 Nightmare and 500,000 stash gold:

@@ -160,7 +160,7 @@ def main() -> None:
         watch = True
         args.remove("--watch")
     save_dirs = args or [
-        "/home/grant/games/d2r/prefixes/acct1/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected/mods/custom"
+        "/home/grant/games/d2r/prefixes/acct1/pfx/drive_c/users/steamuser/Saved Games/Diablo II Resurrected/mods/castalia"
     ]
     run_once(save_dirs)
     if watch:

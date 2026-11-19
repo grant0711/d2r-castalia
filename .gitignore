@@ -1,5 +1,6 @@
 # Ignore D2R installation, Wine/Proton prefixes, runtime binaries, and generated mod output
 /game/
+/castalia
 /my-mod
 /prefixes/
 /runtime/

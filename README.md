@@ -53,13 +53,13 @@ Everything in the item and crafting economy revolves around **7 Horadric Cube re
 
 ## Deterministic Build & Verification Pipeline
 
-All mod data files (`my-mod/data/`), invariant checks, and the strategy guide website ([`docs/site/index.html`](docs/site/index.html)) are built from a single deterministic pipeline so that documentation and in-game values can never drift:
+All mod data files (`castalia/data/`), invariant checks, and the strategy guide website ([`docs/site/index.html`](docs/site/index.html)) are built from a single deterministic pipeline so that documentation and in-game values can never drift:
 
 ```bash
 ./bin/d2r-build-mod.py
 ```
 
 Running `./bin/d2r-build-mod.py`:
-1. Transforms pristine reference tables from `vanilla-reference/` into `my-mod/data/`.
+1. Transforms pristine reference tables from `vanilla-reference/` into `castalia/data/` (`game/Diablo II Resurrected/mods/castalia/castalia.mpq/data/`).
 2. Runs the full invariant verification suite (`tools/mod_builder/verify.py`).
-3. Rebuilds [`docs/site/index.html`](docs/site/index.html) (`tools/build_site.py`) directly from the compiled `.txt` and `.json` outputs in `my-mod/data/`.
+3. Rebuilds [`docs/site/index.html`](docs/site/index.html) (`tools/build_site.py`) directly from the compiled `.txt` and `.json` outputs in `castalia/data/`.

@@ -2,25 +2,42 @@
 """
 common.py
 Shared utilities for reading pristine vanilla D2R .txt/JSON tables from
-/home/grant/games/d2r/vanilla-reference/ and writing deterministic, validated
-CRLF .txt/JSON tables to /home/grant/games/d2r/my-mod/.
+vanilla-reference/ and writing deterministic, validated CRLF .txt/JSON tables
+to game/Diablo II Resurrected/mods/<mod_name>/<mod_name>.mpq/.
 """
 import json
 import os
 from typing import Dict, List, Tuple
 
-VANILLA_ROOT = "/home/grant/games/d2r/vanilla-reference"
-MOD_ROOT = "/home/grant/games/d2r/my-mod"
-VANILLA_EXCEL = os.path.join(VANILLA_ROOT, "data/global/excel")
-MOD_EXCEL = os.path.join(MOD_ROOT, "data/global/excel")
-VANILLA_STRINGS = os.path.join(VANILLA_ROOT, "data/local/lng/strings")
-MOD_STRINGS = os.path.join(MOD_ROOT, "data/local/lng/strings")
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mod_config.json")
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+D2R_PLATFORM_ROOT = os.environ.get("D2R_PLATFORM_ROOT", REPO_ROOT)
+GAME_DIR = os.environ.get("D2R_GAME_DIR", os.path.join(D2R_PLATFORM_ROOT, "game/Diablo II Resurrected"))
+VANILLA_ROOT = os.environ.get("D2R_VANILLA_ROOT", os.path.join(D2R_PLATFORM_ROOT, "vanilla-reference"))
 
 
 def load_config() -> dict:
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+MOD_NAME = os.environ.get("D2R_MOD_NAME") or load_config().get("mod_name", "castalia")
+MOD_ROOT = os.environ.get("D2R_MOD_ROOT") or os.path.join(GAME_DIR, f"mods/{MOD_NAME}/{MOD_NAME}.mpq")
+VANILLA_EXCEL = os.path.join(VANILLA_ROOT, "data/global/excel")
+MOD_EXCEL = os.path.join(MOD_ROOT, "data/global/excel")
+VANILLA_STRINGS = os.path.join(VANILLA_ROOT, "data/local/lng/strings")
+MOD_STRINGS = os.path.join(MOD_ROOT, "data/local/lng/strings")
+
+
+def ensure_modinfo_json() -> str:
+    """Ensure modinfo.json inside MOD_ROOT has name and savepath matching MOD_NAME."""
+    os.makedirs(MOD_ROOT, exist_ok=True)
+    modinfo_path = os.path.join(MOD_ROOT, "modinfo.json")
+    payload = {"name": MOD_NAME, "savepath": f"{MOD_NAME}/"}
+    with open(modinfo_path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+        f.write("\n")
+    return modinfo_path
 
 
 def read_excel_tsv(filename: str) -> Tuple[List[str], List[Dict[str, str]]]:

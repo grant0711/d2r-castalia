@@ -33,9 +33,10 @@ import os
 import subprocess
 import sys
 
-ROOT = "/home/grant/games/d2r"
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
+from mod_builder.common import MOD_EXCEL, VANILLA_EXCEL  # noqa: E402
 from mod_builder.sorc import engine  # noqa: E402
 from mod_builder.sorc.patterns import (  # noqa: E402
     MISSILE_FUNCS,
@@ -46,8 +47,8 @@ from mod_builder.sorc.patterns import (  # noqa: E402
 from mod_builder.sorc.registry import BY_SLUG, PAGE, SLOTS, check_registry, slot_level  # noqa: E402
 
 DOCS = os.path.join(ROOT, "docs", "sorc")
-EXCEL = os.path.join(ROOT, "my-mod/data/global/excel")
-VANILLA = os.path.join(ROOT, "vanilla-reference/data/global/excel")
+EXCEL = MOD_EXCEL
+VANILLA = VANILLA_EXCEL
 SORC_PATHS = ["tools/mod_builder/sorc", "docs/sorc", "bin/d2r-sorc"]
 
 

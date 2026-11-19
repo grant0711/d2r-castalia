@@ -10,6 +10,8 @@
         "skills.txt": {
           "Telekinesis": {
             "passive": "1",
+            "calc1": "lvl*10",
+            "*calc1 desc": "Lightning Stance Retaliation Damage +% (10%/lvl)",
             "leftskill": "0",
             "rightskill": "0",
             "srvstfunc": "",

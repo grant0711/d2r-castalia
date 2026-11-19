@@ -1,48 +1,124 @@
-# Sorceress Overhaul — Session Handoff
+# Sorceress Overhaul — Session Handoff (`feat/sorceress`)
 
-## 1. Where We Are
-- **Branch / Commit**: `main` at `445f8a5` (`final4: conservative capped scaling; Cold juggernaut; Fire life drain`).
-- **Build & Verify**: `python3 /home/grant/games/d2r/bin/d2r-sorc build` (runs `skills` build + all 8 verification suites).
-- **Test Character Reset**: `python3 /home/grant/games/d2r/bin/d2r-sorc char` (refunds all 118 skill points on `SORC.d2s`).
-- **Status Dashboard**: See [STATUS.md](file:///home/grant/games/d2r/docs/sorc/STATUS.md) and [README.md](file:///home/grant/games/d2r/docs/sorc/README.md).
+## 1. Quick Bootstrap for a New Context Window
 
-## 2. Completed & Locked-In Skills
-1. **All 3 Stances (`done`, variant `final4`)**:
-   - **Conflagration** (`conflagration`, replaces `Enchant` ID 52, Fire R3C2)
-   - **Cryostasis** (`cryostasis`, replaces `Frozen Armor` ID 40, Cold R4C1)
-   - **Overcharge** (`overcharge`, replaces `Energy Shield` ID 58, Lightning R4C2)
-   - *Mechanics*: `srvdofunc=18`, mutually exclusive via `states.txt` `group=13`, 6-loop `skill2` cast animation (`_shared` variant `anim_v3`), linear Boon/Bust scaling with caps, `Echo` cross-stance boon carry, and `damagedinmelee` retaliation (`auraeventfunc1=2/3`).
-2. **Retaliation Support Passives (`wip`, variant `final2`)**:
-   - **Kindling** (`kindling`, ID 37 `Warmth`), **Brittle Touch** (`brittle_touch`, ID 50 `Shiver Armor`), **Conduction** (`conduction`, ID 43 `Telekinesis`).
-   - Pure passives (`passive=1`) scaling stance melee retaliation damage (`+10%/lvl`) or freeze length (`+5%/lvl`), with working Current/Next Level tooltips.
-3. **Dials (`r9_no_vanilla_passive`)**:
-   - **Echo** (`afterglow`, ID 63 `Lightning Mastery`) is wired into all 3 stances; **Ignition** (`ignition`, ID 61) and **Equilibrium** (`equilibrium`, ID 65) have vanilla mastery stats stripped and await dial formula hookup.
-4. **Fire Line 1: Cinder Lance (`wip`, variant `p3_scaling`)**:
-   - Replaces `Fire Bolt` (ID 36, Fire R1C2, Req Lvl 1).
-   - Pierces all enemies (`CollideKill=0`) and scales velocity and reach per level (`Vel=18`, `VelLev=6`, `MaxVel=40`, `Range=26`).
+Start here without grepping the codebase:
 
-## 3. Hard Engine Rules Discovered
-- **Never add a 31st `charclass="sor"` skill** (corrupts `.d2s` saves). All 30 Sorceress skills reuse the 30 vanilla rows 1:1 ([registry.py](file:///home/grant/games/d2r/tools/mod_builder/sorc/registry.py)).
-- **Investment Must Change Feel**: Every active skill must scale a tangible geometry/feel parameter with skill points (velocity, range/radius, projectile count, or secondary duration), not just damage.
-- **Stance Constraints**:
-  - `srvdofunc=18` applies only ONE state and does NOT fire offensive aura events (`doactive`, `domissileattack`, `domissiledamage`), nor does it spawn `srvmissilea`.
-  - Defensive events (`damagedinmelee`, `hitbymissile`) DO work on `srvdofunc=18`.
-  - However, **active spells** CAN read whether a stance is active via `stat('skill_handofathena'.accr)` or similar marker stats if needed, or scale directly with skill level / calcs!
-- **Tooltip Next-Level Rule**: In `skilldesc.txt`, `skill('X'.lvl)` evaluates only current level in both Current and Next tooltip sections. Always use `lvl` (or `clc1..6` referencing `lvl`) for the skill's own level so "Next Level" displays `lvl + 1`.
-- **Skilldesc Line Limit**: `skilldesc.txt` only has `descline1..6`; overflow additional lines into `dsc2line1..5`.
+```bash
+# 1. View all 30 Sorceress skill slots, vanilla row IDs, status (16 done, 1 wip, 13 stub), and active variants:
+/home/grant/games/d2r/bin/d2r-sorc map
 
-## 4. Next Up: Remaining Fire Tree Skills (in Unlock Order)
-1. **Lvl 8 AoE 1 — `Pyroclasm` (`pyroclasm`, replaces `Fire Ball` ID 47, R2C1)**:
-   - Instant ring blast centered on caster with knockback and level-scaling radius/missile count.
-2. **Lvl 8 Utility — `Flashfire` (`flashfire`, replaces `Blaze` ID 46, R2C3)**:
-   - Mobility / burning trail utility.
-3. **Lvl 16 Combo — `Backdraft` (`backdraft`, replaces `Fire Wall` ID 51, R3C1)**:
-   - Ground fire patch + crowd control / combo.
-4. **Lvl 16 Dial — `Ignition` (`ignition`, replaces `Fire Mastery` ID 61, R3C3)**:
-   - Passive boosting active stance boons by `+2%/lvl`.
-5. **Lvl 24 AoE 2 — `Skyfall` (`skyfall`, replaces `Meteor` ID 56, R4C3)**:
-   - Delayed heavy AoE impact on cursor.
-6. **Lvl 32 Line 2 — `Brimstone Lance` (`brimstone_lance`, replaces `Inferno` ID 41, R5C2)**:
-   - Heavy piercing spear / multi-projectile boss killer.
-7. **Lvl 40 Capstone — `Pyre Hydra` (`pyre_hydra`, replaces `Hydra` ID 62, R6C2)**:
-   - Multi-head summon at cursor (no cooldown).
+# 2. Run the 30-skill TDD formula linter & stance-matrix simulator:
+/home/grant/games/d2r/bin/d2r-sorc test
+
+# 3. Look up the proven Fire template & server/client functions for the next Cold or Lightning skill:
+/home/grant/games/d2r/bin/d2r-sorc patterns <slug>
+/home/grant/games/d2r/bin/d2r-sorc funcs [query]
+
+# 4. Inspect a single skill's design, active JSON patch, and built diff vs vanilla:
+/home/grant/games/d2r/bin/d2r-sorc show <slug>
+
+# 5. Rebuild skills + verify invariants + regenerate docs/site/index.html:
+/home/grant/games/d2r/bin/d2r-sorc build
+```
+
+Key reference files:
+- **Status Dashboard**: [`docs/sorc/STATUS.md`](file:///home/grant/games/d2r/docs/sorc/STATUS.md) (auto-generated by `d2r-sorc check` / `d2r-sorc build`)
+- **Workflow Guide**: [`docs/sorc/README.md`](file:///home/grant/games/d2r/docs/sorc/README.md)
+- **Technical Engine Reference**: [`docs/engine_reference/sorceress_stances_and_spells.md`](file:///home/grant/games/d2r/docs/engine_reference/sorceress_stances_and_spells.md)
+- **30-Slot Map**: [`tools/mod_builder/sorc/registry.py`](file:///home/grant/games/d2r/tools/mod_builder/sorc/registry.py)
+- **Per-Skill JSON Specs**: [`tools/mod_builder/sorc/specs/`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs)
+
+---
+
+## 2. Current Progress (`16 done`, `1 wip`, `13 stub`)
+
+### A. Completed & Locked In (`16 / 30 done`)
+1. **Entire Fire Tree (`10 / 10 done`)** — including prerequisite DAG (`registry.py`), stone connector arrows (`tools/mod_builder/sorc/tree.py`), custom skill icons (`tools/mod_builder/sorc/icons.py`), Conflagration empowerment, and cross-stance fizzle (`test_fizzle`):
+   - **Cinder Lance** (`cinder_lance` $\rightarrow$ `Fire Bolt` 36, R1C1, Lvl 1, Line 1): `srvdofunc=1/cltdofunc=1`, velocity scales with level (`Vel=14, VelLev=4, MaxVel=40`); in Conflagration range doubles (`15 -> 30`) and impact triggers radius-4 AoE (`cinder_lance_crater`, `pCltDoFunc=48`).
+   - **Pyroclasm** (`pyroclasm` $\rightarrow$ `Fire Ball` 47, R2C1, Lvl 8, AoE 1): `srvdofunc=154/cltdofunc=99` (`pyroclasm_ring`), 360° knockback ring whose radius scales via `VelLev=3` (`Accel=""`) and bolt count scales `5 -> 8` (`+5` in Conflagration, up to 16).
+   - **Backdraft** (`backdraft` $\rightarrow$ `Fire Wall` 51, R2C3, Lvl 8, Combo CC/AoE): `14+28 / 17+28`, cursor fiery vortex that pulls enemies inward and slows movement (`45%+lvl%`, `+15%` in Conflagration, duration extended by **Kindling**) before detonating (`backdraft_explode`, radius `3..5`, `+2` in Conflagration).
+   - **Conflagration** (`conflagration` $\rightarrow$ `Enchant` 52, R3C2, Lvl 16, Fire Stance): `srvdofunc=18`, `sorc_stance_fire` (`group=13`), marker stat `skill_handofathena=1`. Boons: `+5% -> +75%` Fire Dmg, `+5% -> +40%` FCR, `+30% -> +258%` Mana Regen. Busts: `+5% -> +50%` Phys Dmg Taken, `-1 -> -10` Life/sec drain. Retaliates with Fire damage when hit in melee (`damagedinmelee`, `auraeventfunc1=3`).
+   - **Flashfire** (`flashfire` $\rightarrow$ `Blaze` 46, R3C3, Lvl 16, Mobility Utility): `srvdofunc=23`, strictly requires Conflagration (`restrict=2, State1=sorc_stance_fire`), 3s sprint (`+100%` FRW in Conflagration, 10s cooldown `localdelay=250`) leaving a 3s burning trail.
+   - **Kindling** (`kindling` $\rightarrow$ `Warmth` 37, R4C2, Lvl 24, Support Passive): `+10%/lvl` Fire Stance melee retaliation damage and `+5 frames/lvl` Backdraft slow duration.
+   - **Skyfall** (`skyfall` $\rightarrow$ `Meteor` 56, R4C3, Lvl 24, AoE 2): `srvdofunc=28/cltdofunc=28` (`skyfall_center`), 1.2s delayed meteor impact + burning crater (`skyfall_fire` + `skyfall_crater_clt`, radius `4..7`, `+3` in Conflagration).
+   - **Brimstone Lance** (`brimstone_lance` $\rightarrow$ `Inferno` 41, R5C1, Lvl 32, Line 2): `srvdofunc=1/cltdofunc=1`, all-piercing heavy lance (`CollideKill=0, Pierce=1, NextDelay=4`) with `pSrvDoFunc=2/pCltDoFunc=3` dropping `brimstone_wake` (`0.4s` base, `4.0s` molten trail in Conflagration).
+   - **Ignition** (`ignition` $\rightarrow$ `Fire Mastery` 61, R5C3, Lvl 32, Sustain Passive): Always-on passive restoring `1 -> 10` Life/sec (`hpregen`), neutralizing Conflagration's life drain at level 26.
+   - **Pyre Hydra** (`pyre_hydra` $\rightarrow$ `Hydra` 62, R6C2, Lvl 40, Capstone): Zero-cooldown 3-headed turret summon (`1/2/3` max clusters at lvl `1..12 / 13..25 / 26+`); snapshots Conflagration via `sumsk1calc = (stat('skill_handofathena'.accr) > 0) ? (lvl + 30) : lvl` so bolts gain range and erupt into 6 radial sub-bolts (`pCltHitFunc=46`) with radius-6 AoE on hit.
+
+2. **All 3 Elemental Stances, 3 Sustain Passives ("Dials") & 3 Retaliation Passives (`6 / 6 done` in Cold & Lightning)**:
+   - **Cryostasis** (`cryostasis` $\rightarrow$ `Frozen Armor` 40, Cold R4C1, Lvl 24, `final4`): `sorc_stance_cold` (`group=13`), marker `skill_frenzy=1`. Boons: `+5% -> +75%` Cold Dmg, `+3% -> +25%` Phys DR, `+10% -> +200%` Defense. Busts: `-5% -> -50%` FRW, `-5% -> -30%` FCR. Melee attackers are frozen (`auraeventfunc1=2`).
+   - **Overcharge** (`overcharge` $\rightarrow$ `Energy Shield` 58, Lightning R4C2, Lvl 24, `final4`): `sorc_stance_light` (`group=13`), marker `skill_decrepify=1`. Boons: `+5% -> +75%` Ltng Dmg, `+5% -> +40%` FRW, `+5% -> +40%` FHR. Busts: `-5% -> -75%` Fire & Cold Resist. Melee attackers take Lightning damage (`auraeventfunc1=3`).
+   - **Equilibrium** (`equilibrium` $\rightarrow$ `Cold Mastery` 65, Cold R4C2, Lvl 24, `final1`): Always-on passive granting `+2 -> +30` Mana after each Kill (`item_manaafterkill`).
+   - **Echo** (`afterglow` $\rightarrow$ `Lightning Mastery` 63, Lightning R3C1, Lvl 16, `final1`): Always-on passive granting `5% -> 75%` Damage Taken Goes to Mana (`item_damagetomana`).
+   - **Brittle Touch** (`brittle_touch` $\rightarrow$ `Shiver Armor` 50, Cold R4C3, Lvl 24, `final2`): Passive extending Cryostasis melee freeze retaliation length by `+5%/lvl`.
+   - **Conduction** (`conduction` $\rightarrow$ `Telekinesis` 43, Lightning R3C3, Lvl 16, `final2`): Passive boosting Overcharge melee lightning retaliation damage by `+10%/lvl`.
+
+### B. In Progress (`1 / 30 wip`)
+- **Glacier Step** (`glacier_step` $\rightarrow$ `Chilling Armor` 60, Cold R3C1, Lvl 16, Mobility Utility):
+  - Variant `p1_ice_blink` is built and passes `d2r-sorc test glacier_step`.
+  - Uses `srvdofunc=166 / cltdofunc=104` (Blade Warp engine, `lob=1, warp=1, calc5=1`), strictly gated to Cryostasis (`restrict=2, State1=sorc_stance_cold`, 3s cooldown `localdelay=75`). Blinks along an icy wake (`glacier_step_path_srv` + `glacier_step_path_clt`) and detonates a freezing spike nova (`glacier_step_nova`) on arrival.
+  - Ready for in-game verification / tuning and promotion to `done`.
+
+---
+
+## 3. Hard Engine & Design Contracts (Enforced by `d2r-sorc test` & `tests/`)
+
+1. **1:1 Vanilla Row Reuse**: Never add a 31st `charclass="sor"` skill. Reuse the 30 vanilla rows (`*Id 36..65`) 1:1. Any helper skills in `specs/_shared.json` must have `"charclass": ""`.
+2. **Stance Detection Markers**:
+   - Fire (**Conflagration**): `stat('skill_handofathena'.accr) > 0`
+   - Cold (**Cryostasis**): `stat('skill_frenzy'.accr) > 0`
+   - Lightning (**Overcharge**): `stat('skill_decrepify'.accr) > 0`
+3. **Cross-Stance Fizzle Contract (All Offensive Spells)**:
+   - Casting an offensive spell while an **opposing** stance is active must fizzle immediately (`Range = 1` or `0`, `Radius = 0`):
+     - Cold offensive spells wrap `Range`/`aurarangecalc`/`calc1`: `((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : (<normal_expr>)`
+     - Lightning offensive spells wrap `Range`/`aurarangecalc`/`calc1`: `((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 1 : (<normal_expr>)`
+4. **Hard Stance Gating on Mobility Utility Skills**:
+   - `flashfire` (`State1="sorc_stance_fire"`), `glacier_step` (`State1="sorc_stance_cold"`), and `phase_step` (`State1="sorc_stance_light"`) must set `"restrict": "2"` so they can only be cast while their tree's stance is active.
+5. **Zero Elemental Pierce Boundary**:
+   - No player skill or passive may grant `passive_fire_pierce`, `passive_ltng_pierce`, `passive_cold_pierce`, `passive_pois_pierce`, or `passive_mag_pierce`.
+6. **Investment Must Change Feel**:
+   - Every active spell must scale a tangible geometry/feel parameter with skill level (`VelLev`, `Range`, AoE radius `calc1`/`cltcalc1`, bolt count `calc2`, or chill/freeze/field duration) in addition to non-linear damage (`EMinLev1..5`, `EMaxLev1..5`) and matching-stance empowerment.
+7. **Tooltip Next-Level Rule**:
+   - In `skilldesc.txt`, use `lvl` (or `clc1..6` referencing `lvl`) for the skill's own level so the "Next Level" tooltip panel shifts to `lvl + 1` (`skill('X'.lvl)` does not shift in the Next Level panel).
+
+---
+
+## 4. Next Up: Remaining 13 `stub` Skills (+ `glacier_step` Verification)
+
+Run `/home/grant/games/d2r/bin/d2r-sorc patterns <slug>` before starting any skill below to print its parallel Fire template spec and function signature.
+
+### A. Cold Tree (`6 stubs` + `1 wip`)
+| Unlock | Grid | Skill (`slug`) | Vanilla Row (`*Id`) | Role | Parallel Template & Function Pair |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| **Lvl 1** | R1C2 | **Frost Dart** (`frost_dart`) | `Ice Bolt` (`39`) | Line 1 (levelling) | Copy [`cinder_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/cinder_lance.json) (`srvdofunc=1/cltdofunc=1`). Scale bolt velocity (`VelLev`), chill length, and in **Cryostasis** (`skill_frenzy`) expand range & trigger AoE frost burst on impact. |
+| **Lvl 8** | R2C2 | **Hoarfrost Burst** (`hoarfrost_burst`) | `Frost Nova` (`44`) | AoE 1 (levelling) | Parallel to [`pyroclasm.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/pyroclasm.json) using `srvdofunc=22/cltdofunc=25` (Frost Nova ring, `calc3`/`cltcalc1` Velocity Adder scales ring radius with level + **Cryostasis** bonus) or `154/99`. |
+| **Lvl 16** | R3C1 | **Glacier Step** (`glacier_step`) | `Chilling Armor` (`60`) | Utility (mobility) | **`wip` (`p1_ice_blink`)**: Verify in-game (`srvdofunc=166/cltdofunc=104`, `restrict=2, State1=sorc_stance_cold`, `localdelay=75`) and mark `done`. |
+| **Lvl 16** | R3C3 | **Permafrost** (`permafrost`) | `Ice Blast` (`45`) | Combo (CC/AoE) | Copy [`backdraft.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/backdraft.json) (`14+28 / 17+28`). Cursor ground freeze/chill field (`pCltDoFunc=48`, `HitClass=48`) that slows and damages enemies over time, expanded in **Cryostasis** and extended by **Brittle Touch**. |
+| **Lvl 32** | R5C1 | **Whiteout** (`whiteout`) | `Blizzard` (`59`) | AoE 2 (power spike) | Parallel to [`skyfall.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/skyfall.json) (`srvdofunc=28/cltdofunc=28`, `blizzardcenter`). Cursor snowstorm with level-scaling radius (`calc1`/`cltcalc1`) and lingering frost zone, expanded in **Cryostasis**. |
+| **Lvl 32** | R5C3 | **Icicle Spear** (`icicle_spear`) | `Glacial Spike` (`55`) | Line 2 (boss killer) | Copy [`brimstone_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/brimstone_lance.json) (`srvdofunc=1/cltdofunc=1`, `CollideKill=0, Pierce=1, NextDelay=4`, `pSrvDoFunc=2/pCltDoFunc=3`). Heavy all-piercing ice spear dropping a freezing wake that lasts 10x longer in **Cryostasis**. |
+| **Lvl 40** | R6C2 | **Frozen Orb** (`frozen_orb`) | `Frozen Orb` (`64`) | Capstone | Zero-cooldown Level 40 capstone (`srvdofunc=1/cltdofunc=29`, `pSrvDoFunc=16/pCltDoFunc=18` carrier orb + bolt submissiles). Scale orb reach/bolt velocity with level + **Cryostasis** empowerment + cross-stance fizzle. |
+
+### B. Lightning Tree (`7 stubs`)
+| Unlock | Grid | Skill (`slug`) | Vanilla Row (`*Id`) | Role | Parallel Template & Function Pair |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| **Lvl 1** | R1C2 | **Static Lance** (`static_lance`) | `Lightning` (`49`) | Line 1 (levelling) | Parallel to [`cinder_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/cinder_lance.json) (`srvdofunc=1/cltdofunc=1`). Fast piercing/impact lightning projectile scaling velocity/range with level and erupting in an AoE shock burst in **Overcharge** (`skill_decrepify`). |
+| **Lvl 8** | R2C1 | **Pulse Ring** (`pulse_ring`) | `Nova` (`48`) | AoE 1 (levelling) | Parallel to [`pyroclasm.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/pyroclasm.json) using `srvdofunc=22/cltdofunc=25` (Nova ring with `calc3`/`cltcalc1` Velocity Adder scaling ring radius with level + **Overcharge** bonus). |
+| **Lvl 8** | R2C3 | **Phase Step** (`phase_step`) | `Teleport` (`54`) | Utility (mobility) | Copy [`glacier_step.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/glacier_step.json) (`srvdofunc=166/cltdofunc=104`, `lob=1, warp=1, calc5=1`). Strictly gated to **Overcharge** (`restrict=2, State1=sorc_stance_light`, cooldown `localdelay=50..75`) with lightning path wake & arrival shock nova. |
+| **Lvl 16** | R3C2 | **Tesla Field** (`tesla_field`) | `Static Field` (`42`) | Combo (CC/AoE) | Copy [`backdraft.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/backdraft.json) (`14+28 / 17+28`). Cursor static field (`pCltDoFunc=48`, `HitClass=64`) that pulses lightning damage and debuffs enemies inside `calc1` radius, empowered in **Overcharge**. |
+| **Lvl 24** | R4C3 | **Stormcall** (`stormcall`) | `Thunder Storm` (`57`) | AoE 2 (power spike) | Copy [`skyfall.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/skyfall.json) (`srvdofunc=28/cltdofunc=28`). Cursor delayed lightning bombardment zone with level-scaling radius (`calc1`/`cltcalc1`) and electrified ground crater, expanded in **Overcharge**. |
+| **Lvl 32** | R5C2 | **Spearbolt** (`spearbolt`) | `Chain Lightning` (`53`) | Line 2 (boss killer) | Copy [`brimstone_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/brimstone_lance.json) (`1/1` all-piercing lightning spear with electrified wake) or `26/27` (multi-bounce Chain Lightning scaling bounce count & range in **Overcharge**). |
+| **Lvl 40** | R6C2 | **Heaven's Wrath** (`heavens_wrath`) | `Charged Bolt` (`38`) | Capstone | Zero-cooldown Level 40 capstone (`srvdofunc=28/cltdofunc=28` cursor lightning pillar + radial sub-bolt ring burst via `pCltHitFunc=46` / `pSrvDoFunc=25`), scaling radius & bolt count in **Overcharge** with cross-stance fizzle. |
+
+---
+
+## 5. Final Tree Polish Checklist (Once All 30 Skills Are `done`)
+
+1. **Populate `prereqs` for Cold & Lightning in [`tools/mod_builder/sorc/registry.py`](file:///home/grant/games/d2r/tools/mod_builder/sorc/registry.py)**:
+   - [`tools/mod_builder/sorc/tree.py`](file:///home/grant/games/d2r/tools/mod_builder/sorc/tree.py) automatically draws the vertical and diagonal stone connector arrows onto `soskilltree.sprite` (Frame 0 = Cold, Frame 1 = Lightning, Frame 2 = Fire) directly from `prereqs` in `registry.SLOTS`.
+2. **Audit Cold & Lightning Skill Icons in [`tools/mod_builder/sorc/icons.py`](file:///home/grant/games/d2r/tools/mod_builder/sorc/icons.py)**:
+   - Remap or stamp any Cold/Lightning cels in `soskillicon.sprite` where repurposed vanilla rows need updated icon artwork (just as Fire did for `COPY_CELS`, `kindling.jpg`, and `pyroclasm.jpg`).
+3. **Compact All Spec JSONs**:
+   - Run `/home/grant/games/d2r/bin/d2r-sorc compact --all` to prune intermediate test variants and keep every file in `tools/mod_builder/sorc/specs/*.json` lean.
+4. **Full Build & Test Verification**:
+   - Run `python3 /home/grant/games/d2r/bin/d2r-build-mod.py` and `python3 -m unittest -v` (all 8 verification suites + 32 unit tests + regenerated [`docs/site/index.html`](file:///home/grant/games/d2r/docs/site/index.html)).

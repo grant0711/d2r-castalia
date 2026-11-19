@@ -25,7 +25,7 @@
 | 2.3 | 8 | **Phase Step** (`phase_step`) | Teleport (54) | utility (mobility) | stub | baseline |
 | 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | done | final1 |
 | 3.2 | 16 | **Tesla Field** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | stub | baseline |
-| 3.3 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | wip | final2 |
+| 3.3 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | done | final2 |
 | 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | final4 |
 | 4.3 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | stub | baseline |
 | 5.2 | 32 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | stub | baseline |
@@ -41,7 +41,7 @@
 | 3.3 | 16 | **Permafrost** (`permafrost`) | Ice Blast (45) | combo (CC/AoE) | stub | baseline |
 | 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | done | final4 |
 | 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | done | final1 |
-| 4.3 | 24 | **Brittle Touch** (`brittle_touch`) | Shiver Armor (50) | support passive | wip | final2 |
+| 4.3 | 24 | **Brittle Touch** (`brittle_touch`) | Shiver Armor (50) | support passive | done | final2 |
 | 5.1 | 32 | **Whiteout** (`whiteout`) | Blizzard (59) | AoE 2 (power spike) | stub | baseline |
 | 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | Glacial Spike (55) | line 2 (boss killer) | stub | baseline |
 | 6.2 | 40 | **Frozen Orb** (`frozen_orb`) | Frozen Orb (64) | capstone | stub | baseline |

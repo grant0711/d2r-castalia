@@ -9,6 +9,8 @@
       "tables": {
         "skills.txt": {
           "Warmth": {
+            "calc1": "lvl*10",
+            "*calc1 desc": "Fire Stance Retaliation Damage +% (10%/lvl)",
             "passivestate": "",
             "passivestat1": "",
             "passivecalc1": "",

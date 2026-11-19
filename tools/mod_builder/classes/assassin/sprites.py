@@ -477,10 +477,9 @@ def _build_asskillicon_pair() -> str:
     import math
     import os
     import subprocess
-    from mod_builder.common import MOD_ROOT, VANILLA_ROOT
+    from mod_builder.common import MOD_ROOT, REPO_ROOT, VANILLA_ROOT
 
-    d2r_root = os.path.dirname(MOD_ROOT)
-    assets_dir = os.path.join(d2r_root, "assets", "skill_icons")
+    assets_dir = os.path.join(REPO_ROOT, "assets", "skill_icons")
     ass_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.sprite")
     ass_low_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/assassin/asskillicon.lowend.sprite")
     bar_src = os.path.join(VANILLA_ROOT, "data/hd/global/ui/spells/barbarian/baskillicon.sprite")

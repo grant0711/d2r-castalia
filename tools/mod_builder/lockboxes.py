@@ -23,9 +23,9 @@ import subprocess
 from collections import deque
 from typing import Dict, List, Set, Tuple
 
-from mod_builder.common import MOD_EXCEL, MOD_ROOT, VANILLA_EXCEL, read_excel_tsv
+from mod_builder.common import MOD_EXCEL, MOD_ROOT, REPO_ROOT, VANILLA_EXCEL, read_excel_tsv
 
-ASSETS_DIR = os.path.join(os.path.dirname(MOD_ROOT), "assets", "items")
+ASSETS_DIR = os.path.join(REPO_ROOT, "assets", "items")
 
 LOCKBOX_TIER_INFO = {
     1: {

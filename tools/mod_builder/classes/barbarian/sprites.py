@@ -22,9 +22,9 @@ def _build_baskillicon_pair(suffix: str, frame_w: int, frame_h: int) -> str:
     """
     import os
     import subprocess
-    from mod_builder.common import MOD_ROOT, VANILLA_ROOT
+    from mod_builder.common import MOD_ROOT, REPO_ROOT, VANILLA_ROOT
 
-    d2r_root = os.path.dirname(MOD_ROOT)
+    d2r_root = REPO_ROOT
     src_path = os.path.join(VANILLA_ROOT, f"data/hd/global/ui/spells/barbarian/baskillicon{suffix}")
     with open(src_path, "rb") as f:
         raw = f.read()

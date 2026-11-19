@@ -1,6 +1,6 @@
 {
   "_shared": {
-    "status": "wip",
+    "status": "done",
     "variant": "anim_v3"
   },
   "afterglow": {
@@ -16,7 +16,7 @@
     "variant": "test_fizzle"
   },
   "brittle_touch": {
-    "status": "wip",
+    "status": "done",
     "variant": "final2"
   },
   "cinder_lance": {
@@ -24,7 +24,7 @@
     "variant": "test_fizzle"
   },
   "conduction": {
-    "status": "wip",
+    "status": "done",
     "variant": "final2"
   },
   "conflagration": {

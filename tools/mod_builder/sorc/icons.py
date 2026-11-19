@@ -13,7 +13,7 @@ import math
 import os
 import subprocess
 
-from mod_builder.common import MOD_ROOT, VANILLA_ROOT
+from mod_builder.common import MOD_ROOT, REPO_ROOT, VANILLA_ROOT
 
 FW, FH, NF = 132, 130, 60
 FW_LOW, FH_LOW = 67, 65
@@ -158,8 +158,7 @@ def _downscale(frame: bytes) -> bytes:
 
 def _mask_from_icon_jpg(filename: str, inset: int = 5) -> list:
     """Load a white-on-black silhouette JPEG from assets/skill_icons/ into the plate interior."""
-    d2r_root = os.path.dirname(MOD_ROOT)
-    img_path = os.path.join(d2r_root, "assets", "skill_icons", filename)
+    img_path = os.path.join(REPO_ROOT, "assets", "skill_icons", filename)
     pw = (PX1 - PX0) - 2 * inset
     ph = (PY1 - PY0) - 2 * inset
     art_px = subprocess.check_output([

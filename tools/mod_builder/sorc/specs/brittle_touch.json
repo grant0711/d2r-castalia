@@ -10,6 +10,8 @@
         "skills.txt": {
           "Shiver Armor": {
             "passive": "1",
+            "calc1": "lvl*5",
+            "*calc1 desc": "Cold Stance Freeze Length +% (5%/lvl)",
             "leftskill": "0",
             "rightskill": "0",
             "srvstfunc": "",

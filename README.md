@@ -2,8 +2,8 @@
 
 An opinionated overhaul of **Diablo II: Resurrected** built around a simple conviction: **a game world should feel like an intact, believable place to inhabit—and a few clear, honest rules, when pieced together carefully, can create near-infinite room for player creativity.**
 
-> **Full Strategy Guide & Interactive Skill Compendium:**
-> For complete interactive skill trees, live **Level 1 $\rightarrow$ 20 calculations**, synergies, Gem & Skull tables, and all 33 Semantic Runes (generated directly from the mod's compiled `.txt` data files), open **[The Castalia Compendium (`docs/site/index.html`)](docs/site/index.html)**.
+> **Full Strategy Guide, Character Generator & Interactive Skill Compendium:**
+> For complete interactive skill trees, live **Level 1 $\rightarrow$ 20 calculations**, synergies, Gem & Skull tables, all 33 Semantic Runes, and the browser-based **`.d2s` Character Generator**, visit **[https://grant0711.github.io/d2r-castalia/](https://grant0711.github.io/d2r-castalia/)** (or open **[`docs/site/index.html`](docs/site/index.html)** locally).
 
 ---
 
@@ -63,3 +63,8 @@ Running `./bin/d2r-build-mod.py`:
 1. Transforms pristine reference tables from `vanilla-reference/` into `castalia/data/` (`game/Diablo II Resurrected/mods/castalia/castalia.mpq/data/`).
 2. Runs the full invariant verification suite (`tools/mod_builder/verify.py`).
 3. Rebuilds [`docs/site/index.html`](docs/site/index.html) (`tools/build_site.py`) directly from the compiled `.txt` and `.json` outputs in `castalia/data/`.
+
+### Developer & Session Handoff Documentation
+- **Technical Architecture & CLI Reference**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- **Sorceress Overhaul Handoff & Queue**: [`docs/sorc/HANDOFF.md`](docs/sorc/HANDOFF.md) & [`docs/sorc/STATUS.md`](docs/sorc/STATUS.md)
+- **Engine Function Reference**: [`docs/engine_reference/README.md`](docs/engine_reference/README.md)

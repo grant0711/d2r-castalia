@@ -35,11 +35,13 @@ If the user does not specify a character name (e.g., *"Create a lvl 55 paladin a
 ---
 
 ## 2. Sorceress Skill Iteration (`bin/d2r-sorc`) & Mod Build (`bin/d2r-build-mod.py`)
+- **Session Handoff & Active Queue**: Read [`/home/grant/games/d2r/docs/sorc/HANDOFF.md`](file:///home/grant/games/d2r/docs/sorc/HANDOFF.md) and [`/home/grant/games/d2r/docs/sorc/STATUS.md`](file:///home/grant/games/d2r/docs/sorc/STATUS.md) first when resuming Sorceress skill development.
 - Query Sorceress skill slots, engine functions, or patterns directly from the CLI without grepping:
   - `/home/grant/games/d2r/bin/d2r-sorc map`
   - `/home/grant/games/d2r/bin/d2r-sorc funcs [query]`
   - `/home/grant/games/d2r/bin/d2r-sorc patterns [slug]`
+  - `/home/grant/games/d2r/bin/d2r-sorc show <slug>`
 - Build & run invariant tests:
-  - `/home/grant/games/d2r/bin/d2r-sorc build [slug]`
+  - `/home/grant/games/d2r/bin/d2r-sorc build`
   - `/home/grant/games/d2r/bin/d2r-sorc test [slug]`
   - `python3 /home/grant/games/d2r/bin/d2r-build-mod.py [step...]`

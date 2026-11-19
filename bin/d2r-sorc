@@ -21,6 +21,7 @@ d2r-sorc - one-skill-at-a-time experiment workflow for the Sorceress overhaul.
   funcs [query]                      query indexed skills.txt & missiles.txt server/client functions & pitfalls
   patterns [slug_or_role]            show reusable skill archetype blueprint & parallel template skill
   compact [slug|--all]               prune old inactive variants from specs/*.json (keeps baseline + active)
+  test [slug]                        run TDD engine contract, formula linter & stance matrix simulation for a skill (or all 30)
 
 Typical loop:  patterns -> variant -> set -> use -> build -> char -> (play, report) -> log -> status -> compact -> commit
 """
@@ -417,6 +418,118 @@ def cmd_compact(args):
           f"{total_before:,} B -> {total_after:,} B ({total_before - total_after:,} B saved)")
 
 
+def cmd_test(args):
+    if ROOT not in sys.path:
+        sys.path.insert(0, ROOT)
+    from tests.calc_eval import eval_d2_expr, lint_d2_expression
+    from tests.fixture import clear_fixture_caches, get_indexed_tables
+
+    clear_fixture_caches()
+    idx = get_indexed_tables()
+    skills_by_name = idx["skills_by_name"]
+    desc_by_name = idx["desc_by_name"]
+    missiles_by_name = idx["missiles_by_name"]
+    valid_stats = idx["valid_stats"]
+    state = engine.load_state()
+
+    targets = [slot(args.slug)] if args.slug else SLOTS
+    failures = []
+    for meta in targets:
+        slug = meta["slug"]
+        vname = meta["vname"]
+        tree = meta["tree"]
+        role = meta["role"]
+        av = engine.active_variant(slug, state)
+        srow = skills_by_name[vname]
+        drow = desc_by_name.get(srow.get("skilldesc", "").strip(), {})
+
+        # 1. Lint all expressions on skill & skilldesc
+        for col, val in srow.items():
+            if col.startswith(("calc", "cltcalc", "auralen", "aurarange", "aurastatcalc", "passivecalc", "EDmgSym", "ELenSym", "DmgSym", "ToHitCalc")) and val:
+                errs = lint_d2_expression(val, skills_by_name, valid_stats, missiles_by_name)
+                if errs:
+                    failures.append(f"{slug} (skills.txt:{col}): {errs}")
+        for dcol, dval in drow.items():
+            if dcol.endswith(("cal1", "cal2", "cal3", "cal4", "cal5", "cal6", "cal7", "calc1", "calc2")) and dval:
+                errs = lint_d2_expression(dval, skills_by_name, valid_stats, missiles_by_name)
+                if errs:
+                    failures.append(f"{slug} (skilldesc.txt:{dcol}): {errs}")
+
+        # 2. Simulate stance behavior for non-baseline reworked skills
+        if av == "baseline":
+            print(f"[STUB] {meta['name']:18} ({slug:16}) variant=baseline (lint OK)")
+            continue
+
+        own_marker = STANCE_MARKERS[tree]["stat"]
+        stance_vname = BY_SLUG[STANCE_MARKERS[tree]["stance_slug"]]["vname"]
+        opp_markers = [STANCE_MARKERS[t]["stat"] for t in STANCE_MARKERS if t != tree]
+
+        if role == "STANCE":
+            has_marker = any(srow.get(f"aurastat{i}") == own_marker for i in range(1, 7))
+            if not has_marker:
+                failures.append(f"{slug}: stance missing aurastat={own_marker!r}")
+            c1_l1 = eval_d2_expr(srow.get("calc1", ""), srow, slvl=1, skills_by_name=skills_by_name)
+            c1_l20 = eval_d2_expr(srow.get("calc1", ""), srow, slvl=20, skills_by_name=skills_by_name)
+            print(f"[PASS] {meta['name']:18} ({slug:16}) variant={av:15} role=STANCE  (marker={own_marker}, boon={c1_l1}%->{c1_l20}%)")
+            continue
+
+        if "passive" in role or "dial" in role:
+            calc_expr = srow.get("passivecalc1", "").strip() or srow.get("calc1", "").strip() or drow.get("desccalca1", "").strip()
+            p_l1 = eval_d2_expr(calc_expr, srow, slvl=1, skills_by_name=skills_by_name)
+            p_l20 = eval_d2_expr(calc_expr, srow, slvl=20, skills_by_name=skills_by_name)
+            if p_l1 == 0 or abs(p_l20) < abs(p_l1):
+                failures.append(f"{slug}: passive invalid scaling (slvl1={p_l1}, slvl20={p_l20})")
+            print(f"[PASS] {meta['name']:18} ({slug:16}) variant={av:15} role=PASSIVE (slvl1={p_l1} -> slvl20={p_l20})")
+            continue
+
+        if "utility" in role:
+            expected_state = STANCE_MARKERS[tree]["state"]
+            if srow.get("restrict") != "2" or srow.get("State1") != expected_state:
+                failures.append(
+                    f"{slug}: mobility utility skill must have restrict='2' and State1={expected_state!r} "
+                    f"(got restrict={srow.get('restrict')!r}, State1={srow.get('State1')!r})"
+                )
+                continue
+            print(f"[PASS] {meta['name']:18} ({slug:16}) variant={av:15} role=UTILITY (strictly gated: restrict=2, State1={expected_state})")
+            continue
+
+        guarded = []
+        for col in ("EDmgSymPerCalc", "ELenSymPerCalc", "auralencalc", "aurarangecalc", "calc1", "calc2", "calc3", "calc4", "cltcalc1"):
+            val = srow.get(col, "").strip()
+            if opp_markers[0] in val and opp_markers[1] in val:
+                guarded.append((f"skills:{col}", srow, val))
+        for mcol in ("srvmissile", "srvmissilea", "srvmissileb", "srvmissilec"):
+            mname = srow.get(mcol, "").strip()
+            if mname and mname in missiles_by_name:
+                mrow = missiles_by_name[mname]
+                for mf_col in ("Range", "Radius", "EDmgSymPerCalc", "ELenSymPerCalc", "DmgSymPerCalc", " cAlc1", "calc1"):
+                    mval = mrow.get(mf_col, "").strip()
+                    if opp_markers[0] in mval and opp_markers[1] in mval:
+                        guarded.append((f"missile({mname}):{mf_col}", mrow, mval))
+
+        if not guarded:
+            failures.append(f"{slug}: active spell missing cross-stance fizzle guard against {opp_markers}")
+            continue
+
+        sim_notes = []
+        for label, trow, expr in guarded:
+            n_val = eval_d2_expr(expr, trow, slvl=10, skill_levels={vname: 10}, stats={}, skills_by_name=skills_by_name)
+            m_val = eval_d2_expr(expr, trow, slvl=10, skill_levels={vname: 10, stance_vname: 10}, stats={own_marker: 10}, skills_by_name=skills_by_name)
+            oa_val = eval_d2_expr(expr, trow, slvl=10, skill_levels={vname: 10}, stats={opp_markers[0]: 10}, skills_by_name=skills_by_name)
+            ob_val = eval_d2_expr(expr, trow, slvl=10, skill_levels={vname: 10}, stats={opp_markers[1]: 10}, skills_by_name=skills_by_name)
+            if m_val < n_val:
+                failures.append(f"{slug} ({label}): matching stance ({m_val}) < neutral ({n_val})")
+            if oa_val > 1 or ob_val > 1:
+                failures.append(f"{slug} ({label}): opposing stance failed to fizzle (oppA={oa_val}, oppB={ob_val})")
+            sim_notes.append(f"{label}[neutral={n_val}, stance={m_val}, fizzle={oa_val}/{ob_val}]")
+        print(f"[PASS] {meta['name']:18} ({slug:16}) variant={av:15} {', '.join(sim_notes)}")
+
+    if failures:
+        for f in failures:
+            print(f"[FAIL] {f}", file=sys.stderr)
+        die(f"{len(failures)} TDD verification check(s) failed")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -445,6 +558,7 @@ def main():
     p = sub.add_parser("patterns"); p.add_argument("target", nargs="?"); p.set_defaults(f=cmd_patterns)
     p = sub.add_parser("compact"); p.add_argument("slug", nargs="?"); p.add_argument("--all", action="store_true")
     p.add_argument("--keep", action="append"); p.set_defaults(f=cmd_compact)
+    p = sub.add_parser("test"); p.add_argument("slug", nargs="?"); p.set_defaults(f=cmd_test)
 
     args = ap.parse_args()
     args.f(args)

@@ -9,7 +9,9 @@ import re
 from typing import Dict, List, Optional, Set, Tuple
 
 
-_SKILL_REF_RE = re.compile(r"skill\('([^']+)'\.(lvl|blvl|clc1|clc2|clc3|par1|par2|par3|par4|par5|par6|par7|par8)\)")
+_SKILL_REF_RE = re.compile(
+    r"skill\('([^']+)'\.(lvl|blvl|rng|len|clc1|clc2|clc3|clc4|clc5|clc6|par1|par2|par3|par4|par5|par6|par7|par8)\)"
+)
 _STAT_REF_RE = re.compile(r"stat\('([^']+)'\.(accr|base)\)")
 _MISSILE_REF_RE = re.compile(r"miss\('([^']+)'\.([A-Za-z0-9_]+)\)")
 
@@ -326,6 +328,30 @@ def eval_d2_expr(
         if prop in ("lvl", "blvl"):
             return str(sk_lvl)
         target_row = skills_by_name.get(sk_name, {})
+        if prop == "rng":
+            rv = eval_d2_expr(
+                target_row.get("aurarangecalc", ""),
+                target_row,
+                max(1, sk_lvl),
+                sk_lvl,
+                skill_levels,
+                stats,
+                skills_by_name,
+                _depth + 1,
+            )
+            return str(rv)
+        if prop == "len":
+            lv = eval_d2_expr(
+                target_row.get("auralencalc", ""),
+                target_row,
+                max(1, sk_lvl),
+                sk_lvl,
+                skill_levels,
+                stats,
+                skills_by_name,
+                _depth + 1,
+            )
+            return str(lv)
         if prop.startswith("par"):
             p_idx = int(prop[3:])
             pv = (target_row.get(f"Param{p_idx}") or "0").strip()

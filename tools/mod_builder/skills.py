@@ -137,26 +137,41 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     append_barbarian_helper_skills(s_headers, s_rows, by_name)
     apply_assassin_skills_and_desc(s_headers, s_rows, by_name, d_headers, d_rows, by_desc)
 
-    # 4. Clear player-side elemental resistance pierce stats
-    if "Apocalypse" in by_name:
-        by_name["Apocalypse"]["aurastat1"] = ""
-        by_name["Apocalypse"]["aurastatcalc1"] = ""
-    for _pet_sk in ("Hydra", "Charged Bolt Sentry", "Wake of Fire Sentry", "Lightning Sentry", "Death Sentry"):
-        if _pet_sk in by_name:
-            _pr = by_name[_pet_sk]
-            for _pi in range(1, 7):
-                if _pr.get(f"passivestat{_pi}", "").startswith("passive_") and _pr.get(f"passivestat{_pi}", "").endswith("_pierce"):
-                    _pr[f"passivestat{_pi}"] = ""
-                    _pr[f"passivecalc{_pi}"] = ""
-
-    # 5. Sorceress 1:1 map layout + active experiment variants
+    # 4. Sorceress 1:1 map layout + active experiment variants
     sorc_engine.apply_layout(by_name, by_desc)
     sorc_engine.apply_table_patches("skills.txt", s_headers, s_rows)
     sorc_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
+
+    # 5. Globally scrub all player-side elemental resistance pierce (passive_*_pierce)
+    #    and Sunder Charm immunity pierce (item_pierce_*_immunity) stats/calcs across skills.txt
+    if "Apocalypse" in by_name:
+        by_name["Apocalypse"]["aurastat1"] = ""
+        by_name["Apocalypse"]["aurastatcalc1"] = ""
+    _forbidden_pierce_tokens = (
+        "passive_fire_pierce", "passive_ltng_pierce", "passive_cold_pierce",
+        "passive_pois_pierce", "passive_mag_pierce", "passive_dmg_pierce",
+        "item_pierce_fire_immunity", "item_pierce_light_immunity", "item_pierce_ltng_immunity",
+        "item_pierce_cold_immunity", "item_pierce_poison_immunity",
+        "item_pierce_damage_immunity", "item_pierce_magic_immunity",
+    )
     for _r in s_rows:
-        if _r.get("skill") == "Hydra" and _r.get("passivestat2") == "passive_fire_pierce":
-            _r["passivestat2"] = ""
-            _r["passivecalc2"] = ""
+        for _pi in range(1, 15):
+            _scol, _ccol = f"passivestat{_pi}", f"passivecalc{_pi}"
+            if _scol in _r or _ccol in _r:
+                _sval = _r.get(_scol, "")
+                _cval = _r.get(_ccol, "")
+                if any(tok in _sval or tok in _cval for tok in _forbidden_pierce_tokens):
+                    if _scol in _r:
+                        _r[_scol] = ""
+                    if _ccol in _r:
+                        _r[_ccol] = ""
+        for _ai in range(1, 7):
+            _scol, _ccol = f"aurastat{_ai}", f"aurastatcalc{_ai}"
+            _sval = _r.get(_scol, "")
+            _cval = _r.get(_ccol, "")
+            if any(tok in _sval or tok in _cval for tok in _forbidden_pierce_tokens):
+                _r[_scol] = ""
+                _r[_ccol] = ""
 
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)

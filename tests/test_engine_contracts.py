@@ -15,6 +15,40 @@ from mod_builder.common import MOD_ROOT, MOD_STRINGS, read_strings_json
 class TestEngineContracts(unittest.TestCase):
     """Universal D2R engine referential, binary-bound, and function-coupling contracts."""
 
+    def test_zero_elemental_or_sunder_pierce_in_player_skills(self):
+        """
+        Foundational Mod Boundary: Player skills and summons in skills.txt must NEVER
+        grant or inherit elemental resistance pierce (passive_*_pierce) or Sunder Charm
+        immunity pierce (item_pierce_*_immunity).
+        """
+        _, skill_rows = read_mod_tsv("skills.txt")
+        forbidden_pierce_tokens = (
+            "passive_fire_pierce",
+            "passive_ltng_pierce",
+            "passive_cold_pierce",
+            "passive_pois_pierce",
+            "passive_mag_pierce",
+            "passive_dmg_pierce",
+            "item_pierce_fire_immunity",
+            "item_pierce_light_immunity",
+            "item_pierce_ltng_immunity",
+            "item_pierce_cold_immunity",
+            "item_pierce_poison_immunity",
+            "item_pierce_damage_immunity",
+            "item_pierce_magic_immunity",
+        )
+        for r in skill_rows:
+            sname = r.get("skill", "")
+            for col, val in r.items():
+                if not val or col.startswith("*"):
+                    continue
+                for tok in forbidden_pierce_tokens:
+                    self.assertNotIn(
+                        tok,
+                        val,
+                        f"skills.txt ({sname}.{col}): forbidden elemental/sunder pierce stat {tok!r} in {val!r}",
+                    )
+
     def test_states_and_overlay_referential_integrity(self):
         _, state_rows = read_mod_tsv("states.txt")
         _, ov_rows = read_vanilla_tsv("overlay.txt")

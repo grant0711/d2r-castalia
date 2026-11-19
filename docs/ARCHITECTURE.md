@@ -107,10 +107,26 @@ Before implementing or modifying a skill, query the indexed server/client functi
    ./bin/d2r-sorc use <slug> <variant>
    ./bin/d2r-sorc build
    ```
-3. **Log observations & compact**:
+3. **Run TDD Behavioral Simulation & Verify**:
+   ```bash
+   ./bin/d2r-sorc test <slug>
+   python3 -m unittest -v
+   ```
+4. **Log observations & compact**:
    ```bash
    ./bin/d2r-sorc log <slug> "Verified in game: ..."
    ./bin/d2r-sorc status <slug> done
    ./bin/d2r-sorc compact <slug>
    ```
    Running `d2r-sorc compact` prunes obsolete inactive variants from `specs/<slug>.json` (keeping `"baseline"` and the active variant) so spec files stay under `~4 KB` and never saturate context windows.
+
+---
+
+## 4. Non-Tautological TDD Test Suite (`tests/`)
+
+Instead of tautological config assertions, the test suite under [`tests/`](file:///home/grant/games/d2r/tests) (orchestrated automatically at the end of `d2r-build-mod.py` via [`tools/mod_builder/verify.py`](file:///home/grant/games/d2r/tools/mod_builder/verify.py) or run directly via `python3 -m unittest -v`) enforces 4 layers of emergent and architectural invariants:
+
+1. [`tests/test_engine_contracts.py`](file:///home/grant/games/d2r/tests/test_engine_contracts.py) — Universal C++ engine contracts: referential integrity across all tables/strings, function-to-column coupling rules (`srvdofunc`/`cltdofunc` companion column requirements), the **Zero Elemental Pierce / Zero Sunder Charm** foundational boundary across all player skills, binary `uint8_t`/`int16_t` bounds, and `descline=19` format string guards.
+2. [`tests/test_skill_simulation.py`](file:///home/grant/games/d2r/tests/test_skill_simulation.py) & [`tests/calc_eval.py`](file:///home/grant/games/d2r/tests/calc_eval.py) — Parses and evaluates every D2R formula across `skills.txt`, `missiles.txt`, and `skilldesc.txt`, simulating reworked skills across neutral, matching-stance, and opposing-stance states (verifying cross-stance fizzle on offensive spells and hard `restrict=2, State1=sorc_stance_<tree>` gating on mobility utility skills).
+3. [`tests/test_skill_trees.py`](file:///home/grant/games/d2r/tests/test_skill_trees.py) — Skill tree prerequisite DAG, canonical `{1, 8, 16, 24, 32, 40}` level gates, and UI connector arrow geometry.
+4. [`tests/test_world_invariants.py`](file:///home/grant/games/d2r/tests/test_world_invariants.py), [`tests/test_item_invariants.py`](file:///home/grant/games/d2r/tests/test_item_invariants.py), [`tests/test_monster_invariants.py`](file:///home/grant/games/d2r/tests/test_monster_invariants.py) — Property-based world, economy, vendor, staffmod, affix, distillation, monster affinity, optional dungeon, and hireling invariants.

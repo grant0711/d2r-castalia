@@ -25,7 +25,7 @@ from typing import Dict, List, Set, Tuple
 
 from mod_builder.common import MOD_EXCEL, MOD_ROOT, VANILLA_EXCEL, read_excel_tsv
 
-ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
+ASSETS_DIR = os.path.join(os.path.dirname(MOD_ROOT), "assets", "items")
 
 LOCKBOX_TIER_INFO = {
     1: {

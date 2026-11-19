@@ -18,8 +18,11 @@ d2r-sorc - one-skill-at-a-time experiment workflow for the Sorceress overhaul.
   commit [-m MSG]                    git commit all sorceress work (checkpoint)
   revert <slug>                      restore this skill's spec + state from the last checkpoint
   check                              validate the map/layout and regenerate docs/sorc/STATUS.md
+  funcs [query]                      query indexed skills.txt & missiles.txt server/client functions & pitfalls
+  patterns [slug_or_role]            show reusable skill archetype blueprint & parallel template skill
+  compact [slug|--all]               prune old inactive variants from specs/*.json (keeps baseline + active)
 
-Typical loop:  variant -> set -> use -> build -> char -> (play, report) -> log -> status -> commit
+Typical loop:  patterns -> variant -> set -> use -> build -> char -> (play, report) -> log -> status -> compact -> commit
 """
 import argparse
 import csv
@@ -33,6 +36,12 @@ ROOT = "/home/grant/games/d2r"
 sys.path.insert(0, os.path.join(ROOT, "tools"))
 
 from mod_builder.sorc import engine  # noqa: E402
+from mod_builder.sorc.patterns import (  # noqa: E402
+    MISSILE_FUNCS,
+    SKILL_ARCHETYPES,
+    SKILL_FUNCS,
+    STANCE_MARKERS,
+)
 from mod_builder.sorc.registry import BY_SLUG, PAGE, SLOTS, check_registry, slot_level  # noqa: E402
 
 DOCS = os.path.join(ROOT, "docs", "sorc")
@@ -265,7 +274,7 @@ def cmd_check(_args):
 
 def cmd_build(_args):
     cmd_check(_args)
-    r = subprocess.run([sys.executable, os.path.join(ROOT, "bin/d2r-build-mod.py"), "skills", "verify"],
+    r = subprocess.run([sys.executable, os.path.join(ROOT, "bin/d2r-build-mod.py"), "itemtypes", "skills", "verify"],
                        capture_output=True, text=True)
     tail = (r.stdout + r.stderr).strip().splitlines()
     if r.returncode != 0:
@@ -321,6 +330,93 @@ def cmd_revert(args):
     print(f"{s['slug']} restored to last checkpoint. Run: d2r-sorc build")
 
 
+def cmd_funcs(args):
+    q = (args.query or "").lower().strip()
+    print("== STANCE MARKERS & CROSS-STANCE FIZZLE GUARDS ==")
+    for tree, info in STANCE_MARKERS.items():
+        if not q or q in tree or q in json.dumps(info).lower():
+            print(f"  {tree:9} | state={info['state']:17} | stat={info['stat']:18}")
+            print(f"            | active:   {info['expr']}")
+            print(f"            | opposing: {info['opposing_expr']}")
+    print("\n== PROVEN SKILLS.TXT (srvstfunc / srvdofunc / cltstfunc / cltdofunc) ==")
+    for sf in SKILL_FUNCS:
+        if not q or q in json.dumps(sf).lower():
+            print(f"\n  [{sf['id']}] {sf['name']}")
+            print(f"    srvst={sf['srvstfunc'] or '-'}  srvdo={sf['srvdofunc'] or '-'}  cltst={sf['cltstfunc'] or '-'}  cltdo={sf['cltdofunc'] or '-'}")
+            print(f"    Missiles:  {sf['missile_cols']}")
+            print(f"    Calcs:     {sf['calcs']}")
+            print(f"    Proven in: {sf['proven_in']}")
+            print(f"    Pitfalls:  {sf['pitfalls']}")
+    print("\n== PROVEN MISSILES.TXT (pSrvDoFunc / pCltDoFunc / pSrvHitFunc / pCltHitFunc) ==")
+    for mf in MISSILE_FUNCS:
+        if not q or q in json.dumps(mf).lower():
+            print(f"  [{mf['id']:10}] {mf['name']}: {mf['notes']}")
+
+
+def cmd_patterns(args):
+    q = (args.target or "").lower().strip()
+    if q and q in BY_SLUG:
+        s = BY_SLUG[q]
+        role = s["role"]
+        arch = SKILL_ARCHETYPES.get(role)
+        print(f"Skill: {s['name']} ({s['slug']}) — {s['tree'].title()} r{s['row']}c{s['col']} (Lvl {slot_level(s)}), replaces '{s['vname']}' (ID {s['vid']})")
+        print(f"Role:  {role}")
+        print(f"Design: {s['design']}")
+        tm = STANCE_MARKERS[s["tree"]]
+        print(f"Stance Marker ({tm['stance_slug']}): {tm['expr']}")
+        print(f"Cross-Stance Fizzle Guard: {tm['opposing_expr']} ? <fizzle_val> : (<normal_expr>)")
+        if arch:
+            t_slug = arch["template_slug"]
+            print(f"\nParallel Template Skill: {t_slug} (tools/mod_builder/sorc/specs/{t_slug}.json)")
+            print(f"Functions: {arch['skills_funcs']}")
+            print(f"Pattern:   {arch['missile_pattern']}")
+        return
+
+    for role, arch in SKILL_ARCHETYPES.items():
+        if not q or q in role.lower() or q in json.dumps(arch).lower():
+            print(f"\n== Archetype: {role} (Template: {arch['template_slug']}) ==")
+            print(f"  Functions:  {arch['skills_funcs']}")
+            print(f"  Pattern:    {arch['missile_pattern']}")
+            print(f"  Tree Slots: {arch['tree_slots']}")
+
+
+def cmd_compact(args):
+    state = engine.load_state()
+    slugs = ["_shared"] + [s["slug"] for s in SLOTS] if args.all else ([args.slug] if args.slug else [])
+    if not slugs:
+        die("specify a <slug> or --all")
+    total_before = 0
+    total_after = 0
+    pruned_count = 0
+    for sl in slugs:
+        slot(sl)
+        p = engine.spec_path(sl)
+        if not os.path.exists(p):
+            continue
+        sz_before = os.path.getsize(p)
+        total_before += sz_before
+        spec = engine.load_spec(sl)
+        av = engine.active_variant(sl, state)
+        variants = spec.get("variants", {})
+        keep_keys = []
+        if "baseline" in variants:
+            keep_keys.append("baseline")
+        if av in variants and av not in keep_keys:
+            keep_keys.append(av)
+        for k in (args.keep or []):
+            if k in variants and k not in keep_keys:
+                keep_keys.append(k)
+        removed = len(variants) - len(keep_keys)
+        if removed > 0:
+            pruned_count += removed
+            spec["variants"] = {k: variants[k] for k in keep_keys}
+            engine.save_spec(sl, spec)
+        sz_after = os.path.getsize(p)
+        total_after += sz_after
+    print(f"compacted {len(slugs)} spec file(s): pruned {pruned_count} inactive variant(s), "
+          f"{total_before:,} B -> {total_after:,} B ({total_before - total_after:,} B saved)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -345,6 +441,10 @@ def main():
     p.add_argument("--level", type=int); p.set_defaults(f=cmd_char)
     p = sub.add_parser("commit"); p.add_argument("-m"); p.set_defaults(f=cmd_commit)
     p = sub.add_parser("revert"); p.add_argument("slug"); p.set_defaults(f=cmd_revert)
+    p = sub.add_parser("funcs"); p.add_argument("query", nargs="?"); p.set_defaults(f=cmd_funcs)
+    p = sub.add_parser("patterns"); p.add_argument("target", nargs="?"); p.set_defaults(f=cmd_patterns)
+    p = sub.add_parser("compact"); p.add_argument("slug", nargs="?"); p.add_argument("--all", action="store_true")
+    p.add_argument("--keep", action="append"); p.set_defaults(f=cmd_compact)
 
     args = ap.parse_args()
     args.f(args)

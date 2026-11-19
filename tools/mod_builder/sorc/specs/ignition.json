@@ -4,46 +4,39 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "r9_no_vanilla_passive": {
-      "description": "R9: strip the vanilla mastery passive stats so the dial skill has no effect of its own yet",
-      "tables": {
-        "skills.txt": {
-          "Fire Mastery": {
-            "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": ""
-          }
-        }
-      }
-    },
     "final1": {
-      "description": "final1: Passive dial that multiplies all active stance benefit stats by +2% per level (up to +40% at lvl 20)",
+      "description": "final1: Always-on passive that restores Life per second (1 Life/sec at lvl 1 -> 10 Life/sec at lvl 26), neutralizing level 20+ Conflagration's 10 Life/sec drain at Ignition level 26 and granting net positive regeneration above level 26",
       "no_label": true,
       "strings": {
         "name": "Ignition",
-        "short": "Passively amplifies the positive effects of any active Stance",
-        "long": "Passive — increases the positive benefit stats granted by Conflagration, Cryostasis, and Overcharge by +2% per level.\nStance penalties are not increased."
+        "short": "passive - regenerates life each second",
+        "long": "Passive\n\ncontinually regenerates life each second\noffsetting Conflagration's life drain"
       },
       "strings_extra": {
-        "ModSorc_IgnitionBoon": "Stance Benefit Bonus: +%d%%"
+        "ModSorc_IgnitionLifeSec": "Life Restored per Second: %d"
       },
       "tables": {
         "skills.txt": {
           "Fire Mastery": {
-            "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": "",
-            "calc1": "lvl * 2",
-            "*calc1 desc": "Stance benefit multiplier % (+2%/lvl)"
+            "passivestate": "firemastery",
+            "passivestat1": "hpregen",
+            "passivecalc1": "10 + (lvl - 1) * 92 / 25",
+            "calc1": "10 + (lvl - 1) * 92 / 25",
+            "*calc1 desc": "hpregen units (10 = 1 Life/sec at lvl 1 -> 102 = 10 Life/sec at lvl 26)"
           }
         },
         "skilldesc.txt": {
           "fire mastery": {
             "descline1": "74",
-            "desctexta1": "ModSorc_IgnitionBoon",
+            "desctexta1": "ModSorc_IgnitionLifeSec",
             "desctextb1": "",
-            "desccalca1": "lvl * 2",
-            "desccalcb1": ""
+            "desccalca1": "1 + (lvl - 1) * 9 / 25",
+            "desccalcb1": "",
+            "descline2": "",
+            "desctexta2": "",
+            "desctextb2": "",
+            "desccalca2": "",
+            "desccalcb2": ""
           }
         }
       }

@@ -94,19 +94,19 @@ def _detect_theme(props: List[Tuple[str, str, str, str]]) -> str:
 CURATED_UNIQUE_ADDITIONS: Dict[str, List[Tuple[str, str, str, str]]] = {
     # --- Curated Oskills (16 distinct skills, 1 item each + 2 distinct on new Javelins = 18 distinct oskills total) ---
     "Stoutnail": [("oskill", "Sacrifice", "4", "6")],
-    "Dimoaks Hew": [("oskill", "Jab", "4", "6"), ("light", "", "-2", "-2")],
+    "Dimoaks Hew": [("oskill", "Concentrate", "4", "6"), ("light", "", "-2", "-2")],
     "Deathspade": [("oskill", "Cleave", "4", "6"), ("light", "", "-2", "-2")],
     "Rimeraven": [("oskill", "Exploding Arrow", "5", "7"), ("ease", "", "20", "20")],
-    "Bloodthief": [("oskill", "Feral Rage", "5", "7"), ("damageresist", "", "-8", "-5")],
+    "Bloodthief": [("oskill", "Fend", "4", "6"), ("damageresist", "", "-8", "-5")],
     "Soulflay": [("oskill", "Zeal", "5", "7"), ("light", "", "-2", "-2")],
     "Lance of Yaggai": [("oskill", "Charged Strike", "6", "8"), ("balance2", "", "-10", "-10")],
-    "Irices Shard": [("oskill", "Frozen Armor", "6", "8")],
+    "Irices Shard": [("oskill", "Fade", "5", "7")],
     "The Spirit Shroud": [("oskill", "Psychic Ward", "6", "8")],
     "Blastbark": [("oskill", "Multiple Shot", "6", "8"), ("ease", "", "20", "20")],
-    "Frostburn": [("oskill", "Chilling Armor", "7", "9"), ("balance2", "", "-10", "-10")],
+    "Frostburn": [("oskill", "Cyclone Armor", "7", "9"), ("balance2", "", "-10", "-10")],
     "Valkiry Wing": [("oskill", "Valkyrie", "4", "6"), ("light", "", "-2", "-2")],
-    "Bloodmoon": [("oskill", "Blood Boil", "8", "11"), ("damageresist", "", "-8", "-5")],
-    "Steelshade": [("oskill", "Enchant", "10", "13"), ("ease", "", "20", "20")],
+    "Bloodmoon": [("oskill", "Vengeance", "8", "11"), ("damageresist", "", "-8", "-5")],
+    "Steelshade": [("oskill", "Ring of Fire", "9", "12"), ("ease", "", "20", "20")],
     "Gutsiphon": [("oskill", "Strafe", "9", "12"), ("balance2", "", "-10", "-10")],
     "Boneflame": [("oskill", "Bone Armor", "12", "15"), ("light", "", "-2", "-2")],
 
@@ -211,27 +211,80 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
 
         code = r.get("code", "")
         r["nolimit"] = "1"
-        # Do not touch Unique Jewels (Rainbow Facet, etc.) or Quest items (lvl req == 0)
         lvl_req = int(r.get("lvl req") or "0")
-        if code in ("jew", "cjw") or lvl_req == 0:
+        if code in ("jew", "cjw"):
+            # Replace reworked Blaze (Flashfire) proc on Fire Level-Up Rainbow Facet with Fire Wall / Backdraft (51),
+            # and convert pierce-fire/cold/ltng/pois into extra-fire/cold/ltng/pois (doubling extra-* on Rainbow Facet to 6..10%)
+            pierce_to_extra = {
+                "pierce-fire": "extra-fire",
+                "pierce-cold": "extra-cold",
+                "pierce-ltng": "extra-ltng",
+                "pierce-pois": "extra-pois",
+                "pierce-mag": "extra-mag",
+            }
+            j_props = []
+            for p, par, mn, mx in _get_props(r, 12):
+                if p == "levelup-skill" and par.strip() in ("46", "Blaze"):
+                    par = "51"
+                if p in pierce_to_extra:
+                    continue
+                if p in ("extra-fire", "extra-cold", "extra-ltng", "extra-pois") and mn == "3" and mx == "5":
+                    mn, mx = "6", "10"
+                j_props.append((p, par, mn, mx))
+            _set_props(r, j_props, 12)
+            continue
+        # Do not touch Quest items (lvl req == 0)
+        if lvl_req == 0:
             continue
         wtype = weap_types.get(code, "")
         props = _get_props(r, 12)
         theme = _detect_theme(props)
 
-        # 1. Remove nofreeze, strip reworked Barbarian charged/oskill/repurposed skill refs, & compress gold% by 0.45x
+        # 1. Remove nofreeze, strip retired Teleport & Lower Resist, convert pierce-* -> extra-*, & compress gold% by 0.45x
+        pierce_to_extra = {
+            "pierce-fire": "extra-fire",
+            "pierce-cold": "extra-cold",
+            "pierce-ltng": "extra-ltng",
+            "pierce-pois": "extra-pois",
+            "pierce-mag": "extra-mag",
+        }
         reworked_barb_skill_refs = {
             "127", "129", "131", "142", "150", "155",
             "Blade Mastery", "Mace Mastery", "Find Potion", "Find Item", "Grim Ward",
             "Battle Command", "Natural Resistance", "Berserk",
         }
+        retired_teleport_refs = {"54", "Teleport"}
+        reworked_sorc_stance_or_passive_refs = {
+            "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+            "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+            "Enchant", "Teleport", "Energy Shield", "Chilling Armor",
+            "Fire Mastery", "Lightning Mastery", "Cold Mastery", "Lower Resist",
+        }
         new_props = []
         for p, par, mn, mx in props:
+            ps = par.strip()
+            if p in pierce_to_extra:
+                p = pierce_to_extra[p]
+            # Systematically strip all Teleport references (oskill, charged, skill, procs)
+            if p in ("charged", "oskill", "skill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill", "kill-skill", "death-skill") and ps in retired_teleport_refs:
+                continue
+            # Strip reworked Barbarian, Sorceress stance/passive skills & Lower Resist from charged/oskill/skill
             if p in ("charged", "oskill", "skill") and (
-                par.strip() in reworked_barb_skill_refs
-                or (p in ("charged", "oskill") and par.strip().isdigit() and 126 <= int(par.strip()) <= 155)
+                ps in reworked_barb_skill_refs
+                or (p in ("charged", "oskill") and ps in reworked_sorc_stance_or_passive_refs)
+                or (p in ("charged", "oskill") and ps.isdigit() and 126 <= int(ps) <= 155)
             ):
                 continue
+            # Replace proc references to Sorceress stance/stance-gated skills & Lower Resist (91 -> 87 Decrepify)
+            if p in ("gethit-skill", "hit-skill", "att-skill", "levelup-skill", "kill-skill", "death-skill"):
+                if ps in ("46", "Blaze"):
+                    par = "51"  # Backdraft (Fire Wall), active non-stance-gated Fire spell
+                elif ps in ("52", "Enchant"):
+                    par = "47"  # Pyroclasm (Fire Ball), active non-stance-gated Fire spell
+                elif ps in ("91", "Lower Resist"):
+                    par = "87"  # Decrepify instead of Lower Resist
+                elif ps in reworked_sorc_stance_or_passive_refs:
+                    continue
             if p == "nofreeze":
                 nofreeze_removed += 1
                 if theme == "cold" or len(props) <= 3:
@@ -333,7 +386,7 @@ def build_uniqueitems(cfg: dict) -> Tuple[str, List[Tuple[int, str, str]]]:
         ("Atalanta's Dart", "am5", "26", "19", [
             ("ama", "", "1", "1"),
             ("dmg%", "", "85", "110"),
-            ("oskill", "Guided Arrow", "4", "6"),
+            ("oskill", "Jab", "4", "6"),
             ("move2", "", "20", "20"),
             ("rep-quant", "8", "", ""),
         ]),
@@ -540,10 +593,35 @@ def build_setitems(cfg: dict) -> str:
         props = _get_props(r, 9)
         theme = _detect_theme(props)
 
-        # 1. Remove nofreeze from base props & add Kiss-Curse to overperforming Set pieces (e.g. >=30% Crushing Blow)
+        # 1. Remove nofreeze, convert pierce-* -> extra-*, & strip retired Teleport / Sorceress stance / Lower Resist refs
+        pierce_to_extra = {
+            "pierce-fire": "extra-fire",
+            "pierce-cold": "extra-cold",
+            "pierce-ltng": "extra-ltng",
+            "pierce-pois": "extra-pois",
+            "pierce-mag": "extra-mag",
+        }
+        retired_set_skill_refs = {
+            "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+            "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+            "Enchant", "Teleport", "Energy Shield", "Chilling Armor",
+            "Fire Mastery", "Lightning Mastery", "Cold Mastery", "Lower Resist",
+        }
         new_props = []
         has_high_cb = False
         for p, par, mn, mx in props:
+            ps = par.strip()
+            if p in pierce_to_extra:
+                p = pierce_to_extra[p]
+            if p in ("charged", "oskill", "skill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill", "kill-skill", "death-skill"):
+                if ps in ("54", "Teleport") or (p in ("charged", "oskill") and ps in retired_set_skill_refs):
+                    continue
+                if p in ("gethit-skill", "hit-skill", "att-skill", "levelup-skill") and ps in ("52", "Enchant"):
+                    par = "47"  # Pyroclasm (Fire Ball) instead of Conflagration stance
+                elif p in ("gethit-skill", "hit-skill", "att-skill", "levelup-skill") and ps in ("91", "Lower Resist"):
+                    par = "87"  # Decrepify instead of Lower Resist
+                elif p in ("gethit-skill", "hit-skill", "att-skill", "levelup-skill") and ps in retired_set_skill_refs:
+                    continue
             if p == "nofreeze":
                 nofreeze_removed += 1
                 if theme == "cold":
@@ -557,15 +635,30 @@ def build_setitems(cfg: dict) -> str:
             new_props.append(("light", "", "-2", "-2"))
         _set_props(r, new_props, 9)
 
-        # 2. Remove nofreeze from partial set bonuses (aprop1a..5b)
+        # 2. Remove nofreeze, convert pierce-* -> extra-*, & strip retired Teleport / stance / Lower Resist refs from partial set bonuses (aprop1a..5b)
         for i in range(1, 6):
             for ab in ("a", "b"):
-                if r.get(f"aprop{i}{ab}") == "nofreeze":
+                ap = r.get(f"aprop{i}{ab}", "").strip()
+                apar = r.get(f"apar{i}{ab}", "").strip()
+                if ap in pierce_to_extra:
+                    r[f"aprop{i}{ab}"] = pierce_to_extra[ap]
+                    ap = pierce_to_extra[ap]
+                if ap == "nofreeze":
                     nofreeze_removed += 1
                     r[f"aprop{i}{ab}"] = "res-cold" if theme == "cold" else "half-freeze"
                     r[f"apar{i}{ab}"] = ""
                     r[f"amin{i}{ab}"] = "20" if theme == "cold" else "1"
                     r[f"amax{i}{ab}"] = "20" if theme == "cold" else "1"
+                elif ap in ("charged", "oskill", "gethit-skill", "hit-skill", "att-skill") and apar in retired_set_skill_refs:
+                    if ap in ("gethit-skill", "hit-skill", "att-skill") and apar in ("52", "Enchant"):
+                        r[f"apar{i}{ab}"] = "47"
+                    elif ap in ("gethit-skill", "hit-skill", "att-skill") and apar in ("91", "Lower Resist"):
+                        r[f"apar{i}{ab}"] = "87"
+                    else:
+                        r[f"aprop{i}{ab}"] = ""
+                        r[f"apar{i}{ab}"] = ""
+                        r[f"amin{i}{ab}"] = ""
+                        r[f"amax{i}{ab}"] = ""
 
         # 3. Modest flat 2-piece bonus (aprop1a) on Set pieces that currently have an empty aprop1a
         if not r.get("aprop1a") and r.get("add func") == "2":
@@ -586,10 +679,27 @@ def build_sets(cfg: dict) -> str:
     for r in rows:
         if not r.get("index"):
             continue
-        # Remove any nofreeze on set completion bonuses
+        # Remove any nofreeze and replace reworked Sorceress stance/passive oskills on set completion bonuses
         for col in headers:
-            if (col.startswith("PCode") or col.startswith("FCode")) and r.get(col) == "nofreeze":
+            if not (col.startswith("PCode") or col.startswith("FCode")):
+                continue
+            val = r.get(col, "").strip()
+            suffix = col[5:]  # e.g. "2a", "5", "7"
+            pcol = ("PParam" if col.startswith("PCode") else "FParam") + suffix
+            mncol = ("PMin" if col.startswith("PCode") else "FMin") + suffix
+            mxcol = ("PMax" if col.startswith("PCode") else "FMax") + suffix
+            pval = r.get(pcol, "").strip()
+            if val == "nofreeze":
                 r[col] = "half-freeze"
+            elif val == "oskill" and pval in ("Enchant", "52"):
+                # Enchant (52) is now Conflagration (self-draining Sorc stance); replace with universally castable Ring of Fire
+                r[pcol] = "Ring of Fire"
+            elif val == "oskill" and pval in ("Fire Mastery", "61"):
+                # Fire Mastery (61) is now Ignition (Sorc stance passive); replace with +15% Fire Skill Damage for the set's fire spells
+                r[col] = "extra-fire"
+                r[pcol] = ""
+                r[mncol] = "15"
+                r[mxcol] = "15"
     return write_excel_tsv("sets.txt", headers, rows)
 
 
@@ -684,9 +794,9 @@ def _broad_slot_label(code: str, weap_types: Dict[str, str], armor_types: Dict[s
         return "Melee Weapon"
     if code in armor_types:
         at = armor_types[code]
-        if at in ("helm", "circ", "pelt", "phlm"):
+        if at in ("helm", "bhlm", "circ", "pelt", "phlm"):
             return "Helm"
-        if at in ("shie", "ashd", "head"):
+        if at in ("shie", "bshd", "ashd", "head"):
             return "Shield"
         if at == "glov":
             return "Gloves"

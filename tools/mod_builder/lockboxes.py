@@ -109,6 +109,7 @@ def _get_reserved_codes() -> Set[str]:
         "vk1", "vk2", "vk3", "vk4",
         "sw1", "sw2", "sw3", "sw4",
         "va1", "va2", "va3", "va4",
+        "zee", "zef", "zeg",
         "xxx", "any", "all",
     }
     for fn, col in (
@@ -196,6 +197,9 @@ def get_lockbox_registry() -> List[Dict[str, object]]:
         idx = r.get("index", "").strip()
         bcode = r.get("item", "").strip()
         if not idx or not bcode or bcode in skip_base_codes:
+            continue
+        if r.get("set", "").strip() == "Cow King's Leathers":
+            # Exclude Cow King's Leathers (hardcoded by C++ engine to fail outside Moo Moo Farm)
             continue
         lvl = int(r.get("lvl") or "1")
         if lvl >= 100:

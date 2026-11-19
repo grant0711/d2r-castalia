@@ -195,8 +195,9 @@ def apply_layout(by_name: Dict[str, dict], by_desc: Dict[str, dict]) -> None:
         if row is None or row.get("*Id") != str(s["vid"]) or row.get("charclass") != "sor":
             raise RuntimeError(f"sorc map: row '{s['vname']}' is not Sorceress id {s['vid']}")
         row["reqlevel"] = str(slot_level(s))
-        for c in ("reqskill1", "reqskill2", "reqskill3"):
-            row[c] = ""
+        prereqs = s.get("prereqs", [])
+        for idx, c in enumerate(("reqskill1", "reqskill2", "reqskill3")):
+            row[c] = BY_SLUG[prereqs[idx]]["vname"] if idx < len(prereqs) else ""
         d = by_desc[row["skilldesc"]]
         d["SkillPage"] = str(PAGE[s["tree"]])
         d["SkillRow"] = str(s["row"])

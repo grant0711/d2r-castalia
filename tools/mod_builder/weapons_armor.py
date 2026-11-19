@@ -699,8 +699,8 @@ def build_weapons(cfg: dict) -> str:
     um1["namestr"] = "um1"
     um1["level"] = "1"
     um1["cost"] = "100000"
-    um1["normcode"] = "um1"
-    um1["ubercode"] = "um1"
+    um1["normcode"] = "xxx"
+    um1["ubercode"] = "xxx"
     um1["ultracode"] = "um1"
     um1["PermStoreItem"] = "1"
     um1["NightmareUpgrade"] = "xxx"
@@ -761,25 +761,29 @@ def build_armor(cfg: dict) -> str:
             row["NightmareUpgrade"] = "xh9"
             row["HellUpgrade"] = "uh9"
         elif code == "ci0":
-            # Circlet (qlvl=30 -> blocked in Act 1-3 Normal [cap<=28], first spawns in Act 4 Normal [cap=36];
+            # Circlet (qlvl=30, levelreq=16, magic lvl=3 -> blocked in Act 1-3 Normal [cap<=28], first spawns in Act 4 Normal [cap=36];
             # upgrades to Coronet in NM and Tiara in Hell)
             row["level"] = "30"
+            row["levelreq"] = "16"
             row["NightmareUpgrade"] = "ci1"
             row["HellUpgrade"] = "ci2"
         elif code == "ci1":
-            # Coronet (qlvl=39 -> blocked in Act 1-4 Normal [cap<=36], first spawns in Act 5 Normal;
+            # Coronet (qlvl=39, levelreq=32, magic lvl=8 -> blocked in Act 1-4 Normal [cap<=36], first spawns in Act 5 Normal;
             # upgrades to Tiara in NM and Diadem in Hell)
             row["level"] = "39"
+            row["levelreq"] = "32"
             row["NightmareUpgrade"] = "ci2"
             row["HellUpgrade"] = "ci3"
         elif code == "ci2":
-            # Tiara (qlvl=52 -> first spawns as extra slot in Mid/Late NM Act 4/5; upgrades to Diadem in Hell)
+            # Tiara (qlvl=52, levelreq=46, magic lvl=13 -> first spawns in NM; upgrades to Diadem in Hell)
             row["level"] = "52"
+            row["levelreq"] = "46"
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "ci3"
         elif code == "ci3":
-            # Diadem (qlvl=64 -> spawns via HellUpgrade on ci1/ci2 in Hell Act 1-5)
+            # Diadem (qlvl=64, levelreq=60, magic lvl=18 -> spawns via HellUpgrade on ci1/ci2 in Hell Act 1-5)
             row["level"] = "64"
+            row["levelreq"] = "60"
             row["NightmareUpgrade"] = "xxx"
             row["HellUpgrade"] = "xxx"
         elif code == row.get("normcode"):
@@ -799,23 +803,120 @@ def build_armor(cfg: dict) -> str:
         minac = int(row["minac"]) if row.get("minac") else 0
         maxac = int(row["maxac"]) if row.get("maxac") else 0
 
-        if spd == "10":
-            # Heavy Armor / Heavy Shield: 2.20x AC, speed = 15 (2.5x stamina drain), +10% block on shields
-            row["minac"] = str(max(1, int(round(minac * 2.20))))
-            row["maxac"] = str(max(2, int(round(maxac * 2.20))))
-            row["speed"] = "15"
-            if atype in ("shie", "ashd", "head") and row.get("block"):
-                row["block"] = str(int(row["block"]) + 10)
-        elif spd == "5":
-            # Medium Armor / Medium Shield: 1.45x AC, speed = 8 (1.8x stamina drain)
-            row["minac"] = str(max(1, int(round(minac * 1.45))))
-            row["maxac"] = str(max(2, int(round(maxac * 1.45))))
-            row["speed"] = "8"
-        elif spd == "0" and atype in ("tors", "shie", "ashd", "head"):
-            # Light Body Armor / Light Shield: 0.85x AC, speed = 0
-            row["minac"] = str(max(1, int(round(minac * 0.85))))
-            row["maxac"] = str(max(2, int(round(maxac * 0.85))))
-            row["speed"] = "0"
+        # Promote Ancient Armor / Ornate Plate / Sacred Armor (highest Str body armor line) to Heavy (speed=10)
+        if code in ("aar", "xar", "uar"):
+            spd = "10"
+
+        if atype == "tors":
+            if spd == "10":
+                row["minac"] = str(max(1, int(round(minac * 2.20))))
+                row["maxac"] = str(max(2, int(round(maxac * 2.20))))
+                row["speed"] = "15"
+            elif spd == "5":
+                row["minac"] = str(max(1, int(round(minac * 1.45))))
+                row["maxac"] = str(max(2, int(round(maxac * 1.45))))
+                row["speed"] = "8"
+            else:
+                row["minac"] = str(max(1, int(round(minac * 0.85))))
+                row["maxac"] = str(max(2, int(round(maxac * 0.85))))
+                row["speed"] = "0"
+
+        # 3-Tier Weight Class Progression for Shields (shie & ashd):
+        # Light (spd=0): low AC, modest lower Block Chance (14%-24%), +15% Faster Block Rate (auto prefix 316 / 318)
+        # Medium (spd=5): medium-high AC, balanced Block Chance (18%-28%), neutral Block Rate (no auto / 304)
+        # Heavy (spd=10/12): massive AC, modest higher Block Chance (24%-30%), -15% Faster Block Rate (auto prefix 317 / 319)
+        shield_specs = {
+            # Light Shields (spd=0, auto=316)
+            "buc": ("0", "14", 1.10, None, "316"), "xuc": ("0", "16", 1.10, None, "316"), "uuc": ("0", "18", 1.05, None, "316"),
+            "sml": ("0", "16", 1.10, None, "316"), "xml": ("0", "18", 1.10, None, "316"), "uml": ("0", "20", 1.05, None, "316"),
+            "bsh": ("0", "18", 1.00, None, "316"), "xsh": ("0", "20", 1.00, None, "316"), "ush": ("0", "22", 1.00, None, "316"),
+            # Medium Shields (spd=5, auto="")
+            "lrg": ("5", "20", 1.55, None, ""), "xrg": ("5", "22", 1.55, None, ""), "urg": ("5", "24", 1.55, None, ""),
+            "kit": ("5", "20", 1.55, None, ""), "xit": ("5", "22", 1.55, None, ""), "uit": ("5", "24", 1.55, None, ""),
+            "spk": ("5", "18", 1.55, (10, 18), ""), "xpk": ("5", "20", 1.55, (32, 60), ""), "upk": ("5", "22", 1.55, (58, 92), ""),
+            # Heavy Shields (spd=10..12, auto=317)
+            "gts": ("10", "24", 2.40, None, "317"), "xts": ("10", "26", 2.40, None, "317"), "uts": ("10", "28", 2.40, None, "317"),
+            "tow": ("12", "26", 2.75, None, "317"), "xow": ("12", "28", 2.75, None, "317"), "uow": ("12", "30", 2.75, None, "317"),
+            # Paladin Shields (ashd): Light=318 (+15% FBR), Med=304 (neutral), Heavy=319 (-15% FBR)
+            "pa1": ("0", "18", 1.05, None, "318"), "pa6": ("0", "20", 1.05, None, "318"), "pab": ("0", "22", 1.05, None, "318"),
+            "pa2": ("0", "20", 1.10, None, "318"), "pa7": ("0", "22", 1.10, None, "318"), "pac": ("0", "24", 1.10, None, "318"),
+            "pa3": ("5", "22", 1.55, None, "304"), "pa8": ("5", "24", 1.55, None, "304"), "pad": ("5", "26", 1.55, None, "304"),
+            "pa4": ("5", "24", 1.65, None, "304"), "pa9": ("5", "26", 1.65, None, "304"), "pae": ("5", "28", 1.65, None, "304"),
+            "pa5": ("10", "26", 2.35, None, "319"), "paa": ("10", "28", 2.35, None, "319"), "paf": ("10", "30", 2.35, None, "319"),
+        }
+        if code in shield_specs:
+            s_spd, s_blk, s_ac_mult, s_smite, s_auto = shield_specs[code]
+            row["speed"] = s_spd
+            row["block"] = s_blk
+            row["minac"] = str(max(1, int(round(minac * s_ac_mult))))
+            row["maxac"] = str(max(2, int(round(maxac * s_ac_mult))))
+            row["auto prefix"] = s_auto
+            if s_smite is not None:
+                row["mindam"] = str(s_smite[0])
+                row["maxdam"] = str(s_smite[1])
+
+        # Helms & Circlets Weight/Defense/Strength & Enclosed Vision (auto prefix 320 / 321) Progression:
+        helm_specs = {
+            # Circlets (Ultralight: spd=0, 0 Str)
+            "ci0": ("0", "0", 15, 25, ""), "ci1": ("0", "0", 22, 32, ""), "ci2": ("0", "0", 30, 42, ""), "ci3": ("0", "0", 40, 55, ""),
+            # Light Helms (spd=0; Mask line has -2 Light Radius via group 320)
+            "cap": ("0", "0", 4, 7, ""), "xap": ("0", "20", 42, 52, ""), "uap": ("0", "50", 85, 110, ""),
+            "skp": ("0", "15", 9, 13, ""), "xkp": ("0", "43", 50, 62, ""), "ukp": ("0", "84", 100, 130, ""),
+            "msk": ("0", "20", 12, 22, "320"), "xsk": ("0", "50", 54, 74, "320"), "usk": ("0", "90", 105, 135, "320"),
+            "bhm": ("0", "25", 24, 30, ""), "xh9": ("0", "58", 68, 90, ""), "uh9": ("0", "100", 120, 150, ""),
+            # Medium Helms (spd=3..4; Full Helm line has -2 Light Radius via group 320)
+            "hlm": ("3", "30", 18, 24, ""), "xlm": ("3", "68", 82, 100, ""), "ulm": ("3", "120", 170, 210, ""),
+            "fhl": ("4", "45", 28, 36, "320"), "xhl": ("4", "90", 105, 128, "320"), "uhl": ("4", "148", 215, 265, "320"),
+            # Heavy Helms (spd=6; Great/Winged/Spired Helm line has -3 Light Radius via group 321)
+            "crn": ("6", "60", 38, 50, ""), "xrn": ("6", "115", 130, 160, ""), "urn": ("6", "174", 270, 330, ""),
+            "ghm": ("6", "70", 45, 58, "321"), "xhm": ("6", "130", 150, 185, "321"), "uhm": ("6", "192", 310, 380, "321"),
+        }
+        if code in helm_specs:
+            h_spd, h_str, h_minac, h_maxac, h_auto = helm_specs[code]
+            row["speed"] = h_spd
+            row["reqstr"] = h_str
+            row["minac"] = str(h_minac)
+            row["maxac"] = str(h_maxac)
+            row["auto prefix"] = h_auto
+
+        # Assign secondary Bone Caster Armor type tags via 'type2' ('bhlm' -> 'bcas', 'bshd' -> 'bcas')
+        # while keeping primary 'type' as 'helm' / 'shie' so D2R's 3D shield/helm attachment orientation is untouched!
+        if code in ("bhm", "xh9", "uh9", "msk", "xsk", "usk"):
+            row["type2"] = "bhlm"
+        elif code in ("bsh", "xsh", "ush"):
+            row["type2"] = "bshd"
+
+        # Gloves (glov) 5-Tier Light -> Heavy Progression:
+        glove_specs = {
+            "lgl": ("0", "0", 3, 5), "xlg": ("0", "20", 25, 32), "ulg": ("0", "45", 45, 55),
+            "vgl": ("0", "12", 6, 9), "xvg": ("0", "30", 33, 42), "uvg": ("0", "60", 60, 75),
+            "mgl": ("2", "28", 12, 16), "xmg": ("2", "60", 52, 65), "umg": ("2", "106", 100, 122),
+            "tgl": ("3", "48", 19, 25), "xtg": ("3", "90", 74, 90), "utg": ("3", "148", 140, 170),
+            "hgl": ("5", "70", 28, 36), "xhg": ("5", "125", 105, 130), "uhg": ("5", "185", 195, 240),
+        }
+        if code in glove_specs:
+            g_spd, g_str, g_minac, g_maxac = glove_specs[code]
+            row["speed"] = g_spd
+            row["reqstr"] = g_str
+            row["minac"] = str(g_minac)
+            row["maxac"] = str(g_maxac)
+
+        # Boots (boot) 5-Tier Light -> Heavy Progression (Defense, Speed, Str & Kick Damage):
+        boot_specs = {
+            "lbt": ("0", "0", 3, 5, 3, 8), "xlb": ("0", "20", 25, 32, 22, 38), "ulb": ("0", "45", 45, 55, 50, 80),
+            "vbt": ("0", "18", 6, 9, 5, 11), "xvb": ("0", "42", 33, 42, 28, 48), "uvb": ("0", "70", 60, 75, 65, 105),
+            "mbt": ("2", "32", 12, 16, 8, 15), "xmb": ("2", "65", 52, 65, 35, 60), "umb": ("2", "115", 100, 122, 85, 135),
+            "tbt": ("3", "52", 19, 25, 12, 22), "xtb": ("3", "95", 74, 90, 45, 78), "utb": ("3", "155", 140, 170, 110, 175),
+            "hbt": ("5", "75", 28, 36, 18, 32), "xhb": ("5", "130", 105, 130, 60, 105), "uhb": ("5", "195", 195, 240, 145, 230),
+        }
+        if code in boot_specs:
+            bt_spd, bt_str, bt_minac, bt_maxac, bt_mindm, bt_maxdm = boot_specs[code]
+            row["speed"] = bt_spd
+            row["reqstr"] = bt_str
+            row["minac"] = str(bt_minac)
+            row["maxac"] = str(bt_maxac)
+            row["mindam"] = str(bt_mindm)
+            row["maxdam"] = str(bt_maxdm)
 
         # Attach automagic 'skill-rand' staffmod groups (313=bar Primal Helms, 314=dru Pelts)
         if atype == "phlm":
@@ -823,31 +924,31 @@ def build_armor(cfg: dict) -> str:
         elif atype == "pelt":
             row["auto prefix"] = "314"
 
-        # Enforce 4 / 8 / 12 Belt Slot Progression & Strength Requirements across Normal, NM, and Hell:
-        # - Light Belts (Sash & Light Belt families): 4 slots (1 row, belt="2"), low Str (0 / 20 / 50)
-        # - Medium Belts (Belt & Heavy Belt families): 8 slots (2 rows, belt="1"), medium Str (35..145)
-        # - Heavy Belts (Plated Belt, War Belt, Colossus Girdle): 12 slots (3 rows, belt="0"), high Str (100 / 140 / 185)
+        # Enforce 4 / 8 / 12 Belt Slot Progression, Strength, Speed & Defense across Normal, NM, and Hell:
         belt_progression_specs = {
-            "lbl": ("2", "0"),
-            "zlb": ("2", "20"),
-            "ulc": ("2", "50"),
-            "vbl": ("2", "0"),
-            "zvb": ("2", "20"),
-            "uvc": ("2", "50"),
-            "mbl": ("1", "35"),
-            "zmb": ("1", "65"),
-            "umc": ("1", "106"),
-            "tbl": ("1", "50"),
-            "ztb": ("1", "88"),
-            "utc": ("1", "145"),
-            "hbl": ("0", "100"),
-            "zhb": ("0", "140"),
-            "uhc": ("0", "185"),
+            "lbl": ("2", "0", "0", 3, 5),
+            "zlb": ("2", "20", "0", 25, 32),
+            "ulc": ("2", "50", "0", 45, 55),
+            "vbl": ("2", "0", "0", 6, 9),
+            "zvb": ("2", "20", "0", 32, 40),
+            "uvc": ("2", "50", "0", 60, 72),
+            "mbl": ("1", "35", "2", 12, 16),
+            "zmb": ("1", "65", "2", 50, 62),
+            "umc": ("1", "106", "2", 95, 115),
+            "tbl": ("1", "50", "3", 18, 24),
+            "ztb": ("1", "88", "3", 70, 86),
+            "utc": ("1", "145", "3", 135, 165),
+            "hbl": ("0", "100", "5", 28, 36),
+            "zhb": ("0", "140", "5", 100, 125),
+            "uhc": ("0", "185", "5", 190, 235),
         }
         if code in belt_progression_specs:
-            b_idx, b_str = belt_progression_specs[code]
+            b_idx, b_str, b_spd, b_minac, b_maxac = belt_progression_specs[code]
             row["belt"] = b_idx
             row["reqstr"] = b_str
+            row["speed"] = b_spd
+            row["minac"] = str(b_minac)
+            row["maxac"] = str(b_maxac)
 
         # Normalize armor base cost by progression level (1..85) and slot weight
         a_lvl = int(row.get("level") or "1")
@@ -880,6 +981,7 @@ def build_armor(cfg: dict) -> str:
     ]
     for new_code, tmpl_code, aname in summon_armors:
         arow = dict(rows_by_code[tmpl_code])
+        arow["type2"] = ""
         arow["name"] = aname
         arow["code"] = new_code
         arow["namestr"] = new_code

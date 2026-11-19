@@ -315,25 +315,13 @@ def verify_all(cfg: dict = None) -> List[str]:
     for r in tc_rows:
         tc_name = r.get("Treasure Class", "")
         is_chest_tc = "Chest" in tc_name
-        is_duriel_tc = tc_name.startswith("Duriel")
         has_lockbox = False
-        tsc_count = 0
         for i in range(1, 11):
             it = r.get(f"Item{i}", "").strip()
-            if it in globally_forbidden_tc_items:
+            if it in globally_forbidden_tc_items or it == "tsc":
                 raise AssertionError(
                     f"TreasureClassEx.txt ({tc_name}): globally forbidden item '{it}' in Item{i}"
                 )
-            if it == "tsc":
-                if not is_duriel_tc:
-                    raise AssertionError(
-                        f"TreasureClassEx.txt ({tc_name}): Scroll of Town Portal ('tsc') is only allowed on Duriel TCs"
-                    )
-                if r.get(f"Prob{i}", "").strip() != "1":
-                    raise AssertionError(
-                        f"TreasureClassEx.txt ({tc_name}): Duriel 'tsc' must have Prob='1'"
-                    )
-                tsc_count += 1
             if not is_chest_tc and it in monster_forbidden_potions:
                 raise AssertionError(
                     f"TreasureClassEx.txt ({tc_name}): forbidden potion '{it}' in monster TC Item{i}"
@@ -347,8 +335,24 @@ def verify_all(cfg: dict = None) -> List[str]:
                     has_lockbox = True
         if is_chest_tc and not has_lockbox:
             raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Chest TC missing Lockbox entry")
-        if is_duriel_tc and r.get("Picks") == "-6" and tsc_count != 1:
-            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Duriel TC must drop 1 and only 1 'tsc'")
+        tc_items = {r.get(f"Item{i}", "").strip() for i in range(1, 11) if r.get(f"Item{i}", "").strip()}
+        if tc_name in ("Act 1 Good", "Act 1 GemRune") and tc_items & {"Flawed Gem", "Normal Gem", "Flawless Gem", "Perfect Gem"}:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): must only drop Chipped Gem in Act 1 Normal")
+        if tc_name in ("Act 2 Good", "Act 2 GemRune", "Act 3 Good", "Act 3 GemRune") and tc_items & {"Normal Gem", "Flawless Gem", "Perfect Gem"}:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Normal/Flawless/Perfect Gem dropped too early in Act 2-3 Normal")
+        if tc_name in ("Act 4 Good", "Act 4 GemRune", "Act 5 Good", "Act 5 GemRune") and tc_items & {"Flawless Gem", "Perfect Gem"}:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Flawless/Perfect Gem dropped too early in Act 4-5 Normal")
+        if tc_name in ("Act 1 (N) Good", "Act 1 (N) GemRune", "Act 2 (N) Good", "Act 2 (N) GemRune") and "Perfect Gem" in tc_items:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Perfect Gem must not drop before Act 3 (N)")
+        if tc_name in ("Act 3 (N) Good", "Act 3 (N) GemRune") and "Perfect Gem" not in tc_items:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): Perfect Gem must debut in Act 3 (N)")
+        if tc_name == "Act 3 (N) H2H A" and int(r.get("level") or "0") < 50:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): level={r.get('level')} must be >= 50 so Act 2 (N) monsters (mlvl <= 49) do not upgrade to Act 3 (N)")
+        if tc_name == "Act 3 (N) Unique A" and int(r.get("level") or "0") < 53:
+            raise AssertionError(f"TreasureClassEx.txt ({tc_name}): level={r.get('level')} must be >= 53 so Act 2 (N) Uniques (mlvl <= 52) do not upgrade to Act 3 (N)")
+        if tc_name in ("Chipped Gem Skel", "Flawed Gem Skel", "Normal Gem Skel", "Flawless Gem Skel", "Perfect Gem Skel"):
+            if r.get("Prob7") != "6":
+                raise AssertionError(f"TreasureClassEx.txt ({tc_name}): expected Prob7='6' (25% Skull share), got '{r.get('Prob7')}'")
     _, obj_rows = _read_mod_tsv("objects.txt")
     for r in obj_rows:
         if r.get("Lockable") == "1":
@@ -418,6 +422,9 @@ def verify_all(cfg: dict = None) -> List[str]:
     isc_charged = isc_by_stat.get("item_charged_skill")
     if not isc_charged or isc_charged.get("Multiply") != "1" or isc_charged.get("Add") != "10":
         raise AssertionError("itemstatcost.txt (item_charged_skill): expected Multiply='1', Add='10' for cheap charge refills")
+    isc_dmgac = isc_by_stat.get("item_damagetargetac")
+    if not isc_dmgac or isc_dmgac.get("Save Bits") != "10" or isc_dmgac.get("Save Add") != "512":
+        raise AssertionError("itemstatcost.txt (item_damagetargetac): expected Save Bits='10', Save Add='512' (-512..+511 range)")
     for zero_st in (
         "armorclass", "mindamage", "maxdamage", "secondary_mindamage",
         "secondary_maxdamage", "item_throw_mindamage", "item_throw_maxdamage", "maxdurability",
@@ -444,9 +451,12 @@ def verify_all(cfg: dict = None) -> List[str]:
                 or r.get("CharsiMax") != "1"
                 or r.get("PermStoreItem") != "1"
                 or r.get("cost") != "100000"
+                or r.get("normcode") != "xxx"
+                or r.get("ubercode") != "xxx"
+                or r.get("ultracode") != "um1"
             ):
                 raise AssertionError(
-                    "weapons.txt (um1): Untempered Malus must have CharsiMin=1, CharsiMax=1, PermStoreItem=1, cost=100000"
+                    "weapons.txt (um1): Untempered Malus must have CharsiMin=1, CharsiMax=1, PermStoreItem=1, cost=100000, normcode='xxx', ubercode='xxx', ultracode='um1'"
                 )
             continue
         if wtype != "tpot":
@@ -565,12 +575,20 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"armor.txt ({code}): normalized base cost={acost} out of expected 50..50000 range"
             )
+        if code in ("bhm", "xh9", "uh9", "msk", "xsk", "usk"):
+            if atype != "helm" or r.get("type2") != "bhlm":
+                raise AssertionError(f"armor.txt ({code}): expected type='helm' and type2='bhlm', got type='{atype}', type2='{r.get('type2')}'")
+            if code in ("msk", "xsk", "usk") and r.get("auto prefix") != "320":
+                raise AssertionError(f"armor.txt ({code}): expected auto prefix='320' (-2 Light Radius), got '{r.get('auto prefix')}'")
+        elif code in ("bsh", "xsh", "ush"):
+            if atype != "shie" or r.get("type2") != "bshd" or r.get("auto prefix") != "316":
+                raise AssertionError(f"armor.txt ({code}): expected type='shie', type2='bshd', and auto prefix='316', got type='{atype}', type2='{r.get('type2')}', auto prefix='{r.get('auto prefix')}'")
         if code == "ci0":
-            if r.get("NightmareUpgrade") != "ci1" or r.get("HellUpgrade") != "ci2":
-                raise AssertionError("armor.txt (ci0): expected NightmareUpgrade=ci1, HellUpgrade=ci2")
+            if r.get("NightmareUpgrade") != "ci1" or r.get("HellUpgrade") != "ci2" or r.get("levelreq") != "16":
+                raise AssertionError("armor.txt (ci0): expected NightmareUpgrade=ci1, HellUpgrade=ci2, levelreq=16")
         elif code == "ci1":
-            if r.get("NightmareUpgrade") != "ci2" or r.get("HellUpgrade") != "ci3":
-                raise AssertionError("armor.txt (ci1): expected NightmareUpgrade=ci2, HellUpgrade=ci3")
+            if r.get("NightmareUpgrade") != "ci2" or r.get("HellUpgrade") != "ci3" or r.get("levelreq") != "32":
+                raise AssertionError("armor.txt (ci1): expected NightmareUpgrade=ci2, HellUpgrade=ci3, levelreq=32")
 
     # Verify automagic.txt staffmod groups (303, 305, 310..315) against skills.txt reqlevel tiers (1, 8, 16, 24, 32, 40)
     _, auto_rows = _read_mod_tsv("automagic.txt")
@@ -749,6 +767,9 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(f"misc.txt missing lockbox/skeleton key row '{kcode}'")
         if misc_by_code[kcode].get("PermStoreItem") != "1":
             raise AssertionError(f"misc.txt ({kcode}): PermStoreItem must be '1' so Nightmare/Hell vendors stock keys at ilvl >= 25")
+    for bad_lb in ("zee", "zef", "zeg"):
+        if bad_lb in misc_by_code:
+            raise AssertionError(f"misc.txt: Cow King's Leathers lockbox '{bad_lb}' must be excluded")
     for pcode in (
         "hp1", "hp2", "hp3", "hp4", "hp5", "h1a", "h1b", "h1c", "h1d", "h2b", "h2c", "h2d",
         "mp1", "mp2", "mp3", "mp4", "mp5", "m1a", "m1b", "m1c", "m1d", "m2b", "m2c", "m2d",
@@ -771,6 +792,23 @@ def verify_all(cfg: dict = None) -> List[str]:
         raise AssertionError("misc.txt (isc): Scroll of Identify cost must be '250'")
     if misc_by_code.get("ibk", {}).get("maxstack") != "10" or misc_by_code.get("ibk", {}).get("cost") != "10000":
         raise AssertionError("misc.txt (ibk): Tome of Identify must have maxstack='10' and cost='10000'")
+    gem_families_verify = (
+        ("gcv", "gfv", "gsv", "gzv", "gpv"),
+        ("gcy", "gfy", "gsy", "gly", "gpy"),
+        ("gcb", "gfb", "gsb", "glb", "gpb"),
+        ("gcg", "gfg", "gsg", "glg", "gpg"),
+        ("gcr", "gfr", "gsr", "glr", "gpr"),
+        ("gcw", "gfw", "gsw", "glw", "gpw"),
+        ("skc", "skf", "sku", "skl", "skz"),
+    )
+    expected_gem_reqs = ("1", "15", "30", "45", "60")
+    for gfam in gem_families_verify:
+        for gcode, exp_req in zip(gfam, expected_gem_reqs):
+            actual_req = misc_by_code.get(gcode, {}).get("levelreq", "")
+            if actual_req != exp_req:
+                raise AssertionError(
+                    f"misc.txt ({gcode}): expected levelreq='{exp_req}', got '{actual_req}'"
+                )
     _, book_rows = _read_mod_tsv("books.txt")
     for br in book_rows:
         if br.get("Name") == "Tome of Identify" and (br.get("CostPerCharge") != "250" or br.get("BaseCost") != "9750"):
@@ -813,6 +851,12 @@ def verify_all(cfg: dict = None) -> List[str]:
                     )
     for r in mon_rows:
         mid = r.get("Id", "").strip()
+        for exp_col in ("Exp", "Exp(N)", "Exp(H)", "minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
+            ev = (r.get(exp_col) or "").strip()
+            if ev.lstrip("-").isdigit() and not (0 <= int(ev) <= 32767):
+                raise AssertionError(
+                    f"monstats.txt ({mid}): {exp_col}={ev} overflows signed 16-bit integer (0..32767)"
+                )
         if mid == "zombie1" and not cfg.get("qa_blood_moor_boost", False):
             if int(r.get("Level", "1")) >= 50:
                 raise AssertionError("monstats.txt: zombie1 still has QA boosted level while qa_blood_moor_boost=false")
@@ -827,9 +871,21 @@ def verify_all(cfg: dict = None) -> List[str]:
                 raise AssertionError(
                     f"monstats.txt ({mid}): expected progressive off-screen aidist (42 <= {ad_n} < {ad_nm} < {ad_h})"
                 )
-    from mod_builder.monsters import FAMILY_RESIST_PROFILES, FIXED_SKIP_ZONE_IDS, HEAVY_BRUTE_BASES
+    from mod_builder.monsters import (
+        FIXED_SKIP_ZONE_IDS,
+        HEAVY_BRUTE_BASES,
+        OPTIONAL_DUNGEON_IDS,
+        OPTIONAL_DUNGEON_MONSTER_IDS,
+        OPT_DST_TO_SRC,
+        TACTICAL_DESCSTR_MAP,
+        _get_monster_affinity,
+        _parse_monster_tier,
+        scale_int,
+    )
     _, van_mon_rows = read_excel_tsv("monstats.txt")
     van_mon_by_id = {r["Id"]: r for r in van_mon_rows if r.get("Id")}
+    mod_mon_by_id = {r["Id"]: r for r in mon_rows if r.get("Id")}
+    tc_by_name = {r["Treasure Class"]: r for r in tc_rows if r.get("Treasure Class")}
     with open(os.path.join(MOD_STRINGS, "monsters.json"), "r", encoding="utf-8-sig") as f:
         mod_mon_strings = {e["Key"]: e for e in json.load(f) if isinstance(e, dict) and "Key" in e}
     for r in mon_rows:
@@ -838,20 +894,38 @@ def verify_all(cfg: dict = None) -> List[str]:
             r.get("isSpawn") != "1"
             or r.get("killable") != "1"
             or r.get("Align") != ""
-            or r.get("boss") == "1"
+            or (r.get("boss") == "1" and r.get("BaseId", "").strip() != "putriddefiler1")
             or r.get("primeevil") == "1"
             or int(r.get("Velocity") or "0") <= 0
         ):
             continue
-        vr = van_mon_by_id.get(mid)
+        eff_mid = OPT_DST_TO_SRC.get(mid, mid)
+        vr = van_mon_by_id.get(eff_mid)
         if not vr:
             continue
-        if r.get("BaseId", "").strip() in FAMILY_RESIST_PROFILES and mid not in ("cowking", "darkelder"):
+        bid = r.get("BaseId", "").strip()
+        if eff_mid not in ("cowking", "darkelder"):
+            t_idx = _parse_monster_tier(eff_mid, bid)
+            v_el, _, r_el, _ = _get_monster_affinity(eff_mid, bid, t_idx)
+            has_tactical = vr.get("DescStr", "").strip() in TACTICAL_DESCSTR_MAP
             dstr_key = r.get("DescStr", "").strip()
-            if not dstr_key or dstr_key not in mod_mon_strings or int(mod_mon_strings[dstr_key].get("id", 99999)) >= 23000:
-                raise AssertionError(
-                    f"monstats.txt ({mid}): DescStr='{dstr_key}' must be a valid .tbl-backed key (id < 23000) in monsters.json"
-                )
+            if v_el or r_el or has_tactical:
+                if not dstr_key or dstr_key not in mod_mon_strings or int(mod_mon_strings[dstr_key].get("id", 99999)) >= 23000:
+                    raise AssertionError(
+                        f"monstats.txt ({mid}): DescStr='{dstr_key}' must be a valid .tbl-backed key (id < 23000) in monsters.json"
+                    )
+            else:
+                if dstr_key != "":
+                    raise AssertionError(
+                        f"monstats.txt ({mid}): Neutral monster must have empty DescStr='', found '{dstr_key}'"
+                    )
+            for rtype in ("Dm", "Ma", "Fi", "Li", "Co", "Po"):
+                for sfx in ("", "(N)", "(H)"):
+                    rval = int(r.get(f"Res{rtype}{sfx}") or "0")
+                    if rval >= 100:
+                        raise AssertionError(
+                            f"monstats.txt ({mid}): Res{rtype}{sfx}={rval} >= 100 (all monster resistances must be capped at 99%)"
+                        )
         ad_n = int(r.get("aidist") or "0")
         ad_nm = int(r.get("aidist(N)") or "0")
         ad_h = int(r.get("aidist(H)") or "0")
@@ -859,7 +933,7 @@ def verify_all(cfg: dict = None) -> List[str]:
             raise AssertionError(
                 f"monstats.txt ({mid}): aidist ({ad_n}/{ad_nm}/{ad_h}) must be >= 38 (above vanilla's 35-subtile default)"
             )
-        if r.get("BaseId", "").strip() in HEAVY_BRUTE_BASES and mid not in ("cowking", "darkelder"):
+        if r.get("BaseId", "").strip() in HEAVY_BRUTE_BASES and eff_mid not in ("cowking", "darkelder"):
             m_vel = int(r.get("Velocity") or "0")
             v_vel = int(vr.get("Velocity") or "0")
             if m_vel > v_vel:
@@ -894,6 +968,40 @@ def verify_all(cfg: dict = None) -> List[str]:
                     f"monstats.txt ({mid}): Sk{s_i}lvl={m_sk} was not boosted by >= +2 over vanilla {v_sk}"
                 )
 
+    # Verify Optional Exploration Dungeon (+20% difficulty & +30% TC reward probability) contracts
+    for dst_id, src_id in OPT_DST_TO_SRC.items():
+        dst_r = mod_mon_by_id[dst_id]
+        src_r = mod_mon_by_id[src_id]
+        for hcol in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)", "AC", "Exp"):
+            if src_r.get(hcol, ""):
+                exp_v = scale_int(src_r[hcol], 1.20)
+                if dst_r.get(hcol) != exp_v:
+                    raise AssertionError(
+                        f"monstats.txt ({dst_id}): expected 1.20x {hcol}={exp_v} over {src_id} ({src_r[hcol]}), got {dst_r.get(hcol)}"
+                    )
+    for opt_id in OPTIONAL_DUNGEON_MONSTER_IDS:
+        orow = mod_mon_by_id[opt_id]
+        if opt_id not in ("maggotegg3", "maggotbaby3"):
+            for tcol in ("TreasureClass", "TreasureClassChamp", "TreasureClassUnique", "TreasureClass(N)", "TreasureClass(H)"):
+                tval = orow.get(tcol, "").strip()
+                if not tval.endswith(" Opt") or tval not in tc_by_name:
+                    raise AssertionError(
+                        f"monstats.txt ({opt_id}): expected valid '<TC> Opt' in {tcol}, got '{tval}'"
+                    )
+    for r in mon_rows:
+        if r.get("isSpawn") == "1" and r.get("killable") == "1" and r.get("Align") == "" and r.get("boss") != "1":
+            if r.get("BaseId", "").strip() in (
+                "skeleton1", "sk_archer1", "skmage_pois1", "skmage_cold1",
+                "skmage_fire1", "skmage_ltng1", "bonefetish1",
+                "doomknight1", "doomknight2", "doomknight3",
+            ):
+                for tcol in ("TreasureClass", "TreasureClassChamp", "TreasureClassUnique", "TreasureClass(N)", "TreasureClass(H)"):
+                    tval = r.get(tcol, "").strip()
+                    if tval and (" Skel" not in tval or tval not in tc_by_name):
+                        raise AssertionError(
+                            f"monstats.txt ({r.get('Id')}): Skeleton monster must use valid '<TC> Skel' / '<TC> Skel Opt' in {tcol}, got '{tval}'"
+                        )
+
     from mod_builder.monsters import FIXED_SKIP_ZONE_IDS
     _, van_lvl_rows = read_excel_tsv("levels.txt")
     van_lvl_by_name = {r["Name"]: r for r in van_lvl_rows if r.get("Name")}
@@ -925,6 +1033,25 @@ def verify_all(cfg: dict = None) -> List[str]:
             nmons = [r.get(f"nmon{i}", "") for i in range(1, 26) if r.get(f"nmon{i}", "")]
             if mons != nmons:
                 raise AssertionError(f"levels.txt ({lname}): Act 5 mon={mons} != nmon={nmons} (Guest monsters still present)")
+        if int(r.get("MonDen(N)") or "0") > 0:
+            z_mons = {
+                r.get(f"{p}{i}", "").strip()
+                for i in range(1, 26)
+                for p in ("mon", "nmon", "umon")
+                if r.get(f"{p}{i}", "").strip()
+            }
+            if zid in OPTIONAL_DUNGEON_IDS:
+                non_opt_leaks = z_mons - OPTIONAL_DUNGEON_MONSTER_IDS
+                if non_opt_leaks:
+                    raise AssertionError(
+                        f"levels.txt ({lname}, Id={zid}): Optional Dungeon contains unscaled monster(s) {sorted(non_opt_leaks)}"
+                    )
+            else:
+                opt_leaks = z_mons & OPTIONAL_DUNGEON_MONSTER_IDS
+                if opt_leaks:
+                    raise AssertionError(
+                        f"levels.txt ({lname}, Id={zid}): Non-Optional zone contains Optional Dungeon monster(s) {sorted(opt_leaks)}"
+                    )
     if "willowisp1" not in {mod_lvl_by_name["Act 3 - Jungle 2"].get(f"mon{i}", "") for i in range(1, 26)}:
         raise AssertionError("levels.txt (Act 3 - Jungle 2 / Great Marsh): willowisp1 (Gloam) missing from monster roster")
     if int(mod_lvl_by_name["Act 1 - Crypt 2 A"].get("MonDen") or "0") < 260:
@@ -971,13 +1098,13 @@ def verify_all(cfg: dict = None) -> List[str]:
                     raise AssertionError(
                         f"cubemain.txt ({desc}): expected numinputs=3, input 2=bml, input 3='\"jew,mag\"', output='\"jew,crf\"', lvl='1'"
                     )
-                if "levelreq" not in (r.get(f"mod {i}", "") for i in range(1, 6)):
+                if "levelreq" in (r.get(f"mod {i}", "") for i in range(1, 6)):
                     raise AssertionError(
-                        f"cubemain.txt ({desc}): missing levelreq modifier"
+                        f"cubemain.txt ({desc}): forbidden additive levelreq modifier present on distilled jewel"
                     )
                 for m_i in range(1, 6):
                     mcode = r.get(f"mod {m_i}", "").strip()
-                    if not mcode or mcode == "levelreq":
+                    if not mcode:
                         continue
                     if mcode in ("nofreeze", "cannotbefrozen"):
                         raise AssertionError(f"cubemain.txt ({desc}): forbidden {mcode} present on distilled jewel")
@@ -1005,11 +1132,41 @@ def verify_all(cfg: dict = None) -> List[str]:
     for afx_fn in ("magicprefix.txt", "magicsuffix.txt"):
         _, afx_rows = _read_mod_tsv(afx_fn)
         for r in afx_rows:
-            if r.get("spawnable") == "1" and "jewl" in {r.get(f"itype{i}", "").strip() for i in range(1, 8)}:
-                if int(r.get("level") or "1") < 2:
+            if r.get("spawnable") == "1":
+                if "jewl" in {r.get(f"itype{i}", "").strip() for i in range(1, 8)}:
+                    if int(r.get("level") or "1") < 2:
+                        raise AssertionError(
+                            f"{afx_fn} ({r.get('Name')}): jewl affix has level < 2 (would pollute lvl=1 distilled Crafted Jewels)"
+                        )
+                m1c = r.get("mod1code", "").strip()
+                m1p = r.get("mod1param", "").strip()
+                if m1c in ("pierce-fire", "pierce-cold", "pierce-ltng", "pierce-pois", "pierce-mag", "pierce-dmg"):
+                    raise AssertionError(f"{afx_fn} ({r.get('Name')}): forbidden elemental pierce {m1c!r} still spawnable")
+                if m1c in ("charged", "oskill", "skill", "att-skill", "hit-skill", "gethit-skill") and m1p in {
+                    "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+                    "Teleport", "Lower Resist", "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+                    "Enchant", "Energy Shield", "Chilling Armor", "Fire Mastery", "Lightning Mastery", "Cold Mastery",
+                }:
                     raise AssertionError(
-                        f"{afx_fn} ({r.get('Name')}): jewl affix has level < 2 (would pollute lvl=1 distilled Crafted Jewels)"
+                        f"{afx_fn} ({r.get('Name')}): spawnable=1 affix still references retired/reworked skill {m1p!r} ({m1c})"
                     )
+                if r.get("version") != "0":
+                    alvl = int(r.get("level") or "1")
+                    lreq = int(r.get("levelreq") or "0")
+                    if r.get("rare") == "1":
+                        if alvl <= 22 and lreq > 0:
+                            raise AssertionError(f"{afx_fn} ({r.get('Name')}): rare=1 alvl={alvl} <= 22 must have levelreq=0, got {lreq}")
+                        elif alvl <= 29 and lreq > 3:
+                            raise AssertionError(f"{afx_fn} ({r.get('Name')}): rare=1 alvl={alvl} <= 29 must have levelreq <= 3, got {lreq}")
+                        elif alvl <= 44 and lreq > 14:
+                            raise AssertionError(f"{afx_fn} ({r.get('Name')}): rare=1 alvl={alvl} <= 44 must have levelreq <= 14, got {lreq}")
+                        elif alvl <= 59 and lreq > 26:
+                            raise AssertionError(f"{afx_fn} ({r.get('Name')}): rare=1 alvl={alvl} <= 59 must have levelreq <= 26, got {lreq}")
+                        elif alvl >= 60 and lreq > 46:
+                            raise AssertionError(f"{afx_fn} ({r.get('Name')}): rare=1 alvl={alvl} >= 60 must have levelreq <= 46, got {lreq}")
+                    else:
+                        if lreq > max(1, min(62, alvl - 15)):
+                            raise AssertionError(f"{afx_fn} ({r.get('Name')}): rare=0 alvl={alvl} must have levelreq <= {max(1, min(62, alvl - 15))}, got {lreq}")
     checks_passed.append("QA config gates, progressive off-screen aidist, monprop, monumod & lvl=1 crafted jewel distillation contracts")
 
     # 7. Verify hireling.txt 9-Aura Act 2 Matrix, 3-Active-Skill UI cap, level/chance floors & HrSkillIcon sprite integrity
@@ -1107,6 +1264,61 @@ def verify_all(cfg: dict = None) -> List[str]:
     seen_added_oskills: Dict[str, str] = {}
     seen_added_auras_by_slot: Dict[Tuple[str, str], str] = {}
 
+    _, it_rows = _read_mod_tsv("itemtypes.txt")
+    it_by_code = {r["Code"]: r for r in it_rows if r.get("Code")}
+
+    def _type_ancestors(tcode: str) -> set:
+        visited = set()
+        stack = [tcode]
+        while stack:
+            cur = stack.pop()
+            if not cur or cur in visited:
+                continue
+            visited.add(cur)
+            row = it_by_code.get(cur)
+            if row:
+                for col in ("Equiv1", "Equiv2"):
+                    eq = row.get(col, "").strip()
+                    if eq:
+                        stack.append(eq)
+        return visited
+
+    forbidden_skill_refs = {
+        "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+        "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+        "Enchant", "Teleport", "Energy Shield", "Chilling Armor",
+        "Fire Mastery", "Lightning Mastery", "Cold Mastery", "Lower Resist",
+    }
+    forbidden_pierce_props = {"pierce-fire", "pierce-cold", "pierce-ltng", "pierce-pois", "pierce-mag"}
+
+    def _validate_oskill_compatibility(table_label: str, item_code: str, sk_ref: str, item_oskills: set) -> dict:
+        srow = skill_by_name.get(sk_ref.lower()) or skill_by_id.get(sk_ref)
+        if not srow:
+            raise AssertionError(f"{table_label}: invalid oskill '{sk_ref}'")
+        if srow.get("aura") == "1":
+            raise AssertionError(f"{table_label}: oskill '{sk_ref}' is a Paladin aura (use aura prop instead)")
+        st1 = srow.get("State1", "").strip()
+        if st1 and srow.get("restrict", "").strip() == "2":
+            # Allowed only if the item itself also grants the required transformation state (e.g. Wearwolf + Feral Rage)
+            has_wolf = bool({"Wearwolf", "Werewolf", "223"} & item_oskills)
+            has_bear = bool({"Wearbear", "Werebear", "228"} & item_oskills)
+            if not (st1 == "wolf" and has_wolf) and not (st1 == "bear" and has_bear):
+                raise AssertionError(
+                    f"{table_label}: oskill '{sk_ref}' requires State1='{st1}' (restrict=2) and cannot be cast standalone"
+                )
+        if sk_ref in ("54", "Teleport", "380", "Blood Boil"):
+            raise AssertionError(f"{table_label}: oskill '{sk_ref}' is retired or requires a specific summon pet")
+        # Check weapon type compatibility if the item itself is a weapon
+        if item_code in weap_type_by_code:
+            wtype = weap_type_by_code[item_code]
+            anc = _type_ancestors(wtype)
+            req_itypes = [srow.get(f"itypea{k}", "").strip() for k in (1, 2, 3) if srow.get(f"itypea{k}", "").strip()]
+            if req_itypes and not any(rt in anc for rt in req_itypes):
+                raise AssertionError(
+                    f"{table_label}: weapon code='{item_code}' (type='{wtype}', ancestors={sorted(anc)}) is incompatible with oskill '{sk_ref}' required itypea={req_itypes}"
+                )
+        return srow
+
     for r in mod_u_rows:
         if r.get("spawnable") != "1" or r.get("disabled") == "1":
             continue
@@ -1115,21 +1327,29 @@ def verify_all(cfg: dict = None) -> List[str]:
         sb = _slot_bucket(code)
         van_r = van_u_by_idx.get(idx)
         van_props = {van_r.get(f"prop{i}", "").strip() for i in range(1, 13)} if van_r else set()
+        item_oskills = {r.get(f"par{i}", "").strip() for i in range(1, 13) if r.get(f"prop{i}", "").strip() == "oskill"}
         for i in range(1, 13):
             p = r.get(f"prop{i}", "").strip()
             par = r.get(f"par{i}", "").strip()
             if p == "nofreeze":
                 raise AssertionError(f"uniqueitems.txt ({idx}): forbidden nofreeze still present")
-            if p == "oskill" and "oskill" not in van_props:
-                if par.lower() not in skill_by_name:
-                    raise AssertionError(f"uniqueitems.txt ({idx}): invalid oskill '{par}'")
-                if skill_by_name[par.lower()].get("aura") == "1":
-                    raise AssertionError(f"uniqueitems.txt ({idx}): oskill '{par}' is a Paladin aura (use aura prop instead)")
-                if par in seen_added_oskills:
+            if p in forbidden_pierce_props:
+                raise AssertionError(f"uniqueitems.txt ({idx}): forbidden elemental pierce '{p}' still present")
+            if p in ("charged", "oskill", "skill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill", "kill-skill", "death-skill"):
+                if par in ("54", "Teleport"):
+                    raise AssertionError(f"uniqueitems.txt ({idx}): retired Teleport reference '{par}' still present on {p}")
+                if p in ("charged", "oskill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill") and par in forbidden_skill_refs:
                     raise AssertionError(
-                        f"uniqueitems.txt ({idx}): duplicate added oskill '{par}' (already on {seen_added_oskills[par]})"
+                        f"uniqueitems.txt ({idx}): reworked Sorceress stance/passive '{par}' still present on {p}"
                     )
-                seen_added_oskills[par] = idx
+            if p == "oskill":
+                _validate_oskill_compatibility(f"uniqueitems.txt ({idx})", code, par, item_oskills)
+                if "oskill" not in van_props:
+                    if par in seen_added_oskills:
+                        raise AssertionError(
+                            f"uniqueitems.txt ({idx}): duplicate added oskill '{par}' (already on {seen_added_oskills[par]})"
+                        )
+                    seen_added_oskills[par] = idx
             elif p == "aura" and "aura" not in van_props:
                 arow = skill_by_id.get(par) or skill_by_name.get(par.lower())
                 if not arow or arow.get("aura") != "1":
@@ -1139,6 +1359,77 @@ def verify_all(cfg: dict = None) -> List[str]:
                         f"uniqueitems.txt ({idx}): duplicate added aura '{par}' in slot '{sb}' (already on {seen_added_auras_by_slot[(sb, par)]})"
                     )
                 seen_added_auras_by_slot[(sb, par)] = idx
-    checks_passed.append("locked unique/set table parity & zero duplicate oskill/aura curation contracts")
+
+    _, mod_si_rows = _read_mod_tsv("setitems.txt")
+    for r in mod_si_rows:
+        if not r.get("item") or r.get("disabled") == "1":
+            continue
+        idx = r.get("index", "")
+        code = r.get("item", "")
+        si_oskills = {r.get(f"par{i}", "").strip() for i in range(1, 10) if r.get(f"prop{i}", "").strip() == "oskill"}
+        for i in range(1, 10):
+            p = r.get(f"prop{i}", "").strip()
+            par = r.get(f"par{i}", "").strip()
+            if p in forbidden_pierce_props:
+                raise AssertionError(f"setitems.txt ({idx}): forbidden elemental pierce '{p}' still present")
+            if p in ("charged", "oskill", "skill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill") and (
+                par in ("54", "Teleport") or (p != "skill" and par in forbidden_skill_refs)
+            ):
+                raise AssertionError(f"setitems.txt ({idx}): forbidden skill '{par}' on {p}")
+            if p == "oskill":
+                _validate_oskill_compatibility(f"setitems.txt ({idx})", code, par, si_oskills)
+        for i in range(1, 6):
+            for ab in ("a", "b"):
+                ap = r.get(f"aprop{i}{ab}", "").strip()
+                apar = r.get(f"apar{i}{ab}", "").strip()
+                if ap in forbidden_pierce_props:
+                    raise AssertionError(f"setitems.txt ({idx}): forbidden elemental pierce '{ap}' on aprop{i}{ab}")
+                if ap in ("charged", "oskill", "gethit-skill", "hit-skill", "att-skill") and (
+                    apar in ("54", "Teleport") or apar in forbidden_skill_refs
+                ):
+                    raise AssertionError(f"setitems.txt ({idx}): forbidden skill '{apar}' on {ap} (aprop{i}{ab})")
+                if ap == "oskill":
+                    _validate_oskill_compatibility(f"setitems.txt ({idx} aprop{i}{ab})", code, apar, si_oskills)
+
+    _, mod_sets_rows = _read_mod_tsv("sets.txt")
+    for r in mod_sets_rows:
+        idx = r.get("index", "")
+        if not idx:
+            continue
+        set_oskills = set()
+        for col, val in r.items():
+            if (col.startswith("PCode") or col.startswith("FCode")) and (val or "").strip() == "oskill":
+                suffix = col[5:]
+                pcol = ("PParam" if col.startswith("PCode") else "FParam") + suffix
+                set_oskills.add((r.get(pcol) or "").strip())
+        for col, val in r.items():
+            if not (col.startswith("PCode") or col.startswith("FCode")):
+                continue
+            v = (val or "").strip()
+            suffix = col[5:]
+            pcol = ("PParam" if col.startswith("PCode") else "FParam") + suffix
+            par = (r.get(pcol) or "").strip()
+            if v in ("charged", "oskill", "gethit-skill", "hit-skill", "att-skill") and (
+                par in ("54", "Teleport") or par in forbidden_skill_refs
+            ):
+                raise AssertionError(f"sets.txt ({idx}): forbidden skill '{par}' on {col}={v}")
+            if v == "oskill":
+                _validate_oskill_compatibility(f"sets.txt ({idx} {col})", "", par, set_oskills)
+
+    # Verify skilldesc.txt descline=19 never uses %d format string keys (such as StrSkillRadiusSingular or StrSkill29)
+    for r in desc_rows:
+        sd = r.get("skilldesc", "")
+        for pfx in ("descline", "dsc2line", "dsc3line"):
+            t_pfx = pfx.replace("line", "text")
+            for idx_n in range(1, 8):
+                if r.get(f"{pfx}{idx_n}", "").strip() == "19":
+                    for ab in ("a", "b"):
+                        tk = r.get(f"{t_pfx}{ab}{idx_n}", "").strip()
+                        if tk in ("StrSkillRadiusSingular", "StrSkill29", "StrSkill18", "StrSkill62"):
+                            raise AssertionError(
+                                f"skilldesc.txt ({sd}): {pfx}{idx_n}=19 uses %d format string {tk!r} (causes unformatted '%d' in tooltip; use descline=36)"
+                            )
+
+    checks_passed.append("locked unique/set table parity, oskill/stance/weapon compatibility & zero Teleport contracts")
 
     return checks_passed

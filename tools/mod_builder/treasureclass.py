@@ -19,23 +19,35 @@ from typing import Dict, List, Tuple
 from mod_builder.common import read_excel_tsv, write_excel_tsv
 
 ACTS = [
-    # (act_prefix, gem_primary, gem_secondary, rune_tc_early, rune_tc_late, equip_fallback)
-    # Aligned with Gem levelreqs: Chipped (6), Flawed (12), Normal (18), Flawless (30), Perfect (45)
+    # (act_prefix, gem_minority_30pct, gem_majority_70pct, rune_tc_early, rune_tc_late, equip_fallback)
+    # Aligned with Gem levelreqs: Chipped (1), Flawed (15), Normal (30), Flawless (45), Perfect (60)
+    # Each higher gem tier first debuts as the minority drop (g1: 15/50 = 30% in GemRune, 15/40 = 37.5% in Good)
+    # right when monster levels approach its levelreq, then becomes the majority staple drop (g2: 62.5-70%)
+    # in the next Act once players reach that level requirement:
+    # - Act 1 (mlvl 1..12): 100% Chipped (req 1)
+    # - Act 2 (mlvl 12..18): Flawed (req 15) debuts at 30-37.5% alongside Chipped
+    # - Act 3 (mlvl 21..25): Flawed becomes 62.5-70% staple alongside Chipped
+    # - Act 4 (mlvl 26..28): Normal (req 30) debuts at 30-37.5% alongside Flawed
+    # - Act 5 (mlvl 24..43): Normal becomes 62.5-70% staple alongside Flawed (0% Flawless in Normal)
+    # - Act 1 (N) (mlvl 36..43): Flawless (req 45) debuts at 30-37.5% alongside Normal
+    # - Act 2 (N) (mlvl 43..49): Flawless becomes 62.5-70% staple alongside Normal (0% Perfect in Act 2 NM)
+    # - Act 3..5 (N) (mlvl 49..66): Perfect (req 60) debuts in Act 3 NM at 30-37.5% alongside Flawless
+    # - Act 1..5 (H) (mlvl 67..85): Perfect becomes 62.5-70% staple alongside Flawless
     ("Act 1", "Chipped Gem", "Chipped Gem", "Runes 1", "Runes 2", "Act 1 Equip B"),
     ("Act 2", "Flawed Gem", "Chipped Gem", "Runes 2", "Runes 3", "Act 2 Equip B"),
-    ("Act 3", "Normal Gem", "Flawed Gem", "Runes 4", "Runes 5", "Act 3 Equip B"),
+    ("Act 3", "Chipped Gem", "Flawed Gem", "Runes 4", "Runes 5", "Act 3 Equip B"),
     ("Act 4", "Normal Gem", "Flawed Gem", "Runes 6", "Runes 7", "Act 4 Equip B"),
-    ("Act 5", "Flawless Gem", "Normal Gem", "Runes 7", "Runes 8", "Act 5 Equip B"),
+    ("Act 5", "Flawed Gem", "Normal Gem", "Runes 7", "Runes 8", "Act 5 Equip B"),
     ("Act 1 (N)", "Flawless Gem", "Normal Gem", "Runes 8", "Runes 9", "Act 1 (N) Equip B"),
-    ("Act 2 (N)", "Flawless Gem", "Perfect Gem", "Runes 9", "Runes 10", "Act 2 (N) Equip B"),
+    ("Act 2 (N)", "Normal Gem", "Flawless Gem", "Runes 9", "Runes 10", "Act 2 (N) Equip B"),
     ("Act 3 (N)", "Perfect Gem", "Flawless Gem", "Runes 10", "Runes 11", "Act 3 (N) Equip B"),
     ("Act 4 (N)", "Perfect Gem", "Flawless Gem", "Runes 11", "Runes 12", "Act 4 (N) Equip B"),
     ("Act 5 (N)", "Perfect Gem", "Flawless Gem", "Runes 12", "Runes 13", "Act 5 (N) Equip B"),
-    ("Act 1 (H)", "Perfect Gem", "Flawless Gem", "Runes 13", "Runes 14", "Act 1 (H) Equip B"),
-    ("Act 2 (H)", "Perfect Gem", "Flawless Gem", "Runes 14", "Runes 15", "Act 2 (H) Equip B"),
-    ("Act 3 (H)", "Perfect Gem", "Flawless Gem", "Runes 15", "Runes 16", "Act 3 (H) Equip B"),
-    ("Act 4 (H)", "Perfect Gem", "Flawless Gem", "Runes 16", "Runes 17", "Act 4 (H) Equip B"),
-    ("Act 5 (H)", "Perfect Gem", "Flawless Gem", "Runes 16", "Runes 17", "Act 5 (H) Equip C"),
+    ("Act 1 (H)", "Flawless Gem", "Perfect Gem", "Runes 13", "Runes 14", "Act 1 (H) Equip B"),
+    ("Act 2 (H)", "Flawless Gem", "Perfect Gem", "Runes 14", "Runes 15", "Act 2 (H) Equip B"),
+    ("Act 3 (H)", "Flawless Gem", "Perfect Gem", "Runes 15", "Runes 16", "Act 3 (H) Equip B"),
+    ("Act 4 (H)", "Flawless Gem", "Perfect Gem", "Runes 16", "Runes 17", "Act 4 (H) Equip B"),
+    ("Act 5 (H)", "Flawless Gem", "Perfect Gem", "Runes 16", "Runes 17", "Act 5 (H) Equip C"),
 ]
 
 
@@ -184,11 +196,22 @@ def build_treasureclass(cfg: dict) -> str:
                 ],
             )
 
-    # 5. Create custom sub-tables: Act X GemRune & Staged Act Boss Unique Charm 1..5
+    # 5. Create custom sub-tables: Act X GemRune, Skeleton-biased Gem/Good/GemRune tables, & Staged Act Boss Unique Charm 1..5
     # Like Annihilus in ROP (H), Act Boss Charm TCs reference the exact Unique Charm index names
     # directly (never the base item code 'cm1'), so it is physically impossible for a Magic Charm
     # to ever drop. Each has NoDrop=85 and total Unique Charm weight=15 (15% drop chance).
     custom_rows: List[Dict[str, str]] = []
+    for gem_tc_name in ("Chipped Gem", "Flawed Gem", "Normal Gem", "Flawless Gem", "Perfect Gem"):
+        skel_gem_tc = f"{gem_tc_name} Skel"
+        if gem_tc_name in by_tc and skel_gem_tc not in by_tc:
+            sg_row = dict(by_tc[gem_tc_name])
+            sg_row["Treasure Class"] = skel_gem_tc
+            # Bump Skull weight (Item7: skc..skz) from 2 (10.0%) to 6 (6/24 = 25.0% of Gem drops)
+            # so Skeletons remain 75% regular gems while subtly favoring Skulls by 2.5x!
+            sg_row["Prob7"] = "6"
+            custom_rows.append(sg_row)
+            by_tc[skel_gem_tc] = sg_row
+
     for act_prefix, g1, g2, r1, r2, _ in ACTS:
         gr_name = f"{act_prefix} GemRune"
         if gr_name not in by_tc:
@@ -198,6 +221,33 @@ def build_treasureclass(cfg: dict) -> str:
             _set_items(gr_row, [(g1, "15"), (g2, "35"), (r1, "25"), (r2, "25")])
             custom_rows.append(gr_row)
             by_tc[gr_name] = gr_row
+
+        gr_skel_name = f"{act_prefix} GemRune Skel"
+        if gr_skel_name not in by_tc:
+            grs_row = _make_blank_row(headers, gr_skel_name)
+            grs_row["Picks"] = "1"
+            grs_row["NoDrop"] = "0"
+            _set_items(grs_row, [(f"{g1} Skel", "15"), (f"{g2} Skel", "35"), (r1, "25"), (r2, "25")])
+            custom_rows.append(grs_row)
+            by_tc[gr_skel_name] = grs_row
+
+        good_skel_name = f"{act_prefix} Good Skel"
+        if good_skel_name not in by_tc:
+            gds_row = _make_blank_row(headers, good_skel_name)
+            gds_row["Picks"] = "1"
+            gds_row["NoDrop"] = "0"
+            _set_items(
+                gds_row,
+                [
+                    ("Jewelry C" if act_prefix != "Act 1" else "Jewelry A", "30"),
+                    (f"{g1} Skel", "18"),
+                    (f"{g2} Skel", "32"),
+                    (r1, "20"),
+                    (r2, "20"),
+                ],
+            )
+            custom_rows.append(gds_row)
+            by_tc[good_skel_name] = gds_row
 
     boss_charm_tcs = [
         ("Act Boss Charm 1", [("Signet of the Maiden", "15")]),
@@ -503,27 +553,15 @@ def build_treasureclass(cfg: dict) -> str:
                     r["Rare"] = "1024"
                     r["Magic"] = "1024"
                     r["NoDrop"] = "0"
-                    if boss == "Duriel":
-                        # Duriel exclusively drops 1 and only 1 Scroll of Town Portal (tsc)
-                        _set_items(
-                            r,
-                            [
-                                (boss_uitem, "3"),
-                                (boss_charm_tc, "1"),
-                                ("tsc", "1"),
-                                (act_gold, "1"),
-                            ],
-                        )
-                    else:
-                        _set_items(
-                            r,
-                            [
-                                (boss_uitem, "3"),
-                                (boss_cpot, "1"),
-                                (boss_charm_tc, "1"),
-                                (act_gold, "1"),
-                            ],
-                        )
+                    _set_items(
+                        r,
+                        [
+                            (boss_uitem, "3"),
+                            (boss_cpot, "1"),
+                            (boss_charm_tc, "1"),
+                            (act_gold, "1"),
+                        ],
+                    )
 
     # 10. Configure Chest & Super Chest TCs (Act X Chest A/B/C) to drop ONLY:
     # Gold, Runes, Jewelry, Gems (via Act X Good), and Act-scaled Modified Potions
@@ -611,6 +649,213 @@ def build_treasureclass(cfg: dict) -> str:
                         (f"{matched_act} Chest Pair", "3"),
                     ],
                 )
+
+    # 10b. Align Nightmare & Hell (group, level) TC auto-upgrade thresholds in Groups 2..5, 7..15, 18..19, 36..37
+    # with actual levels.txt MonLvlEx(N) / MonLvlEx(H) boundaries so monsters in Nightmare Acts 1-2
+    # (and Champion +2 / Unique +3 bosses) never prematurely auto-upgrade into higher-Act Gem/Rune TCs:
+    # - Act 1 (N): MonLvlEx(N)=36..43 (Champ 38..45, Unique 39..46) -> Normal TCs 36/39/42, Champ/Unique/Super TCs 39/42/45
+    # - Act 2 (N): MonLvlEx(N)=43..49 (Champ 45..51, Unique 46..52) -> Normal TCs 44/46/48, Champ/Unique/Super TCs 47/49/51
+    # - Act 3 (N): MonLvlEx(N)=49..55 (Champ 51..57, Unique 52..58) -> Normal TCs 50/52/54, Champ/Unique/Super TCs 53/55/57
+    # - Act 4 (N): MonLvlEx(N)=56..58 (Champ 58..60, Unique 59..61) -> Normal TCs 56/57/58, Champ/Unique/Super TCs 59/60/61
+    # - Act 5 (N): MonLvlEx(N)=58..66 (Champ 60..68, Unique 61..69) -> Normal TCs 60/63/66, Champ/Unique/Super TCs 62/65/68
+    # - Act 1 (H): MonLvlEx(H)=67..73 (Champ 69..75, Unique 70..76) -> Normal TCs 68/70/72, Champ/Unique TCs 70/72/74
+    # - Act 2 (H): MonLvlEx(H)=74..80 -> Normal TCs 74/76/78, Champ/Unique TCs 76/78/80
+    # - Act 3 (H): MonLvlEx(H)=79..83 -> Normal TCs 79/80/81, Champ/Unique TCs 81/82/83
+    # - Act 4 (H): MonLvlEx(H)=82..85 -> Normal TCs 82/83/84, Champ/Unique TCs 84/85/86
+    # - Act 5 (H): MonLvlEx(H)=80..85 -> Normal TCs 84/85/86, Champ/Unique TCs 86/87/88
+    normal_tc_levels = {
+        "Act 1 (N)": ("36", "39", "42"),
+        "Act 2 (N)": ("44", "46", "48"),
+        "Act 3 (N)": ("50", "52", "54"),
+        "Act 4 (N)": ("56", "57", "58"),
+        "Act 5 (N)": ("60", "63", "66"),
+        "Act 1 (H)": ("68", "70", "72"),
+        "Act 2 (H)": ("74", "76", "78"),
+        "Act 3 (H)": ("79", "80", "81"),
+        "Act 4 (H)": ("82", "83", "84"),
+        "Act 5 (H)": ("84", "85", "86"),
+    }
+    elite_tc_levels = {
+        "Act 1 (N)": ("39", "42", "45"),
+        "Act 2 (N)": ("47", "49", "51"),
+        "Act 3 (N)": ("53", "55", "57"),
+        "Act 4 (N)": ("59", "60", "61"),
+        "Act 5 (N)": ("62", "65", "68"),
+        "Act 1 (H)": ("70", "72", "74"),
+        "Act 2 (H)": ("76", "78", "80"),
+        "Act 3 (H)": ("81", "82", "83"),
+        "Act 4 (H)": ("84", "85", "86"),
+        "Act 5 (H)": ("86", "87", "88"),
+    }
+    if "Act 1 (H) Uitem A Shard" in by_tc:
+        by_tc["Act 1 (H) Uitem A Shard"]["level"] = "70"
+    for r in rows:
+        grp = r.get("group", "")
+        tc = r["Treasure Class"]
+        if grp == "5":
+            for act_p, (la, _, _) in normal_tc_levels.items():
+                if tc == f"{act_p} Good":
+                    r["level"] = la
+                    break
+        elif grp in ("2", "3", "4", "7", "8", "9", "10"):
+            for act_p, (la, lb, lc) in normal_tc_levels.items():
+                if tc.startswith(f"{act_p} "):
+                    if tc.endswith(" A"):
+                        r["level"] = la
+                    elif tc.endswith(" B"):
+                        r["level"] = lb
+                    elif tc.endswith(" C"):
+                        r["level"] = lc
+                    break
+        elif grp in ("11", "12", "13", "14", "15", "36", "37") or (grp in ("18", "19") and "(N)" in tc):
+            for act_p, (la, lb, lc) in elite_tc_levels.items():
+                if tc.startswith(f"{act_p} "):
+                    if tc.endswith((" A", " Ax", " A Desecrated")):
+                        r["level"] = la
+                    elif tc.endswith((" B", " Bx", " B Desecrated")):
+                        r["level"] = lb
+                    elif tc.endswith((" C", " Cx", " C Desecrated")):
+                        r["level"] = lc
+                    break
+
+    # 11. Skeleton Monster TCs (<TC> Skel) & Optional Exploration Dungeon TCs (<TC> Opt / <TC> Skel Opt)
+    # First create Skeleton Uitem/Citem/Cpot sub-tables and clone monster TC groups (7, 8, 9, 13, 15, 36, 37)
+    # into contiguous Skeleton TC groups (+100) that reference 'Act X Good Skel' and 'Act X GemRune Skel'.
+    cpot_last_idx = max(i for i, r in enumerate(rows) if r.get("group") == "12")
+    skel_item_rows: List[Dict[str, str]] = []
+    for act_prefix, _, _, _, _, equip_fallback in ACTS:
+        gr_skel = f"{act_prefix} GemRune Skel"
+        j_tc = "Jewelry A" if act_prefix == "Act 1" else "Jewelry C"
+        for letter in ("A", "B", "C"):
+            eq_tc = f"{act_prefix} Equip {letter}"
+            if eq_tc not in by_tc:
+                eq_tc = equip_fallback
+            for sub_kind in ("Uitem", "Citem", "Cpot"):
+                base_sub = f"{act_prefix} {sub_kind} {letter}"
+                skel_sub = f"{base_sub} Skel"
+                if base_sub in by_tc and skel_sub not in by_tc:
+                    srow = dict(by_tc[base_sub])
+                    srow["Treasure Class"] = skel_sub
+                    srow["group"] = ""
+                    srow["level"] = ""
+                    _set_items(srow, [(eq_tc, "13"), (gr_skel, "5"), (j_tc, "2")])
+                    skel_item_rows.append(srow)
+                    by_tc[skel_sub] = srow
+
+    # Create dedicated 'Act X Cpot A/B/C Opt' & 'Act X Cpot A/B/C Skel Opt' sub-tables with NoDrop=1 (20/21 = 95.24% bonus drop rate
+    # vs 50% on standard Cpot, increasing Champion/Unique expected item/gem/rune yield from 1.50 -> 1.952 = +30.2%)
+    cpot_opt_rows: List[Dict[str, str]] = list(skel_item_rows)
+    for act_prefix, _, _, _, _, _ in ACTS:
+        for letter in ("A", "B", "C"):
+            for sfx_skel in ("", " Skel"):
+                cpot_name = f"{act_prefix} Cpot {letter}{sfx_skel}"
+                cpot_opt_name = f"{cpot_name} Opt"
+                if cpot_name in by_tc and cpot_opt_name not in by_tc:
+                    corow = dict(by_tc[cpot_name])
+                    corow["Treasure Class"] = cpot_opt_name
+                    corow["group"] = ""
+                    corow["level"] = ""
+                    corow["Unique"] = "950"
+                    corow["Set"] = "950"
+                    corow["Rare"] = "990"
+                    corow["Magic"] = "1024"
+                    corow["NoDrop"] = "1"
+                    cpot_opt_rows.append(corow)
+                    by_tc[cpot_opt_name] = corow
+    for offset, corow in enumerate(cpot_opt_rows):
+        rows.insert(cpot_last_idx + 1 + offset, corow)
+
+    # Clone Skeleton monster TC groups (7, 8, 9, 13, 15, 36, 37 -> +100) before Optional Dungeon cloning
+    skel_tc_groups = ("7", "8", "9", "13", "15", "36", "37")
+    skel_cloned_rows: List[Dict[str, str]] = []
+    for grp in skel_tc_groups:
+        grp_rows = [r for r in rows if r.get("group") == grp]
+        new_grp = str(int(grp) + 100)
+        for r in grp_rows:
+            sr = dict(r)
+            tc_orig = r["Treasure Class"]
+            tc_skel = f"{tc_orig} Skel"
+            sr["Treasure Class"] = tc_skel
+            sr["group"] = new_grp
+            if grp in ("7", "8", "9"):
+                for i in range(1, 11):
+                    iv = sr.get(f"Item{i}", "").strip()
+                    if iv.endswith(" Good") and f"{iv} Skel" in by_tc:
+                        sr[f"Item{i}"] = f"{iv} Skel"
+            elif grp in ("13", "15"):
+                for i in (1, 2):
+                    iv = sr.get(f"Item{i}", "").strip()
+                    if iv and f"{iv} Skel" in by_tc:
+                        sr[f"Item{i}"] = f"{iv} Skel"
+            elif grp in ("36", "37"):
+                iv = sr.get("Item1", "").strip()
+                if iv and f"{iv} Skel" in by_tc:
+                    sr["Item1"] = f"{iv} Skel"
+            skel_cloned_rows.append(sr)
+            by_tc[tc_skel] = sr
+    rows.extend(skel_cloned_rows)
+
+    # Clone monster TC groups (7..10, 13, 15..19, 36..39 and Skeleton groups 107..109, 113, 115, 136, 137)
+    # into contiguous Optional Dungeon TC groups (+50) so D2R's (group, level) auto-upgrading in Nightmare/Hell
+    # works identically while delivering +30% rewards.
+    opt_tc_groups = (
+        "7", "8", "9", "10", "13", "15", "16", "17", "18", "19", "36", "37", "38", "39",
+        "107", "108", "109", "113", "115", "136", "137",
+    )
+    opt_cloned_rows: List[Dict[str, str]] = []
+    for grp in opt_tc_groups:
+        grp_rows = [r for r in rows if r.get("group") == grp]
+        new_grp = str(int(grp) + 50)
+        for r in grp_rows:
+            opt_r = dict(r)
+            tc_orig = r["Treasure Class"]
+            tc_opt = f"{tc_orig} Opt"
+            opt_r["Treasure Class"] = tc_opt
+            opt_r["group"] = new_grp
+            if grp in ("7", "8", "9", "10", "16", "17", "107", "108", "109"):
+                # Normal Monster Opt TCs: reduce NoDrop so total denominator (W_items + NoDrop) shrinks by 1/1.30,
+                # increasing per-kill drop probability of Equip, Good (Gems/Runes/Jewelry), and Gold by +30% (1.30x)
+                w_items = sum(
+                    int(opt_r.get(f"Prob{i}") or "0")
+                    for i in range(1, 11)
+                    if opt_r.get(f"Item{i}", "").strip()
+                )
+                nd_std = int(opt_r.get("NoDrop") or "0")
+                if nd_std > 0 and w_items > 0:
+                    nd_opt = max(0, int(round((nd_std - 0.30 * w_items) / 1.30)))
+                    opt_r["NoDrop"] = str(nd_opt)
+                opt_r["Unique"] = "300"
+                opt_r["Set"] = "300"
+                opt_r["Rare"] = "400"
+                opt_r["Magic"] = "600"
+            elif grp in ("13", "15", "113", "115"):
+                # Champion & Unique Opt TCs: replace Cpot (50%) with Cpot Opt (95.24%) -> 1.952 vs 1.50 drops (+30.2%)
+                if opt_r.get("Item2", "").strip() and f"{opt_r['Item2'].strip()} Opt" in by_tc:
+                    opt_r["Item2"] = f"{opt_r['Item2'].strip()} Opt"
+                opt_r["Unique"] = "950" if grp in ("15", "115") else "920"
+                opt_r["Set"] = "950" if grp in ("15", "115") else "920"
+                opt_r["Rare"] = "990" if grp in ("15", "115") else "970"
+            elif grp in ("18", "19"):
+                # SuperUnique Opt TCs: 2 Uitem + 1 Cpot Opt (95.2%) + 1 Cpot (50%) + 1 Gold = 3.45 expected drops
+                uitem_tc = opt_r.get("Item1", "").strip()
+                cpot_tc = opt_r.get("Item2", "").strip()
+                gold_tc = opt_r.get("Item3", "").strip()
+                cpot_opt_tc = f"{cpot_tc} Opt" if f"{cpot_tc} Opt" in by_tc else cpot_tc
+                opt_r["Picks"] = "-5"
+                opt_r["Unique"] = "960"
+                opt_r["Set"] = "960"
+                opt_r["Rare"] = "1000"
+                opt_r["Magic"] = "1024"
+                opt_r["NoDrop"] = "0"
+                _set_items(opt_r, [(uitem_tc, "2"), (cpot_opt_tc, "1"), (cpot_tc, "1"), (gold_tc, "1")])
+            elif grp in ("36", "37", "38", "39", "136", "137"):
+                # Desecrated Opt TCs: point base TC in Item1 to <BaseTC> Opt
+                base_ref = opt_r.get("Item1", "").strip()
+                if base_ref and f"{base_ref} Opt" in by_tc:
+                    opt_r["Item1"] = f"{base_ref} Opt"
+            opt_cloned_rows.append(opt_r)
+            by_tc[tc_opt] = opt_r
+    rows.extend(opt_cloned_rows)
 
     # TEMPORARY QA BOOST: Make Act 1 Blood Moor monsters drop Horadric Cube + Gems + Runes + Uniques
     if econ.get("qa_blood_moor_boost", False):

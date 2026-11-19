@@ -19,48 +19,48 @@ from mod_builder.common import (
 # (code, weapon_mod, helm_mod, shield_mod)
 # Each mod tuple is (Mod1Code, Mod1Param, Mod1Min, Mod1Max)
 GEM_SPECS: List[Tuple[str, Tuple[str, str, str, str], Tuple[str, str, str, str], Tuple[str, str, str, str]]] = [
-    # Ruby (Fire): Weapon Flat Fire Dmg (dmg-fire) | Armor/Helm Fire Res | Shield Fire Res
-    ("gcr", ("dmg-fire", "", "3", "5"), ("res-fire", "", "12", "12"), ("res-fire", "", "16", "16")),
-    ("gfr", ("dmg-fire", "", "8", "13"), ("res-fire", "", "18", "18"), ("res-fire", "", "24", "24")),
-    ("gsr", ("dmg-fire", "", "20", "32"), ("res-fire", "", "25", "25"), ("res-fire", "", "34", "34")),
-    ("glr", ("dmg-fire", "", "45", "70"), ("res-fire", "", "34", "34"), ("res-fire", "", "46", "46")),
-    ("gpr", ("dmg-fire", "", "85", "130"), ("res-fire", "", "45", "45"), ("res-fire", "", "60", "60")),
-    # Sapphire (Cold): Weapon Flat Cold Dmg (dmg-cold, 3s-7s chill) | Armor/Helm Cold Res | Shield Cold Res
-    ("gcb", ("dmg-cold", "75", "2", "4"), ("res-cold", "", "12", "12"), ("res-cold", "", "16", "16")),
-    ("gfb", ("dmg-cold", "100", "6", "10"), ("res-cold", "", "18", "18"), ("res-cold", "", "24", "24")),
-    ("gsb", ("dmg-cold", "125", "15", "24"), ("res-cold", "", "25", "25"), ("res-cold", "", "34", "34")),
-    ("glb", ("dmg-cold", "150", "34", "54"), ("res-cold", "", "34", "34"), ("res-cold", "", "46", "46")),
-    ("gpb", ("dmg-cold", "175", "60", "95"), ("res-cold", "", "45", "45"), ("res-cold", "", "60", "60")),
-    # Topaz (Lightning): Weapon Flat Light Dmg (dmg-ltng) | Armor/Helm Light Res | Shield Light Res
-    ("gcy", ("dmg-ltng", "", "1", "8"), ("res-ltng", "", "12", "12"), ("res-ltng", "", "16", "16")),
-    ("gfy", ("dmg-ltng", "", "1", "22"), ("res-ltng", "", "18", "18"), ("res-ltng", "", "24", "24")),
-    ("gsy", ("dmg-ltng", "", "1", "52"), ("res-ltng", "", "25", "25"), ("res-ltng", "", "34", "34")),
-    ("gly", ("dmg-ltng", "", "1", "115"), ("res-ltng", "", "34", "34"), ("res-ltng", "", "46", "46")),
-    ("gpy", ("dmg-ltng", "", "1", "215"), ("res-ltng", "", "45", "45"), ("res-ltng", "", "60", "60")),
-    # Emerald (Poison): Weapon Flat Pois Dmg over 3s (75 frames, bit-rate = total * 256 / 75) | Armor/Helm Pois Res | Shield Pois Res
-    ("gcg", ("dmg-pois", "75", "34", "34"), ("res-pois", "", "12", "12"), ("res-pois", "", "16", "16")),
-    ("gfg", ("dmg-pois", "75", "96", "96"), ("res-pois", "", "18", "18"), ("res-pois", "", "24", "24")),
-    ("gsg", ("dmg-pois", "75", "222", "222"), ("res-pois", "", "25", "25"), ("res-pois", "", "34", "34")),
-    ("glg", ("dmg-pois", "75", "478", "478"), ("res-pois", "", "34", "34"), ("res-pois", "", "46", "46")),
-    ("gpg", ("dmg-pois", "75", "887", "887"), ("res-pois", "", "45", "45"), ("res-pois", "", "60", "60")),
-    # Diamond (Arcane/Magic): Weapon Flat Magic Dmg (dmg-mag) | Armor/Helm Magic Res | Shield Magic Res
+    # Ruby (Fire): Weapon Flat Fire Dmg (dmg-fire) | Armor/Helm Fire Res (8..30%) | Shield Fire Res (12..45%)
+    ("gcr", ("dmg-fire", "", "3", "5"), ("res-fire", "", "8", "8"), ("res-fire", "", "12", "12")),
+    ("gfr", ("dmg-fire", "", "10", "16"), ("res-fire", "", "12", "12"), ("res-fire", "", "18", "18")),
+    ("gsr", ("dmg-fire", "", "28", "45"), ("res-fire", "", "17", "17"), ("res-fire", "", "26", "26")),
+    ("glr", ("dmg-fire", "", "65", "100"), ("res-fire", "", "23", "23"), ("res-fire", "", "35", "35")),
+    ("gpr", ("dmg-fire", "", "120", "180"), ("res-fire", "", "30", "30"), ("res-fire", "", "45", "45")),
+    # Sapphire (Cold): Weapon Flat Cold Dmg (dmg-cold, 3s-7s chill) | Armor/Helm Cold Res (8..30%) | Shield Cold Res (12..45%)
+    ("gcb", ("dmg-cold", "75", "2", "4"), ("res-cold", "", "8", "8"), ("res-cold", "", "12", "12")),
+    ("gfb", ("dmg-cold", "100", "7", "12"), ("res-cold", "", "12", "12"), ("res-cold", "", "18", "18")),
+    ("gsb", ("dmg-cold", "125", "20", "32"), ("res-cold", "", "17", "17"), ("res-cold", "", "26", "26")),
+    ("glb", ("dmg-cold", "150", "45", "70"), ("res-cold", "", "23", "23"), ("res-cold", "", "35", "35")),
+    ("gpb", ("dmg-cold", "175", "85", "130"), ("res-cold", "", "30", "30"), ("res-cold", "", "45", "45")),
+    # Topaz (Lightning): Weapon Flat Light Dmg (dmg-ltng) | Armor/Helm Light Res (8..30%) | Shield Light Res (12..45%)
+    ("gcy", ("dmg-ltng", "", "1", "8"), ("res-ltng", "", "8", "8"), ("res-ltng", "", "12", "12")),
+    ("gfy", ("dmg-ltng", "", "1", "26"), ("res-ltng", "", "12", "12"), ("res-ltng", "", "18", "18")),
+    ("gsy", ("dmg-ltng", "", "1", "72"), ("res-ltng", "", "17", "17"), ("res-ltng", "", "26", "26")),
+    ("gly", ("dmg-ltng", "", "1", "165"), ("res-ltng", "", "23", "23"), ("res-ltng", "", "35", "35")),
+    ("gpy", ("dmg-ltng", "", "1", "300"), ("res-ltng", "", "30", "30"), ("res-ltng", "", "45", "45")),
+    # Emerald (Poison): Weapon Flat Pois Dmg over 3s (75 frames, bit-rate = total * 256 / 75) | Armor/Helm Pois Res (8..30%) | Shield Pois Res (12..45%)
+    ("gcg", ("dmg-pois", "75", "34", "34"), ("res-pois", "", "8", "8"), ("res-pois", "", "12", "12")),
+    ("gfg", ("dmg-pois", "75", "109", "109"), ("res-pois", "", "12", "12"), ("res-pois", "", "18", "18")),
+    ("gsg", ("dmg-pois", "75", "273", "273"), ("res-pois", "", "17", "17"), ("res-pois", "", "26", "26")),
+    ("glg", ("dmg-pois", "75", "597", "597"), ("res-pois", "", "23", "23"), ("res-pois", "", "35", "35")),
+    ("gpg", ("dmg-pois", "75", "1018", "1018"), ("res-pois", "", "30", "30"), ("res-pois", "", "45", "45")),
+    # Diamond (Arcane/Magic): Weapon Flat Magic Dmg (dmg-mag) | Armor/Helm Magic Res (5..20%) | Shield Magic Res (7..30%)
     ("gcw", ("dmg-mag", "", "2", "4"), ("res-mag", "", "5", "5"), ("res-mag", "", "7", "7")),
-    ("gfw", ("dmg-mag", "", "6", "11"), ("res-mag", "", "8", "8"), ("res-mag", "", "11", "11")),
-    ("gsw", ("dmg-mag", "", "16", "26"), ("res-mag", "", "12", "12"), ("res-mag", "", "16", "16")),
-    ("glw", ("dmg-mag", "", "38", "60"), ("res-mag", "", "18", "18"), ("res-mag", "", "24", "24")),
-    ("gpw", ("dmg-mag", "", "70", "110"), ("res-mag", "", "25", "25"), ("res-mag", "", "35", "35")),
-    # Amethyst (Physical): Weapon +% Enhanced Dmg (dmg%) | Armor/Helm +Flat Defense (ac) | Shield +Flat Defense (ac)
-    ("gcv", ("dmg%", "", "8", "8"), ("ac", "", "20", "20"), ("ac", "", "30", "30")),
-    ("gfv", ("dmg%", "", "16", "16"), ("ac", "", "40", "40"), ("ac", "", "60", "60")),
-    ("gsv", ("dmg%", "", "30", "30"), ("ac", "", "70", "70"), ("ac", "", "100", "100")),
-    ("gzv", ("dmg%", "", "50", "50"), ("ac", "", "110", "110"), ("ac", "", "150", "150")),
-    ("gpv", ("dmg%", "", "80", "80"), ("ac", "", "160", "160"), ("ac", "", "220", "220")),
-    # Skull (Death, Attrition & Bone Armor): Weapon -Monster Def Per Hit (dmg-ac) | Armor/Helm Flat PDR (red-dmg) | Shield Flat PDR (red-dmg)
-    ("skc", ("dmg-ac", "", "-10", "-10"), ("red-dmg", "", "4", "4"), ("red-dmg", "", "6", "6")),
-    ("skf", ("dmg-ac", "", "-22", "-22"), ("red-dmg", "", "8", "8"), ("red-dmg", "", "12", "12")),
-    ("sku", ("dmg-ac", "", "-40", "-40"), ("red-dmg", "", "14", "14"), ("red-dmg", "", "20", "20")),
-    ("skl", ("dmg-ac", "", "-65", "-65"), ("red-dmg", "", "22", "22"), ("red-dmg", "", "32", "32")),
-    ("skz", ("dmg-ac", "", "-100", "-100"), ("red-dmg", "", "32", "32"), ("red-dmg", "", "45", "45")),
+    ("gfw", ("dmg-mag", "", "8", "14"), ("res-mag", "", "8", "8"), ("res-mag", "", "11", "11")),
+    ("gsw", ("dmg-mag", "", "22", "36"), ("res-mag", "", "11", "11"), ("res-mag", "", "16", "16")),
+    ("glw", ("dmg-mag", "", "50", "80"), ("res-mag", "", "15", "15"), ("res-mag", "", "22", "22")),
+    ("gpw", ("dmg-mag", "", "95", "145"), ("res-mag", "", "20", "20"), ("res-mag", "", "30", "30")),
+    # Amethyst (Physical): Weapon +% Enhanced Dmg (dmg% 10..60%) | Armor/Helm +Flat Defense (ac) | Shield +Flat Defense (ac)
+    ("gcv", ("dmg%", "", "10", "10"), ("ac", "", "20", "20"), ("ac", "", "30", "30")),
+    ("gfv", ("dmg%", "", "20", "20"), ("ac", "", "45", "45"), ("ac", "", "65", "65")),
+    ("gsv", ("dmg%", "", "30", "30"), ("ac", "", "85", "85"), ("ac", "", "120", "120")),
+    ("gzv", ("dmg%", "", "45", "45"), ("ac", "", "140", "140"), ("ac", "", "195", "195")),
+    ("gpv", ("dmg%", "", "60", "60"), ("ac", "", "210", "210"), ("ac", "", "290", "290")),
+    # Skull (Death, Attrition & Bone Armor): Weapon -Monster Def Per Hit (dmg-ac -15..-250, SaveBits=10 SaveAdd=512) | Armor/Helm Flat PDR (red-dmg 2..12) | Shield Flat PDR (red-dmg 3..20)
+    ("skc", ("dmg-ac", "", "-15", "-15"), ("red-dmg", "", "2", "2"), ("red-dmg", "", "3", "3")),
+    ("skf", ("dmg-ac", "", "-30", "-30"), ("red-dmg", "", "4", "4"), ("red-dmg", "", "6", "6")),
+    ("sku", ("dmg-ac", "", "-50", "-50"), ("red-dmg", "", "6", "6"), ("red-dmg", "", "10", "10")),
+    ("skl", ("dmg-ac", "", "-125", "-125"), ("red-dmg", "", "9", "9"), ("red-dmg", "", "15", "15")),
+    ("skz", ("dmg-ac", "", "-250", "-250"), ("red-dmg", "", "12", "12"), ("red-dmg", "", "20", "20")),
 ]
 
 # (code, semantic_name, weapon_mod, helm_mod, shield_mod)
@@ -93,13 +93,13 @@ RUNE_SPECS: List[Tuple[str, str, Tuple[str, str, str, str], Tuple[str, str, str,
     ("r23", "Lethal", ("deadly", "", "15", "15"), ("deadly", "", "8", "8"), ("deadly", "", "8", "8")),
     ("r24", "Crushing", ("crush", "", "15", "15"), ("crush", "", "8", "8"), ("crush", "", "8", "8")),
     ("r25", "Prismatic", ("res-all", "", "12", "12"), ("res-all", "", "12", "12"), ("res-all", "", "18", "18")),
-    ("r26", "Scorching", ("pierce-fire", "", "10", "10"), ("extra-fire", "", "8", "8"), ("res-fire-max", "", "4", "4")),
-    ("r27", "Glacial", ("pierce-cold", "", "10", "10"), ("extra-cold", "", "8", "8"), ("res-cold-max", "", "4", "4")),
-    ("r28", "Tempest", ("pierce-ltng", "", "10", "10"), ("extra-ltng", "", "8", "8"), ("res-ltng-max", "", "4", "4")),
-    ("r29", "Virulent", ("pierce-pois", "", "10", "10"), ("extra-pois", "", "8", "8"), ("res-pois-max", "", "4", "4")),
-    ("r30", "Eldritch", ("extra-mag", "", "10", "10"), ("extra-mag", "", "8", "8"), ("extra-mag", "", "8", "8")),
-    ("r31", "Unerring", ("ignore-ac", "", "1", "1"), ("reduce-ac", "", "15", "15"), ("reduce-ac", "", "15", "15")),
-    ("r32", "Bulwark", ("indestruct", "", "1", "1"), ("red-dmg%", "", "6", "6"), ("red-dmg%", "", "6", "6")),
+    ("r26", "Scorching", ("extra-fire", "", "10", "10"), ("res-fire-max", "", "4", "4"), ("abs-fire%", "", "5", "5")),
+    ("r27", "Glacial", ("extra-cold", "", "10", "10"), ("res-cold-max", "", "4", "4"), ("abs-cold%", "", "5", "5")),
+    ("r28", "Tempest", ("extra-ltng", "", "10", "10"), ("res-ltng-max", "", "4", "4"), ("abs-ltng%", "", "5", "5")),
+    ("r29", "Virulent", ("extra-pois", "", "10", "10"), ("res-pois-max", "", "4", "4"), ("res-pois-len", "", "25", "25")),
+    ("r30", "Eldritch", ("extra-mag", "", "10", "10"), ("res-mag-max", "", "4", "4"), ("abs-mag%", "", "5", "5")),
+    ("r31", "Adamant", ("ignore-ac", "", "1", "1"), ("red-dmg%", "", "6", "6"), ("red-dmg%", "", "6", "6")),
+    ("r32", "Eternal", ("indestruct", "", "1", "1"), ("indestruct", "", "1", "1"), ("indestruct", "", "1", "1")),
     ("r33", "Sovereign", ("allskills", "", "1", "1"), ("allskills", "", "1", "1"), ("allskills", "", "1", "1")),
 ]
 

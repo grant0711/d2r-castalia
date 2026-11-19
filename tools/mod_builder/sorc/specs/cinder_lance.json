@@ -4,80 +4,183 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "p1_pierce_all": {
-      "description": "P1: firebolt missile CollideKill=0 so the bolt passes through every enemy (single variable)",
-      "tables": {
-        "missiles.txt": {
-          "firebolt": {
-            "CollideKill": "0"
-          }
-        }
-      },
+    "test_fizzle": {
+      "description": "test_fizzle: Cinder Lance fizzles out immediately (Range=1, Radius=0) when cast in Cryostasis or Overcharge",
+      "no_label": true,
       "strings": {
-        "short": "[P1 test] bolt pierces everything"
-      }
-    },
-    "p2_fast": {
-      "description": "P2: P1 plus firebolt Vel/MaxVel 32 (faster bolt, one new variable)",
-      "tables": {
-        "missiles.txt": {
-          "firebolt": {
-            "CollideKill": "0",
-            "Vel": "32",
-            "MaxVel": "32"
-          }
-        }
+        "name": "Cinder Lance",
+        "short": "bolt of flame - explodes in Conflagration",
+        "long": "Hurls a bolt of flame against a single target\nBolts explode on impact while Conflagration is active"
       },
-      "strings": {
-        "short": "[P2 test] pierce + fast bolt"
-      }
-    },
-    "p3_scaling": {
-      "description": "P3: level scaling: Vel 18 +0.75/lvl (cap 40), Range 26 frames; distance grows with speed",
-      "tables": {
-        "missiles.txt": {
-          "firebolt": {
-            "CollideKill": "0",
-            "Vel": "18",
-            "MaxVel": "40",
-            "VelLev": "6",
-            "Range": "26"
-          }
-        }
+      "hd_missiles": {
+        "cinder_lance_crater": "null",
+        "cinder_lance_blast": "exp_arrow_explode"
       },
-      "strings": {
-        "short": "[P3 test] scales: faster and farther per level"
-      }
-    },
-    "p4a_stance_pop": {
-      "description": "P4a diagnostic: firebolt hit function 38 spawns N 'fireexplode' visuals around the impact, N from the skill's calc4 = 4 only while the Fire stance marker is on",
       "tables": {
         "missiles.txt": {
           "firebolt": {
-            "CollideKill": "0",
-            "Vel": "18",
-            "MaxVel": "40",
-            "VelLev": "6",
-            "Range": "26",
-            "pSrvHitFunc": "38",
-            "pCltHitFunc": "46",
+            "pSrvDoFunc": "1",
+            "pCltDoFunc": "1",
+            "pSrvHitFunc": "1",
             "sHitPar1": "0",
-            "sHitPar2": "0",
-            "cHitPar1": "0",
-            "cHitPar2": "0",
-            "HitSubMissile1": "fireexplode",
-            "CltHitSubMissile1": "fireexplode"
+            "pCltHitFunc": "1",
+            "cHitPar1": "1",
+            "cHitPar2": "1",
+            "CollideType": "3",
+            "CollideKill": "1",
+            "LastCollide": "1",
+            "ClientCol": "1",
+            "Size": "1",
+            "AlwaysExplode": "1",
+            "Skill": "Fire Bolt",
+            "ResultFlags": "5",
+            "HitFlags": "2",
+            "EType": "fire",
+            "HitClass": "32",
+            "Vel": "14",
+            "MaxVel": "40",
+            "VelLev": "4",
+            "Accel": "1500",
+            "Range": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : (15 + ((stat('skill_handofathena'.accr) > 0) ? 15 : 0))",
+            "ExplosionMissile": "fireexplode",
+            "HitSubMissile1": "",
+            "CltHitSubMissile1": "cinder_lance_crater"
+          },
+          "cinder_lance_crater": {
+            "_clone": "erruption center",
+            "CelFile": "null",
+            "Range": "(stat('skill_handofathena'.accr) > 0) ? 6 : 0",
+            "Skill": "Fire Bolt",
+            "SubMissile1": "cinder_lance_blast",
+            "CltSubMissile1": "cinder_lance_blast",
+            "CltSubMissile2": "cinder_lance_blast"
+          },
+          "cinder_lance_blast": {
+            "_clone": "explodingarrowexp",
+            "InitSteps": "1",
+            "Range": "(stat('skill_handofathena'.accr) > 0) ? 16 : 0",
+            "CollideType": "0"
           }
         },
         "skills.txt": {
           "Fire Bolt": {
-            "calc4": "(stat('skill_handofathena'.accr)>0)?4:0",
-            "*calc4 desc": "Stance pop count"
+            "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : ((stat('skill_handofathena'.accr) > 0) ? 4 : 1)",
+            "*calc1 desc": "Explosion Radius (1 single-target base, 4 in Conflagration)",
+            "calc2": "(stat('skill_handofathena'.accr) > 0) ? 1 : 99",
+            "*calc2 desc": "Crater explosion spawn rate in frames",
+            "cltcalc1": "(stat('skill_handofathena'.accr) > 0) ? 3 : 0",
+            "cltcalc2": "(stat('skill_handofathena'.accr) > 0) ? 1 : 99",
+            "HitShift": "8",
+            "EType": "fire",
+            "EMin": "6",
+            "EMinLev1": "2",
+            "EMinLev2": "3",
+            "EMinLev3": "5",
+            "EMinLev4": "12",
+            "EMinLev5": "22",
+            "EMax": "10",
+            "EMaxLev1": "2",
+            "EMaxLev2": "4",
+            "EMaxLev3": "6",
+            "EMaxLev4": "14",
+            "EMaxLev5": "24",
+            "EDmgSymPerCalc": "(skill('Fire Ball'.blvl) + skill('Inferno'.blvl)) * 6"
+          }
+        },
+        "skilldesc.txt": {
+          "fire bolt": {
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "ModSorc_cinder_lance_name",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Firedplev",
+            "dsc3textb2": "ModSorc_pyroclasm_name",
+            "dsc3calca2": "6",
+            "dsc3line3": "76",
+            "dsc3texta3": "Firedplev",
+            "dsc3textb3": "ModSorc_brimstone_lance_name",
+            "dsc3calca3": "6",
+            "descline1": "",
+            "desctexta1": "",
+            "desctextb1": "",
+            "desccalca1": "",
+            "desccalcb1": "",
+            "descline2": "",
+            "desctexta2": "",
+            "desctextb2": "",
+            "desccalca2": "",
+            "desccalcb2": "",
+            "descline3": "",
+            "desctexta3": "",
+            "desctextb3": "",
+            "desccalca3": "",
+            "desccalcb3": "",
+            "descline4": "",
+            "desctexta4": "",
+            "desctextb4": "",
+            "desccalca4": "",
+            "desccalcb4": "",
+            "descline5": "",
+            "desctexta5": "",
+            "desctextb5": "",
+            "desccalca5": "",
+            "desccalcb5": "",
+            "descline6": "",
+            "desctexta6": "",
+            "desctextb6": "",
+            "desccalca6": "",
+            "desccalcb6": "",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2textb1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": "",
+            "dsc2line2": "",
+            "dsc2texta2": "",
+            "dsc2textb2": "",
+            "dsc2calca2": "",
+            "dsc2calcb2": "",
+            "dsc2line3": "",
+            "dsc2texta3": "",
+            "dsc2textb3": "",
+            "dsc2calca3": "",
+            "dsc2calcb3": "",
+            "dsc2line4": "",
+            "dsc2texta4": "",
+            "dsc2textb4": "",
+            "dsc2calca4": "",
+            "dsc2calcb4": "",
+            "dsc2line5": "",
+            "dsc2texta5": "",
+            "dsc2textb5": "",
+            "dsc2calca5": "",
+            "dsc2calcb5": "",
+            "dsc3calcb1": "",
+            "dsc3calcb2": "",
+            "dsc3calcb3": "",
+            "dsc3line4": "",
+            "dsc3texta4": "",
+            "dsc3textb4": "",
+            "dsc3calca4": "",
+            "dsc3calcb4": "",
+            "dsc3line5": "",
+            "dsc3texta5": "",
+            "dsc3textb5": "",
+            "dsc3calca5": "",
+            "dsc3calcb5": "",
+            "dsc3line6": "",
+            "dsc3texta6": "",
+            "dsc3textb6": "",
+            "dsc3calca6": "",
+            "dsc3calcb6": "",
+            "dsc3line7": "",
+            "dsc3texta7": "",
+            "dsc3textb7": "",
+            "dsc3calca7": "",
+            "dsc3calcb7": ""
           }
         }
-      },
-      "strings": {
-        "short": "[P4a test] stance-conditional impact pop"
       }
     }
   }

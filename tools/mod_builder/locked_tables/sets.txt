@@ -21,7 +21,7 @@ Aldur's Watchtower	Aldur's Watchtower	100	att%		150	150					mag%		50	50					life
 Immortal King	Immortal King	100	att		50	50					att		75	75					att		125	125					att		200	200					res-all		50	50	bar		3	3	hp		150	150	red-mag		10	10	state	fullsetgeneric	1	1													bar	0
 Tal Rasha's Wrappings	Tal Rasha's Wrappings	100	regen		10	10					mag%		65	65					balance2		25	25													res-all		50	50	sor		3	3	ac		150	150	hp		150	150	ac-miss		50	50	state	fullsetgeneric	1	1									sor	0
 Griswold's Legacy	Griswold's Legacy	100	str		20	20					dex		30	30																					res-all		50	50	pal		3	3	att		200	200	hp		150	150	state	fullsetgeneric	1	1	balance2		30	30									pal	0
-Trang-Oul's Avatar	Trang-Oul's Avatar	100	regen-mana		15	15	oskill	Fire Ball	18	18	regen-mana		15	15	oskill	Fire Wall	13	13	regen-mana		15	15	oskill	Meteor	10	10									res-all		50	50	nec		3	3	mana		100	100	ac		200	200	state	monsterset	1	1	regen-mana		15	15	oskill	Fire Mastery	3	3	lifesteal		20	20	nec	0
+Trang-Oul's Avatar	Trang-Oul's Avatar	100	regen-mana		15	15	oskill	Fire Ball	18	18	regen-mana		15	15	oskill	Fire Wall	13	13	regen-mana		15	15	oskill	Meteor	10	10									res-all		50	50	nec		3	3	mana		100	100	ac		200	200	state	monsterset	1	1	regen-mana		15	15	extra-fire		15	15	lifesteal		20	20	nec	0
 M'avina's Battle Hymn	M'avina's Battle Hymn	100	str		20	20					dex		30	30																					res-all		50	50	ama		3	3	ac		100	100	att		100	100	mag%		100	100	state	fullsetgeneric	1	1									ama	0
 The Disciple	The Disciple	100	ac		150	150					dmg-pois	75	75	75					str		10	10					dex		10	10					res-all		50	50	allskills		2	2	mana		100	100																						0
 Heaven's Brethren	Heaven's Brethren	100	lifesteal		10	10					regen		30	30	dmg-fire/lvl	24																			res-all		50	50	allskills		2	2	half-freeze		1	1	light		5	5	red-dmg%		24	24														0
@@ -34,4 +34,4 @@ Naj's Ancient Set	Naj's Ancient Set	100	ac		175	175	mag%/lvl	12																	
 McAuley's Folly	McAuley's Folly	100	ac		50	50					att		75	75																					allskills		1	1	mag%		50	50	mana		50	50	lifesteal		4	4																		0
 Warlord's Glory	Warlord's Glory	100	lifesteal		15	15					ac		150	150																					allskills		1	1	aura	Meditation	10	10	red-dmg	0	9	9	res-fire	0	15	15	mana		20	20													war	0
 Bane's Garments	Bane's Garments	100	dmg%		80	80																													allskills		1	1	dex		15	15	cast1		25	25	mag%		40	40																	war	0
-Horazon's Splendor	Horazon's Splendor	100	dex		20	20					enr		30	30					ac		300	300													res-all		50	50	war		3	3	dmg%		350	350	mag%		100	100	oskill	Enchant	30	30	state	fullsetgeneric	1	1									war	0
+Horazon's Splendor	Horazon's Splendor	100	dex		20	20					enr		30	30					ac		300	300													res-all		50	50	war		3	3	dmg%		350	350	mag%		100	100	oskill	Ring of Fire	30	30	state	fullsetgeneric	1	1									war	0

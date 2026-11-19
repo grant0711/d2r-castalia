@@ -11,6 +11,7 @@ import sys
 
 sys.path.insert(0, "/home/grant/games/d2r/tools")
 
+from build_site import build_site
 from mod_builder.affixes import build_affixes_all, print_affix_summary
 from mod_builder.books_shrines import build_books, build_books_shrines, build_shrines
 from mod_builder.common import load_config
@@ -79,6 +80,8 @@ def main():
 
     checks = verify_all(cfg)
     print(f"[d2r-build-mod] Verified {len(checks)} invariant suites: {', '.join(checks)}")
+    site_out = build_site()
+    print(f"[d2r-build-mod] Rebuilt strategy guide site -> {site_out}")
 
 
 if __name__ == "__main__":

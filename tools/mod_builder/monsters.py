@@ -55,8 +55,98 @@ CURATED_ZONE_ROSTERS = {
     "Act 2 - Desert 3": ["crownest3", "swarm1", "scarab2", "vulture2"],                       # Far Oasis (no sandmaggot1)
     "Act 2 - Desert 4": ["sandraider2", "sandleaper3", "pantherwoman3", "slinger6"],          # Lost City (no zombie5)
     "Act 2 - Valley of the Kings": ["brute4", "pantherwoman4", "scarab4", "slinger4"],        # Canyon of the Magi (no sandmaggot3)
-    "Act 2 - Sewer 1 B": ["skeleton4", "sandraider1", "mummy1", "sk_archer4", "zombie5"],     # Sewers 2 (+Plague Bearer)
+    "Act 2 - Sewer 1 B": ["skeleton4", "sandraider1", "mummy1", "sk_archer4"],                # Sewers 2 (zombie5 reserved for Ancient Tunnels)
     "Act 5 - Siege 1": ["minion1", "deathmauler1"],                                           # Bloody Foothills (1.09 pair)
+}
+
+# Purely Optional Exploration Dungeons (26 levels.txt rows across 22 named dungeons with zero quest objectives):
+# Monsters in these zones are +20% more difficult and drop from dedicated '<TC> Opt' (+30% reward probability) tables.
+OPTIONAL_DUNGEON_IDS = {
+    "9", "13",          # Act 1: Cave Level 1 & 2
+    "14",               # Act 1: Underground Passage Level 2
+    "11", "15",         # Act 1: Hole Level 1 & 2
+    "12", "16",         # Act 1: Pit Level 1 & 2
+    "18", "19",         # Act 1: Crypt & Mausoleum
+    "55", "59",         # Act 2: Stony Tomb Level 1 & 2
+    "65",               # Act 2: Ancient Tunnels
+    "84",               # Act 3: Arachnid Lair
+    "86", "87", "90",   # Act 3: Swampy Pit Level 1, 2 & 3
+    "95", "96",         # Act 3: Disused Fane & Forgotten Reliquary (Kurast Bazaar)
+    "97", "98", "99",   # Act 3: Forgotten Temple, Ruined Fane & Disused Reliquary (Upper Kurast / Causeway)
+    "116",              # Act 5: Drifter Cavern
+    "119",              # Act 5: Icy Cellar
+    "125", "126", "127" # Act 5: Abaddon, Pit of Acheron & Infernal Pit
+}
+
+# Minor same-family swaps in Non-Optional zones to free 8 monster IDs exclusively for Optional Dungeons
+NON_OPT_ZONE_MONSTER_SWAPS = {
+    "4":  {"zombie2": "zombie1"},             # Stony Field -> free zombie2 for Cave 1/2, Crypt, Mausoleum
+    "17": {"zombie2": "zombie1"},             # Burial Grounds -> free zombie2
+    "77": {"zombie4": "zombie3"},             # Great Marsh -> free zombie4 for Swampy Pit 2
+    "6":  {"brute2": "brute1"},               # Black Marsh -> free brute2 for Hole 1/2
+    "94": {"brute5": "brute4"},               # Ruined Temple -> free brute5 for Disused Fane / Forgotten Reliquary
+    "5":  {"corruptrogue2": "corruptrogue1"}, # Dark Wood -> free corruptrogue2 for Underground Passage 2
+    "10": {"corruptrogue2": "corruptrogue1"}, # Underground Passage 1 -> free corruptrogue2
+    "7":  {"corruptrogue3": "corruptrogue4"}, # Tamoe Highland -> free corruptrogue3 for Pit 1/2
+    "26": {"corruptrogue3": "corruptrogue4"}, # Monastery Gate -> free corruptrogue3
+    "45": {"mummy3": "mummy2"},               # Valley of Snakes -> free mummy3 for Ancient Tunnels
+    "58": {"mummy3": "mummy2"},               # Claw Viper Temple 1 -> free mummy3
+    "61": {"mummy3": "mummy2"},               # Claw Viper Temple 2 -> free mummy3
+}
+
+# 30 shared zone monsters remapped in OPTIONAL_DUNGEON_IDS to unused same-BaseId vanilla rows in monstats.txt
+OPT_MONSTER_REMAP = {
+    "arach3": "arach2",
+    "arach4": "arach6",
+    "arach5": "arach7",
+    "batdemon2": "batdemon6",
+    "bighead3": "bighead6",
+    "bloodlord2": "bloodlord4",
+    "bonefetish4": "bonefetish6",
+    "bonefetish5": "bonefetish7",
+    "corruptrogue5": "corruptrogue6",
+    "cr_archer1": "cr_archer6",
+    "cr_archer2": "cr_archer7",
+    "cr_archer3": "cr_archer8",
+    "fallen2": "fallen5",
+    "fallen3": "fallen6",
+    "imp4": "imp6",
+    "mosquito2": "mosquito3",
+    "mummy4": "mummy6",
+    "overseer3": "overseer5",
+    "reanimatedhorde3": "reanimatedhorde6",
+    "sandmaggot4": "sandmaggot3",
+    "sandraider3": "sandraider5",
+    "scarab1": "scarab6",
+    "sk_archer1": "sk_archer6",
+    "skeleton1": "skeleton6",
+    "skmage_ltng4": "skmage_ltng5",
+    "skmage_pois3": "skmage_pois5",
+    "snowyeti4": "snowyeti3",
+    "succubus3": "succubus6",
+    "vampire2": "vampire6",
+    "willowisp1": "willowisp2",
+}
+
+OPT_SUB_MONSTER_REMAP = {
+    "minion3": "minion9",
+    "minion4": "minion10",
+    "maggotegg4": "maggotegg3",
+    "maggotbaby4": "maggotbaby3",
+    "frozenhorror1": "frozenhorror5",
+}
+
+OPT_FULL_MONSTER_REMAP = {**OPT_MONSTER_REMAP, **OPT_SUB_MONSTER_REMAP}
+OPT_DST_TO_SRC = {dst: src for src, dst in OPT_FULL_MONSTER_REMAP.items()}
+
+OPTIONAL_DUNGEON_MONSTER_IDS = {
+    # 12 already-exclusive Optional Dungeon monster IDs
+    "batdemon4", "bloodlord3", "clawviper5", "cr_archer5", "imp2", "overseer4",
+    "scarab5", "skeleton3", "skeleton5", "skmage_ltng3", "snowyeti1", "succubus2",
+    # 8 freed monster IDs made exclusive to Optional Dungeons
+    "zombie2", "zombie4", "zombie5", "brute2", "brute5", "corruptrogue2", "corruptrogue3", "mummy3",
+    # 35 remapped Optional Dungeon monster/minion/spawn/superunique IDs
+    *OPT_FULL_MONSTER_REMAP.values(),
 }
 
 # Stationary nest/spawner -> mobile counterpart for umon1..3 (since nests can't spawn as Uniques)
@@ -290,6 +380,25 @@ def build_levels(cfg: dict) -> str:
             if parse_int(row.get(u_col, "")) > 0:
                 row[u_col] = "1"
 
+        # 4. Disambiguate Non-Optional vs Optional Exploration Dungeon monster rosters:
+        #    - In NON_OPT_ZONE_MONSTER_SWAPS zones, swap the 8 shared monster IDs to same-family peers
+        #    - In OPTIONAL_DUNGEON_IDS (26 purely optional dungeon rows), remap shared monsters via OPT_MONSTER_REMAP
+        if zid in NON_OPT_ZONE_MONSTER_SWAPS:
+            swap_map = NON_OPT_ZONE_MONSTER_SWAPS[zid]
+            for i in range(1, 26):
+                for m_prefix in ("mon", "nmon", "umon"):
+                    col = f"{m_prefix}{i}"
+                    cur_m = row.get(col, "").strip()
+                    if cur_m in swap_map:
+                        row[col] = swap_map[cur_m]
+        elif zid in OPTIONAL_DUNGEON_IDS:
+            for i in range(1, 26):
+                for m_prefix in ("mon", "nmon", "umon"):
+                    col = f"{m_prefix}{i}"
+                    cur_m = row.get(col, "").strip()
+                    if cur_m in OPT_MONSTER_REMAP:
+                        row[col] = OPT_MONSTER_REMAP[cur_m]
+
     return write_tsv("levels.txt", headers, rows)
 
 
@@ -317,119 +426,6 @@ ARCANE_CASTER_BASES = {
     "succubus1", "succubuswitch1", "putriddefiler1", "doomknight3",
 }
 
-# Family-wide elemental profile:
-#   "weak": {res_type: normal_weakness_val} (scales up in NM and Hell so N < NM < H)
-#   "strong": primary thematic element(s) for earlier immunity stretching when suited to the biome/family
-FAMILY_RESIST_PROFILES = {
-    # Act 1 / Undead / Construct / Beasts
-    "skeleton1":       {"weak": {"Fi": -35, "Ma": -30}, "strong": ("Po", "Co")},
-    "sk_archer1":      {"weak": {"Fi": -35, "Ma": -30}, "strong": ("Po", "Co")},
-    "skmage_pois1":    {"weak": {"Fi": -40, "Dm": -20}, "strong": ("Po", "Ma")},
-    "skmage_cold1":    {"weak": {"Fi": -40, "Dm": -20}, "strong": ("Co", "Po")},
-    "skmage_fire1":    {"weak": {"Co": -40, "Dm": -20}, "strong": ("Fi", "Po")},
-    "skmage_ltng1":    {"weak": {"Po": -35, "Dm": -20}, "strong": ("Li", "Ma")},
-    "zombie1":         {"weak": {"Fi": -45, "Li": -30}, "strong": ("Po", "Co")},
-    "fallen1":         {"weak": {"Co": -40, "Li": -30}, "strong": ("Fi",)},
-    "fallenshaman1":   {"weak": {"Co": -40, "Dm": -25}, "strong": ("Fi", "Ma")},
-    "quillrat1":       {"weak": {"Fi": -35, "Co": -30}, "strong": ("Po",)},
-    "foulcrow1":       {"weak": {"Li": -40, "Fi": -30}, "strong": ("Co",)},
-    "corruptrogue1":   {"weak": {"Po": -35, "Co": -30}, "strong": ("Fi", "Li")},
-    "cr_archer1":      {"weak": {"Po": -35, "Dm": -20}, "strong": ("Fi", "Co")},
-    "cr_lancer1":      {"weak": {"Po": -35, "Li": -30}, "strong": ("Co", "Fi")},
-    "goatman1":        {"weak": {"Po": -35, "Co": -30}, "strong": ("Fi", "Li")},
-    "brute2":          {"weak": {"Li": -40, "Fi": -35}, "strong": ("Co", "Dm")},
-    "wraith1":         {"weak": {"Fi": -35, "Li": -30}, "strong": ("Dm", "Ma", "Po")},
-    "bighead1":        {"weak": {"Co": -35, "Po": -30}, "strong": ("Li",)},
-    "arach1":          {"weak": {"Fi": -40, "Co": -30}, "strong": ("Po",)},
-    "vampire1":        {"weak": {"Fi": -40, "Li": -30}, "strong": ("Co", "Ma", "Po")},
-    "fetish1":         {"weak": {"Co": -35, "Fi": -30}, "strong": ("Po",)},
-    "fetishblow1":     {"weak": {"Co": -35, "Dm": -20}, "strong": ("Po",)},
-    "fetishshaman1":   {"weak": {"Co": -40, "Dm": -20}, "strong": ("Fi", "Ma")},
-    "bonefetish1":     {"weak": {"Fi": -40, "Ma": -30}, "strong": ("Po", "Co")},
-    # Act 2 Desert / Tombs
-    "sandleaper1":     {"weak": {"Co": -40, "Fi": -30}, "strong": ("Li",)},
-    "pantherwoman1":   {"weak": {"Co": -35, "Po": -30}, "strong": ("Fi", "Li")},
-    "slinger1":        {"weak": {"Co": -35, "Dm": -20}, "strong": ("Fi", "Li")},
-    "slinger5":        {"weak": {"Co": -35, "Dm": -20}, "strong": ("Fi", "Po")},
-    "vulture1":        {"weak": {"Li": -40, "Co": -30}, "strong": ("Fi",)},
-    "swarm1":          {"weak": {"Fi": -45, "Co": -35}, "strong": ("Po", "Dm")},
-    "scarab1":         {"weak": {"Co": -40, "Fi": -30}, "strong": ("Li", "Po")},
-    "sandraider1":     {"weak": {"Co": -35, "Li": -30}, "strong": ("Fi",)},
-    "sandmaggot1":     {"weak": {"Fi": -40, "Li": -35}, "strong": ("Po",)},
-    "clawviper1":      {"weak": {"Fi": -35, "Po": -30}, "strong": ("Co", "Li")},
-    "mummy1":          {"weak": {"Fi": -45, "Li": -30}, "strong": ("Po", "Co")},
-    "unraveler1":      {"weak": {"Fi": -40, "Dm": -20}, "strong": ("Ma", "Po")},
-    "baboon1":         {"weak": {"Po": -35, "Li": -30}, "strong": ("Fi", "Co")},
-    "blunderbore1":    {"weak": {"Li": -40, "Ma": -30}, "strong": ("Dm", "Co")},
-    "batdemon1":       {"weak": {"Co": -40, "Fi": -30}, "strong": ("Li",)},
-    # Act 3 Jungle / Kurast / Zakarum
-    "mosquito1":       {"weak": {"Fi": -40, "Li": -35}, "strong": ("Po",)},
-    "thornhulk1":      {"weak": {"Fi": -45, "Po": -30}, "strong": ("Dm", "Co")},
-    "frogdemon1":      {"weak": {"Li": -40, "Co": -35}, "strong": ("Po", "Fi")},
-    "willowisp1":      {"weak": {"Dm": -25, "Fi": -35}, "strong": ("Li", "Po")},
-    "zealot1":         {"weak": {"Li": -35, "Po": -35}, "strong": ("Ma", "Fi")},
-    "cantor1":         {"weak": {"Po": -40, "Dm": -20}, "strong": ("Ma", "Co", "Li")},
-    "councilmember1":  {"weak": {"Co": -35, "Po": -30}, "strong": ("Fi", "Li", "Ma")},
-    # Act 4 Hell
-    "vilemother1":     {"weak": {"Fi": -40, "Li": -35}, "strong": ("Po", "Co")},
-    "vilechild1":      {"weak": {"Fi": -40, "Li": -35}, "strong": ("Po", "Co")},
-    "fingermage1":     {"weak": {"Dm": -25, "Co": -35}, "strong": ("Ma", "Li")},
-    "regurgitator1":   {"weak": {"Li": -40, "Ma": -30}, "strong": ("Po", "Dm")},
-    "doomknight1":     {"weak": {"Li": -35, "Ma": -30}, "strong": ("Fi", "Po")},
-    "doomknight2":     {"weak": {"Co": -35, "Dm": -20}, "strong": ("Li", "Fi")},
-    "doomknight3":     {"weak": {"Dm": -25, "Li": -30}, "strong": ("Co", "Ma", "Po")},
-    "megademon1":      {"weak": {"Co": -40, "Ma": -30}, "strong": ("Fi", "Po")},
-    # Act 5 Highlands / Ice Caves / Worldstone
-    "reanimatedhorde1":{"weak": {"Fi": -45, "Li": -30}, "strong": ("Co", "Po")},
-    "siegebeast1":     {"weak": {"Li": -40, "Ma": -35}, "strong": ("Fi", "Dm")},
-    "snowyeti1":       {"weak": {"Fi": -45, "Li": -30}, "strong": ("Co",)},
-    "frozenhorror1":   {"weak": {"Fi": -45, "Li": -35}, "strong": ("Co",)},
-    "minion1":         {"weak": {"Co": -35, "Li": -30}, "strong": ("Fi", "Co")},
-    "suicideminion1":  {"weak": {"Co": -40, "Li": -35}, "strong": ("Fi", "Co")},
-    "succubus1":       {"weak": {"Dm": -20, "Li": -35}, "strong": ("Fi", "Ma")},
-    "succubuswitch1":  {"weak": {"Dm": -25, "Li": -35}, "strong": ("Ma", "Fi", "Co")},
-    "overseer1":       {"weak": {"Co": -35, "Ma": -30}, "strong": ("Fi", "Li")},
-    "imp1":            {"weak": {"Co": -40, "Li": -35}, "strong": ("Fi",)},
-    "bloodlord1":      {"weak": {"Ma": -35, "Li": -30}, "strong": ("Dm", "Fi", "Co")},
-    "deathmauler1":    {"weak": {"Fi": -35, "Ma": -30}, "strong": ("Li", "Co")},
-    "putriddefiler1":  {"weak": {"Fi": -40, "Co": -35}, "strong": ("Po", "Ma")},
-    "painworm1":       {"weak": {"Fi": -40, "Co": -35}, "strong": ("Po",)},
-    "hellbovine":      {"weak": {"Fi": -35, "Li": -35}, "strong": ("Dm",)},
-}
-
-# Families that gain Magic Immunity (ResMa = 100) in Hell (and high Magic Res in NM)
-HELL_MAGIC_IMMUNE_BASES = {
-    "unraveler1", "wraith1", "cantor1", "succubuswitch1", "doomknight3",
-}
-
-
-def _scale_weakness_by_diff(base_w: int, diff_suffix: str, is_phys_or_mag: bool) -> int:
-    """
-    Ensure Normal < Nightmare < Hell for all negative resistances:
-      - Elemental Weakness (e.g. -40 in Normal):
-          Normal:    -40%
-          Nightmare: -25% (+15%)
-          Hell:      -10% (+30%)
-      - Physical/Magic Weakness (e.g. -25 in Normal):
-          Normal:    -25%
-          Nightmare: -15% (+10%)
-          Hell:       -5% (+20%)
-    """
-    if diff_suffix == "":
-        return base_w
-    if diff_suffix == "(N)":
-        step = 10 if is_phys_or_mag else 15
-        return min(-10 if is_phys_or_mag else -15, base_w + step)
-    # Hell "(H)"
-    step = 20 if is_phys_or_mag else 25
-    return min(-5 if is_phys_or_mag else -10, base_w + step)
-
-
-ICE_MINION_IDS = {
-    "minion3", "minion6", "minion8",
-    "suicideminion3", "suicideminion6", "suicideminion8",
-}
-
 RES_COLOR_LABELS = {
     "Dm": "ÿc4Physicalÿc0",
     "Ma": "ÿc8Magicÿc0",
@@ -439,114 +435,165 @@ RES_COLOR_LABELS = {
     "Po": "ÿc2Poisonÿc0",
 }
 
+NEUTRAL_FAMILIES = {
+    "quillrat1",      # Quill Rat -> Bush Barb (5)
+    "foulcrow1",      # Foul Crow -> Cloud Stalker (4)
+    "sandraider1",    # Sand Raider -> Assailant (5)
+    "baboon1",        # Dune Beast -> Temple Guard (5)
+    "vulture1",       # Carrion Bird -> Winged Nightmare (4)
+    "sandleaper1",    # Sand Leaper -> Cliff Lurker (5)
+    "frogdemon1",     # Swamp Dweller -> Slime Prince (3)
+    "deathmauler1",   # Death Mauler -> Death Brigadier (5)
+    "painworm1",      # Pain Worm -> Anguish Worm (5)
+    "vilechild1",     # Flesh Beast -> Grotesque Wyrm (3)
+    "maggotbaby1",    # Sand Maggot Young -> World Killer Young (hatched children)
+}
 
-def _apply_weaknesses_and_magic_imm(row: dict, base_id: str, mon_id: str = "") -> None:
-    if mon_id in ICE_MINION_IDS:
-        weaknesses = {"Fi": -35, "Li": -30}
-        strong_elems = ("Co",)
-    elif base_id in ("minion1", "suicideminion1"):
-        weaknesses = {"Co": -35, "Li": -30}
-        strong_elems = ("Fi",)
-    else:
-        profile = FAMILY_RESIST_PROFILES.get(base_id, {"weak": {}, "strong": ()})
-        weaknesses = profile["weak"]
-        strong_elems = profile["strong"]
-    if base_id in HEAVY_BRUTE_BASES and "Dm" not in weaknesses and "Dm" not in strong_elems:
-        strong_elems = ("Dm",) + tuple(strong_elems)
-    all_res = ("Dm", "Ma", "Fi", "Li", "Co", "Po")
+NEUTRAL_MONSTER_IDS = {
+    "minion1",
+    "minion2",
+    "suicideminion1",
+    "suicideminion2",
+    "arach1",
+    "arach2",
+}
 
-    orig_res = {
-        diff: {r: parse_int(row.get(f"Res{r}{diff}", "")) for r in all_res}
-        for diff in ("", "(N)", "(H)")
-    }
-    var_weak = {
-        r for r in weaknesses
-        if orig_res[""][r] < 50
-    }
 
-    for diff_suffix in ("", "(N)", "(H)"):
-        # Count existing non-weakness immunities (>= 100) in this difficulty
-        imm_count = sum(
-            1 for r in all_res if r not in var_weak and orig_res[diff_suffix][r] >= 100
-        )
-        max_imm = 1 if diff_suffix in ("", "(N)") else 2
+def _parse_monster_tier(mon_id: str, base_id: str) -> int:
+    if base_id == "slinger5":
+        return 1 if mon_id == "slinger5" else 2
+    i = len(mon_id) - 1
+    while i >= 0 and mon_id[i].isdigit():
+        i -= 1
+    num_str = mon_id[i + 1 :]
+    return int(num_str) if num_str else 1
 
-        for rtype in all_res:
-            col = f"Res{rtype}{diff_suffix}"
-            cur = orig_res[diff_suffix][rtype]
-            is_pm = rtype in ("Dm", "Ma")
 
-            # 1. If this element is one of this variant's designated weaknesses, keep it Weak (< 0%)
-            #    across all 3 difficulties (Normal < Nightmare < Hell) so it never flips to Immune in Hell
-            if rtype in var_weak:
-                w_val = _scale_weakness_by_diff(weaknesses[rtype], diff_suffix, is_pm)
-                row[col] = str(w_val)
-                continue
+def _get_monster_affinity(
+    mon_id: str, base_id: str, tier_idx: int
+) -> tuple[str | None, int, str | None, int]:
+    """
+    Return (vuln_elem, vuln_steps, res_elem, res_steps) for a monster:
+      - Difficulty baselines: Normal = 10%, Nightmare = 20%, Hell = 30%
+      - Step interval = 35% (1 step = ±35%, 2 steps = ±70%, capped at 99% in Hell)
+      - Distribution across the 301 native progression monsters:
+          * ~1/2 (49.8%, 150/301): Both ("Vulnerable: X | Resists: Y")
+          * ~1/3 (33.6%, 101/301): Single-Affinity ("Vulnerable: X" OR "Resists: Y")
+          * ~1/6 (16.6%,  50/301): Neither / Neutral (10% / 20% / 30%, no subtitle)
+    """
+    t_weak = 1 if tier_idx <= 2 else 2
+    t_res = 1 if tier_idx <= 2 else 2
 
-            # 2. Keep native immunities (>= 100) intact on non-weakness elements
-            if cur >= 100:
-                continue
+    # 1. NEITHER / NEUTRAL (~1/6 = 16.6%, 50/301 progression monsters)
+    if base_id in NEUTRAL_FAMILIES or mon_id in NEUTRAL_MONSTER_IDS:
+        return (None, 0, None, 0)
 
-            # 3. Stretch positive / thematic resistances upward so immunities appear earlier when suited to the biome,
-            #    and neutral resistances climb progressively from Normal -> Nightmare -> Hell
-            is_thematic = (rtype in strong_elems) or (cur >= 33)
-            if diff_suffix == "":
-                # Normal: stretch high thematic resists (>= 70) to 100% Immune (max 1 immunity),
-                # moderate thematic resists (33..69) to 65..85%, and keep neutrals at 0..15%
-                if is_thematic and cur >= 70 and imm_count < max_imm and rtype != "Dm":
-                    row[col] = "100"
-                    imm_count += 1
-                elif is_thematic and cur >= 40:
-                    row[col] = str(min(85, cur + 20))
-                elif rtype in strong_elems and cur > 0:
-                    row[col] = str(min(75, cur + 25))
-                elif rtype == "Dm" and base_id in HEAVY_BRUTE_BASES:
-                    row[col] = "25"
-            elif diff_suffix == "(N)":
-                # Nightmare: stretch thematic resists (>= 55, or >= 45 in primary strong_elems) to 100% Immune (max 1 immunity),
-                # moderate thematic resists to 65..85% (or >= 50%), and neutral elements to 15..25%
-                if (
-                    ((rtype in strong_elems and cur >= 45) or cur >= 60)
-                    and imm_count < max_imm
-                    and rtype != "Dm"
-                ):
-                    row[col] = "100"
-                    imm_count += 1
-                elif is_thematic and cur >= 25:
-                    row[col] = str(min(85, max(65, cur + 25)))
-                elif rtype in strong_elems:
-                    row[col] = str(max(50, cur + 35))
-                else:
-                    # Neutral resistance in Nightmare: 15% (Dm/Ma) or 25% (Elemental)
-                    floor_nm = 15 if is_pm else 25
-                    row[col] = str(min(45, max(cur + 15, floor_nm)))
-            else:
-                # Hell "(H)": stretch thematic resists (>= 65 or strong_elems >= 50) to 100% Immune (up to 2 immunities),
-                # and raise neutral resistances to 33..50% so non-weakness hits face stiff resistance
-                if (
-                    ((rtype in strong_elems and (cur >= 33 or imm_count == 0)) or cur >= 65)
-                    and imm_count < max_imm
-                    and rtype != "Dm"
-                ):
-                    row[col] = "100"
-                    imm_count += 1
-                elif is_thematic and cur >= 33:
-                    row[col] = str(min(90, max(75, cur + 25)))
-                elif rtype in strong_elems:
-                    row[col] = str(max(75, cur + 50))
-                else:
-                    floor_h = 33 if is_pm else 45
-                    row[col] = str(min(75, max(cur + 25, floor_h)))
+    # 2. SINGLE-AFFINITY (~1/3 = 33.6%, 101/301 progression monsters)
+    # A) Only Resists ("Resists: <Element>")
+    if base_id in {"corruptrogue1", "cr_archer1", "cr_lancer1", "goatman1"}:
+        return (None, 0, "Co", t_res)
+    if base_id in {"brute2", "hellbovine", "blunderbore1"}:
+        return (None, 0, "Dm", t_res if base_id != "blunderbore1" else 2)
+    if base_id in {"pantherwoman1", "slinger1", "slinger5"}:
+        return (None, 0, "Fi", t_res)
+    if base_id == "zealot1":
+        return (None, 0, "Ma", t_res)
+    if base_id in {"overseer1", "imp1"}:
+        return (None, 0, "Fi", t_res)
+    if base_id == "fallen1":
+        return (None, 0, "Fi", 2)
 
-    # Add Magic Immunity to select Arcane/Undead/Zakarum casters in Hell (and 75% Magic Res in NM)
-    if base_id in HELL_MAGIC_IMMUNE_BASES:
-        if parse_int(row.get("ResMa(N)", "")) < 75:
-            row["ResMa(N)"] = "75"
-        imm_count_h = sum(
-            1 for r in all_res if parse_int(row.get(f"Res{r}(H)", "")) >= 100
-        )
-        if imm_count_h < 2:
-            row["ResMa(H)"] = "100"
+    # B) Only Vulnerable ("Vulnerable: <Element>")
+    if base_id in {"skeleton1", "sk_archer1"}:
+        return ("Fi", t_weak, None, 0)
+    if base_id in {"fetish1", "fetishblow1"}:
+        return ("Fi", t_weak, None, 0)
+    if base_id == "batdemon1":
+        return ("Co", t_weak, None, 0)
+    if base_id == "mosquito1":
+        return ("Fi", t_weak, None, 0)
+    if base_id == "swarm1":
+        return ("Fi", t_weak, None, 0)
+    if base_id in {"succubus1", "succubuswitch1"}:
+        return ("Dm", t_weak if base_id == "succubus1" else 2, None, 0)
+
+    # 3. BOTH ("Vulnerable: <Element> | Resists: <Element>") (~1/2 = 49.8%, 150/301 progression monsters)
+    if base_id in {"zombie1", "mummy1", "vilemother1", "putriddefiler1", "skmage_pois1"}:
+        return ("Fi", 2, "Po", 2)
+    if base_id == "sandmaggot1":
+        return ("Fi", t_weak, "Po", 2)
+    if base_id == "arach1":
+        if mon_id == "arach4":  # Flame Spider
+            return ("Co", 2, "Fi", 2)
+        return ("Fi", t_weak, "Po", 2)
+    if base_id in {"fallenshaman1", "fetishshaman1", "skmage_fire1", "councilmember1", "megademon1", "baalhighpriest", "venomlord"}:
+        return ("Co", 2, "Fi", 2)
+    if base_id == "bighead1":
+        return ("Co", t_weak, "Li", 2)
+    if base_id == "scarab1":
+        return ("Co", 2, "Li", 2)
+    if base_id in {"wraith1", "siegebeast1", "bloodlord1"}:
+        return ("Ma", 2, "Dm", 2)
+    if base_id == "willowisp1":
+        return ("Dm", 2, "Li", 2)
+    if base_id == "clawviper1":
+        return ("Fi", t_weak, "Co", 2)
+    if base_id in {"vampire1", "skmage_cold1", "reanimatedhorde1", "snowyeti1", "frozenhorror1"}:
+        return ("Fi", 2, "Co", 2)
+    if base_id == "thornhulk1":
+        return ("Fi", 2, "Dm", 2)
+    if base_id == "unraveler1":
+        return ("Fi", 2, "Ma", 2)
+    if base_id == "bonefetish1":
+        return ("Ma", 2, "Po", 2)
+    if base_id in {"cantor1", "fingermage1", "doomknight3"}:
+        return ("Dm", 2, "Ma", 2)
+    if base_id == "regurgitator1":
+        return ("Li", 2, "Po", 2)
+    if base_id in {"doomknight1", "baalminion1"}:
+        return ("Ma", 2, "Fi", 2)
+    if base_id == "doomknight2":
+        return ("Co", 2, "Li", 2)
+    if base_id == "skmage_ltng1":
+        return ("Po", 2, "Li", 2)
+    if base_id in {"minion1", "suicideminion1"}:
+        if any(mon_id.endswith(s) for s in ("3", "6", "8")):
+            return ("Fi", 2, "Co", 2)
+        return ("Co", 2, "Fi", 2)
+
+    return (None, 0, None, 0)
+
+
+def _apply_affinity_resists(
+    row: dict,
+    vuln_elem: str | None,
+    vuln_steps: int,
+    res_elem: str | None,
+    res_steps: int,
+) -> None:
+    """
+    Set Normal (10%), Nightmare (20%), and Hell (30%) baseline resistances across all 6 damage types,
+    shifted by -35% * vuln_steps for vuln_elem and +35% * res_steps for res_elem (capped at 99%).
+    """
+    for rtype in ("Dm", "Ma", "Fi", "Li", "Co", "Po"):
+        if rtype == vuln_elem and vuln_steps > 0:
+            delta = -35 * vuln_steps
+        elif rtype == res_elem and res_steps > 0:
+            delta = 35 * res_steps
+        else:
+            delta = 0
+        row[f"Res{rtype}"] = str(min(99, 10 + delta))
+        row[f"Res{rtype}(N)"] = str(min(99, 20 + delta))
+        row[f"Res{rtype}(H)"] = str(min(99, 30 + delta))
+
+
+def _apply_monster_resistances(
+    row: dict, base_id: str, mon_id: str = ""
+) -> tuple[str | None, str | None]:
+    tier_idx = _parse_monster_tier(mon_id, base_id)
+    v_el, v_st, r_el, r_st = _get_monster_affinity(mon_id, base_id, tier_idx)
+    _apply_affinity_resists(row, v_el, v_st, r_el, r_st)
+    return v_el, r_el
 
 
 def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
@@ -578,9 +625,9 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
             row[col] = scale_int(row[col], mult)
         for col, mult in (("A1TH", 1.45), ("A1TH(N)", 1.60), ("A1TH(H)", 1.75)):
             row[col] = scale_int(row[col], mult)
-        row["Exp"] = "28000"
-        row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
-        row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
+        # Signed 16-bit safe (<= 32767) Exp % ratios of monlvl.txt L-XP:
+        # Normal: ~33.8k XP (~77% of lvl 14->15), NM: ~1.73M XP (~37% of lvl 49->50), Hell: ~10.9M XP (~23% of lvl 76->77)
+        row["Exp"], row["Exp(N)"], row["Exp(H)"] = "20000", "28000", "28000"
         return True
 
     if mon_id == "duriel":
@@ -613,9 +660,9 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
         for col, mult in (("A1TH", 1.50), ("A2TH", 1.50), ("A1TH(N)", 1.65), ("A2TH(N)", 1.65), ("A1TH(H)", 1.80), ("A2TH(H)", 1.80)):
             if row.get(col, ""):
                 row[col] = scale_int(row[col], mult)
-        row["Exp"] = "52000"
-        row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
-        row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
+        # Signed 16-bit safe (<= 32767) Exp % ratios of monlvl.txt L-XP:
+        # Normal: ~90.8k XP (~35% of lvl 22->23), NM: ~2.59M XP (~33% of lvl 55->56), Hell: ~14.8M XP
+        row["Exp"], row["Exp(N)"], row["Exp(H)"] = "25000", "29000", "29000"
         return True
 
     if mon_id == "mephisto":
@@ -642,9 +689,9 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
             row[col] = scale_int(row[col], mult)
         for col, mult in (("A1TH", 1.45), ("A1TH(N)", 1.60), ("A1TH(H)", 1.75)):
             row[col] = scale_int(row[col], mult)
-        row["Exp"] = "76000"
-        row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
-        row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
+        # Signed 16-bit safe (<= 32767) Exp % ratios of monlvl.txt L-XP:
+        # Normal: ~140.8k XP (~22% of lvl 26->27), NM: ~3.39M XP (~31% of lvl 59->60), Hell: ~16.2M XP
+        row["Exp"], row["Exp(N)"], row["Exp(H)"] = "28000", "30000", "30000"
         return True
 
     if mon_id == "diablo":
@@ -676,9 +723,9 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
         for col, mult in (("A1TH", 1.50), ("A2TH", 1.50), ("A1TH(N)", 1.65), ("A2TH(N)", 1.65), ("A1TH(H)", 1.80), ("A2TH(H)", 1.80)):
             if row.get(col, ""):
                 row[col] = scale_int(row[col], mult)
-        row["Exp"] = "116000"
-        row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
-        row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
+        # Signed 16-bit safe (<= 32767) Exp % ratios of monlvl.txt L-XP:
+        # Normal: ~234.1k XP (~22% of lvl 32->33), NM: ~4.42M XP (~28% of lvl 63->64), Hell: ~18.8M XP
+        row["Exp"], row["Exp(N)"], row["Exp(H)"] = "31000", "31000", "31000"
         return True
 
     if mon_id == "baalcrab":
@@ -710,17 +757,19 @@ def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
         for col, mult in (("A1TH", 1.50), ("A2TH", 1.50), ("A1TH(N)", 1.65), ("A2TH(N)", 1.65), ("A1TH(H)", 1.80), ("A2TH(H)", 1.80)):
             if row.get(col, ""):
                 row[col] = scale_int(row[col], mult)
-        row["Exp"] = "180000"
-        row["Exp(N)"] = scale_int(row["Exp(N)"], 28.0)
-        row["Exp(H)"] = scale_int(row["Exp(H)"], 28.0)
+        # Signed 16-bit safe (<= 32767) Exp % ratios of monlvl.txt L-XP:
+        # Normal: ~475.2k XP (~19% of lvl 42->43), NM: ~8.02M XP (~18% of lvl 75->76), Hell: ~22.5M XP
+        row["Exp"], row["Exp(N)"], row["Exp(H)"] = "32000", "32000", "32000"
         return True
 
     return False
 
 
-def _configure_baal_wave_monsters(row: dict, mon_id: str) -> bool:
+def _configure_baal_wave_monsters(
+    row: dict, mon_id: str
+) -> tuple[bool, str | None, str | None]:
     if mon_id not in ("unraveler5", "baalhighpriest", "venomlord", "baalminion1", "baalminion2", "baalminion3"):
-        return False
+        return False, None, None
 
     row["aidist"], row["aidist(N)"], row["aidist(H)"] = "42", "46", "50"
     row["Crit"] = "20"
@@ -749,28 +798,16 @@ def _configure_baal_wave_monsters(row: dict, mon_id: str) -> bool:
     for col in ("Exp", "Exp(N)", "Exp(H)"):
         row[col] = scale_int(row[col], 4.8)
 
-    # Progressive N -> NM -> H weaknesses & stretched strengths on Baal Throne Waves
+    # Apply the 10%/20%/30% difficulty baseline with ±70% (2x35%) steps and 99% cap
     if mon_id == "unraveler5":
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "-40", "-25", "-15"
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-20", "-10", "-5"
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "75", "100", "100"
-        row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "75", "90", "100"
-    elif mon_id == "baalhighpriest":
-        row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "-35", "-20", "-10"
-        row["ResDm"], row["ResDm(N)"], row["ResDm(H)"] = "-20", "-10", "-5"
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "65", "85", "100"
-        row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "65", "85", "95"
-    elif mon_id == "venomlord":
-        row["ResCo"], row["ResCo(N)"], row["ResCo(H)"] = "-40", "-25", "-15"
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "-30", "-20", "-10"
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "80", "100", "100"
-        row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "75", "95", "100"
-    elif mon_id in ("baalminion1", "baalminion2", "baalminion3"):
-        row["ResMa"], row["ResMa(N)"], row["ResMa(H)"] = "-35", "-20", "-10"
-        row["ResLi"], row["ResLi(N)"], row["ResLi(H)"] = "-30", "-20", "-10"
-        row["ResFi"], row["ResFi(N)"], row["ResFi(H)"] = "60", "95", "120"
-        row["ResPo"], row["ResPo(N)"], row["ResPo(H)"] = "95", "95", "95"
-    return True
+        v_el, r_el = "Fi", "Ma"
+    elif mon_id in ("baalhighpriest", "venomlord"):
+        v_el, r_el = "Co", "Fi"
+    else:  # baalminion1..3
+        v_el, r_el = "Ma", "Fi"
+
+    _apply_affinity_resists(row, v_el, 2, r_el, 2)
+    return True, v_el, r_el
 
 
 def _configure_quest_superuniques(row: dict, mon_id: str) -> bool:
@@ -783,7 +820,8 @@ def _configure_quest_superuniques(row: dict, mon_id: str) -> bool:
     """
     quest_boss_ids = {
         "bloodraven", "griswold", "smith", "radament", "summoner",
-        "maggotqueen1", "darkelder", "izual", "hephasto",
+        "maggotqueen1", "maggotqueen2", "maggotqueen3", "maggotqueen4", "maggotqueen5",
+        "darkelder", "izual", "hephasto",
         "nihlathakboss", "ancientbarb1", "ancientbarb2", "ancientbarb3",
         "cowking",
     }
@@ -792,6 +830,13 @@ def _configure_quest_superuniques(row: dict, mon_id: str) -> bool:
 
     row["aidist"], row["aidist(N)"], row["aidist(H)"] = "42", "46", "50"
     row["Crit"] = "22"
+
+    # Cap any >= 100% resistance at 99% so no quest boss triggers native "Immune to X"
+    for rtype in ("Dm", "Ma", "Fi", "Li", "Co", "Po"):
+        for sfx in ("", "(N)", "(H)"):
+            col = f"Res{rtype}{sfx}"
+            if parse_int(row.get(col, "0")) >= 100:
+                row[col] = "99"
 
     # Progressive HP multipliers (Normal 2.8x -> Nightmare 3.2x -> Hell 3.6x)
     # Summoner & Nihlathak start with very low vanilla glass-cannon HP (129 / 191), so give them a 4.0x..5.0x pool
@@ -1069,51 +1114,61 @@ def _configure_trap_entities(row: dict, mon_id: str) -> bool:
     return True
 
 
-def _get_descstr_pool() -> tuple[dict[str, str], list[tuple[int, str, str]]]:
+def _get_descstr_pool() -> list[tuple[int, str, str]]:
     """
-    Return (van_desc_en, pool) where pool is a deterministic list of (id, Key, source_file)
+    Return a deterministic list of (id, Key, source_file)
     for .tbl-backed string keys (id < 23000) safe to use in monstats.txt DescStr.
     Strictly uses the 108 legacy unused D2bnetHelp* keys from bnet.json so that zero
     existing vanilla keys in monsters.json (which also holds rare item affixes like GhoulRI
     and interactive object names like TrappDoor) are ever overwritten.
     """
-    m_str = read_strings_json("monsters.json")
     b_str = read_strings_json("bnet.json")
-
-    van_desc_en = {e["Key"]: e["enUS"] for e in m_str}
 
     pool: list[tuple[int, str, str]] = []
     for e in b_str:
         if e["Key"].startswith("D2bnetHelp") and e["id"] < 23000:
             pool.append((e["id"], e["Key"], "bnet.json"))
 
-    return van_desc_en, pool
+    return pool
 
 
-def _format_monster_affinity_desc(row: dict, orig_desc_key: str, van_desc_en: dict[str, str]) -> str:
-    all_res = ("Dm", "Ma", "Fi", "Li", "Co", "Po")
-    res_list = [k for k in all_res if parse_int(row.get(f"Res{k}(N)", "")) >= 50]
-    weak_list = [k for k in all_res if parse_int(row.get(f"Res{k}(N)", "")) < 0]
-    parts = []
-    if orig_desc_key and orig_desc_key in van_desc_en:
-        parts.append(van_desc_en[orig_desc_key])
-    if res_list:
-        parts.append(", ".join(RES_COLOR_LABELS[k] for k in res_list) + " Resistant")
-    if weak_list:
-        parts.append("Weak to " + ", ".join(RES_COLOR_LABELS[k] for k in weak_list))
-    return " - ".join(parts)
+TACTICAL_DESCSTR_MAP = {
+    "drains mana": "Drains Mana",
+    "homing missiles": "Drains Mana",
+    "drains mana and stamina": "Drains Mana & Stamina",
+    "drains stamina": "Drains Stamina",
+    "stun attack": "Stun Attack",
+    "steals life": "Steals Life",
+}
+
+
+def _format_monster_affinity_desc(
+    vuln_elem: str | None, res_elem: str | None, orig_desc_key: str = ""
+) -> str:
+    parts: list[str] = []
+    if vuln_elem:
+        parts.append(f"Vulnerable: {RES_COLOR_LABELS[vuln_elem]}")
+    if res_elem:
+        parts.append(f"Resists: {RES_COLOR_LABELS[res_elem]}")
+    tactical_tag = TACTICAL_DESCSTR_MAP.get(orig_desc_key)
+    if tactical_tag:
+        parts.append(tactical_tag)
+    return " | ".join(parts)
 
 
 def build_monstats(cfg: dict) -> str:
     headers, rows = read_tsv("monstats.txt")
-    van_desc_en, desc_pool = _get_descstr_pool()
+    desc_pool = _get_descstr_pool()
     text_to_key: dict[str, str] = {}
     pool_idx = 0
 
-    def assign_desc_str(r: dict, orig_d: str) -> None:
+    def assign_desc_str(
+        r: dict, vuln_elem: str | None, res_elem: str | None, orig_d: str = ""
+    ) -> None:
         nonlocal pool_idx
-        desc_text = _format_monster_affinity_desc(r, orig_d, van_desc_en)
+        desc_text = _format_monster_affinity_desc(vuln_elem, res_elem, orig_d)
         if not desc_text:
+            r["DescStr"] = ""
             return
         if desc_text not in text_to_key:
             if pool_idx >= len(desc_pool):
@@ -1138,8 +1193,9 @@ def build_monstats(cfg: dict) -> str:
             continue
 
         # 2. Solo-Tuned Baal Throne Room Wave Monsters
-        if _configure_baal_wave_monsters(row, mon_id):
-            assign_desc_str(row, orig_desc)
+        is_wave, wave_v_el, wave_r_el = _configure_baal_wave_monsters(row, mon_id)
+        if is_wave:
+            assign_desc_str(row, wave_v_el, wave_r_el, orig_desc)
             continue
 
         # 2b. Quest SuperUniques & Act Minibosses (Blood Raven, Griswold, The Smith, Radament,
@@ -1155,17 +1211,32 @@ def build_monstats(cfg: dict) -> str:
         if _configure_trap_entities(row, mon_id):
             continue
 
-        # 4. Regular Spawnable Enemy Monsters
+        base_id = row.get("BaseId", "").strip()
+
+        # Cap any >= 100% resistance at 99% on killable enemy structures/spawners/sub-entities
+        # (excluding Bone Prison and Turret wall objects which use Poison res >= 200 to prevent poison states)
         if (
-            row.get("isSpawn", "") != "1"
+            row.get("killable", "") == "1"
+            and row.get("Align", "") == ""
+            and not base_id.startswith("boneprison")
+            and base_id != "turret1"
+        ):
+            for rtype in ("Dm", "Ma", "Fi", "Li", "Co", "Po"):
+                for sfx in ("", "(N)", "(H)"):
+                    col = f"Res{rtype}{sfx}"
+                    if parse_int(row.get(col, "0")) >= 100:
+                        row[col] = "99"
+
+        # 4. Regular Spawnable Enemy Monsters (plus maggotbaby1..6 hatched children & putriddefiler1..5)
+        if (
+            (row.get("isSpawn", "") != "1" and base_id != "maggotbaby1")
             or row.get("killable", "") != "1"
             or row.get("Align", "") != ""
-            or row.get("boss", "") == "1"
+            or (row.get("boss", "") == "1" and base_id != "putriddefiler1")
             or row.get("primeevil", "") == "1"
         ):
             continue
 
-        base_id = row.get("BaseId", "").strip()
         vel = parse_int(row.get("Velocity", "0"))
         if vel <= 0:
             # Stationary nests/spawners: scale HP by 1.5x, XP by 2.4x, and off-screen aggro radius
@@ -1204,6 +1275,57 @@ def build_monstats(cfg: dict) -> str:
                 "El1Pct(H)", "El1MinD(H)", "El1MaxD(H)", "El1Dur(H)",
             ):
                 row[c] = ""
+
+        # Align zombie3 (Catacombs 3-4) and mummy4 (Tal Rasha's Tombs) base TCs with their earliest Act
+        # so they never drop next-Act TCs early (while still auto-upgrading via group/level when spawned in Act 3 NM/H)
+        if mon_id == "zombie3":
+            for tcol in (
+                "TreasureClass", "TreasureClassChamp", "TreasureClassUnique",
+                "TreasureClassDesecratedChamp", "TreasureClassDesecratedUnique",
+                "TreasureClass(N)", "TreasureClassChamp(N)", "TreasureClassUnique(N)",
+                "TreasureClassDesecratedChamp(N)", "TreasureClassDesecratedUnique(N)",
+                "TreasureClass(H)", "TreasureClassChamp(H)", "TreasureClassUnique(H)",
+                "TreasureClassDesecratedChamp(H)", "TreasureClassDesecratedUnique(H)",
+            ):
+                if row.get(tcol, "").startswith("Act 2"):
+                    row[tcol] = "Act 1" + row[tcol][5:]
+        elif mon_id == "mummy4":
+            for tcol in (
+                "TreasureClass", "TreasureClassChamp", "TreasureClassUnique",
+                "TreasureClassDesecratedChamp", "TreasureClassDesecratedUnique",
+                "TreasureClass(N)", "TreasureClassChamp(N)", "TreasureClassUnique(N)",
+                "TreasureClassDesecratedChamp(N)", "TreasureClassDesecratedUnique(N)",
+                "TreasureClass(H)", "TreasureClassChamp(H)", "TreasureClassUnique(H)",
+                "TreasureClassDesecratedChamp(H)", "TreasureClassDesecratedUnique(H)",
+            ):
+                if row.get(tcol, "").startswith("Act 3"):
+                    row[tcol] = "Act 2" + row[tcol][5:].replace(" B", " C")
+
+        # Assign Skeleton monster families ('<TC> Skel') so they have a subtle ~2.5x-3.1x higher probability
+        # of dropping Skulls over other Gems while preserving 75% regular Gem drops
+        if base_id in (
+            "skeleton1",
+            "sk_archer1",
+            "skmage_pois1",
+            "skmage_cold1",
+            "skmage_fire1",
+            "skmage_ltng1",
+            "bonefetish1",
+            "doomknight1",
+            "doomknight2",
+            "doomknight3",
+        ):
+            for tcol in (
+                "TreasureClass", "TreasureClassChamp", "TreasureClassUnique",
+                "TreasureClassDesecratedChamp", "TreasureClassDesecratedUnique",
+                "TreasureClass(N)", "TreasureClassChamp(N)", "TreasureClassUnique(N)",
+                "TreasureClassDesecratedChamp(N)", "TreasureClassDesecratedUnique(N)",
+                "TreasureClass(H)", "TreasureClassChamp(H)", "TreasureClassUnique(H)",
+                "TreasureClassDesecratedChamp(H)", "TreasureClassDesecratedUnique(H)",
+            ):
+                tval = row.get(tcol, "").strip()
+                if tval and not tval.endswith(" Skel"):
+                    row[tcol] = f"{tval} Skel"
 
         # Classify into 4 Archetypes (strictly clamping group/party sizes to never exceed vanilla)
         van_min_grp = parse_int(row.get("MinGrp", ""), 1)
@@ -1265,7 +1387,7 @@ def build_monstats(cfg: dict) -> str:
         # Dedicated SuperUnique monster classes (Council Members, Infector/Seis/Vizier,
         # Shenk, Pindleskin, Frozenstein, etc.) get heightened Crit, off-screen aggro, and +2 extra skill levels
         if mon_id in (
-            "corruptrogue3", "councilmember1", "councilmember2", "councilmember3",
+            "corruptrogue4", "councilmember1", "councilmember2", "councilmember3",
             "unraveler3", "megademon3", "doomknight3", "fingermage3", "fetishshaman4",
             "clawviper3", "thornhulk3", "reanimatedhorde5", "snowyeti4", "siegebeast3",
             "overseer1", "minionspawner1",
@@ -1312,11 +1434,63 @@ def build_monstats(cfg: dict) -> str:
         for col in ("Exp", "Exp(N)", "Exp(H)"):
             row[col] = scale_int(row[col], xp_mult)
 
-        # Apply Biome Weaknesses & Hell Magic Immunities
-        _apply_weaknesses_and_magic_imm(row, base_id, mon_id)
+        # Apply 10%/20%/30% difficulty baseline with ±35%/±70% steps and 99% cap
+        v_el, r_el = _apply_monster_resistances(row, base_id, mon_id)
 
-        # Populate color-coded Resistances and Weaknesses via DescStr on all normal monsters
-        assign_desc_str(row, orig_desc)
+        # Populate concise custom affinity + tactical subtitle via DescStr (or clear DescStr if Neutral)
+        assign_desc_str(row, v_el, r_el, orig_desc)
+
+    # 5. Optional Exploration Dungeon Monsters:
+    #    a) Clone the 34 remapped shared monsters/minions/spawns (src_id -> dst_id) preserving dst_id's Id and *hcIdx
+    by_id = {r.get("Id", "").strip(): r for r in rows if r.get("Id", "").strip()}
+    for src_id, dst_id in OPT_FULL_MONSTER_REMAP.items():
+        src_r = by_id[src_id]
+        dst_r = by_id[dst_id]
+        keep_id = dst_r["Id"]
+        keep_hc = dst_r.get("*hcIdx", "")
+        for k, v in src_r.items():
+            dst_r[k] = v
+        dst_r["Id"] = keep_id
+        dst_r["*hcIdx"] = keep_hc
+
+    #    b) Scale all 55 Optional Dungeon monsters by +20% difficulty (1.20x HP, Damage, AR, Defense, XP),
+    #       remap their minion1/minion2/spawn references, and assign '<TC> Opt' (+30% reward probability) TCs
+    opt_tc_cols = (
+        "TreasureClass", "TreasureClassChamp", "TreasureClassUnique",
+        "TreasureClassDesecratedChamp", "TreasureClassDesecratedUnique",
+        "TreasureClass(N)", "TreasureClassChamp(N)", "TreasureClassUnique(N)",
+        "TreasureClassDesecratedChamp(N)", "TreasureClassDesecratedUnique(N)",
+        "TreasureClass(H)", "TreasureClassChamp(H)", "TreasureClassUnique(H)",
+        "TreasureClassDesecratedChamp(H)", "TreasureClassDesecratedUnique(H)",
+    )
+    for opt_id in OPTIONAL_DUNGEON_MONSTER_IDS:
+        orow = by_id[opt_id]
+        for hcol in ("minHP", "maxHP", "MinHP(N)", "MaxHP(N)", "MinHP(H)", "MaxHP(H)"):
+            if orow.get(hcol, ""):
+                orow[hcol] = scale_int(orow[hcol], 1.20)
+        for scol in (
+            "AC", "AC(N)", "AC(H)",
+            "Exp", "Exp(N)", "Exp(H)",
+            "A1TH", "A2TH", "S1TH",
+            "A1TH(N)", "A2TH(N)", "S1TH(N)",
+            "A1TH(H)", "A2TH(H)", "S1TH(H)",
+            "A1MinD", "A1MaxD", "A2MinD", "A2MaxD", "S1MinD", "S1MaxD",
+            "El1MinD", "El1MaxD", "El2MinD", "El2MaxD", "El3MinD", "El3MaxD",
+            "A1MinD(N)", "A1MaxD(N)", "A2MinD(N)", "A2MaxD(N)", "S1MinD(N)", "S1MaxD(N)",
+            "El1MinD(N)", "El1MaxD(N)", "El2MinD(N)", "El2MaxD(N)", "El3MinD(N)", "El3MaxD(N)",
+            "A1MinD(H)", "A1MaxD(H)", "A2MinD(H)", "A2MaxD(H)", "S1MinD(H)", "S1MaxD(H)",
+            "El1MinD(H)", "El1MaxD(H)", "El2MinD(H)", "El2MaxD(H)", "El3MinD(H)", "El3MaxD(H)",
+        ):
+            if orow.get(scol, ""):
+                orow[scol] = scale_int(orow[scol], 1.20)
+        for mref_col in ("minion1", "minion2", "spawn"):
+            mref_val = orow.get(mref_col, "").strip()
+            if mref_val in OPT_FULL_MONSTER_REMAP:
+                orow[mref_col] = OPT_FULL_MONSTER_REMAP[mref_val]
+        for tcol in opt_tc_cols:
+            tval = orow.get(tcol, "").strip()
+            if tval and not tval.endswith(" Opt"):
+                orow[tcol] = f"{tval} Opt"
 
     # Write allocated .tbl-backed DescStr entries to monsters.json and bnet.json
     pool_by_key = {k_name: (eid, src) for eid, k_name, src in desc_pool}
@@ -1538,6 +1712,20 @@ def build_superuniques(cfg: dict) -> str:
                 elif (not row.get("Mod3") or row.get("Mod3") == "0") and row.get("Mod1") != new_mod and row.get("Mod2") != new_mod:
                     row["Mod3"] = new_mod
 
+            # Disambiguate Non-Optional vs Optional Dungeon SuperUnique Classes & TCs:
+            if su == "Treehead WoodFist":
+                row["Class"] = "brute3"
+            elif su == "The Countess":
+                row["Class"] = "corruptrogue4"
+            elif su in ("Coldcrow", "Bonebreak", "Snapchip Shatter"):
+                cur_cls = row.get("Class", "").strip()
+                if cur_cls in OPT_FULL_MONSTER_REMAP:
+                    row["Class"] = OPT_FULL_MONSTER_REMAP[cur_cls]
+                for tc_col in ("TC", "TC Desecrated", "TC(N)", "TC(N) Desecrated", "TC(H)", "TC(H) Desecrated"):
+                    tval = row.get(tc_col, "").strip()
+                    if tval and not tval.endswith(" Opt"):
+                        row[tc_col] = f"{tval} Opt"
+
     return write_tsv("superuniques.txt", headers, rows)
 
 
@@ -1615,6 +1803,12 @@ def build_difficultylevels(cfg: dict) -> str:
         row["StaticFieldMin"] = static_mins[name]
         row["UniqueDamageBonus"] = elite_dmg_bonus[name]
         row["ChampionDamageBonus"] = elite_dmg_bonus[name]
+        # Ensure Blacksmith's Malus (bml) in the co-opted Gambling UI always spawns as Magic (0% Rare/Set/Unique)
+        row["GambleRare"] = "0"
+        row["GambleSet"] = "0"
+        row["GambleUnique"] = "0"
+        row["GambleUber"] = "0"
+        row["GambleUltra"] = "0"
 
     return write_tsv("difficultylevels.txt", headers, rows)
 

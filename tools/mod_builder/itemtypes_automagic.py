@@ -54,7 +54,7 @@ def build_itemtypes(cfg: dict) -> str:
         malu["BodyLoc1"] = ""
         malu["BodyLoc2"] = ""
         malu["Magic"] = "1"
-        malu["Rare"] = "1"
+        malu["Rare"] = ""
         malu["Normal"] = "0"
         malu["MaxSockets1"] = "0"
         malu["MaxSockets2"] = "0"
@@ -159,6 +159,49 @@ def build_itemtypes(cfg: dict) -> str:
         thml["BodyLoc1"] = ""
         thml["BodyLoc2"] = ""
         rows.append(thml)
+
+    # 5c. Add 'bcas' (Bone Caster Armor umbrella), 'bhlm' (Bone Helm & Mask secondary type tag inheriting from 'bcas'),
+    # and 'bshd' (Bone Shield secondary type tag inheriting from 'bcas') assigned via armor.txt 'type2' (keeping primary
+    # 'type' as 'helm' / 'shie' so hardcoded 3D shield/helm attachment orientations remain 100% intact)!
+    if "bcas" not in by_code and "armo" in by_code:
+        bcas = dict(by_code["armo"])
+        bcas["ItemType"] = "Bone Caster Armor"
+        bcas["Code"] = "bcas"
+        bcas["Equiv1"] = ""
+        bcas["Equiv2"] = ""
+        bcas["Body"] = "0"
+        bcas["BodyLoc1"] = ""
+        bcas["BodyLoc2"] = ""
+        bcas["TreasureClass"] = "0"
+        bcas["Rarity"] = "0"
+        rows.append(bcas)
+        by_code["bcas"] = bcas
+    if "bhlm" not in by_code and "helm" in by_code:
+        bhlm = dict(by_code["helm"])
+        bhlm["ItemType"] = "Bone Helm"
+        bhlm["Code"] = "bhlm"
+        bhlm["Equiv1"] = "bcas"
+        bhlm["Equiv2"] = ""
+        bhlm["Body"] = "0"
+        bhlm["BodyLoc1"] = ""
+        bhlm["BodyLoc2"] = ""
+        bhlm["TreasureClass"] = "0"
+        bhlm["Rarity"] = "0"
+        rows.append(bhlm)
+        by_code["bhlm"] = bhlm
+    if "bshd" not in by_code and "shie" in by_code:
+        bshd = dict(by_code["shie"])
+        bshd["ItemType"] = "Bone Shield"
+        bshd["Code"] = "bshd"
+        bshd["Equiv1"] = "bcas"
+        bshd["Equiv2"] = ""
+        bshd["Body"] = "0"
+        bshd["BodyLoc1"] = ""
+        bshd["BodyLoc2"] = ""
+        bshd["TreasureClass"] = "0"
+        bshd["Rarity"] = "0"
+        rows.append(bshd)
+        by_code["bshd"] = bshd
 
     # 6. Clear hardcoded StaffMods in itemtypes.txt so our automagic.txt 'skill-rand' groups (303, 305, 310..315)
     # control 100% of class skill rolls across all 6 progression tiers (reqlevel 1/8/16/24/32/40)!
@@ -530,6 +573,52 @@ def build_automagic(cfg: dict) -> str:
     ]
     for grp_id, cls_code in staffmod_groups:
         rows.extend(_build_class_staffmod_rows(headers, grp_id, cls_code))
+
+    # 6. Add Shield Block Rate & Helm Light Radius implicit automagic groups (316..321):
+    # - 316: Light Shields (+15% Faster Block Rate)
+    # - 317: Heavy Shields (-15% Faster Block Rate)
+    # - 318: Light Paladin Shields (clones 304 + mod3code=block2 +15%)
+    # - 319: Heavy Paladin Shields (clones 304 + mod3code=block2 -15%)
+    # - 320: Enclosed Visor Helms (Mask & Full Helm lines: -2 Light Radius)
+    # - 321: Fully Enclosed Greathelms (Great/Winged/Spired Helm line: -3 Light Radius)
+    rows.append(
+        _make_auto_row(
+            headers, "316", "1", "", "1", "1",
+            [("block2", "", "15", "15")],
+            itype1="shie", itype2="",
+        )
+    )
+    rows.append(
+        _make_auto_row(
+            headers, "317", "1", "", "1", "1",
+            [("block2", "", "-15", "-15")],
+            itype1="shie", itype2="",
+        )
+    )
+    for r in list(kept_rows):
+        if r.get("group") == "304":
+            for new_grp, fbr_val in (("318", "15"), ("319", "-15")):
+                pr = dict(r)
+                pr["group"] = new_grp
+                pr["mod3code"] = "block2"
+                pr["mod3param"] = ""
+                pr["mod3min"] = fbr_val
+                pr["mod3max"] = fbr_val
+                rows.append(pr)
+    rows.append(
+        _make_auto_row(
+            headers, "320", "1", "", "1", "1",
+            [("light", "", "-2", "-2")],
+            itype1="helm", itype2="",
+        )
+    )
+    rows.append(
+        _make_auto_row(
+            headers, "321", "1", "", "1", "1",
+            [("light", "", "-3", "-3")],
+            itype1="helm", itype2="",
+        )
+    )
 
     return write_excel_tsv("automagic.txt", headers, rows)
 

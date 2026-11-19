@@ -94,20 +94,9 @@ def _curve_lev_brackets(
         row[lev_cols[4]] = str(new_l5)
 
 
-# Custom passive/potion states to append to states.txt (each gets a unique ID >= 232)
+# Custom passive/potion states to append to states.txt (each gets a unique ID >= 232, all < 255)
 PALADIN_PASSIVE_STATES = [
-    "pal_sacrifice",
     "pal_might",
-    "pal_thorns",
-    "pal_concentration",
-    "pal_conviction",
-    "pal_prayer",
-    "pal_defiance",
-    "pal_cleansing",
-    "pal_vigor",
-    "pal_meditation",
-    "pal_redemption",
-    "pal_salvation",
     "hp_cooldown",
 ]
 
@@ -140,7 +129,6 @@ ASSASSIN_STATES = [
             "light-b": "180",
         },
     ),
-    ("ass_ts_passive", {}),
     ("ass_cobra_debuff", {"curable": "1", "curse": "1"}),
     ("ass_boi_passive", {}),
     ("ass_cot_passive", {}),
@@ -279,8 +267,8 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     zeal["LevToHit"] = "12"
 
     # Vengeance (Id 111): Frontal Arc Cleave (srvstfunc=35 + srvdofunc=164, 156-degree arc via calc5=13, calc6=30, +0 range bonus),
-    # non-linear base scaling: 90% -> 338% Fire/Cold/Ltng damage at Lvl 20 (Param1=90, Param2=16),
-    # synergized ONLY by individual Resist Fire / Resist Cold / Resist Lightning auras (+14%/lvl -> +280% at 20 pts, reaching +618% in chosen elements).
+    # halved standalone base scaling: 45% at Lvl 1 -> 159% Fire/Cold/Ltng damage at Lvl 20 (Param1=45, Param2=6 via RAMP12),
+    # synergized ONLY by individual Resist Fire / Resist Cold / Resist Lightning auras (+23%/lvl -> +460% at 20 pts, reaching +619% in chosen elements).
     veng = by_name["Vengeance"]
     veng["srvdofunc"] = "164"
     veng["cltdofunc"] = "103"
@@ -290,10 +278,10 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     veng["manashift"] = "6"
     veng["mana"] = "12"
     veng["lvlmana"] = "1"
-    veng["Param1"] = "90"   # Damage % baseline (90% at Lvl 1)
-    veng["Param2"] = "16"   # Damage % per level (ramped -> 90 + 310*16/20 = 338% at Lvl 20)
+    veng["Param1"] = "45"   # Damage % baseline (45% at Lvl 1, halved from 90%)
+    veng["Param2"] = "6"    # Damage % per level (ramped -> 45 + 19*6 = 159% at Lvl 20)
     veng["Param7"] = ""
-    veng["Param8"] = "14"   # +14%/lvl to specific element from Resist Fire / Resist Cold / Resist Lightning
+    veng["Param8"] = "23"   # +23%/lvl to specific element from Resist Fire / Resist Cold / Resist Lightning (+460% at 20 pts -> 619% total)
     veng["calc1"] = f"{RAMP12}+skill('Resist Fire'.blvl)*par8"
     veng["calc2"] = f"{RAMP12}+skill('Resist Cold'.blvl)*par8"
     veng["calc3"] = f"{RAMP12}+skill('Resist Lightning'.blvl)*par8"
@@ -372,19 +360,19 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     # Holy Shield (Id 117): Tactical defensive bastion cast before engaging dangerous packs/bosses:
     #   - Removed bonus Smite damage entirely (refocused as a pure defensive skill)
     #   - 0% innate Defense bonus; 100% of its Defense bonus comes from Defiance synergy (+15%/lvl -> up to +300% Defense)
-    #   - Scaled back Block % chance (Param5 = 5, Param6 = 25 -> +7% at sLvl 1, +14% at sLvl 5, +18% at sLvl 10, +22% at sLvl 20)
+    #   - Vanilla Block % chance restored (Param5 = 10, Param6 = 40 -> +14% at sLvl 1, +25% at sLvl 5, +31% at sLvl 10, +35% at sLvl 20)
     #   - Grants flat Physical Damage Reduced & Magic Damage Reduced (calc2 = 5 at sLvl 1 -> 22 at sLvl 10 -> 62 at sLvl 20)
-    #   - Shorter tactical duration: 15s + 2s/lvl (Param1 = 375, Param2 = 50 -> 15s at sLvl 1, 34s at sLvl 10, 53s at sLvl 20)
+    #   - Bumped duration: 25s + 3s/lvl (Param1 = 625, Param2 = 75 -> 25s at sLvl 1, 52s at sLvl 10, 82s at sLvl 20)
     #   - Higher Mana cost: 40 + 2/lvl (40 Mana at sLvl 1 -> 78 Mana at sLvl 20)
     hshd = by_name["Holy Shield"]
     hshd["mana"] = "40"
     hshd["lvlmana"] = "2"
-    hshd["Param1"] = "375"  # 15s baseline duration (down from 30s)
-    hshd["Param2"] = "50"   # +2s per level (down from +25s/lvl -> 53s at Lvl 20 instead of 505s)
+    hshd["Param1"] = "625"  # 25s baseline duration (bumped from 15s)
+    hshd["Param2"] = "75"   # +3s per level (bumped from +2s/lvl -> 82s at Lvl 20)
     hshd["Param3"] = "0"    # 0% base Defense
     hshd["Param4"] = "0"    # 0% Defense per level
-    hshd["Param5"] = "5"    # Block % Min (down from 10)
-    hshd["Param6"] = "25"   # Block % Max (down from 40 -> +7% at Lvl 1, +22% at Lvl 20)
+    hshd["Param5"] = "10"   # Vanilla Block % Min (restored to 10)
+    hshd["Param6"] = "40"   # Vanilla Block % Max (restored to 40 -> +14% at Lvl 1, +35% at Lvl 20)
     hshd["Param8"] = "15"   # +15% Defense per hard point in Defiance (+300% at 20 Defiance)
     hshd["calc1"] = "skill('Defiance'.blvl)*par8"
     hshd["calc2"] = "5+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*3/20"
@@ -704,26 +692,49 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     fana["passivecalc1"] = "ln56"
     fana["aurastatcalc3"] = "ln56*2/3"
 
-    # Conviction (Id 123, "Aura of Guilt"): Ramped -Enemy Res (cap -100%),
-    # adds Enemy Physical Damage Reduction (-10 - lvl) & Enemy Slow (-10 - lvl/2);
-    # perdelay = 10 (0.4s tick) with active mana upkeep (manashift=4, mana=4, lvlmana=1 -> 1.2/sec at Lvl 1, 7.1/sec at Lvl 20);
-    # zero passive bonus.
+    # Conviction (Id 123):
+    # Reworked into a friendly party aura (srvdofunc=65, aurafilter=73731, matching Might/Fanaticism/Salvation)
+    # that buffs the Paladin, all party members, and all hirelings/summons along a true logistic S-curve:
+    #   clc1 = min(lvl-1,4)+3*max(0,min(lvl-5,10))+max(0,min(lvl-15,5))+max(0,lvl-20)/2
+    #   (climbs slowly Lvl 1..5 [0 -> 4], rapidly Lvl 5..15 [4 -> 34], and tapers off Lvl 15..20+ [34 -> 39])
+    # Because Levels 1..5 sit on the flat bottom toe of the S-curve, a 1-point Conviction (even with +3..4 All Skills)
+    # grants very little (+3% at Lvl 1 -> +15% at Lvl 5 w/ 20 Resist); the Paladin must invest hard points into BOTH
+    # Conviction (to climb Levels 6..15) AND the corresponding Resist aura:
+    #   - aurastat1 = passive_fire_mastery: (skill('Resist Fire'.blvl)*(3+clc1*3))/20  (+3% at Lvl 1 -> +15% at Lvl 5 -> +60% at Lvl 10 -> +105% at Lvl 15 -> +120% at Lvl 20 w/ 20 Resist Fire)
+    #   - aurastat2 = passive_cold_mastery: (skill('Resist Cold'.blvl)*(3+clc1*3))/20
+    #   - aurastat3 = passive_ltng_mastery: (skill('Resist Lightning'.blvl)*(3+clc1*3))/20
+    #   - aurastat4 = item_damagetargetac:  -clc2, where clc2 = 60+clc1*18 (-60 at Lvl 1 -> -132 at Lvl 5 -> -402 at Lvl 10 -> -672 at Lvl 15 -> -762 at Lvl 20)
+    #   - aurastat5 = item_slow:            clc3,  where clc3 = 4+(clc1*4)/5 (4% at Lvl 1 -> 7% at Lvl 5 -> 19% at Lvl 10 -> 31% at Lvl 15 -> 35% at Lvl 20)
+    # - perdelay = 10 (0.4s tick) with active mana upkeep (manashift=4, mana=4, lvlmana=1 -> 1.2/sec at Lvl 1, 7.1/sec at Lvl 20).
     convic = by_name["Conviction"]
+    convic["srvdofunc"] = "65"
+    convic["aurafilter"] = "73731"
+    convic["aurastate"] = "conviction"
+    convic["auratargetstate"] = "conviction"
     convic["immediate"] = "1"
     convic["perdelay"] = "10"
     convic["minmana"] = "0"
     convic["manashift"] = "4"
     convic["mana"] = "4"
     convic["lvlmana"] = "1"
-    convic["Param3"] = "20"
-    convic["Param4"] = "4"
-    convic["aurastatcalc2"] = f"-min({RAMP34},100)"
-    convic["aurastatcalc3"] = f"-min({RAMP34},100)"
-    convic["aurastatcalc4"] = f"-min({RAMP34},100)"
-    convic["aurastat5"] = "damagepercent"
-    convic["aurastatcalc5"] = "-10-lvl"
-    convic["aurastat6"] = "velocitypercent"
-    convic["aurastatcalc6"] = "-10-lvl/2"
+    convic["calc1"] = "min(lvl-1,4)+3*max(0,min(lvl-5,10))+max(0,min(lvl-15,5))+max(0,lvl-20)/2"
+    convic["*calc1 desc"] = "Logistic S-curve index (0 at Lvl 1 -> 4 at Lvl 5 -> 34 at Lvl 15 -> 39 at Lvl 20)"
+    convic["calc2"] = "60+clc1*18"
+    convic["*calc2 desc"] = "-Monster Defense Per Hit magnitude"
+    convic["calc3"] = "4+(clc1*4)/5"
+    convic["*calc3 desc"] = "Slows Target %"
+    convic["aurastat1"] = "passive_fire_mastery"
+    convic["aurastatcalc1"] = "(skill('Resist Fire'.blvl)*(3+clc1*3))/20"
+    convic["aurastat2"] = "passive_cold_mastery"
+    convic["aurastatcalc2"] = "(skill('Resist Cold'.blvl)*(3+clc1*3))/20"
+    convic["aurastat3"] = "passive_ltng_mastery"
+    convic["aurastatcalc3"] = "(skill('Resist Lightning'.blvl)*(3+clc1*3))/20"
+    convic["aurastat4"] = "item_damagetargetac"
+    convic["aurastatcalc4"] = "-clc2"
+    convic["aurastat5"] = "item_slow"
+    convic["aurastatcalc5"] = "clc3"
+    convic["aurastat6"] = ""
+    convic["aurastatcalc6"] = ""
     convic["passivestate"] = ""
     convic["passivestat1"] = ""
     convic["passivecalc1"] = ""
@@ -1103,11 +1114,17 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     convic = by_desc["conviction"]
     _set_dsc_line(convic, "desc", 1, "36", "StrSkill34", "", "usmc*5", "256")
     _set_dsc_line(convic, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "ln12*2", "3")
-    _set_dsc_line(convic, "desc", 3, "74", "StrSkill54", "", f"-min({RAMP34},100)", "")
-    _set_dsc_line(convic, "desc", 4, "74", "StrSkill21", "", "-dm56", "")
-    _set_dsc_line(convic, "desc", 5, "74", "StrSkill38", "", "-10-lvl", "")
-    _set_dsc_line(convic, "desc", 6, "74", "Cgslow", "", "10+lvl/2", "")
-    _set_dsc_line(convic, "dsc2", 1, "", "", "", "", "")
+    _set_dsc_line(convic, "desc", 3, "74", "ModConvicDefPerHit", "", "clc2", "")
+    _set_dsc_line(convic, "desc", 4, "74", "Cgslow", "", "clc3", "")
+    _set_dsc_line(convic, "desc", 5, "", "", "", "", "")
+    _set_dsc_line(convic, "desc", 6, "", "", "", "", "")
+    _set_dsc_line(convic, "dsc2", 1, "74", "ModConvicFireDmg", "", "(skill('Resist Fire'.blvl)*(3+clc1*3))/20", "")
+    _set_dsc_line(convic, "dsc2", 2, "74", "ModConvicColdDmg", "", "(skill('Resist Cold'.blvl)*(3+clc1*3))/20", "")
+    _set_dsc_line(convic, "dsc2", 3, "74", "ModConvicLtngDmg", "", "(skill('Resist Lightning'.blvl)*(3+clc1*3))/20", "")
+    _clear_dsc3_synergies(convic, "skillname123")
+    _set_dsc_line(convic, "dsc3", 2, "76", "Firedplev", "skillname100", "(3+clc1*3)/20", "")
+    _set_dsc_line(convic, "dsc3", 3, "76", "Colddplev", "skillname105", "(3+clc1*3)/20", "")
+    _set_dsc_line(convic, "dsc3", 4, "76", "Ltngdplev", "skillname110", "(3+clc1*3)/20", "")
 
     pray = by_desc["prayer"]
     _set_dsc_line(pray, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
@@ -4990,8 +5007,10 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cs["*calc3 desc"] = "Soul-Hex Wave % Defense Shred per Orb"
         cs["calc4"] = "12*skill('Dragon Claw'.blvl) + 6*skill('Charged Bolt Sentry'.blvl)"
         cs["*calc4 desc"] = "Total Synergy Bonus (%)"
+        cs["calc5"] = "60 + 10*max(0,lvl-1) + 10*max(0,lvl-8) + 15*max(0,lvl-16)"
+        cs["*calc5 desc"] = "Held-Orb -Monster Defense Per Hit per Orb (-60 at Lvl 1 -> -410 at Lvl 20; 3 orbs = -180 -> -1230)"
         cs["aurastat2"] = "item_damagetargetac"
-        cs["aurastatcalc2"] = "-50"
+        cs["aurastatcalc2"] = "-clc5"
         cs["aurastat3"] = "progressive_tohit"
         cs["aurastatcalc3"] = "par4"
         cs["passivestate"] = ""
@@ -5016,7 +5035,7 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         cs_d["desccalcb3"] = "clc2"
         cs_d["descline4"] = "74"
         cs_d["desctexta4"] = "ModCobraStrikeHoldBuff"
-        cs_d["desccalca4"] = "50"
+        cs_d["desccalca4"] = "clc5"
         cs_d["descline5"] = "74"
         cs_d["desctexta5"] = "StrSkill22"
         cs_d["desccalca5"] = "toht"
@@ -5114,6 +5133,8 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         bs_sk["auratargetstate"] = "lifetap"
         bs_sk["auralencalc"] = f"125 + 10 * {cs_m}"
         bs_sk["aurarangecalc"] = "(lvl >= 3) ? 5 : 0"
+        bs_sk["aurastat1"] = "skill_armor_percent"
+        bs_sk["aurastatcalc1"] = f"-(25 + 2 * {cs_m})"
         bs_sk["auraevent1"] = "damagedinmelee"
         bs_sk["auraeventfunc1"] = "5"
         bs_sk["auraevent2"] = "damagedbymissile"
@@ -5835,16 +5856,10 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         rs["*calc5 desc"] = "Chance To Cast Escalation 2 Skill"
         rs["*calc7desc"] = "Escalation 2 Skill Id"
 
-        # Hidden skill cast by Whirlwind on every spin tick: temporary elemental resistance shred on nearby enemies.
-        #   Each element's shred scales with the points in that element's charge-up skill (x2) plus Whirlwind's
-        #   own level (x1) - independent of whether orbs are currently held.
-        #   Lasts 3s after the last tick, so it outlives the spin by a few seconds.
+        # Hidden skill cast by Whirlwind on every spin tick: slows nearby enemies' movement and attack speed
+        # for 3.0s (75 frames) while spinning through them (replacing elemental resistance shred).
         if "Ass Whirl Shred" not in by_name:
             max_sid = max(parse_int(r.get("*Id", "0"), 0) for r in s_rows)
-            # Clone the stock Battle Cry row (srvdofunc 68 + 'battlecry' missile): a warcry-style burst around the
-            # caster that applies its aura state to every enemy it touches, with no target needed -> castable from
-            # Whirlwind's escalation hook.  (Curse-style srvdofunc 30 needs a target and never reached monsters.)
-            # Made hidden and class-less.
             sk_shred = dict(by_name["Battle Cry"])
             for k in ("charclass", "skilldesc", "reqskill1", "reqskill2", "reqskill3", "leftskill", "rightskill",
                       "stsound", "stsoundclass", "ItemCastSound", "cost mult", "cost add", "mana", "lvlmana",
@@ -5864,16 +5879,10 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             sk_shred["auratargetstate"] = "ass_whirl_shred"
             sk_shred["auralencalc"] = "75"
             sk_shred["aurarangecalc"] = ""
-            for n_idx, (res_stat, orb_stat, orb_skill) in enumerate(
-                (
-                    ("fireresist", "progressive_fire", "Fists of Fire"),
-                    ("coldresist", "progressive_cold", "Blades of Ice"),
-                    ("lightresist", "progressive_lightning", "Claws of Thunder"),
-                ),
-                start=1,
-            ):
-                sk_shred[f"aurastat{n_idx}"] = res_stat
-                sk_shred[f"aurastatcalc{n_idx}"] = f"-(skill('{orb_skill}'.blvl) + skill('Royal Strike'.blvl)/2)"
+            sk_shred["aurastat1"] = "velocitypercent"
+            sk_shred["aurastatcalc1"] = "-min(65, 20 + skill('Royal Strike'.lvl)*2)"
+            sk_shred["aurastat2"] = "attackrate"
+            sk_shred["aurastatcalc2"] = "-min(65, 20 + skill('Royal Strike'.lvl)*2)"
             # Visuals toned down: no client-side Battle Cry burst/overlay; only the state's monster tint remains.
             for k in ("cltdofunc", "cltstfunc", "cltmissilea", "cltmissileb", "cltmissilec", "castoverlay",
                       "srvoverlay", "tgtoverlay", "ItemCastOverlay", "*cltcalc1 desc"):
@@ -5935,19 +5944,19 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         rs_d["desccalca2"] = "toht"
         rs_d["desccalcb2"] = ""
         rs_d["descline3"] = "74"
-        rs_d["desctexta3"] = "ModWhirlFireShred"
+        rs_d["desctexta3"] = "Cgslow"
         rs_d["desctextb3"] = ""
-        rs_d["desccalca3"] = "skill('Fists of Fire'.blvl) + skill('Royal Strike'.blvl)/2"
+        rs_d["desccalca3"] = "min(65, 20 + lvl*2)"
         rs_d["desccalcb3"] = ""
-        rs_d["descline4"] = "74"
-        rs_d["desctexta4"] = "ModWhirlColdShred"
-        rs_d["desctextb4"] = ""
-        rs_d["desccalca4"] = "skill('Blades of Ice'.blvl) + skill('Royal Strike'.blvl)/2"
-        rs_d["desccalcb4"] = ""
-        rs_d["descline5"] = "74"
-        rs_d["desctexta5"] = "ModWhirlLightShred"
+        rs_d["descline4"] = "36"
+        rs_d["desctexta4"] = "StrSkillDurationSingular"
+        rs_d["desctextb4"] = "StrSkill20"
+        rs_d["desccalca4"] = "75"
+        rs_d["desccalcb4"] = "25"
+        rs_d["descline5"] = ""
+        rs_d["desctexta5"] = ""
         rs_d["desctextb5"] = ""
-        rs_d["desccalca5"] = "skill('Claws of Thunder'.blvl) + skill('Royal Strike'.blvl)/2"
+        rs_d["desccalca5"] = ""
         rs_d["desccalcb5"] = ""
         rs_d["dsc2line1"] = "36"
         rs_d["dsc2texta1"] = "StrSkill3"
@@ -6390,12 +6399,32 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             _r["lvlmana"] = _lvlm
             _r["minmana"] = _minm
 
+    # Clear player-side elemental resistance pierce / debuff stats (Hydra, Sentries, Apocalypse)
+    # so monster elemental resistances (capped at 99%) can never be bypassed by pierce.
+    # (Note: Necromancer Lower Resist Id 91 is left untouched on the Necromancer skill tree & automagic until the Necro rework.)
+    if "Apocalypse" in by_name:
+        apoc = by_name["Apocalypse"]
+        apoc["aurastat1"] = ""
+        apoc["aurastatcalc1"] = ""
+    for _pet_sk in ("Hydra", "Charged Bolt Sentry", "Wake of Fire Sentry", "Lightning Sentry", "Death Sentry"):
+        if _pet_sk in by_name:
+            _pr = by_name[_pet_sk]
+            for _pi in range(1, 7):
+                if _pr.get(f"passivestat{_pi}", "").startswith("passive_") and _pr.get(f"passivestat{_pi}", "").endswith("_pierce"):
+                    _pr[f"passivestat{_pi}"] = ""
+                    _pr[f"passivecalc{_pi}"] = ""
+
     # Sorceress 1:1 map layout + active experiment variants (see mod_builder/sorc/)
     from mod_builder.sorc import engine as sorc_engine
 
     sorc_engine.apply_layout(by_name, by_desc)
     sorc_engine.apply_table_patches("skills.txt", s_headers, s_rows)
     sorc_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
+    # Ensure Hydra (Pyre Hydra) does not inherit vanilla passive_fire_pierce on passivestat2
+    for _r in s_rows:
+        if _r.get("skill") == "Hydra" and _r.get("passivestat2") == "passive_fire_pierce":
+            _r["passivestat2"] = ""
+            _r["passivecalc2"] = ""
 
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
@@ -6432,6 +6461,10 @@ def build_skill_strings(cfg: dict) -> str:
         (61025, "ModActivePctPDR", "Physical Damage Reduced by %d%%"),
         (61026, "StrSkillMagicDamageToYourAttack", "Magic Damage To Your Attack: %d-%d"),
         (61027, "ModActiveFlatMDR", "Magic Damage Reduced by %d"),
+        (61028, "ModConvicFireDmg", "Fire Skill Damage: +%d%%"),
+        (61029, "ModConvicColdDmg", "Cold Skill Damage: +%d%%"),
+        (61100, "ModConvicLtngDmg", "Lightning Skill Damage: +%d%%"),
+        (61101, "ModConvicDefPerHit", "-%d to Monster Defense Per Hit"),
         (0, "skillsd124", "aura - restores life and mana after each kill"),
         (0, "skillld124", "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"),
         (0, "skillxld124", "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"),
@@ -6439,9 +6472,9 @@ def build_skill_strings(cfg: dict) -> str:
         (0, "skillld117", "enhances your shield with divine power, increasing blocking\nand reducing physical and magic damage taken"),
         (0, "skillsd111", "cleaving attacks add elemental damage"),
         (0, "skillld111", "cleaves enemies in a frontal arc, adding fire, lightning,\nand cold damage to each successful attack"),
-        (0, "skillsd123", "aura - demoralizes and weakens enemies"),
-        (0, "skillld123", "when active, aura demoralizes nearby enemies, sapping their speed\nand attack power while shattering their defenses and resistances"),
-        (0, "skillxld123", "when active, aura demoralizes nearby enemies, sapping their speed\nand attack power while shattering their defenses and resistances"),
+        (0, "skillsd123", "aura - empowers party elemental damage and crippling strikes"),
+        (0, "skillld123", "when active, aura empowers you and your party with\nfire, cold, and lightning damage based on points in each Resistance Aura\nwhile attacks slow enemies and shred monster defense per hit"),
+        (0, "skillxld123", "when active, aura empowers you and your party with\nfire, cold, and lightning damage based on points in each Resistance Aura\nwhile attacks slow enemies and shred monster defense per hit"),
         (0, "skillsd104", "aura - increases defense and reduces physical damage"),
         (0, "skillld104", "when active, aura bolsters the defense of you and your party\nand reduces physical damage taken from attacks"),
         (0, "skillsd115", "aura - increases movement speed and hit recovery"),
@@ -6712,7 +6745,7 @@ def build_skill_strings(cfg: dict) -> str:
         (
             0,
             "Skillld281",
-            "Does not release orbs\n\nspin through nearby enemies, striking with your weapon\nand any held orb damage; enemies near you\ntemporarily lose elemental resistance",
+            "Does not release orbs\n\nspin through nearby enemies, striking with your weapon\nand any held orb damage while slowing the movement\nand attack speed of enemies in your wake",
         ),
     ]
     from mod_builder.sorc import engine as sorc_engine
@@ -8581,6 +8614,9 @@ def build_skills_all(cfg: dict) -> str:
     from mod_builder.sorc.tree import build_soskilltree_pair
 
     p19 = build_soskilltree_pair()
+    from mod_builder.sorc.icons import build_soskillicon_pair
+
+    p19 = f"{p19}, {build_soskillicon_pair()}"
     from mod_builder.sorc.statemachine import build_sorceress_state_machine
 
     p20 = build_sorceress_state_machine()

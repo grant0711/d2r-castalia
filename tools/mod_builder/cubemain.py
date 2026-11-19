@@ -70,30 +70,31 @@ GEM_CURSES: Dict[str, Tuple[str, str, str, str]] = {
     "skz": ("hp", "", "-55", "-38"),
 }
 
-# Gem Tier output level rules:
-# Chipped -> lvl=12, Flawed -> lvl=24, Standard -> lvl=36, Flawless -> lvl=50, Perfect -> plvl=100 (100% of clvl)
+# Gem Tier output level rules (N - 1 of next Gem tier req, with Perfect = plvl 100):
+# Chipped (req 1) -> lvl=14, Flawed (req 15) -> lvl=29, Standard (req 30) -> lvl=44,
+# Flawless (req 45) -> lvl=59, Perfect (req 60) -> plvl=100 (100% of clvl)
 GEM_LEVEL_RULES: Dict[str, Tuple[str, str]] = {
-    "gcr": ("12", ""), "gfr": ("24", ""), "gsr": ("36", ""), "glr": ("50", ""), "gpr": ("", "100"),
-    "gcb": ("12", ""), "gfb": ("24", ""), "gsb": ("36", ""), "glb": ("50", ""), "gpb": ("", "100"),
-    "gcy": ("12", ""), "gfy": ("24", ""), "gsy": ("36", ""), "gly": ("50", ""), "gpy": ("", "100"),
-    "gcg": ("12", ""), "gfg": ("24", ""), "gsg": ("36", ""), "glg": ("50", ""), "gpg": ("", "100"),
-    "gcw": ("12", ""), "gfw": ("24", ""), "gsw": ("36", ""), "glw": ("50", ""), "gpw": ("", "100"),
-    "gcv": ("12", ""), "gfv": ("24", ""), "gsv": ("36", ""), "gzv": ("50", ""), "gpv": ("", "100"),
-    "skc": ("12", ""), "skf": ("24", ""), "sku": ("36", ""), "skl": ("50", ""), "skz": ("", "100"),
+    "gcr": ("14", ""), "gfr": ("29", ""), "gsr": ("44", ""), "glr": ("59", ""), "gpr": ("", "100"),
+    "gcb": ("14", ""), "gfb": ("29", ""), "gsb": ("44", ""), "glb": ("59", ""), "gpb": ("", "100"),
+    "gcy": ("14", ""), "gfy": ("29", ""), "gsy": ("44", ""), "gly": ("59", ""), "gpy": ("", "100"),
+    "gcg": ("14", ""), "gfg": ("29", ""), "gsg": ("44", ""), "glg": ("59", ""), "gpg": ("", "100"),
+    "gcw": ("14", ""), "gfw": ("29", ""), "gsw": ("44", ""), "glw": ("59", ""), "gpw": ("", "100"),
+    "gcv": ("14", ""), "gfv": ("29", ""), "gsv": ("44", ""), "gzv": ("59", ""), "gpv": ("", "100"),
+    "skc": ("14", ""), "skf": ("29", ""), "sku": ("44", ""), "skl": ("59", ""), "skz": ("", "100"),
 }
 
-# Gem Tier multipliers for Rune Affixes:
+# Gem Tier multipliers for Rune Affixes (capped at 0.90x-1.00x for Perfect Gems, no negative bust):
 # Tier 0 (Chipped):  0.20x - 0.30x
-# Tier 1 (Flawed):   0.40x - 0.50x
-# Tier 2 (Standard): 0.60x - 0.80x
-# Tier 3 (Flawless): 0.90x - 1.10x
-# Tier 4 (Perfect):  1.20x - 1.40x
+# Tier 1 (Flawed):   0.35x - 0.45x
+# Tier 2 (Standard): 0.55x - 0.65x
+# Tier 3 (Flawless): 0.75x - 0.85x
+# Tier 4 (Perfect):  0.90x - 1.00x
 GEM_TIER_MULTS: List[Tuple[float, float]] = [
     (0.20, 0.30),
-    (0.40, 0.50),
-    (0.60, 0.80),
-    (0.90, 1.10),
-    (1.20, 1.40),
+    (0.35, 0.45),
+    (0.55, 0.65),
+    (0.75, 0.85),
+    (0.90, 1.00),
 ]
 
 GEM_TIER_INDEX: Dict[str, int] = {
@@ -596,7 +597,6 @@ def _build_distillation_rows(
     - Also emits base-code fallback ("<code>,uni" / "<code>,set") for all single-item base codes
     - output  = "jew,crf" with lvl=1 (below minimum jewel affix level=2 -> zero random magic affixes!)
     - mod 1..4 = Top 4 priority distillable properties scaled by 0.50 * (lvl / 100)
-    - mod 5    = levelreq set from the Unique/Set item's lvl req
     """
     out_lines: List[str] = []
 
@@ -708,9 +708,6 @@ def _build_distillation_rows(
             if not distilled_mods:
                 continue
 
-            # Append explicit levelreq modifier based on the Unique/Set item's lvl req
-            distilled_mods.append(("levelreq", "100", "", str(lvl_req), str(lvl_req)))
-
             input_specs: List[Tuple[str, str]] = [
                 (f'"{idx_name}"' if "," in idx_name else idx_name, idx_name),
             ]
@@ -780,7 +777,56 @@ def build_cubemain(cfg: dict) -> str:
             "input 1": f'"{src},qty=2"', "output": dst,
         }))
 
-    # 4. Socket Punching (weap,nos / armo,nos + bml + skz -> 1-2 sockets); no socket clearing recipe
+    # 3b. 5-Tier Gem-Assisted Rune Splitting (160 rows, r02..r33 + gem0..gem4 -> 50%..100% value recovery)
+    for n in range(2, 34):
+        src = f"r{n:02d}"
+        r_m1 = f"r{n - 1:02d}"
+        r_m2 = f"r{max(1, n - 2):02d}"
+        r_m3 = f"r{max(1, n - 3):02d}"
+        if n == 2:
+            # r02 (worth 2 x r01): Chipped/Flawed/Standard -> 1 x r01; Flawless/Perfect -> 2 x r01
+            tier_outputs = [
+                ("gem0", r_m1, "", ""),
+                ("gem1", r_m1, "", ""),
+                ("gem2", r_m1, "", ""),
+                ("gem3", r_m1, r_m1, ""),
+                ("gem4", r_m1, r_m1, ""),
+            ]
+        elif n == 3:
+            # r03 (worth 2 x r02 = 4 x r01): 50% -> 75% -> 75% -> 100% -> 100%
+            tier_outputs = [
+                ("gem0", r_m1, "", ""),
+                ("gem1", r_m1, r_m2, ""),
+                ("gem2", r_m1, r_m2, ""),
+                ("gem3", r_m1, r_m2, r_m2),
+                ("gem4", r_m1, r_m1, ""),
+            ]
+        else:
+            # r04..r33: 50% (gem0) -> 62.5% (gem1) -> 75% (gem2) -> 87.5% (gem3) -> 100% (gem4)
+            tier_outputs = [
+                ("gem0", r_m1, "", ""),
+                ("gem1", r_m1, r_m3, ""),
+                ("gem2", r_m1, r_m2, ""),
+                ("gem3", r_m1, r_m2, r_m3),
+                ("gem4", r_m1, r_m1, ""),
+            ]
+        for gem_type, out_a, out_b, out_c in tier_outputs:
+            outs_lbl = " + ".join(x for x in (out_a, out_b, out_c) if x)
+            row_fields = {
+                "description": f"Split {src} + {gem_type} -> {outs_lbl}",
+                "enabled": "1", "version": "100", "numinputs": "2",
+                "input 1": src, "input 2": gem_type,
+                "output": out_a,
+            }
+            if out_b:
+                row_fields["output b"] = out_b
+            if out_c:
+                row_fields["output c"] = out_c
+            lines.append(_make_row_str(num_cols, col_idx, row_fields))
+
+    # 4. Socket Punching & Socket Clearing (bml + skz):
+    # - Unsocketed (weap,nos / armo,nos) + bml + skz -> punches 1-2 sockets
+    # - Socketed   (weap,sock / armo,sock) + bml + skz -> clears sockets ("useitem,uns", destroying socketed contents)
     for itype, label in [("weap", "Weapon"), ("armo", "Armor")]:
         lines.append(_make_row_str(num_cols, col_idx, {
             "description": f"Unsocketed {label} + Blacksmith's Malus + Perfect Skull -> 1-2 Sockets",
@@ -788,6 +834,12 @@ def build_cubemain(cfg: dict) -> str:
             "input 1": f'"{itype},nos"', "input 2": "bml", "input 3": "skz",
             "output": "useitem",
             "mod 1": "sock", "mod 1 min": "1", "mod 1 max": "2",
+        }))
+        lines.append(_make_row_str(num_cols, col_idx, {
+            "description": f"Socketed {label} + Blacksmith's Malus + Perfect Skull -> Clear Sockets",
+            "enabled": "1", "version": "100", "numinputs": "3",
+            "input 1": f'"{itype},sock"', "input 2": "bml", "input 3": "skz",
+            "output": '"useitem,uns"',
         }))
 
     # 4b. Tempered Malus (um1,rar) Base-Tier Upgrades:
@@ -847,19 +899,21 @@ def build_cubemain(cfg: dict) -> str:
                 "lvl": "99",
             }))
 
-    # 6. 1-Step Gem Pact + 2-Rune Slot-Specific Crafting across all 7 Disjoint Slot Groups
-    # and all 35 Gems/Skulls (Chipped -> Perfect):
+    # 6. 1-Step Gem + 2-Rune Slot-Specific Crafting across all 8 Disjoint Slot Groups
+    # and all 35 Gems/Skulls (Chipped -> Perfect), with zero negative busts:
     #   1) weap (1.00x Weapon spec, Eth + Non-Eth)
     #   2) glov (0.60x Weapon spec, Eth + Non-Eth; omits r31 Ignore Target's Defense)
-    #   3) jwly (0.50x Weapon spec -> Rings & Amulets, Non-Eth only; omits r31 Ignore Target's Defense & r32 Indestructible)
-    #   4) btbl (0.60x Armor/Helm spec -> Boots & Belts, Eth + Non-Eth)
-    #   5) helm (0.75x Armor/Helm spec -> Helms, Circlets, Pelts, Primal Helms, Eth + Non-Eth)
-    #   6) shld (1.00x Shield spec -> Shields, Paladin Shields, Necro Heads, Grimoires, Eth + Non-Eth)
-    #   7) tors (1.00x Armor/Helm spec -> Body Armor, Eth + Non-Eth)
+    #   3) ring (0.50x Weapon spec -> Rings, Non-Eth only; omits r31 Ignore Target's Defense & r32 Indestructible)
+    #   4) amul (0.50x Armor/Helm spec -> Amulets, Non-Eth only; follows Armor/Helm Gem & Rune slot; omits r32 Indestructible)
+    #   5) btbl (0.60x Armor/Helm spec -> Boots & Belts, Eth + Non-Eth)
+    #   6) helm (0.75x Armor/Helm spec -> Helms, Circlets, Pelts, Primal Helms, Eth + Non-Eth)
+    #   7) shld (1.00x Shield spec -> Shields, Paladin Shields, Necro Heads, Grimoires, Eth + Non-Eth)
+    #   8) tors (1.00x Armor/Helm spec -> Body Armor, Eth + Non-Eth)
     slot_groups = [
         ("weap", 0, 1.00, True, set()),
         ("glov", 0, 0.60, True, {"r31"}),
-        ("jwly", 0, 0.50, False, {"r31", "r32"}),
+        ("ring", 0, 0.50, False, {"r31", "r32"}),
+        ("amul", 1, 0.50, False, {"r32"}),
         ("btbl", 1, 0.60, True, set()),
         ("helm", 1, 0.75, True, set()),
         ("shld", 2, 1.00, True, set()),
@@ -870,7 +924,7 @@ def build_cubemain(cfg: dict) -> str:
     tail_empty = "\t" * (num_cols - 47 - 1) + "\t0"
 
     # Precompute 2-Rune combinations per (slot_idx, gem_tier_idx)
-    # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_3_5_str)]
+    # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_2_5_str)]
     slot_tier_combos: List[List[List[Tuple[str, str]]]] = []
     for s_idx, (_, gem_col_idx, s_scale, _, forbidden_runes) in enumerate(slot_groups):
         tier_list: List[List[Tuple[str, str]]] = []
@@ -883,29 +937,29 @@ def build_cubemain(cfg: dict) -> str:
                 rmods_2.append(_scale_craft_mod(raw_mod, s_scale, g_mult, rune_count=2))
 
             combos: List[Tuple[str, str]] = []
-            # A) 2 identical runes: "rXX,qty=2"
+            # A) 2 identical runes: "rXX,qty=2" -> stamped into mod 2 (cols 27..31), mod 3..5 empty (cols 32..46)
             for i in range(33):
                 rc = rune_codes[i]
                 if rc in forbidden_runes:
                     continue
                 inp_str = f'"{rc},qty=2"\t\t'
-                m3 = rmods_2[i]
-                mod_str = f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t\t\t\t\t\t\t\t\t\t"
+                m2 = rmods_2[i]
+                mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
                 combos.append((inp_str, mod_str))
 
-            # B) 2 different runes: rXX + rYY (i < j)
+            # B) 2 different runes: rXX + rYY (i < j) -> stamped into mod 2 (cols 27..31) & mod 3 (cols 32..36), mod 4..5 empty
             for i in range(33):
                 rc1 = rune_codes[i]
                 if rc1 in forbidden_runes:
                     continue
-                m3 = rmods_1[i]
+                m2 = rmods_1[i]
                 for j in range(i + 1, 33):
                     rc2 = rune_codes[j]
                     if rc2 in forbidden_runes:
                         continue
-                    m4 = rmods_1[j]
+                    m3 = rmods_1[j]
                     inp_str = f"{rc1}\t{rc2}\t"
-                    mod_str = f"{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t{m4[0]}\t\t{m4[1]}\t{m4[2]}\t{m4[3]}\t\t\t\t\t"
+                    mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t\t\t\t\t\t\t\t\t\t"
                     combos.append((inp_str, mod_str))
 
             tier_list.append(combos)
@@ -932,19 +986,17 @@ def build_cubemain(cfg: dict) -> str:
                     combos = slot_tier_combos[s_idx][t_idx]
                     raw_boon = g_spec[1 + gem_col_idx]
                     boon = _scale_gem_boon(raw_boon, s_scale)
-                    curse = _scale_gem_curse(GEM_CURSES[g_code], s_scale)
                     lvl_s, plvl_s = GEM_LEVEL_RULES[g_code]
 
                     prefix_0_12 = f"{desc_tag} {slot_code} {g_code}\t1\t\t\t\t100\t\t\t\t\t4\t{inp1_str}\t{g_code}\t"
-                    mid_16_31 = (
+                    mid_16_26 = (
                         f"\t\t\t{out_str}\t{lvl_s}\t{plvl_s}\t\t"
                         f"{boon[0]}\t\t{boon[1]}\t{boon[2]}\t{boon[3]}\t"
-                        f"{curse[0]}\t\t{curse[1]}\t{curse[2]}\t{curse[3]}\t"
                     )
 
                     chunk: List[str] = []
-                    for inp_3_5, mod_3_5 in combos:
-                        chunk.append(f"{prefix_0_12}{inp_3_5}{mid_16_31}{mod_3_5}{tail_empty}")
+                    for inp_3_5, mod_2_5 in combos:
+                        chunk.append(f"{prefix_0_12}{inp_3_5}{mid_16_26}{mod_2_5}{tail_empty}")
                     f.write(("\r\n".join(chunk) + "\r\n").encode("utf-8"))
                     craft_count += len(chunk)
 

@@ -5,16 +5,16 @@
 
 | r.c | lvl | new skill | replaces (id) | role | status | variant |
 |---|---|---|---|---|---|---|
-| 1.2 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | wip | p3_scaling |
-| 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | done | final1 |
-| 2.3 | 8 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | done | final1 |
-| 3.1 | 16 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | done | final2 |
+| 1.1 | 1 | **Cinder Lance** (`cinder_lance`) | Fire Bolt (36) | line 1 (levelling) | done | test_fizzle |
+| 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | Fire Ball (47) | AoE 1 (levelling) | done | test_fizzle |
+| 2.3 | 8 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | done | test_fizzle |
 | 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | final4 |
-| 3.3 | 16 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | done | final1 |
-| 4.1 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | wip | final2 |
-| 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | done | final1 |
-| 5.2 | 32 | **Brimstone Lance** (`brimstone_lance`) | Inferno (41) | line 2 (boss killer) | stub | baseline |
-| 6.2 | 40 | **Pyre Hydra** (`pyre_hydra`) | Hydra (62) | capstone | stub | baseline |
+| 3.3 | 16 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | done | final1 |
+| 4.2 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | done | final2 |
+| 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | done | test_fizzle |
+| 5.1 | 32 | **Brimstone Lance** (`brimstone_lance`) | Inferno (41) | line 2 (boss killer) | done | test_fizzle |
+| 5.3 | 32 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | done | final1 |
+| 6.2 | 40 | **Pyre Hydra** (`pyre_hydra`) | Hydra (62) | capstone | done | test_fizzle |
 
 ## Lightning (skill page 2)
 
@@ -23,7 +23,7 @@
 | 1.2 | 1 | **Static Lance** (`static_lance`) | Lightning (49) | line 1 (levelling) | stub | baseline |
 | 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | Nova (48) | AoE 1 (levelling) | stub | baseline |
 | 2.3 | 8 | **Phase Step** (`phase_step`) | Teleport (54) | utility (mobility) | stub | baseline |
-| 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | tested | r9_no_vanilla_passive |
+| 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | done | final1 |
 | 3.2 | 16 | **Tesla Field** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | stub | baseline |
 | 3.3 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | wip | final2 |
 | 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | final4 |
@@ -37,10 +37,10 @@
 |---|---|---|---|---|---|---|
 | 1.2 | 1 | **Frost Dart** (`frost_dart`) | Ice Bolt (39) | line 1 (levelling) | stub | baseline |
 | 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | Frost Nova (44) | AoE 1 (levelling) | stub | baseline |
-| 3.1 | 16 | **Glacier Step** (`glacier_step`) | Chilling Armor (60) | utility (mobility) | stub | baseline |
+| 3.1 | 16 | **Glacier Step** (`glacier_step`) | Chilling Armor (60) | utility (mobility) | wip | p1_ice_blink |
 | 3.3 | 16 | **Permafrost** (`permafrost`) | Ice Blast (45) | combo (CC/AoE) | stub | baseline |
 | 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | done | final4 |
-| 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | stub | r9_no_vanilla_passive |
+| 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | done | final1 |
 | 4.3 | 24 | **Brittle Touch** (`brittle_touch`) | Shiver Armor (50) | support passive | wip | final2 |
 | 5.1 | 32 | **Whiteout** (`whiteout`) | Blizzard (59) | AoE 2 (power spike) | stub | baseline |
 | 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | Glacial Spike (55) | line 2 (boss killer) | stub | baseline |

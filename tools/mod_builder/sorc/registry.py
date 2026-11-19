@@ -16,8 +16,8 @@ Rows are the mod's 6 unlock tiers: 1 / 8 / 16 / 24 / 32 / 40.
 
 TIER_LEVELS = [1, 8, 16, 24, 32, 40]
 PAGE = {"fire": 1, "lightning": 2, "cold": 3}
-# soskilltree.sprite frame per tree (Fire, Lightning, Cold)
-FRAME = {"fire": 0, "lightning": 1, "cold": 2}
+# soskilltree.sprite frame per tree (Frame 0 = Left Tab = Cold/Page 3, Frame 1 = Middle Tab = Lightning/Page 2, Frame 2 = Right Tab = Fire/Page 1)
+FRAME = {"cold": 0, "lightning": 1, "fire": 2}
 
 # Each entry:
 #   slug    stable file/key name (never rename)
@@ -29,38 +29,39 @@ FRAME = {"fire": 0, "lightning": 1, "cold": 2}
 #   role    slot role from the blueprint
 #   design  one-paragraph intent (what the finished skill should do)
 #   level   optional reqlevel override (defaults to the tier level of `row`)
+#   prereqs optional list of prerequisite slugs
 SLOTS = [
     # ------------------------------------------------------------------ FIRE
     dict(slug="cinder_lance", tree="fire", vid=36, vname="Fire Bolt", name="Cinder Lance",
-         row=1, col=2, role="line 1 (levelling)",
+         row=1, col=1, prereqs=[], role="line 1 (levelling)",
          design="Fast, thin, long-range fire bolt that pierces 3 enemies. In Conflagration the whole path ignites."),
     dict(slug="pyroclasm", tree="fire", vid=47, vname="Fire Ball", name="Pyroclasm",
-         row=2, col=1, role="AoE 1 (levelling)",
+         row=2, col=1, prereqs=["cinder_lance"], role="AoE 1 (levelling)",
          design="Instant ring blast centred on the caster, radius 6, with knockback. In Conflagration: radius +50% and a 3s fire ring."),
     dict(slug="flashfire", tree="fire", vid=46, vname="Blaze", name="Flashfire",
-         row=2, col=3, role="utility (mobility)",
+         row=3, col=3, prereqs=["conflagration"], role="utility (mobility)",
          design="8-yd dash in a line leaving a burning corridor (3s). In Conflagration the corridor lasts 6s and is twice as wide."),
-    dict(slug="backdraft", tree="fire", vid=51, vname="Fire Wall", name="Backdraft",
-         row=3, col=1, role="combo (CC/AoE)",
-         design="Ground fire (r4, 6s) that slows enemies 30%. A later fire spell hitting it detonates it (r6). Strong on arrival, only +3%/lvl; slow and detonation stay useful. Conflagration: detonations chain to adjacent patches."),
     dict(slug="conflagration", tree="fire", vid=52, vname="Enchant", name="Conflagration",
-         row=3, col=2, role="STANCE",
+         row=3, col=2, prereqs=[], role="STANCE",
          design="Castable timed stance (60s + 10s/lvl), one combined state, mutually exclusive (group 13). Boons scale linearly with stance level: +fire skill damage (5% -> 75% at lvl 20) and +faster cast rate (5% -> 40%). Busts: +physical damage taken (5% -> 50%, capped 75%) and a life drain (1 -> 10 life/s). Echo adds a share of the other elements' damage. Melee attackers that hit you take fire damage: base x (1 + 0.1 per stance lvl) x (1 + 0.1 per Kindling lvl)."),
-    dict(slug="ignition", tree="fire", vid=61, vname="Fire Mastery", name="Ignition",
-         row=3, col=3, role="dial (potency)",
-         design="Passive: all active stance benefit numbers +2% per level (up to +40%). Penalties do not grow."),
+    dict(slug="backdraft", tree="fire", vid=51, vname="Fire Wall", name="Backdraft",
+         row=2, col=3, prereqs=[], role="combo (CC/AoE)",
+         design="Ground fire (r4, 6s) that slows enemies 30%. A later fire spell hitting it detonates it (r6). Strong on arrival, only +3%/lvl; slow and detonation stay useful. Conflagration: detonations chain to adjacent patches."),
     dict(slug="kindling", tree="fire", vid=37, vname="Warmth", name="Kindling",
-         row=4, col=1, role="support passive",
+         row=4, col=2, prereqs=["conflagration"], role="support passive",
          design="Empowers the Fire stance retaliation: while Conflagration is active, melee attackers take fire damage when they strike you; Kindling raises that damage and (later) its radius and burn."),
     dict(slug="skyfall", tree="fire", vid=56, vname="Meteor", name="Skyfall",
-         row=4, col=3, role="AoE 2 (power spike)",
+         row=4, col=3, prereqs=["flashfire"], role="AoE 2 (power spike)",
          design="Meteor lands on the cursor after a 1.2s delay, r7. First big AoE jump (Blizzard-like). In Conflagration the delay drops to 0.6s."),
     dict(slug="brimstone_lance", tree="fire", vid=41, vname="Inferno", name="Brimstone Lance",
-         row=5, col=2, role="line 2 (boss killer)",
-         design="Slow heavy spear that pierces ALL enemies, -25% fire resistance for 6s, +40% damage to unique bosses. In Conflagration leaves a molten line (4s)."),
+         row=5, col=1, prereqs=["pyroclasm"], role="line 2 (boss killer)",
+         design="Heavy blazing lance that pierces ALL enemies. In Conflagration leaves a molten line (4s)."),
+    dict(slug="ignition", tree="fire", vid=61, vname="Fire Mastery", name="Ignition",
+         row=5, col=3, prereqs=["kindling", "skyfall"], role="dial (potency)",
+         design="Passive: all active stance benefit numbers +2% per level (up to +40%). Penalties do not grow."),
     dict(slug="pyre_hydra", tree="fire", vid=62, vname="Hydra", name="Pyre Hydra",
-         row=6, col=2, role="capstone",
-         design="Summons 3 fire-spewing heads at the cursor for 12s; each fires at enemies in range and leaves fire pools. No cooldown, no self-risk. In Conflagration the heads leave trails and their fire detonates nearby Backdraft patches."),
+         row=6, col=2, prereqs=["brimstone_lance", "kindling"], role="capstone",
+         design="Summons 3 fire-spewing heads at the cursor; each fires piercing fire bolts at enemies in range. In Conflagration bolts erupt in AoE explosions on hit."),
     # ------------------------------------------------------------------ COLD
     dict(slug="frost_dart", tree="cold", vid=39, vname="Ice Bolt", name="Frost Dart",
          row=1, col=2, role="line 1 (levelling)",

@@ -4,24 +4,24 @@
     "variant": "anim_v3"
   },
   "afterglow": {
-    "status": "tested",
-    "variant": "r9_no_vanilla_passive"
+    "status": "done",
+    "variant": "final1"
   },
   "backdraft": {
     "status": "done",
-    "variant": "final2"
+    "variant": "test_fizzle"
   },
   "brimstone_lance": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "test_fizzle"
   },
   "brittle_touch": {
     "status": "wip",
     "variant": "final2"
   },
   "cinder_lance": {
-    "status": "wip",
-    "variant": "p3_scaling"
+    "status": "done",
+    "variant": "test_fizzle"
   },
   "conduction": {
     "status": "wip",
@@ -36,8 +36,8 @@
     "variant": "final4"
   },
   "equilibrium": {
-    "status": "stub",
-    "variant": "r9_no_vanilla_passive"
+    "status": "done",
+    "variant": "final1"
   },
   "flashfire": {
     "status": "done",
@@ -52,8 +52,8 @@
     "variant": "baseline"
   },
   "glacier_step": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "p1_ice_blink"
   },
   "heavens_wrath": {
     "status": "stub",
@@ -72,7 +72,7 @@
     "variant": "final1"
   },
   "kindling": {
-    "status": "wip",
+    "status": "done",
     "variant": "final2"
   },
   "overcharge": {
@@ -92,16 +92,16 @@
     "variant": "baseline"
   },
   "pyre_hydra": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "test_fizzle"
   },
   "pyroclasm": {
     "status": "done",
-    "variant": "final1"
+    "variant": "test_fizzle"
   },
   "skyfall": {
     "status": "done",
-    "variant": "final1"
+    "variant": "test_fizzle"
   },
   "spearbolt": {
     "status": "stub",

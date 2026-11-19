@@ -8,7 +8,7 @@ Step 3b: Build misc.txt, data/hd/items/items.json, and string tables
 - 3-Tier 5-Minute (7500 frames) Preparation Elixirs:
     Thawing (wms -> wm2 -> wm3), Antidote (yps -> yp2 -> yp3), Stamina (vps -> vp2 -> vp3)
 - Strategic Town Portal & Identify Scrolls/Tomes (tsc, tbk, isc, ibk)
-- Gem & Skull levelreq = 6 / 12 / 18 / 30 / 45
+- Gem & Skull levelreq = 1 / 15 / 30 / 45 / 60
 - Rune r01..r33 levelreq = 4, 6, 8, ..., 70
 """
 import json
@@ -197,7 +197,7 @@ def build_misc(cfg: dict) -> str:
     _clear_vendors(ibk)
     _set_vendor_stock(ibk, scroll_vendors, "1", "1")
 
-    # 3. Gem & Skull levelreq (6 / 12 / 18 / 30 / 45)
+    # 3. Gem & Skull levelreq (1 / 15 / 30 / 45 / 60)
     gem_families = [
         ["gcv", "gfv", "gsv", "gzv", "gpv"],
         ["gcy", "gfy", "gsy", "gly", "gpy"],
@@ -207,7 +207,7 @@ def build_misc(cfg: dict) -> str:
         ["gcw", "gfw", "gsw", "glw", "gpw"],
         ["skc", "skf", "sku", "skl", "skz"],
     ]
-    gem_lvlreqs = ["6", "12", "18", "30", "45"]
+    gem_lvlreqs = ["1", "15", "30", "45", "60"]
     for fam in gem_families:
         for code, lreq in zip(fam, gem_lvlreqs):
             rows_by_code[code]["levelreq"] = lreq

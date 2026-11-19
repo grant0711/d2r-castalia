@@ -29,6 +29,15 @@ def _add_itypes(row: Dict[str, str], new_types: List[str]) -> None:
         row[f"itype{i}"] = existing[i - 1] if i - 1 < len(existing) else ""
 
 
+def _add_etypes(row: Dict[str, str], new_types: List[str]) -> None:
+    existing = [row.get(f"etype{i}", "") for i in range(1, 6) if row.get(f"etype{i}", "")]
+    for nt in new_types:
+        if nt not in existing and len(existing) < 5:
+            existing.append(nt)
+    for i in range(1, 6):
+        row[f"etype{i}"] = existing[i - 1] if i - 1 < len(existing) else ""
+
+
 def _scale_mod_val(val_str: str, mult: float) -> str:
     if not val_str:
         return val_str
@@ -207,6 +216,10 @@ def build_itemstatcost(cfg: dict) -> str:
             # without overflowing 8-bit signed Send Bits (-128..+127) or getting wiped by weapon-only damagerelated=1
             r["Signed"] = "1"
             r["Send Bits"] = "16"
+            r["Save Bits"] = "10"
+            r["Save Add"] = "512"
+            r["1.09-Save Bits"] = "10"
+            r["1.09-Save Add"] = "512"
             r["damagerelated"] = ""
         elif st == "item_attackertakesdamage":
             # Revert Patch 2.4's attackedinmelee back to damagedinmelee so missed and blocked
@@ -259,11 +272,26 @@ def build_magicprefix(cfg: dict) -> str:
     # Expansion (version >= 1) Resistance & Elemental Damage groups for Quivers (bowq, xboq)
     quiver_prefix_groups = {"116", "117", "118", "119", "120", "137", "138", "139", "140"}
 
+    # Reworked/retired skills that must never spawn as charged/oskill/proc magic affixes:
+    # - 126..155: Reworked Barbarian skills
+    # - 54 / "Teleport": Retired Teleport (planned stance-specific refactor)
+    # - 91 / "Lower Resist": Removed from item charges/oskills/procs (no elemental pierce on items)
+    # - 37, 40, 43, 46, 50, 52, 58, 60, 61, 63, 65: Reworked Sorceress stances, stance-gated skills & passives
+    retired_affix_skill_refs = {
+        "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+        "Teleport", "Lower Resist", "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+        "Enchant", "Energy Shield", "Chilling Armor", "Fire Mastery", "Lightning Mastery", "Cold Mastery",
+    }
+
     for r in rows:
-        # Disable all charged suffixes referencing reworked Barbarian skills (IDs 126..155)
-        if r.get("mod1code") == "charged":
+        # Disable all charged/oskill/proc prefixes referencing reworked Barbarian/Sorceress skills, Teleport, Lower Resist, or pierce-*
+        m1c = r.get("mod1code", "").strip()
+        if m1c in ("pierce-fire", "pierce-cold", "pierce-ltng", "pierce-pois", "pierce-mag", "pierce-dmg"):
+            r["spawnable"] = "0"
+            continue
+        if m1c in ("charged", "oskill", "skill", "att-skill", "hit-skill", "gethit-skill"):
             m1p = r.get("mod1param", "").strip()
-            if m1p.isdigit() and 126 <= int(m1p) <= 155:
+            if m1p in retired_affix_skill_refs or (m1p.isdigit() and 126 <= int(m1p) <= 155):
                 r["spawnable"] = "0"
                 continue
 
@@ -327,6 +355,47 @@ def build_magicprefix(cfg: dict) -> str:
         if grp == "116":
             r["multiply"] = "0"
             r["add"] = "0"
+
+        # 4c. Bone Caster Armor ('bcas' = 'bhlm' Bone Helms/Masks + 'bshd' Bone Shields) Prefix Isolation:
+        #     - Exclude %ED / +Defense (Grp 101), Visionary %AR/lvl (Grp 111), and class Skill Tabs (Grp 125)
+        #     - Unlock Vulpine Dmg-to-Mana (Grp 107) and All Resistances (Grp 116) on 'bhlm' ('shld' already has both)
+        #     - Unlock full flat Mana progression (Grp 115: Snake's..Bahamut's) and Mana After Kill (Grp 121) on 'bcas'
+        if not is_charm_or_jewel:
+            if grp == "101" and ({"armo", "helm", "shld"} & itypes_all):
+                _add_etypes(r, ["bcas"])
+            elif grp == "111" and ("helm" in itypes_all):
+                _add_etypes(r, ["bhlm"])
+            elif grp == "125" and ({"helm", "shld"} & itypes_all):
+                _add_etypes(r, ["bcas"])
+            elif grp == "107" and ("shld" in itypes_all):
+                _add_itypes(r, ["bhlm"])
+            elif grp == "115" and ("circ" in itypes_all):
+                if "shld" in itypes_all:
+                    _add_itypes(r, ["bhlm"])
+                else:
+                    _add_itypes(r, ["bcas"])
+            elif grp == "116" and ("circ" in itypes_all):
+                _add_itypes(r, ["bhlm"])
+            elif grp == "121" and ("circ" in itypes_all):
+                _add_itypes(r, ["bcas"])
+
+    # 4d. Clone top-tier 31-40% Single Resistance prefixes (Sapphire/Ruby/Amber/Emerald, lvl=25, Grps 117..120)
+    #     for 'bcas' (since the original 'circ' rows use all 7 itype columns once bowq/xboq are added)
+    bcas_res_clones = []
+    for r in rows:
+        if (
+            r.get("spawnable") == "1"
+            and r.get("version") != "0"
+            and r.get("group") in ("117", "118", "119", "120")
+            and r.get("Name") in ("Sapphire", "Ruby", "Amber", "Emerald")
+            and r.get("itype1") == "rod"
+        ):
+            cr = dict(r)
+            cr["itype1"] = "bcas"
+            for i in range(2, 8):
+                cr[f"itype{i}"] = ""
+            bcas_res_clones.append(cr)
+    rows.extend(bcas_res_clones)
 
     # 5. Add Rare-eligible Grandmaster's (Group 111, lvl=69, lreq=61, 151-200% ED + 251-300 AR, freq=3)
     gm = {h: "" for h in headers}
@@ -400,6 +469,7 @@ def build_magicprefix(cfg: dict) -> str:
     mp["add"] = "0"
     rows.append(mp)
 
+    _calibrate_rare_affix_levelreqs(rows)
     return write_excel_tsv("magicprefix.txt", headers, rows)
 
 
@@ -420,11 +490,26 @@ def build_magicsuffix(cfg: dict) -> str:
     # 7 = IAS (swing1..3), 10 = Cold Dmg, 12 = Fire Dmg, 13 = Ltng Dmg, 16 = Pois Dmg, 24 = Knockback
     quiver_suffix_groups = {"7", "10", "12", "13", "16", "24"}
 
+    # Reworked/retired skills that must never spawn as charged/oskill/proc magic affixes:
+    # - 126..155: Reworked Barbarian skills
+    # - 54 / "Teleport": Retired Teleport (planned stance-specific refactor)
+    # - 91 / "Lower Resist": Removed from item charges/oskills/procs (no elemental pierce on items)
+    # - 37, 40, 43, 46, 50, 52, 58, 60, 61, 63, 65: Reworked Sorceress stances, stance-gated skills & passives
+    retired_affix_skill_refs = {
+        "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+        "Teleport", "Lower Resist", "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+        "Enchant", "Energy Shield", "Chilling Armor", "Fire Mastery", "Lightning Mastery", "Cold Mastery",
+    }
+
     for r in rows:
-        # Disable all charged suffixes referencing reworked Barbarian skills (IDs 126..155)
-        if r.get("mod1code") == "charged":
+        # Disable all charged/oskill/proc prefixes referencing reworked Barbarian/Sorceress skills, Teleport, Lower Resist, or pierce-*
+        m1c = r.get("mod1code", "").strip()
+        if m1c in ("pierce-fire", "pierce-cold", "pierce-ltng", "pierce-pois", "pierce-mag", "pierce-dmg"):
+            r["spawnable"] = "0"
+            continue
+        if m1c in ("charged", "oskill", "skill", "att-skill", "hit-skill", "gethit-skill"):
             m1p = r.get("mod1param", "").strip()
-            if m1p.isdigit() and 126 <= int(m1p) <= 155:
+            if m1p in retired_affix_skill_refs or (m1p.isdigit() and 126 <= int(m1p) <= 155):
                 r["spawnable"] = "0"
                 continue
 
@@ -479,6 +564,30 @@ def build_magicsuffix(cfg: dict) -> str:
                 r["multiply"] = str(mx_val * 50)
                 r["add"] = str(mx_val * 50)
 
+        # 3c. Bone Caster Armor ('bcas' = 'bhlm' Bone Helms/Masks + 'bshd' Bone Shields) Suffix Isolation:
+        #     - Exclude Thorns (Grp 6), +Max Damage (Grp 14), and +Strength (Grp 31) from Bone Shields ('bshd')
+        #     - Unlock Faster Cast Rate (Grp 9: of the Apprentice 10% FCR, of the Magus 20% FCR) on 'bcas'
+        #     - Unlock full Energy progression (Grp 23: of Energy..of Wizardry..of Enlightenment) on 'bcas'
+        #     - Unlock Magic Damage Reduced (Grp 2: of Warding..of Negation) on 'bhlm' ('shld' already has it)
+        #     - Unlock full Replenish Life progression (Grp 19: of Regeneration..of Revivification) on 'bcas'
+        if not is_charm_or_jewel:
+            if grp in ("6", "14", "31") and ("shld" in itypes_all):
+                _add_etypes(r, ["bshd"])
+            elif grp == "9" and ("circ" in itypes_all):
+                _add_itypes(r, ["bcas"])
+            elif grp == "23":
+                if "helm" in itypes_all:
+                    _add_etypes(r, ["bhlm"])
+                elif "circ" in itypes_all:
+                    _add_itypes(r, ["bcas"])
+            elif grp == "2" and ("shld" in itypes_all):
+                _add_itypes(r, ["bhlm"])
+            elif grp == "19":
+                if "shld" in itypes_all:
+                    _add_etypes(r, ["bshd"])
+                elif "circ" in itypes_all:
+                    _add_itypes(r, ["bcas"])
+
     # 4. Add Progressive Tactical Suffix Groups (60..64) for Pierce, Open Wounds, Deadly, Crushing, Slow
     # Strict frequency = "1" and non-overlapping maxlevel on Rare tiers so these are genuinely rare chase rolls!
     new_suffixes = [
@@ -519,6 +628,8 @@ def build_magicsuffix(cfg: dict) -> str:
         nr["mod1max"] = vmax
         for idx, it in enumerate(itypes[:7], start=1):
             nr[f"itype{idx}"] = it
+        if "helm" in itypes:
+            nr["etype1"] = "bhlm"
         nr["multiply"] = "0"
         nr["add"] = "0"
         rows.append(nr)
@@ -541,7 +652,45 @@ def build_magicsuffix(cfg: dict) -> str:
     ms["add"] = "0"
     rows.append(ms)
 
+    _calibrate_rare_affix_levelreqs(rows)
     return write_excel_tsv("magicsuffix.txt", headers, rows)
+
+
+def _calibrate_rare_affix_levelreqs(rows: List[Dict[str, str]]) -> None:
+    """
+    Calibrate the `levelreq` column of all spawnable affixes:
+    1) Rare/Craft-eligible (`rare == "1"`): pre-absorb D2R's hardcoded Crafted item Required Level
+       penalty (`+ 10 + 3 * N_affixes`, i.e. +13..+22) so normal slots are immediately equippable
+       at the Gem tier (`14 / 29 / 44 / 59 / plvl=100`), while Circlets/Coronets/Tiaras/Diadems
+       (`magic lvl = 3 / 8 / 13 / 18`) have a moderated +3 to +8 level aspirational stretch when
+       rolling higher-alvl chase affixes:
+         - alvl 1..22  -> max affix levelreq = 0   (Crafted req: 13..22)
+         - alvl 23..29 -> max affix levelreq = 1..3 (Flawed ilvl 29: 1-2 affixes = 13..19, 4-affix cap = 25)
+         - alvl 30..44 -> max affix levelreq = 4..14 (Standard ilvl 44: 2 affixes = 16..30, 3 affixes = 19..33, 4-affix cap = 36)
+         - alvl 45..59 -> max affix levelreq = 15..26 (Flawless ilvl 59: 3 affixes = 19..45, 4-affix cap = 48)
+         - alvl 60..99 -> max affix levelreq = 26 + min(20, round((alvl - 59) * 20 / 31)) (27..46; 4-affix cap = 49..68!)
+    2) Magic-only (`rare != "1"`): cap at `max(1, min(62, alvl - 15))` so vendor-shopped Magic
+       Circlets/Coronets/Tiaras/Diadems (`alvl = clvl + 5 + magic_lvl`) never exceed a +3 to +8 level stretch.
+    """
+    for r in rows:
+        if r.get("spawnable") != "1" or r.get("version") == "0":
+            continue
+        lvl = int(r.get("level") or "1")
+        cur_req = int(r.get("levelreq") or "0")
+        if r.get("rare") == "1":
+            if lvl <= 22:
+                cap_req = 0
+            elif lvl <= 29:
+                cap_req = max(1, int(round((lvl - 22) * 3.0 / 7.0)))
+            elif lvl <= 44:
+                cap_req = 3 + int(round((lvl - 29) * 11.0 / 15.0))
+            elif lvl <= 59:
+                cap_req = 14 + int(round((lvl - 44) * 12.0 / 15.0))
+            else:
+                cap_req = 26 + min(20, int(round((lvl - 59) * 20.0 / 31.0)))
+        else:
+            cap_req = max(1, min(62, lvl - 15))
+        r["levelreq"] = str(min(cur_req, cap_req))
 
 
 def build_affix_strings(cfg: dict) -> str:
@@ -565,8 +714,8 @@ def build_affix_strings(cfg: dict) -> str:
         (60076, "of Snaring", "of Snaring"),
         (60077, "of Entangling", "of Entangling"),
         (60078, "of Crippling", "of Crippling"),
-        (60079, "Forgemaster's", "Forgemaster's"),
-        (60080, "of Socketing", "of Socketing"),
+        (60079, "Forgemaster's", ""),
+        (60080, "of Socketing", ""),
     ]
     return update_mod_strings_json("item-nameaffixes.json", updates)
 

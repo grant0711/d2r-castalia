@@ -4,30 +4,34 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "r0_single": {
-      "description": "R0: Afterglow only supplies its total level to the stance duration formula (no effect of its own yet)",
+    "final1": {
+      "description": "final1: Always-on passive that grants 5% -> 75% Damage Taken Goes to Mana at lvl 20 (cap 100%)",
+      "no_label": true,
       "strings": {
-        "short": "[R0 test] duration source",
-        "long": "R0 DIAGNOSTIC\nNo effect yet. Its TOTAL level (including +skills, not capped at 20)\nsets stance duration: 10s + 5s per level."
-      }
-    },
-    "r7_single_echo": {
-      "description": "R7: Echo supplies its TOTAL level to the stance carry stats (no effect of its own)",
-      "strings": {
-        "short": "[R7 test] Echo (carry source)",
-        "long": "R7 DIAGNOSTIC\nNo effect of its own. Each total level adds +10 Strength to Conflagration and +50% Defense to Cryostasis."
-      }
-    },
-    "r9_no_vanilla_passive": {
-      "description": "R9: Echo passively grants +1% Fire/Cold/Lightning Skill Damage per Echo level while ANY stance is active (via op=2 on ironmaiden_level, set to 1 by all 3 stances)",
+        "name": "Echo",
+        "short": "passive - damage taken goes to mana",
+        "long": "Passive\n\nconverts a percentage of damage taken into mana"
+      },
+      "strings_extra": {
+        "ModSorc_EchoDmgToMana": "Damage Taken Goes to Mana: %d%%"
+      },
       "tables": {
         "skills.txt": {
           "Lightning Mastery": {
-            "passivestate": "",
-            "passivestat1": "item_absorb_slash_percent",
-            "passivecalc1": "lvl",
+            "passivestate": "lightningmastery",
+            "passivestat1": "item_damagetomana",
+            "passivecalc1": "min(100, 5 + (lvl - 1) * 70 / 19)",
             "passivestat2": "",
             "passivecalc2": ""
+          }
+        },
+        "skilldesc.txt": {
+          "lightning mastery": {
+            "descline1": "74",
+            "desctexta1": "ModSorc_EchoDmgToMana",
+            "desctextb1": "",
+            "desccalca1": "min(100, 5 + (lvl - 1) * 70 / 19)",
+            "desccalcb1": ""
           }
         }
       }

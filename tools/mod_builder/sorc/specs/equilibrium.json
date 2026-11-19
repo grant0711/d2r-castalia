@@ -4,14 +4,32 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "r9_no_vanilla_passive": {
-      "description": "R9: strip the vanilla mastery passive stats so the dial skill has no effect of its own yet",
+    "final1": {
+      "description": "final1: Always-on passive that grants +1.5 Mana after each Kill per level (+2 at lvl 1 -> +30 at lvl 20)",
+      "no_label": true,
+      "strings": {
+        "name": "Equilibrium",
+        "short": "passive - restores mana after each kill",
+        "long": "Passive\n\nrestores mana after each enemy you kill"
+      },
+      "strings_extra": {
+        "ModSorc_EquilibriumMaek": "Mana after each Kill: +%d"
+      },
       "tables": {
         "skills.txt": {
           "Cold Mastery": {
-            "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": ""
+            "passivestate": "coldmastery",
+            "passivestat1": "item_manaafterkill",
+            "passivecalc1": "(lvl * 3 + 1) / 2"
+          }
+        },
+        "skilldesc.txt": {
+          "cold mastery": {
+            "descline1": "74",
+            "desctexta1": "ModSorc_EquilibriumMaek",
+            "desctextb1": "",
+            "desccalca1": "(lvl * 3 + 1) / 2",
+            "desccalcb1": ""
           }
         }
       }

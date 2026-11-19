@@ -4,298 +4,9 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "p1_ring": {
-      "description": "P1: expanding fire ring centered on caster with knockback (srvdofunc=22/cltdofunc=25 + pyroclasm_ring cloned from ringoffire); velocity & radius scale with level (Vel 16 + 0.75/lvl, cap 36)",
-      "hd_missiles": {
-        "pyroclasm_ring": "ringoffire"
-      },
-      "tables": {
-        "missiles.txt": {
-          "pyroclasm_ring": {
-            "_clone": "ringoffire",
-            "Skill": "Fire Ball",
-            "Vel": "16",
-            "MaxVel": "36",
-            "VelLev": "6",
-            "Range": "12",
-            "NextDelay": "12"
-          }
-        },
-        "skills.txt": {
-          "Fire Ball": {
-            "srvdofunc": "22",
-            "cltdofunc": "25",
-            "srvmissile": "",
-            "cltmissile": "",
-            "srvmissilea": "pyroclasm_ring",
-            "srvmissileb": "pyroclasm_ring",
-            "srvmissilec": "pyroclasm_ring",
-            "cltmissilea": "pyroclasm_ring",
-            "calc1": "0",
-            "*calc1 desc": "Missile Velocity Adder",
-            "cltcalc1": "0",
-            "*cltcalc1 desc": "Missile Velocity Adder"
-          }
-        }
-      },
-      "strings": {
-        "short": "[P1 test] expanding fire ring with knockback; radius scales with level"
-      }
-    },
-    "p2_radial_count": {
-      "description": "P2: srvdofunc=154/cltdofunc=99 (Ring of Fire radial spawner) for dynamic missile count (calc2 = 6 + (lvl-1)/5 + 4 in Conflagration), smaller radius (Vel 12, VelLev 3, MaxVel 22, Range 8), muted impact explosion (fireexplode)",
-      "hd_missiles": {
-        "pyroclasm_ring": "fireball"
-      },
-      "tables": {
-        "missiles.txt": {
-          "pyroclasm_ring": {
-            "_clone": "ringoffire",
-            "Skill": "Fire Ball",
-            "Vel": "12",
-            "MaxVel": "22",
-            "VelLev": "3",
-            "Range": "8",
-            "NextDelay": "8",
-            "Size": "1",
-            "Light": "4",
-            "ExplosionMissile": "fireexplode",
-            "CltHitSubMissile1": "fireexplode",
-            "sHitPar1": "2",
-            "cHitPar1": "2"
-          }
-        },
-        "skills.txt": {
-          "Fire Ball": {
-            "srvdofunc": "154",
-            "cltdofunc": "99",
-            "ItemEffect": "154",
-            "ItemCltEffect": "99",
-            "srvmissile": "",
-            "cltmissile": "",
-            "srvmissilea": "pyroclasm_ring",
-            "srvmissileb": "pyroclasm_ring",
-            "srvmissilec": "pyroclasm_ring",
-            "cltmissilea": "pyroclasm_ring",
-            "Param1": "6",
-            "*Param1 Description": "Base number of missiles",
-            "calc1": "2",
-            "*calc1 desc": "Explosion Radius",
-            "calc2": "6+(lvl-1)/5+((stat('hpregen'.accr)<0)?4:0)",
-            "*calc2 desc": "# missiles (6 + 1 per 5 lvls + 4 in Conflagration)",
-            "calc3": "0",
-            "*calc3 desc": "Missile Velocity Adder",
-            "cltcalc1": "0",
-            "*cltcalc1 desc": "Missile Velocity Adder"
-          }
-        },
-        "skilldesc.txt": {
-          "fire ball": {
-            "descmissile1": "pyroclasm_ring",
-            "dsc2line1": "74",
-            "dsc2texta1": "ModSorcPyroMissiles",
-            "dsc2textb1": "",
-            "dsc2calca1": "clc2",
-            "dsc2calcb1": ""
-          }
-        }
-      },
-      "strings": {
-        "short": "[P2 test] radial ring: 6 missiles (+1/5 lvls, +4 in Conflagration), compact radius"
-      },
-      "strings_extra": {
-        "ModSorcPyroMissiles": "Radial Bolts: %d (+4 in Conflagration)"
-      }
-    },
-    "p3_ringoffire_state": {
-      "description": "P3: restore ringoffire HD visual + ringoffireexplode outer detonation, read dedicated stance marker stat('skill_handofathena'.accr)>0 for +6 bolts in Conflagration",
-      "hd_missiles": {
-        "pyroclasm_ring": "ringoffire"
-      },
-      "tables": {
-        "missiles.txt": {
-          "pyroclasm_ring": {
-            "_clone": "ringoffire",
-            "Skill": "Fire Ball",
-            "Vel": "12",
-            "MaxVel": "22",
-            "VelLev": "3",
-            "Range": "8",
-            "NextDelay": "8",
-            "ExplosionMissile": "ringoffireexplode",
-            "sHitPar1": "3",
-            "cHitPar1": "3"
-          }
-        },
-        "skills.txt": {
-          "Fire Ball": {
-            "srvdofunc": "154",
-            "cltdofunc": "99",
-            "ItemEffect": "154",
-            "ItemCltEffect": "99",
-            "srvmissile": "",
-            "cltmissile": "",
-            "srvmissilea": "pyroclasm_ring",
-            "srvmissileb": "pyroclasm_ring",
-            "srvmissilec": "pyroclasm_ring",
-            "cltmissilea": "pyroclasm_ring",
-            "Param1": "6",
-            "*Param1 Description": "Base number of missiles",
-            "calc1": "3",
-            "*calc1 desc": "Explosion Radius",
-            "calc2": "6+(lvl-1)/5+((stat('skill_handofathena'.accr)>0)?6:0)",
-            "*calc2 desc": "# missiles (6 + 1 per 5 lvls + 6 in Conflagration)",
-            "calc3": "0",
-            "*calc3 desc": "Missile Velocity Adder",
-            "cltcalc1": "0",
-            "*cltcalc1 desc": "Missile Velocity Adder"
-          }
-        },
-        "skilldesc.txt": {
-          "fire ball": {
-            "descmissile1": "pyroclasm_ring",
-            "dsc2line1": "74",
-            "dsc2texta1": "ModSorcPyroMissiles",
-            "dsc2textb1": "",
-            "dsc2calca1": "clc2",
-            "dsc2calcb1": ""
-          }
-        }
-      },
-      "strings": {
-        "short": "[P3 test] ringoffire visual + marker-based Conflagration missile bonus"
-      },
-      "strings_extra": {
-        "ModSorcPyroMissiles": "Radial Bolts: %d (+6 in Conflagration)"
-      }
-    },
-    "p4_compact_radius": {
-      "description": "P4: tighter early-game radius at lvl 1 (Vel=8, Range=7), moderate scaling to lvl 20 (Vel=14 via calc3=(lvl-1)/3), plus +4 velocity/radius boost in Conflagration",
-      "hd_missiles": {
-        "pyroclasm_ring": "ringoffire"
-      },
-      "tables": {
-        "missiles.txt": {
-          "pyroclasm_ring": {
-            "_clone": "ringoffire",
-            "Skill": "Fire Ball",
-            "Vel": "8",
-            "MaxVel": "24",
-            "VelLev": "0",
-            "Range": "7",
-            "NextDelay": "7",
-            "ExplosionMissile": "ringoffireexplode",
-            "sHitPar1": "2",
-            "cHitPar1": "2"
-          }
-        },
-        "skills.txt": {
-          "Fire Ball": {
-            "srvdofunc": "154",
-            "cltdofunc": "99",
-            "ItemEffect": "154",
-            "ItemCltEffect": "99",
-            "srvmissile": "",
-            "cltmissile": "",
-            "srvmissilea": "pyroclasm_ring",
-            "srvmissileb": "pyroclasm_ring",
-            "srvmissilec": "pyroclasm_ring",
-            "cltmissilea": "pyroclasm_ring",
-            "Param1": "6",
-            "*Param1 Description": "Base number of missiles",
-            "calc1": "2",
-            "*calc1 desc": "Explosion Radius",
-            "calc2": "6+(lvl-1)/5+((stat('skill_handofathena'.accr)>0)?6:0)",
-            "*calc2 desc": "# missiles (6 + 1 per 5 lvls + 6 in Conflagration)",
-            "calc3": "(lvl-1)/3+((stat('skill_handofathena'.accr)>0)?4:0)",
-            "*calc3 desc": "Missile Velocity Adder",
-            "cltcalc1": "(lvl-1)/3+((stat('skill_handofathena'.accr)>0)?4:0)",
-            "*cltcalc1 desc": "Missile Velocity Adder"
-          }
-        },
-        "skilldesc.txt": {
-          "fire ball": {
-            "descmissile1": "pyroclasm_ring",
-            "dsc2line1": "74",
-            "dsc2texta1": "ModSorcPyroMissiles",
-            "dsc2textb1": "",
-            "dsc2calca1": "clc2",
-            "dsc2calcb1": ""
-          }
-        }
-      },
-      "strings": {
-        "short": "[P4 test] tight lvl 1 ring, moderate lvl 20 growth, +radius & +6 bolts in Conflagration"
-      },
-      "strings_extra": {
-        "ModSorcPyroMissiles": "Radial Bolts: %d (+6 in Conflagration)"
-      }
-    },
-    "p5_no_decel": {
-      "description": "P5: clear Accel='' (ringoffire had Accel=-1000 which braked the ring early); Vel=9, Range=11, calc3/cltcalc1=(lvl-1)*7/19+((stat('skill_handofathena'.accr)>0)?5:0) so radius grows from lvl 1 to 20 and increases further in Conflagration",
-      "hd_missiles": {
-        "pyroclasm_ring": "ringoffire"
-      },
-      "tables": {
-        "missiles.txt": {
-          "pyroclasm_ring": {
-            "_clone": "ringoffire",
-            "Skill": "Fire Ball",
-            "Accel": "",
-            "Vel": "9",
-            "MaxVel": "26",
-            "VelLev": "0",
-            "Range": "11",
-            "NextDelay": "11",
-            "ExplosionMissile": "ringoffireexplode",
-            "sHitPar1": "2",
-            "cHitPar1": "2"
-          }
-        },
-        "skills.txt": {
-          "Fire Ball": {
-            "srvdofunc": "154",
-            "cltdofunc": "99",
-            "ItemEffect": "154",
-            "ItemCltEffect": "99",
-            "srvmissile": "",
-            "cltmissile": "",
-            "srvmissilea": "pyroclasm_ring",
-            "srvmissileb": "pyroclasm_ring",
-            "srvmissilec": "pyroclasm_ring",
-            "cltmissilea": "pyroclasm_ring",
-            "Param1": "6",
-            "*Param1 Description": "Base number of missiles",
-            "calc1": "2",
-            "*calc1 desc": "Explosion Radius",
-            "calc2": "6+(lvl-1)/5+((stat('skill_handofathena'.accr)>0)?6:0)",
-            "*calc2 desc": "# missiles (6 + 1 per 5 lvls + 6 in Conflagration)",
-            "calc3": "(lvl-1)*7/19+((stat('skill_handofathena'.accr)>0)?5:0)",
-            "*calc3 desc": "Missile Velocity Adder",
-            "cltcalc1": "(lvl-1)*7/19+((stat('skill_handofathena'.accr)>0)?5:0)",
-            "*cltcalc1 desc": "Missile Velocity Adder"
-          }
-        },
-        "skilldesc.txt": {
-          "fire ball": {
-            "descmissile1": "pyroclasm_ring",
-            "dsc2line1": "74",
-            "dsc2texta1": "ModSorcPyroMissiles",
-            "dsc2textb1": "",
-            "dsc2calca1": "clc2",
-            "dsc2calcb1": ""
-          }
-        }
-      },
-      "strings": {
-        "short": "[P5 test] Accel cleared so velocity adder scales radius by level and in Conflagration"
-      },
-      "strings_extra": {
-        "ModSorcPyroMissiles": "Radial Bolts: %d (+6 in Conflagration)"
-      }
-    },
-    "p6_vellev": {
-      "description": "P6: restore native missile VelLev=3 (proven in P1 to scale radius with level, since srvdofunc=154/cltdofunc=99 ignores calc3/cltcalc1); Vel=8, MaxVel=16, Range=9",
+    "test_fizzle": {
+      "description": "test_fizzle: Pyroclasm fizzles out immediately (Range=1, Radius=0) when cast in Cryostasis or Overcharge",
+      "no_label": true,
       "hd_missiles": {
         "pyroclasm_ring": "ringoffire"
       },
@@ -308,73 +19,10 @@
             "Vel": "8",
             "MaxVel": "16",
             "VelLev": "3",
-            "Range": "9",
+            "Range": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : 9",
             "NextDelay": "9",
             "ExplosionMissile": "ringoffireexplode",
-            "sHitPar1": "2",
-            "cHitPar1": "2"
-          }
-        },
-        "skills.txt": {
-          "Fire Ball": {
-            "srvdofunc": "154",
-            "cltdofunc": "99",
-            "ItemEffect": "154",
-            "ItemCltEffect": "99",
-            "srvmissile": "",
-            "cltmissile": "",
-            "srvmissilea": "pyroclasm_ring",
-            "srvmissileb": "pyroclasm_ring",
-            "srvmissilec": "pyroclasm_ring",
-            "cltmissilea": "pyroclasm_ring",
-            "Param1": "6",
-            "*Param1 Description": "Base number of missiles",
-            "calc1": "2",
-            "*calc1 desc": "Explosion Radius",
-            "calc2": "6+(lvl-1)/5+((stat('skill_handofathena'.accr)>0)?6:0)",
-            "*calc2 desc": "# missiles (6 + 1 per 5 lvls + 6 in Conflagration)",
-            "calc3": "0",
-            "*calc3 desc": "Missile Velocity Adder",
-            "cltcalc1": "0",
-            "*cltcalc1 desc": "Missile Velocity Adder"
-          }
-        },
-        "skilldesc.txt": {
-          "fire ball": {
-            "descmissile1": "pyroclasm_ring",
-            "dsc2line1": "74",
-            "dsc2texta1": "ModSorcPyroMissiles",
-            "dsc2textb1": "",
-            "dsc2calca1": "clc2",
-            "dsc2calcb1": ""
-          }
-        }
-      },
-      "strings": {
-        "short": "[P6 test] missile VelLev=3 scales radius by level; Conflagration adds +6 radial bolts"
-      },
-      "strings_extra": {
-        "ModSorcPyroMissiles": "Radial Bolts: %d (+6 in Conflagration)"
-      }
-    },
-    "final1": {
-      "description": "final1: keep radial bolt count under ~16 direction cap so Conflagration boost is clearly visible at lvl 20 (5 + (lvl-1)/5 -> 5 at lvl 1, 8 at lvl 20; +5 in Conflagration -> 10 at lvl 1, 13 at lvl 20)",
-      "hd_missiles": {
-        "pyroclasm_ring": "ringoffire"
-      },
-      "tables": {
-        "missiles.txt": {
-          "pyroclasm_ring": {
-            "_clone": "ringoffire",
-            "Skill": "Fire Ball",
-            "Accel": "",
-            "Vel": "8",
-            "MaxVel": "16",
-            "VelLev": "3",
-            "Range": "9",
-            "NextDelay": "9",
-            "ExplosionMissile": "ringoffireexplode",
-            "sHitPar1": "2",
+            "sHitPar1": "0",
             "cHitPar1": "2"
           }
         },
@@ -392,14 +40,29 @@
             "cltmissilea": "pyroclasm_ring",
             "Param1": "5",
             "*Param1 Description": "Base number of missiles",
-            "calc1": "2",
+            "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : 2",
             "*calc1 desc": "Explosion Radius",
             "calc2": "min(16,5+(lvl-1)/5+((stat('skill_handofathena'.accr)>0)?5:0))",
             "*calc2 desc": "# missiles (5 + 1 per 5 lvls + 5 in Conflagration, cap 16)",
             "calc3": "0",
             "*calc3 desc": "Missile Velocity Adder",
             "cltcalc1": "0",
-            "*cltcalc1 desc": "Missile Velocity Adder"
+            "*cltcalc1 desc": "Missile Velocity Adder",
+            "HitShift": "8",
+            "EType": "fire",
+            "EMin": "8",
+            "EMinLev1": "2",
+            "EMinLev2": "4",
+            "EMinLev3": "7",
+            "EMinLev4": "14",
+            "EMinLev5": "24",
+            "EMax": "12",
+            "EMaxLev1": "3",
+            "EMaxLev2": "5",
+            "EMaxLev3": "8",
+            "EMaxLev4": "16",
+            "EMaxLev5": "26",
+            "EDmgSymPerCalc": "(skill('Fire Bolt'.blvl) + skill('Inferno'.blvl)) * 6"
           }
         },
         "skilldesc.txt": {
@@ -410,28 +73,27 @@
             "dsc2textb1": "",
             "dsc2calca1": "clc2",
             "dsc2calcb1": "",
-            "dsc3line1": "",
-            "dsc3texta1": "",
-            "dsc3textb1": "",
-            "dsc3calca1": "",
-            "dsc3line2": "",
-            "dsc3texta2": "",
-            "dsc3textb2": "",
-            "dsc3calca2": "",
-            "dsc3line3": "",
-            "dsc3texta3": "",
-            "dsc3textb3": "",
-            "dsc3calca3": ""
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "ModSorc_pyroclasm_name",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Firedplev",
+            "dsc3textb2": "ModSorc_cinder_lance_name",
+            "dsc3calca2": "6",
+            "dsc3line3": "76",
+            "dsc3texta3": "Firedplev",
+            "dsc3textb3": "ModSorc_brimstone_lance_name",
+            "dsc3calca3": "6"
           }
         }
       },
       "strings": {
-        "short": "instant fire ring with knockback",
-        "long": "unleash a ring of fire bolts around you that knock enemies back\nradius and bolt count grow with skill level\nConflagration adds 5 additional radial bolts"
+        "short": "expanding ring of fire bolts",
+        "long": "unleashes a ring of fiery bolts that knock enemies back"
       },
-      "no_label": true,
       "strings_extra": {
-        "ModSorcPyroMissiles": "Radial Bolts: %d (+5 in Conflagration)"
+        "ModSorcPyroMissiles": "Bolts: %d"
       }
     }
   }

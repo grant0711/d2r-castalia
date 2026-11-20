@@ -29,7 +29,7 @@
 | 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | final4 |
 | 4.3 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | stub | baseline |
 | 5.2 | 32 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | stub | baseline |
-| 6.2 | 40 | **Heaven's Wrath** (`heavens_wrath`) | Charged Bolt (38) | capstone | stub | baseline |
+| 6.2 | 40 | **Heaven's Wrath** (`heavens_wrath`) | Charged Bolt (38) | capstone | done | p6_stance_cancel |
 
 ## Cold (skill page 3)
 

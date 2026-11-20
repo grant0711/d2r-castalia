@@ -41,7 +41,7 @@
             "restrict": "1",
             "castoverlay": "thunderstormcast",
             "removerlay": "lightning",
-            "overlay1": "thunderstormback",
+            "overlay1": "holyshockback",
             "overlay2": "holyshockfront",
             "stat": "",
             "armblue": "",

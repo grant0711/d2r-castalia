@@ -56,8 +56,8 @@
     "variant": "p3_freeze_curve"
   },
   "heavens_wrath": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "p6_stance_cancel"
   },
   "hoarfrost_burst": {
     "status": "stub",

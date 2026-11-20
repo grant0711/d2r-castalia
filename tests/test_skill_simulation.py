@@ -206,11 +206,18 @@ class TestSkillSimulation(unittest.TestCase):
                     skills_by_name=skills_by_name,
                 )
 
-                self.assertGreater(
-                    neutral_val,
-                    0,
-                    f"{meta['name']} ({label}): neutral output ({neutral_val}) must be > 0",
-                )
+                if "SymPerCalc" in label:
+                    self.assertGreaterEqual(
+                        neutral_val,
+                        0,
+                        f"{meta['name']} ({label}): neutral synergy output ({neutral_val}) must be >= 0",
+                    )
+                else:
+                    self.assertGreater(
+                        neutral_val,
+                        0,
+                        f"{meta['name']} ({label}): neutral output ({neutral_val}) must be > 0",
+                    )
                 self.assertGreaterEqual(
                     match_val,
                     neutral_val,

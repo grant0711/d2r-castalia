@@ -213,44 +213,27 @@ def build_itemtypes(cfg: dict) -> str:
 
 
 # Exact Skill IDs per class and tier (Tiers 1..6 corresponding to reqlevel 1 / 8 / 16 / 24 / 32 / 40 in skills.txt).
-# Preserving vanilla *Id values in skills.txt keeps all C++ engine skill-ID handlers, 3D HD state machine skillIndex
-# bindings, and Unique/Set/Affix references intact, while decomposing each tier into maximal contiguous [lo, hi]
-# 'skill-rand' intervals in automagic.txt guarantees 0% higher-tier leakage and 100% tier coverage at every ilvl bracket.
+# Vanilla classes are tier-ordered by id. The reworked Sorceress, Barbarian and Assassin moved skills between tiers,
+# so mod_builder/skill_order.py permutes their skills.txt rows at write time to make every tier a contiguous id
+# block again; automagic 'skill-rand' ranges are emitted directly in that FINAL id space (one interval per pool).
+from mod_builder import skill_order as _skill_order  # noqa: E402
+
 CLASS_SKILL_TIERS: Dict[str, List[tuple]] = {
-    "sor": [(36, 40), (41, 45), (46, 50), (51, 55), (56, 60), (61, 65)],
     "nec": [(66, 70), (71, 75), (76, 80), (81, 85), (86, 90), (91, 95)],
     "pal": [(96, 100), (101, 105), (106, 110), (111, 115), (116, 120), (121, 125)],
     "dru": [(221, 225), (226, 230), (231, 235), (236, 240), (241, 245), (246, 250)],
 }
+for _cls in _skill_order.PERMUTED_CLASSES:
+    CLASS_SKILL_TIERS[_cls] = _skill_order.final_tier_ranges(_cls)
 
 CLASS_SKILL_ID_SETS: Dict[str, List[List[int]]] = {
-    "sor": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["sor"]],
-    "nec": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["nec"]],
-    "pal": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["pal"]],
-    "dru": [list(range(a, b + 1)) for a, b in CLASS_SKILL_TIERS["dru"]],
-    "bar": [
-        [126, 127, 128, 133, 135, 138, 142],  # Tier 1 (reqlevel  1)
-        [132, 134, 137, 141],                 # Tier 2 (reqlevel  8)
-        [130, 131, 140, 144, 145, 148],       # Tier 3 (reqlevel 16)
-        [136, 143, 146, 155],                 # Tier 4 (reqlevel 24)
-        [129, 139, 149, 150, 152],            # Tier 5 (reqlevel 32)
-        [147, 151, 153, 154],                 # Tier 6 (reqlevel 40)
-    ],
-    "ass": [
-        [252, 254, 255, 256, 257],            # Tier 1 (reqlevel  1): Lethality, Tiger Strike, Dragon Talon, Caltrops, Blade Sentinel
-        [251, 259, 263, 264],                 # Tier 2 (reqlevel  8): Shrapnel Sentry, Fists of Fire, Weapon Block, Cloak of Shadows
-        [258, 260, 262, 266, 268, 274],       # Tier 3 (reqlevel 16): Burst of Speed, Dragon Claw, Fire Sentry, Blade Fury, Shadow Bind, Blades of Ice
-        [269, 270, 273, 276],                 # Tier 4 (reqlevel 24): Electrocute, Dragon Tail, Mind Blast, Ice Sentry
-        [265, 267, 271, 275, 277, 278],       # Tier 5 (reqlevel 32): Cobra Strike, Fade, Lightning Sentry, Dragon Flight, Blade Shield, Venom
-        [253, 261, 272, 279, 280],            # Tier 6 (reqlevel 40): Flow, Soul Siphon Sentry, Shuriken, Shadow Master, Omnislash
-    ],
+    cls: [list(range(a, b + 1)) for a, b in tiers] for cls, tiers in CLASS_SKILL_TIERS.items()
 }
 
-
-# Sorceress tiers follow the 1:1 skill map (mod_builder/sorc/registry.py): tier k = skills whose tab row is k.
-from mod_builder.sorc.registry import SLOTS as _SORC_SLOTS  # noqa: E402
-
-CLASS_SKILL_ID_SETS["sor"] = [sorted(s["vid"] for s in _SORC_SLOTS if s["row"] == k) for k in range(1, 7)]
+# .d2s saves store an item's automagic (auto prefix) row index in 11 bits: rows >= 2048 cannot be saved and the
+# item is DELETED on Save & Exit. Keep a safety margin below the hard limit.
+AUTOMAGIC_SAVE_LIMIT = 2048
+AUTOMAGIC_MAX_ROWS = 2000
 
 
 def _to_intervals(skill_ids: List[int]) -> List[tuple]:
@@ -422,6 +405,34 @@ def _build_class_staffmod_rows(headers: List[str], group: str, cls: str) -> List
     return out
 
 
+
+def _merge_duplicate_rows(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    """Collapse rows identical in every column except `frequency` into one row with the summed frequency.
+    Lossless: the engine picks a row within a group with probability frequency / sum(frequency)."""
+    out: List[Dict[str, str]] = []
+    seen: Dict[tuple, Dict[str, str]] = {}
+    for r in rows:
+        key = tuple(sorted((k, v) for k, v in r.items() if k != "frequency"))
+        if key in seen and r.get("frequency", "").isdigit() and seen[key].get("frequency", "").isdigit():
+            seen[key]["frequency"] = str(int(seen[key]["frequency"]) + int(r["frequency"]))
+            continue
+        r = dict(r)
+        seen[key] = r
+        out.append(r)
+    return out
+
+
+def _check_automagic_save_limit(rows: List[Dict[str, str]]) -> None:
+    if len(rows) > AUTOMAGIC_MAX_ROWS:
+        groups: Dict[str, int] = {}
+        for r in rows:
+            groups[r.get("group", "")] = groups.get(r.get("group", ""), 0) + 1
+        raise RuntimeError(
+            f"automagic.txt has {len(rows)} rows (budget {AUTOMAGIC_MAX_ROWS}, hard save limit "
+            f"{AUTOMAGIC_SAVE_LIMIT}). Items whose auto-affix row index is >= {AUTOMAGIC_SAVE_LIMIT} are DELETED "
+            f"on Save & Exit. Rows per group: {groups}")
+
+
 def build_automagic(cfg: dict) -> str:
     headers, rows = read_excel_tsv("automagic.txt")
 
@@ -456,6 +467,8 @@ def build_automagic(cfg: dict) -> str:
             itype1="thro", itype2="misl",
         )
     )
+    # Everything appended so far is a small fixed group; the class staffmod groups below are large.
+    head_count = len(rows)
 
     # 3. Rebuild group 303 (Sorceress Orbs: innate +Life or +Mana in mod1 + 1-2 Sorceress skill-rand in mod2/mod3)
     # Sorceress tiers come from the 1:1 skill map and are NOT contiguous id blocks, so every skill pool is
@@ -581,14 +594,16 @@ def build_automagic(cfg: dict) -> str:
     # - 319: Heavy Paladin Shields (clones 304 + mod3code=block2 -15%)
     # - 320: Enclosed Visor Helms (Mask & Full Helm lines: -2 Light Radius)
     # - 321: Fully Enclosed Greathelms (Great/Winged/Spired Helm line: -3 Light Radius)
-    rows.append(
+    # These are inserted BEFORE the large class staffmod groups so common shields/helms always get low row ids.
+    fixed_rows: List[Dict[str, str]] = []
+    fixed_rows.append(
         _make_auto_row(
             headers, "316", "1", "", "1", "1",
             [("block2", "", "15", "15")],
             itype1="shie", itype2="",
         )
     )
-    rows.append(
+    fixed_rows.append(
         _make_auto_row(
             headers, "317", "1", "", "1", "1",
             [("block2", "", "-15", "-15")],
@@ -604,21 +619,25 @@ def build_automagic(cfg: dict) -> str:
                 pr["mod3param"] = ""
                 pr["mod3min"] = fbr_val
                 pr["mod3max"] = fbr_val
-                rows.append(pr)
-    rows.append(
+                fixed_rows.append(pr)
+    fixed_rows.append(
         _make_auto_row(
             headers, "320", "1", "", "1", "1",
             [("light", "", "-2", "-2")],
             itype1="helm", itype2="",
         )
     )
-    rows.append(
+    fixed_rows.append(
         _make_auto_row(
             headers, "321", "1", "", "1", "1",
             [("light", "", "-3", "-3")],
             itype1="helm", itype2="",
         )
     )
+
+    rows = rows[:head_count] + fixed_rows + rows[head_count:]
+    rows = _merge_duplicate_rows(rows)
+    _check_automagic_save_limit(rows)
 
     return write_excel_tsv("automagic.txt", headers, rows)
 

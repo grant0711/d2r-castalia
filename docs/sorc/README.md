@@ -8,9 +8,12 @@
 
 ---
 
-## 1. The 1:1 Save-Compatibility Rule
+## 1. The 30-Row Reuse Rule & Tier-Contiguous Skill IDs
 
-All 30 vanilla Sorceress rows (`*Id 36..65`) are kept with the same row name, `*Id`, `charclass="sor"`, and icon cel so `.d2s` saves, staffmods, and `+skill` items remain 100% compatible.
+All 30 vanilla Sorceress rows are reused 1:1 (same row name, `charclass="sor"`, icon cel); every builder and spec authors against the **source** layout (`vid` / `vname` in `registry.py`).
+- **Final IDs are tier-sorted at write time** by [`tools/mod_builder/skill_order.py`](file:///home/grant/games/d2r/tools/mod_builder/skill_order.py) (Sorceress, Barbarian & Assassin): rows are re-ordered so tier *k* occupies the *k*-th contiguous ID block, numeric skill params in item tables and HD state machine `skillIndex` bindings follow, and row names travel with their content. This keeps `automagic.txt` staffmods at one `skill-rand` interval per pool — it must stay **< 2048 rows** (11-bit auto-affix id in `.d2s`; larger row indices delete the item on Save & Exit). Enforced by `tests/test_skill_ids.py` and a hard check in the automagic builder.
+- **Never** hardcode a final skill id in specs/builders; write source ids (or names) and let `skill_order` remap. Use `skill_order.remap_id(old)` in tests that inspect built tables.
+- Changing a skill's tier changes the final IDs (existing characters' skill points shift: respec with `d2r-char reset`).
 - **Skill Tabs**: Page 1 = **Fire** (`soskilltree.sprite` frame 2), Page 2 = **Lightning** (frame 1), Page 3 = **Cold** (frame 0).
 - **Unlock Tiers**: Rows `1..6` correspond to required character levels **`1 / 8 / 16 / 24 / 32 / 40`**.
 - **Prerequisite Arrows**: Declared via `prereqs=[...]` in `registry.SLOTS` and automatically composited onto `soskilltree.sprite` by [`tools/mod_builder/sorc/tree.py`](file:///home/grant/games/d2r/tools/mod_builder/sorc/tree.py).

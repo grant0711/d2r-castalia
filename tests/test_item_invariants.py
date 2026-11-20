@@ -154,12 +154,20 @@ class TestItemInvariants(unittest.TestCase):
             self.assertEqual(seen_ids, expected_ids)
 
     def test_affixes_and_locked_unique_set_oskill_compatibility(self):
-        forbidden_skill_refs = {
+        # Numeric refs are written in SOURCE skill ids (pre tier-contiguous permutation) and mapped to final ids,
+        # because this test inspects built tables (see mod_builder/skill_order.py).
+        from mod_builder.skill_order import remap_id
+
+        def _final(*refs):
+            return {str(remap_id(int(x))) if x.isdigit() else x for x in refs}
+
+        teleport_refs = _final("54", "Teleport")
+        forbidden_skill_refs = _final(
             "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
             "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
             "Enchant", "Teleport", "Energy Shield", "Chilling Armor",
             "Fire Mastery", "Lightning Mastery", "Cold Mastery", "Lower Resist",
-        }
+        )
         forbidden_pierce_props = {"pierce-fire", "pierce-cold", "pierce-ltng", "pierce-pois", "pierce-mag"}
 
         for afx_fn in ("magicprefix.txt", "magicsuffix.txt"):
@@ -237,7 +245,7 @@ class TestItemInvariants(unittest.TestCase):
                 has_wolf = bool({"Wearwolf", "Werewolf", "223"} & item_oskills)
                 has_bear = bool({"Wearbear", "Werebear", "228"} & item_oskills)
                 self.assertTrue((st1 == "wolf" and has_wolf) or (st1 == "bear" and has_bear))
-            self.assertNotIn(sk_ref, ("54", "Teleport", "380", "Blood Boil"))
+            self.assertNotIn(sk_ref, teleport_refs | {"380", "Blood Boil"})
             if item_code in weap_type_by_code:
                 wtype = weap_type_by_code[item_code]
                 anc = _type_ancestors(wtype)
@@ -266,7 +274,7 @@ class TestItemInvariants(unittest.TestCase):
                 self.assertNotEqual(p, "nofreeze")
                 self.assertNotIn(p, forbidden_pierce_props)
                 if p in ("charged", "oskill", "skill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill", "kill-skill", "death-skill"):
-                    self.assertNotIn(par, ("54", "Teleport"))
+                    self.assertNotIn(par, teleport_refs)
                     if p in ("charged", "oskill", "gethit-skill", "hit-skill", "att-skill", "levelup-skill"):
                         self.assertNotIn(par, forbidden_skill_refs)
                 if p == "oskill":

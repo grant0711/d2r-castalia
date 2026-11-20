@@ -409,7 +409,10 @@ class TestEngineContracts(unittest.TestCase):
             (s.get("modeId"), s.get("skillIndex"), s.get("stepIndex")): s
             for s in barb_sm.get("states", [])
         }
-        for req_key in ((18, 139, 0), (18, 139, 1), (18, 107, 0), (18, 107, 1)):
+        from mod_builder.skill_order import remap_id
+
+        shield_charge = remap_id(139)  # 'Stun' row (Shield Charge) after the tier-contiguous id permutation
+        for req_key in ((18, shield_charge, 0), (18, shield_charge, 1), (18, 107, 0), (18, 107, 1)):
             self.assertIn(
                 req_key,
                 barb_seq_states,

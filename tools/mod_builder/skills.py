@@ -191,9 +191,13 @@ def build_skill_strings(cfg: dict) -> str:
 
 
 def build_skills_all(cfg: dict) -> str:
+    import time
+
+    from mod_builder import skill_order
     from mod_builder.affixes import build_itemstatcost
     from mod_builder.weapons_armor import build_missiles
 
+    run_started_at = time.time() - 1.0
     p0 = build_itemstatcost(cfg)
     p1 = build_states(cfg)
     p2, p3 = build_skills_and_desc(cfg)
@@ -214,4 +218,6 @@ def build_skills_all(cfg: dict) -> str:
     p18 = _build_asskillicon_pair()
     p19 = f"{sorc_tree.build_soskilltree_pair()}, {sorc_icons.build_soskillicon_pair()}"
     p20 = sorc_sm.build_sorceress_state_machine()
-    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}, {p20}"
+    # Must run LAST: every state machine above was generated from vanilla in the source skill-id space.
+    p21 = f"{len(skill_order.remap_state_machines(run_started_at))} state machines skill-id remapped"
+    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}, {p20}, {p21}"

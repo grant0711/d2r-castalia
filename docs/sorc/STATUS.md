@@ -37,7 +37,7 @@
 |---|---|---|---|---|---|---|
 | 1.2 | 1 | **Frost Dart** (`frost_dart`) | Ice Bolt (39) | line 1 (levelling) | stub | baseline |
 | 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | Frost Nova (44) | AoE 1 (levelling) | stub | baseline |
-| 3.1 | 16 | **Glacier Step** (`glacier_step`) | Chilling Armor (60) | utility (mobility) | wip | p1_ice_blink |
+| 3.1 | 16 | **Glacier Step** (`glacier_step`) | Chilling Armor (60) | utility (mobility) | done | p1_ice_blink |
 | 3.3 | 16 | **Permafrost** (`permafrost`) | Ice Blast (45) | combo (CC/AoE) | stub | baseline |
 | 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | done | final4 |
 | 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | done | final1 |

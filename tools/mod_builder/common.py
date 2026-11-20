@@ -76,6 +76,10 @@ def write_excel_tsv(filename: str, headers: List[str], rows: List[Dict[str, str]
     """
     out_path = os.path.join(MOD_EXCEL, filename)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    # Final skill-ID permutation (tier-contiguous class skill ids); see mod_builder/skill_order.py
+    from mod_builder import skill_order
+
+    rows = skill_order.remap_table_rows(filename, headers, rows)
     out_lines = ["\t".join(headers)]
     for idx, row in enumerate(rows, start=2):
         vals = [str(row.get(h, "")) for h in headers]
@@ -115,6 +119,9 @@ def write_excel_raw(filename: str, headers: List[str], rows: List[List[str]]) ->
     """Write raw (headers, list_of_col_lists) to MOD_EXCEL with strict CRLF endings."""
     out_path = os.path.join(MOD_EXCEL, filename)
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    from mod_builder import skill_order
+
+    rows = skill_order.remap_raw_rows(filename, headers, rows)
     out_lines = ["\t".join(headers)]
     for idx, cols in enumerate(rows, start=2):
         if len(cols) != len(headers):

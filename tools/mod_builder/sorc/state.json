@@ -52,7 +52,7 @@
     "variant": "baseline"
   },
   "glacier_step": {
-    "status": "wip",
+    "status": "done",
     "variant": "p1_ice_blink"
   },
   "heavens_wrath": {

@@ -1,9 +1,10 @@
 """
 Sorceress 1:1 skill map (single source of truth for layout, names and design intent).
 
-Every one of the 30 vanilla Sorceress skill rows is KEPT (same row name, same *Id, same
-charclass="sor", same icon frame) so saves, items (`oskill`, staves, charms) and tables that
-reference them keep working. What changes is what that row *does* and what it is *called*:
+Every one of the 30 vanilla Sorceress skill rows is reused (same row name, charclass="sor", icon
+frame). `vid` is the SOURCE id builders/specs author against; at write time mod_builder/skill_order.py
+re-sorts the rows so each tier is a contiguous final id block (and remaps numeric skill refs + HD
+skillIndex). What changes is what that row *does*, what it is *called* and its final id:
 
     vanilla row (id, name)  --1:1-->  new skill (name, tree, row, col, level, design)
 

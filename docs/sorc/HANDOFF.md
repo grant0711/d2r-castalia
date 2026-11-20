@@ -64,7 +64,7 @@ Key reference files:
 
 ## 3. Hard Engine & Design Contracts (Enforced by `d2r-sorc test` & `tests/`)
 
-1. **1:1 Vanilla Row Reuse**: Never add a 31st `charclass="sor"` skill. Reuse the 30 vanilla rows (`*Id 36..65`) 1:1. Any helper skills in `specs/_shared.json` must have `"charclass": ""`.
+1. **1:1 Vanilla Row Reuse + Tier-Contiguous Final IDs**: Never add a 31st `charclass="sor"` skill. Reuse the 30 vanilla rows 1:1, authoring against the **source** row (`vid`/`vname`). [`skill_order.py`](file:///home/grant/games/d2r/tools/mod_builder/skill_order.py) re-sorts the Sorc/Barb/Assassin rows by tier at write time (final IDs ≠ `vid`) and remaps numeric skill params + HD `skillIndex`; `automagic.txt` must stay < 2048 rows (`.d2s` 11-bit auto-affix id — larger indices delete items on Save & Exit). Any helper skills in `specs/_shared.json` must have `"charclass": ""`.
 2. **Stance Detection Markers**:
    - Fire (**Conflagration**): `stat('skill_handofathena'.accr) > 0`
    - Cold (**Cryostasis**): `stat('skill_frenzy'.accr) > 0`

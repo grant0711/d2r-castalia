@@ -116,8 +116,8 @@
     "variant": "baseline"
   },
   "tesla_field": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "final1"
   },
   "whiteout": {
     "status": "stub",

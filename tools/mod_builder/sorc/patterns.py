@@ -167,7 +167,12 @@ SKILL_FUNCS: List[Dict[str, str]] = [
         "pitfalls": (
             "1) calc5 MUST be >= 1 (e.g. '1') or srvdofunc=166 will not execute the warp! "
             "2) Clear MissileWeaponVFX='' on the bladewarp clone so a floating dagger doesn't render on the Sorceress. "
-            "3) Warp missile uses pSrvDoFunc=2, pCltDoFunc=3, pSrvHitFunc=42, Vel=96, Range=15, CollideType=6."
+            "3) Warp missile uses pSrvDoFunc=2, pCltDoFunc=3, pSrvHitFunc=42, Vel=96, Range=15, CollideType=6. "
+            "4) (Proven in-game, phase_step p6/p7) The warp's ExplosionMissile is CLIENT-ONLY: it never spawns on the server, "
+            "so nothing chained from it deals damage or applies states. Landing damage comes from srvdofunc=166 ITSELF "
+            "(skill EType/EMin/EMax over aurarangecalc). For server-side effects use the warp's trail-dropper "
+            "(pSrvDoFunc=2 -> SubMissile1, dropped every frame along the path; e.g. a sigil pulse pSrvDoFunc=14 with "
+            "Param1=1 + missile Radius applying the skill's auratargetstate). Blink distance is NOT limited by the warp Range."
         ),
     },
     {
@@ -322,7 +327,7 @@ MISSILE_FUNCS: List[Dict[str, str]] = [
         "pSrvHitFunc": "42",
         "pCltHitFunc": "",
         "name": "Blade Warp Destination Trigger",
-        "notes": "Teleports the caster to the missile destination and spawns ExplosionMissile (e.g. glacier_step_nova) at the landing point.",
+        "notes": "Teleports the caster to the missile destination. Its ExplosionMissile (e.g. glacier_step_nova) spawns on the CLIENT ONLY (visuals); server landing damage is srvdofunc 166's own hit.",
     },
 ]
 

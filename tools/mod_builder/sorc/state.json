@@ -84,8 +84,8 @@
     "variant": "baseline"
   },
   "phase_step": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "p10_scaling_frenzy"
   },
   "pulse_ring": {
     "status": "stub",

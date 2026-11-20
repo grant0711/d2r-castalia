@@ -228,7 +228,9 @@
             "ELen": "",
             "ELevLen1": "",
             "ELevLen2": "",
-            "ELevLen3": ""
+            "ELevLen3": "",
+            "aurastat3": "item_fastergethitrate",
+            "aurastatcalc3": "min(80, 36 + lvl * 4)"
           }
         },
         "skilldesc.txt": {

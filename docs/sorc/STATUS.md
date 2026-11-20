@@ -21,7 +21,7 @@
 | r.c | lvl | new skill | replaces (id) | role | status | variant |
 |---|---|---|---|---|---|---|
 | 1.2 | 1 | **Static Lance** (`static_lance`) | Lightning (49) | line 1 (levelling) | stub | baseline |
-| 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | Nova (48) | AoE 1 (levelling) | stub | baseline |
+| 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | Nova (48) | AoE 1 (levelling) | done | final1 |
 | 2.3 | 8 | **Phase Step** (`phase_step`) | Teleport (54) | utility (mobility) | done | p10_scaling_frenzy |
 | 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | done | final1 |
 | 3.2 | 16 | **Tesla Field** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | stub | baseline |

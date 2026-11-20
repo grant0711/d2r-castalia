@@ -12,3 +12,4 @@ Design: Strictly requires Overcharge to cast (restrict=2, State1=sorc_stance_lig
 - **2026-11-20 02:54** [p8_path_frenzy] p8 feedback: remove purple, widen + level-scale frenzy path and landing radius, shock enemies phased over. -> p9
 - **2026-11-20 03:06** [p9_wider_shock_path] p9 feedback: frenzy should scale (20% +2%/lvl, cap 40%); tooltip: only lightning damage, description 'blink to a location, shocking monsters in your path'. -> p10
 - **2026-11-20 12:34** [p10_scaling_frenzy] Verified in game -> done (p10_scaling_frenzy).
+- **2026-11-20 16:57** [p10_scaling_frenzy] Added 2x FHR (item_fastergethitrate = min(80, 36 + lvl*4)) to supercharge frenzy.

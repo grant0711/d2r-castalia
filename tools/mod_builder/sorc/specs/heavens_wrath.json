@@ -161,7 +161,9 @@
             "aurastat1": "velocitypercent",
             "aurastatcalc1": "min(40, 18 + lvl * 2)",
             "aurastat2": "attackrate",
-            "aurastatcalc2": "min(40, 18 + lvl * 2)"
+            "aurastatcalc2": "min(40, 18 + lvl * 2)",
+            "aurastat3": "item_fastergethitrate",
+            "aurastatcalc3": "min(80, 36 + lvl * 4)"
           }
         },
         "skilldesc.txt": {

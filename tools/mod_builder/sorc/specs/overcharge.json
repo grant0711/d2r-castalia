@@ -4,8 +4,8 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "final4": {
-      "description": "final4: conservative linear scaling with caps",
+    "final5": {
+      "description": "final5: Ltng dmg 5->30%, FRW 5->40%, FHR 5->40%, FBR 5->40%; Fire/Cold res strip replaced with -10->-100% Defense penalty.",
       "tables": {
         "skills.txt": {
           "Energy Shield": {
@@ -26,13 +26,13 @@
             "aurastat1": "passive_ltng_mastery",
             "aurastat2": "item_fastermovevelocity",
             "aurastat3": "item_fastergethitrate",
-            "aurastat4": "fireresist",
-            "aurastat5": "coldresist",
+            "aurastat4": "item_fasterblockrate",
+            "aurastat5": "item_armor_percent",
             "aurastat6": "skill_decrepify",
             "aurastatcalc1": "clc1",
             "aurastatcalc2": "clc2",
             "aurastatcalc3": "clc3",
-            "aurastatcalc4": "-clc4",
+            "aurastatcalc4": "clc4",
             "aurastatcalc5": "-clc5",
             "aurastatcalc6": "1",
             "petmax": "",
@@ -61,16 +61,16 @@
             "Param7": "250",
             "Param8": "9",
             "HitShift": "7",
-            "calc1": "5+(lvl-1)*70/19",
-            "*calc1 desc": "Lightning Skill Damage % (5 -> 75 at lvl 20)",
+            "calc1": "5+(lvl-1)*25/19",
+            "*calc1 desc": "Lightning Skill Damage % (5 -> 30 at lvl 20)",
             "calc2": "5+(lvl-1)*35/19",
             "*calc2 desc": "Faster Run/Walk % (5 -> 40 at lvl 20)",
             "calc3": "5+(lvl-1)*35/19",
             "*calc3 desc": "Faster Hit Recovery % (5 -> 40 at lvl 20)",
-            "calc4": "min(75,5+(lvl-1)*70/19)",
-            "*calc4 desc": "Fire Resist Reduction (5 -> 75, cap 75)",
-            "calc5": "min(75,5+(lvl-1)*70/19)",
-            "*calc5 desc": "Cold Resist Reduction (5 -> 75, cap 75)"
+            "calc4": "5+(lvl-1)*35/19",
+            "*calc4 desc": "Faster Block Rate % (5 -> 40 at lvl 20)",
+            "calc5": "min(100,10+(lvl-1)*5)",
+            "*calc5 desc": "Defense Reduction % (10 -> 100, cap 100)"
           }
         },
         "skilldesc.txt": {
@@ -112,12 +112,12 @@
             "desccalca4": "clc3",
             "desccalcb4": "",
             "descline5": "74",
-            "desctexta5": "ModSorcFireResPenalty",
+            "desctexta5": "ModSorcFBR",
             "desctextb5": "",
             "desccalca5": "clc4",
             "desccalcb5": "",
             "descline6": "74",
-            "desctexta6": "ModSorcColdResPenalty",
+            "desctexta6": "ModSorcDefenseDown",
             "desctextb6": "",
             "desccalca6": "clc5",
             "desccalcb6": "",
@@ -186,16 +186,16 @@
       },
       "strings": {
         "short": "Stance - Lightning Element",
-        "long": "Stance\n\nbecome supercharged, boosting lightning damage, movement and\nhit recovery, but leaving you open to fire and cold\nmelee attackers that hit you are shocked\nonly one stance can be active at a time"
+        "long": "Stance\n\nbecome supercharged, boosting lightning damage, movement, hit recovery,\nand block speed at the cost of reduced defense\nmelee attackers that hit you are shocked\nonly one stance can be active at a time"
       },
       "no_label": true,
       "strings_extra": {
         "ModSorcLtngDmg": "Lightning Skill Damage: +%d%%",
         "ModSorcFRW": "Faster Run/Walk: +%d%%",
         "ModSorcFHR": "Faster Hit Recovery: +%d%%",
-        "ModSorcFireResPenalty": "Fire Resist: -%d%%",
-        "ModSorcColdResPenalty": "Cold Resist: -%d%%",
-        "ModSorcRetalLtng": "Melee Attackers Take %d-%d Lightning Damage When They Hit You"
+        "ModSorcRetalLtng": "Melee Attackers Take %d-%d Lightning Damage When They Hit You",
+        "ModSorcFBR": "Faster Block Rate: +%d%%",
+        "ModSorcDefenseDown": "Defense: -%d%%"
       }
     }
   }

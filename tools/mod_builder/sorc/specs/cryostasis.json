@@ -4,8 +4,8 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "final4": {
-      "description": "final4: Cold is now a slow juggernaut (damage reduction boon, defense and speed busts) with impactful stance-transition VFX/SFX",
+    "final5": {
+      "description": "final5: Cold dmg 5->30%, Phys DR 3->25%, Defense +10->200%; gentler slow (-5->-30% FRW) and FCR (-5->-20%) busts.",
       "tables": {
         "skills.txt": {
           "Frozen Armor": {
@@ -53,16 +53,16 @@
             "Param6": "3",
             "Param7": "250",
             "Param8": "5",
-            "calc2": "5+(lvl-1)*70/19",
-            "*calc2 desc": "Cold Skill Damage % (5 -> 75 at lvl 20)",
+            "calc2": "5+(lvl-1)*25/19",
+            "*calc2 desc": "Cold Skill Damage % (5 -> 30 at lvl 20)",
             "calc3": "min(50,3+(lvl-1)*22/19)",
             "*calc3 desc": "Physical Damage Reduction % (3 -> 25, cap 50)",
-            "calc4": "min(50,5+(lvl-1)*45/19)",
-            "*calc4 desc": "Run/Walk Reduction % (5 -> 50, cap 50)",
+            "calc4": "min(30,5+(lvl-1)*25/19)",
+            "*calc4 desc": "Run/Walk Reduction % (5 -> 30, cap 30)",
             "calc5": "10+(lvl-1)*10",
             "*calc5 desc": "Defense Bonus % (10 -> 200 at lvl 20, uncapped)",
-            "calc6": "min(30,5+(lvl-1)*25/19)",
-            "*calc6 desc": "Faster Cast Rate Reduction % (5 -> 30 at lvl 20, cap 30)"
+            "calc6": "min(20,5+(lvl-1)*15/19)",
+            "*calc6 desc": "Faster Cast Rate Reduction % (5 -> 20, cap 20)"
           }
         },
         "skilldesc.txt": {

@@ -4,33 +4,33 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "final1": {
-      "description": "final1: Always-on passive that restores Life per second (1 Life/sec at lvl 1 -> 10 Life/sec at lvl 26), neutralizing level 20+ Conflagration's 10 Life/sec drain at Ignition level 26 and granting net positive regeneration above level 26",
+    "final2": {
+      "description": "final2: Always-on passive matching vanilla Warmth (30% -> 258% Mana Recovery Rate at lvl 20) so all 3 trees offer distinct mana sustain.",
       "no_label": true,
       "strings": {
         "name": "Ignition",
-        "short": "passive - regenerates life each second",
-        "long": "Passive\n\ncontinually regenerates life each second\noffsetting Conflagration's life drain"
+        "short": "passive - increases mana recovery rate",
+        "long": "Passive\n\nincreases the rate at which you recover mana"
       },
       "strings_extra": {
-        "ModSorc_IgnitionLifeSec": "Life Restored per Second: %d"
+        "ModSorc_IgnitionManaRegen": "Mana Recovery Rate: +%d%%"
       },
       "tables": {
         "skills.txt": {
           "Fire Mastery": {
             "passivestate": "firemastery",
-            "passivestat1": "hpregen",
-            "passivecalc1": "10 + (lvl - 1) * 92 / 25",
-            "calc1": "10 + (lvl - 1) * 92 / 25",
-            "*calc1 desc": "hpregen units (10 = 1 Life/sec at lvl 1 -> 102 = 10 Life/sec at lvl 26)"
+            "passivestat1": "manarecoverybonus",
+            "passivecalc1": "30 + (lvl - 1) * 12",
+            "calc1": "30 + (lvl - 1) * 12",
+            "*calc1 desc": "Mana Recovery Rate % (30 -> 258 at lvl 20, same as vanilla Warmth)"
           }
         },
         "skilldesc.txt": {
           "fire mastery": {
             "descline1": "74",
-            "desctexta1": "ModSorc_IgnitionLifeSec",
+            "desctexta1": "ModSorc_IgnitionManaRegen",
             "desctextb1": "",
-            "desccalca1": "1 + (lvl - 1) * 9 / 25",
+            "desccalca1": "30 + (lvl - 1) * 12",
             "desccalcb1": "",
             "descline2": "",
             "desctexta2": "",

@@ -4,8 +4,8 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "final4": {
-      "description": "final4: conservative linear scaling with caps; fire gains a life drain bust and impactful stance-transition VFX/SFX",
+    "final5": {
+      "description": "final5: Fire dmg 5->30%, FCR 5->40%, scaled-back mana regen 15->110%, Phys Dmg Taken +5->50%; life drain removed.",
       "tables": {
         "skills.txt": {
           "Enchant": {
@@ -33,13 +33,13 @@
             "aurastat1": "passive_fire_mastery",
             "aurastat2": "item_fastercastrate",
             "aurastat3": "damageresist",
-            "aurastat4": "hpregen",
+            "aurastat4": "",
             "aurastat5": "manarecoverybonus",
             "aurastat6": "skill_handofathena",
             "aurastatcalc1": "clc1",
             "aurastatcalc2": "clc2",
             "aurastatcalc3": "-clc3",
-            "aurastatcalc4": "-(clc4*256)/25",
+            "aurastatcalc4": "",
             "aurastatcalc5": "clc5",
             "aurastatcalc6": "1",
             "seqnum": "4",
@@ -63,16 +63,16 @@
             "Param3": "3600",
             "Param4": "300",
             "HitShift": "7",
-            "calc1": "5+(lvl-1)*70/19",
-            "*calc1 desc": "Fire Skill Damage % (5 -> 75 at lvl 20)",
+            "calc1": "5+(lvl-1)*25/19",
+            "*calc1 desc": "Fire Skill Damage % (5 -> 30 at lvl 20)",
             "calc2": "5+(lvl-1)*35/19",
             "*calc2 desc": "Faster Cast Rate % (5 -> 40 at lvl 20)",
             "calc3": "min(75,5+(lvl-1)*45/19)",
             "*calc3 desc": "Damage Taken % (5 -> 50, cap 75)",
-            "calc4": "min(10,1+(lvl-1)*9/19)",
-            "*calc4 desc": "Life Drained per Second (1 -> 10, cap 10)",
-            "calc5": "30+(lvl-1)*12",
-            "*calc5 desc": "Mana Recovery Rate % (30 -> 258 at lvl 20, same as vanilla Warmth)"
+            "calc4": "",
+            "*calc4 desc": "",
+            "calc5": "15+(lvl-1)*5",
+            "*calc5 desc": "Mana Recovery Rate % (15 -> 110 at lvl 20)"
           }
         },
         "skilldesc.txt": {
@@ -114,14 +114,14 @@
             "desccalca4": "clc3",
             "desccalcb4": "",
             "descline5": "74",
-            "desctexta5": "ModSorcLifeDrain",
+            "desctexta5": "ModSorcManaRegen",
             "desctextb5": "",
-            "desccalca5": "clc4",
+            "desccalca5": "clc5",
             "desccalcb5": "",
-            "descline6": "74",
-            "desctexta6": "ModSorcManaRegen",
+            "descline6": "",
+            "desctexta6": "",
             "desctextb6": "",
-            "desccalca6": "clc5",
+            "desccalca6": "",
             "desccalcb6": "",
             "dsc2line1": "36",
             "dsc2texta1": "StrSkill3",
@@ -188,7 +188,7 @@
       },
       "strings": {
         "short": "Stance - Fire Element",
-        "long": "Stance\n\nWreathe yourself in flame, empowering fire spells and cast speed\nand restoring mana, at the cost of life drain and physical vulnerability\nOnly one stance may be active at a time"
+        "long": "Stance\n\nWreathe yourself in flame, empowering fire spells, cast speed,\nand mana recovery at the cost of physical vulnerability\nOnly one stance may be active at a time"
       },
       "no_label": true,
       "strings_extra": {
@@ -196,7 +196,6 @@
         "ModSorcFCR": "Faster Cast Rate: +%d%%",
         "ModSorcManaRegen": "Mana Recovery Rate: +%d%%",
         "ModSorcDmgTaken": "Physical Damage Taken Increased by %d%%",
-        "ModSorcLifeDrain": "Life Drained per Second: %d",
         "ModSorcEchoColdLtng": "Echo - Cold and Lightning Skill Damage: +%d%%",
         "ModSorcRetalFire": "Melee Attackers Take %d-%d Fire Damage When They Hit You"
       }

@@ -87,7 +87,7 @@ RUNE_SPECS: List[Tuple[str, str, Tuple[str, str, str, str], Tuple[str, str, str,
     ("r18", "Channeling", ("cast2", "", "10", "10"), ("cast2", "", "8", "8"), ("cast2", "", "8", "8")),
     ("r19", "Rending", ("openwounds", "", "20", "20"), ("openwounds", "", "10", "10"), ("openwounds", "", "10", "10")),
     ("r20", "Crippling", ("slow", "", "15", "15"), ("slow", "", "8", "8"), ("slow", "", "10", "10")),
-    ("r21", "Piercing", ("pierce", "", "20", "20"), ("pierce", "", "10", "10"), ("pierce", "", "10", "10")),
+    ("r21", "Clarity", ("regen-mana", "", "45", "45"), ("regen-mana", "", "20", "20"), ("regen-mana", "", "30", "30")),
     ("r22", "Vital", ("hp", "", "40", "40"), ("hp%", "", "6", "6"), ("hp%", "", "6", "6")),
     # Tier 3 (r23-r33, lvl 48-70 Late Nightmare & Hell)
     ("r23", "Lethal", ("deadly", "", "15", "15"), ("deadly", "", "8", "8"), ("deadly", "", "8", "8")),

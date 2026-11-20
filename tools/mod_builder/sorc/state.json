@@ -53,7 +53,7 @@
   },
   "glacier_step": {
     "status": "done",
-    "variant": "p1_ice_blink"
+    "variant": "p3_freeze_curve"
   },
   "heavens_wrath": {
     "status": "stub",

@@ -4,8 +4,8 @@
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
-    "p1_ice_blink": {
-      "description": "P1: Ice Blink using srvdofunc=166 (Blade Warp, cltdofunc=104, lob=1, warp=1) with 3s cooldown (localdelay=75), restricted to Cryostasis (restrict=2, State1=sorc_stance_cold). Blinks to target point, freezing enemies along the path and in a 9-subtile landing AoE while enemy freeze duration and Cold damage scale up with level.",
+    "p3_freeze_curve": {
+      "description": "P3: p2_cleanup + freeze curve retuned so a Hell-baseline monster (30% cold res, freeze x0.70) is frozen ~2.5s at lvl 20: ELen 36 (+3/lvl 2-16, +2/lvl 17+) -> raw 1.44s @1, 2.28s @8, 3.24s @16, 3.56s @20 (landing + path freeze).",
       "no_label": true,
       "strings": {
         "name": "Glacier Step",
@@ -17,7 +17,6 @@
         "glacier_step_path_srv": "null",
         "glacier_step_path_clt": "ice_break_small",
         "glacier_step_nova": "freeze_explode_center",
-        "glacier_step_aoe_srv": "null",
         "glacier_step_spike": "icecrack"
       },
       "tables": {
@@ -84,13 +83,13 @@
           },
           "glacier_step_nova": {
             "_clone": "erruption center",
-            "pSrvDoFunc": "25",
+            "pSrvDoFunc": "",
             "pCltDoFunc": "48",
             "Range": "8",
             "CelFile": "FreezeExplodeCenter",
             "AnimLen": "15",
             "Skill": "Chilling Armor",
-            "SubMissile1": "glacier_step_aoe_srv",
+            "SubMissile1": "",
             "CltSubMissile1": "freezingarrowexp1",
             "CltSubMissile2": "glacier_step_spike"
           },
@@ -102,25 +101,6 @@
             "Range": "25",
             "CollideType": "0",
             "TravelSound": ""
-          },
-          "glacier_step_aoe_srv": {
-            "_clone": "freezingarrowexp3",
-            "pSrvDoFunc": "1",
-            "pCltDoFunc": "1",
-            "pSrvHitFunc": "1",
-            "sHitPar1": "0",
-            "Range": "1",
-            "CollideType": "3",
-            "CollideKill": "1",
-            "AlwaysExplode": "1",
-            "NextHit": "1",
-            "NextDelay": "15",
-            "MissileSkill": "1",
-            "Skill": "Chilling Armor",
-            "ResultFlags": "5",
-            "HitFlags": "2",
-            "HitShift": "8",
-            "EType": "frze"
           }
         },
         "skills.txt": {
@@ -151,7 +131,7 @@
             "aurastatcalc6": "",
             "auraevent1": "",
             "auraeventfunc1": "",
-            "aurarangecalc": "5 + ((stat('skill_frenzy'.accr) > 0) ? 4 : 0)",
+            "aurarangecalc": "9",
             "stsound": "sorceress_cast_cold",
             "dosound": "sorceress_frostnova",
             "castoverlay": "teleport",
@@ -173,10 +153,10 @@
             "manashift": "8",
             "mana": "10",
             "lvlmana": "0",
-            "calc1": "5 + ((stat('skill_frenzy'.accr) > 0) ? 4 : 0)",
-            "*calc1 desc": "Landing Freeze AoE Radius (subtiles)",
-            "calc2": "1",
-            "*calc2 desc": "Landing Nova Spawn Rate (frames)",
+            "calc1": "9",
+            "*calc1 desc": "Landing Freeze Radius (subtiles; mirrors aurarangecalc for the tooltip)",
+            "calc2": "0",
+            "*calc2 desc": "Unused",
             "calc3": "0",
             "*calc3 desc": "Unused",
             "calc4": "0",
@@ -185,12 +165,12 @@
             "*calc5 desc": "Amount of attacks (required by srvdofunc 166)",
             "calc6": "100",
             "*calc6 desc": "Follow-up damage %",
-            "cltcalc1": "4 + ((stat('skill_frenzy'.accr) > 0) ? 4 : 0)",
-            "*cltcalc1 desc": "Client Landing AoE Visual Radius",
+            "cltcalc1": "8",
+            "*cltcalc1 desc": "Client arrival nova visual radius",
             "cltcalc2": "1",
-            "*cltcalc2 desc": "Client Landing AoE Spawn Rate",
-            "Param1": "5",
-            "*Param1 Description": "Landing Explosion Radius",
+            "*cltcalc2 desc": "Client arrival nova visual spawn interval (frames)",
+            "Param1": "",
+            "*Param1 Description": "",
             "Param2": "",
             "Param3": "",
             "Param4": "",
@@ -211,10 +191,10 @@
             "EMaxLev4": "16",
             "EMaxLev5": "25",
             "EDmgSymPerCalc": "(skill('Ice Bolt'.blvl) + skill('Frost Nova'.blvl)) * 8",
-            "ELen": "50",
-            "ELevLen1": "5",
-            "ELevLen2": "5",
-            "ELevLen3": "5"
+            "ELen": "36",
+            "ELevLen1": "3",
+            "ELevLen2": "3",
+            "ELevLen3": "2"
           }
         },
         "skilldesc.txt": {

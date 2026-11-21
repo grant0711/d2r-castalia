@@ -158,7 +158,7 @@ class TestSkillIds(unittest.TestCase):
                 for lo, hi in ranges:
                     self.assertTrue(tlo <= lo <= hi <= thi, f"{m1} row has mismatched skill-rand {(lo, hi)}")
 
-        # Verify blocked melee affixes (dmg-demon/undead, IAS, OW, DS, CB) cannot spawn on staf or orb
+        # Verify blocked melee affixes (dmg-demon/undead, IAS, LL, ML, OW, DS, CB) cannot spawn on staf or orb
         _, it_rows = read_mod_tsv("itemtypes.txt")
         parents = {r["Code"]: [p for p in (r.get("Equiv1", ""), r.get("Equiv2", "")) if p] for r in it_rows if r.get("Code")}
         def anc(code):
@@ -170,7 +170,7 @@ class TestSkillIds(unittest.TestCase):
                         s.add(p); st.append(p)
             return s
         staf_a, orb_a = anc("staf"), anc("orb")
-        for fname, blocked_grps in (("magicprefix.txt", {"123", "142"}), ("magicsuffix.txt", {"7", "61", "62", "63"})):
+        for fname, blocked_grps in (("magicprefix.txt", {"123", "142"}), ("magicsuffix.txt", {"7", "27", "28", "61", "62", "63"})):
             _, arows = read_mod_tsv(fname)
             for r in arows:
                 if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("group") not in blocked_grps:

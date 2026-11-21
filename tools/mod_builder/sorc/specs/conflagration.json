@@ -5,7 +5,7 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final5": {
-      "description": "final5: Fire dmg 5->30%, FCR 5->40%, scaled-back mana regen 15->110%, Phys Dmg Taken +5->50%; life drain removed.",
+      "description": "final5: Fire dmg 5->30%, FCR 5->40%, scaled-back mana regen 15->110%, Phys Dmg Taken +3->25% (cap 40%); life drain removed.",
       "tables": {
         "skills.txt": {
           "Enchant": {
@@ -67,8 +67,8 @@
             "*calc1 desc": "Fire Skill Damage % (5 -> 30 at lvl 20)",
             "calc2": "5+(lvl-1)*35/19",
             "*calc2 desc": "Faster Cast Rate % (5 -> 40 at lvl 20)",
-            "calc3": "min(75,5+(lvl-1)*45/19)",
-            "*calc3 desc": "Damage Taken % (5 -> 50, cap 75)",
+            "calc3": "min(40,3+(lvl-1)*22/19)",
+            "*calc3 desc": "Damage Taken % (3 -> 25 at lvl 20, ~30 at lvl 25, cap 40)",
             "calc4": "",
             "*calc4 desc": "",
             "calc5": "15+(lvl-1)*5",

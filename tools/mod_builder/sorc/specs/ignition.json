@@ -5,7 +5,7 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final2": {
-      "description": "final2: Always-on passive matching vanilla Warmth (30% -> 258% Mana Recovery Rate at lvl 20) so all 3 trees offer distinct mana sustain.",
+      "description": "final2: Always-on passive granting 20% -> 172% Mana Recovery Rate at lvl 20 (balanced alongside Conflagration's mana regen).",
       "no_label": true,
       "strings": {
         "name": "Ignition",
@@ -20,9 +20,9 @@
           "Fire Mastery": {
             "passivestate": "firemastery",
             "passivestat1": "manarecoverybonus",
-            "passivecalc1": "30 + (lvl - 1) * 12",
-            "calc1": "30 + (lvl - 1) * 12",
-            "*calc1 desc": "Mana Recovery Rate % (30 -> 258 at lvl 20, same as vanilla Warmth)"
+            "passivecalc1": "20 + (lvl - 1) * 8",
+            "calc1": "20 + (lvl - 1) * 8",
+            "*calc1 desc": "Mana Recovery Rate % (20 -> 172 at lvl 20)"
           }
         },
         "skilldesc.txt": {
@@ -30,7 +30,7 @@
             "descline1": "74",
             "desctexta1": "ModSorc_IgnitionManaRegen",
             "desctextb1": "",
-            "desccalca1": "30 + (lvl - 1) * 12",
+            "desccalca1": "20 + (lvl - 1) * 8",
             "desccalcb1": "",
             "descline2": "",
             "desctexta2": "",

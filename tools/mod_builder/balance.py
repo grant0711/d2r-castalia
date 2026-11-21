@@ -278,12 +278,12 @@ def eval_fire_skill(
     """Return single-target & pack effective DPS (pre-res raw DPS; res handled by eHP)."""
     # (vname, reqlevel, syn_specs=[(vname, reqlevel, pct_per_lvl), ...], role, pack_targets_neutral, pack_targets_stance)
     SPEC = {
-        "cinder_lance":    ("Fire Bolt",  1, [("Fire Ball", 8, 6), ("Inferno", 32, 6)],     "Line 1", 1.0, 2.2),
-        "pyroclasm":       ("Fire Ball",  8, [("Fire Bolt", 1, 6), ("Inferno", 32, 6)],     "AoE 1",  4.0, 5.5),
-        "backdraft":       ("Fire Wall",  8, [("Fire Ball", 8, 4)],                         "Combo",  4.5, 6.0),
-        "skyfall":         ("Meteor",    24, [("Fire Wall", 8, 8), ("Fire Ball", 8, 4)],    "AoE 2",  5.0, 6.5),
-        "brimstone_lance": ("Inferno",   32, [("Fire Bolt", 1, 6), ("Fire Ball", 8, 6)],    "Line 2", 2.8, 3.5),
-        "pyre_hydra":      ("Hydra",     40, [("Inferno", 32, 6), ("Fire Ball", 8, 6)],     "Cap",    2.0, 4.5),
+        "cinder_lance":    ("Fire Bolt",  1, [("Fire Ball", 8, 10), ("Inferno", 32, 10)],   "Line 1", 1.0, 2.2),
+        "pyroclasm":       ("Fire Ball",  8, [("Fire Bolt", 1, 10), ("Inferno", 32, 10)],   "AoE 1",  4.0, 5.5),
+        "backdraft":       ("Fire Wall",  8, [("Meteor", 24, 18), ("Fire Ball", 8, 6)],     "Combo",  4.5, 6.0),
+        "skyfall":         ("Meteor",    24, [("Fire Wall", 8, 18), ("Fire Ball", 8, 6)],   "AoE 2",  5.0, 6.5),
+        "brimstone_lance": ("Inferno",   32, [("Fire Ball", 8, 10), ("Hydra", 40, 10)],     "Line 2", 2.8, 3.5),
+        "pyre_hydra":      ("Hydra",     40, [("Inferno", 32, 10), ("Fire Ball", 8, 10)],   "Cap",    2.0, 4.5),
     }
     vname, req_lvl, syns, role, pack_n, pack_s = SPEC[slug]
     if cp.clvl < req_lvl:
@@ -347,22 +347,22 @@ def eval_fire_skill(
 
     elif slug == "pyre_hydra":
         # 1/2/3 clusters (lvl 1-12 / 13-25 / 26+) * 3 heads * ~1.25 bolts/sec/head
-        # Hydra bolt scales via HydraMissile clc3 piecewise curve on Hydra.blvl!
+        # Hydra bolt scales via HydraMissile clc3 piecewise curve on Hydra's effective slvl (passed via sumsk2calc=lvl)!
         clusters = 1 + (1 if slvl > 12 else 0) + (1 if slvl > 25 else 0)
-        b = main_blvl
+        b = slvl
         base_scale = (
             100
             + 12 * max(0, b - 1)
-            + 9 * max(0, b - 8)
-            + 13 * max(0, b - 16)
-            + 27 * max(0, b - 22)
-            + 34 * max(0, b - 28)
+            + 12 * max(0, b - 8)
+            + 45 * max(0, b - 16)
+            + 108 * max(0, b - 22)
+            + 147 * max(0, b - 28)
         ) / 100.0
         # Hydra missile base EMin=32, EMax=44
         bolt_avg = 38.0 * base_scale * syn_mult * elem_mult
         shots_per_sec = clusters * 3.0 * 1.25
-        # In Conflagration: splash sub-bolts add ~30% ST and ~2.2x pack coverage
-        st_dps = bolt_avg * shots_per_sec * (1.25 if in_stance else 1.0)
+        # In Conflagration: 6 scaled pyre_hydra_blast sub-bolts (~42% dmg each) add ~40% ST and ~2.2x pack coverage
+        st_dps = bolt_avg * shots_per_sec * (1.40 if in_stance else 1.0)
         pack_dps = bolt_avg * shots_per_sec * (pack_s if in_stance else pack_n)
     else:
         return None

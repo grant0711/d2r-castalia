@@ -554,8 +554,8 @@ def build_magicsuffix(cfg: dict) -> str:
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
         grp = r.get("group", "")
-        # Strip IAS (grp 7) from Staves & Orbs
-        if grp == "7":
+        # Strip IAS (grp 7), Life Stolen per Hit (grp 27), and Mana Stolen per Hit (grp 28) from Staves & Orbs
+        if grp in ("7", "27", "28"):
             _add_etypes(r, ["staf", "orb"])
         it1 = r.get("itype1", "")
         itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}

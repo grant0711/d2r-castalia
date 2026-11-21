@@ -41,6 +41,9 @@
             "cltmissilea": "pyroclasm_ring",
             "Param1": "5",
             "*Param1 Description": "Base number of missiles",
+            "manashift": "8",
+            "mana": "6",
+            "lvlmana": "1",
             "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : 3",
             "*calc1 desc": "Explosion Radius",
             "calc2": "(stat('skill_handofathena'.accr) > 0) ? 32 : ((lvl >= 16) ? 32 : ((stat('conversion_level'.accr) >= 2) ? 32 : 16))",
@@ -53,17 +56,17 @@
             "EType": "fire",
             "EMin": "8",
             "EMinLev1": "2",
-            "EMinLev2": "4",
-            "EMinLev3": "11",
-            "EMinLev4": "22",
-            "EMinLev5": "36",
+            "EMinLev2": "5",
+            "EMinLev3": "28",
+            "EMinLev4": "74",
+            "EMinLev5": "136",
             "EMax": "12",
             "EMaxLev1": "3",
-            "EMaxLev2": "5",
-            "EMaxLev3": "13",
-            "EMaxLev4": "25",
-            "EMaxLev5": "40",
-            "EDmgSymPerCalc": "(skill('Fire Bolt'.blvl) + skill('Inferno'.blvl)) * 6"
+            "EMaxLev2": "6",
+            "EMaxLev3": "34",
+            "EMaxLev4": "86",
+            "EMaxLev5": "156",
+            "EDmgSymPerCalc": "(skill('Fire Bolt'.blvl) + skill('Inferno'.blvl)) * 10"
           }
         },
         "skilldesc.txt": {
@@ -81,11 +84,11 @@
             "dsc3line2": "76",
             "dsc3texta2": "Firedplev",
             "dsc3textb2": "ModSorc_cinder_lance_name",
-            "dsc3calca2": "6",
+            "dsc3calca2": "10",
             "dsc3line3": "76",
             "dsc3texta3": "Firedplev",
             "dsc3textb3": "ModSorc_brimstone_lance_name",
-            "dsc3calca3": "6"
+            "dsc3calca3": "10"
           }
         }
       },

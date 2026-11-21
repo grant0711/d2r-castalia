@@ -42,6 +42,9 @@ TIER_LEVELS = [1, 8, 16, 24, 32, 40]
 
 # First vanilla *Id of each permuted class's 30-skill block.
 PERMUTED_CLASSES: Dict[str, int] = {"sor": 36, "bar": 126, "ass": 251}
+# Sorceress is ordered by (Tree, Tier) -> 36..45 Fire, 46..55 Lightning, 56..65 Cold
+# so staff/orb automagic can emit element-matched & same-tree skill-rand ranges in 1 interval per tier!
+SORC_TREE_ORDER: Tuple[str, ...] = ("fire", "lightning", "cold")
 
 # Source (pre-permutation) vanilla IDs per tier for the hand-authored overhauls.
 # The Sorceress tiers come from the 1:1 slot map (sorc/registry.py).
@@ -87,10 +90,39 @@ def source_tiers() -> Dict[str, List[List[int]]]:
 
 
 @lru_cache(maxsize=None)
-def _compute() -> Tuple[Dict[int, int], Dict[str, Tuple[Tuple[int, int], ...]]]:
+def _compute() -> Tuple[Dict[int, int], Dict[str, Tuple[Tuple[int, int], ...]], Dict[str, Tuple[Tuple[int, int], ...]]]:
+    from mod_builder.sorc.registry import SLOTS as _SORC_SLOTS
+
     perm: Dict[int, int] = {}
     ranges: Dict[str, Tuple[Tuple[int, int], ...]] = {}
+    sorc_tree_tiers: Dict[str, Tuple[Tuple[int, int], ...]] = {}
+
+    # Sorceress: contiguous (Tree, Tier) blocks: Fire 36..45, Lightning 46..55, Cold 56..65
+    pos = PERMUTED_CLASSES["sor"]
+    for tree in SORC_TREE_ORDER:
+        t_ranges = []
+        for k in range(1, 7):
+            members = sorted(s["vid"] for s in _SORC_SLOTS if s["tree"] == tree and s["row"] == k)
+            if not members:
+                t_ranges.append((-1, -1))
+                continue
+            block = list(range(pos, pos + len(members)))
+            pos += len(members)
+            t_ranges.append((block[0], block[-1]))
+            stay = [i for i in members if i in block]
+            movers = sorted(i for i in members if i not in block)
+            free = [p for p in block if p not in stay]
+            for i in stay:
+                perm[i] = i
+            for i, p in zip(movers, free):
+                perm[i] = p
+        sorc_tree_tiers[tree] = tuple(t_ranges)
+    # Keep ranges["sor"] populated with the 3 tree blocks for any generic caller
+    ranges["sor"] = tuple((36 + idx * 10, 45 + idx * 10) for idx in range(3))
+
     for cls, tiers in source_tiers().items():
+        if cls == "sor":
+            continue
         pos = PERMUTED_CLASSES[cls]
         cls_ranges = []
         for members in tiers:
@@ -106,7 +138,7 @@ def _compute() -> Tuple[Dict[int, int], Dict[str, Tuple[Tuple[int, int], ...]]]:
                 perm[i] = p
         ranges[cls] = tuple(cls_ranges)
     assert sorted(perm) == sorted(perm.values()), "skill_order: permutation is not a bijection"
-    return perm, ranges
+    return perm, ranges, sorc_tree_tiers
 
 
 def permutation() -> Dict[int, int]:
@@ -121,6 +153,11 @@ def remap_id(skill_id: int) -> int:
 def final_tier_ranges(cls: str) -> List[Tuple[int, int]]:
     """Final contiguous (lo, hi) id range of each tier 1..6 for a permuted class."""
     return list(_compute()[1][cls])
+
+
+def final_sorc_tree_tier_ranges() -> Dict[str, List[Tuple[int, int]]]:
+    """Final contiguous (lo, hi) id range per tier (1..6, or (-1,-1) if empty) for each Sorceress tree."""
+    return {tree: list(trs) for tree, trs in _compute()[2].items()}
 
 
 def final_tier_ids(cls: str) -> List[List[int]]:

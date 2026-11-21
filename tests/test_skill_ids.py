@@ -50,15 +50,26 @@ class TestSkillIds(unittest.TestCase):
         for cls, (lo, hi) in CLASS_RANGES.items():
             rows = sk_rows[lo:hi + 1]
             self.assertTrue(all(r.get("charclass") == cls for r in rows), f"{cls}: ids {lo}..{hi} not all {cls}")
-            levels = [int(r["reqlevel"]) for r in rows]
-            self.assertEqual(levels, sorted(levels), f"{cls}: reqlevels not tier-ordered by id: {levels}")
-            self.assertEqual(sorted(set(levels)), TIERS, f"{cls}: unexpected tier levels {sorted(set(levels))}")
+            if cls == "sor":
+                # Sorceress is ordered by (Tree, Tier): 36..45 Fire, 46..55 Lightning, 56..65 Cold
+                for tree_idx in range(3):
+                    sub = rows[tree_idx * 10:(tree_idx + 1) * 10]
+                    levels = [int(r["reqlevel"]) for r in sub]
+                    self.assertEqual(levels, sorted(levels), f"sor tree {tree_idx}: reqlevels not tier-ordered: {levels}")
+                    self.assertEqual(sorted(set(levels)), TIERS, f"sor tree {tree_idx}: unexpected tiers {sorted(set(levels))}")
+            else:
+                levels = [int(r["reqlevel"]) for r in rows]
+                self.assertEqual(levels, sorted(levels), f"{cls}: reqlevels not tier-ordered by id: {levels}")
+                self.assertEqual(sorted(set(levels)), TIERS, f"{cls}: unexpected tier levels {sorted(set(levels))}")
 
     def test_staffmod_ranges_stay_inside_class_and_unlocked_tiers(self):
         _, auto_rows = read_mod_tsv("automagic.txt")
         _, sk_rows = read_mod_tsv("skills.txt")
         by_id = {int(r["*Id"]): r for r in sk_rows}
-        bracket_cap = {("1", "7"): 1, ("8", "13"): 8, ("14", "20"): 16, ("21", "28"): 24, ("29", "36"): 32, ("37", ""): 40}
+        bracket_cap = {
+            ("1", "7"): 1, ("8", "13"): 8, ("14", "20"): 16,
+            ("21", "28"): 24, ("29", "36"): 32, ("32", "36"): 32, ("37", ""): 40,
+        }
         for r in auto_rows:
             ranges = [(int(r[f"mod{i}min"]), int(r[f"mod{i}max"])) for i in (1, 2, 3) if r.get(f"mod{i}code") == "skill-rand"]
             if not ranges:
@@ -121,6 +132,53 @@ class TestSkillIds(unittest.TestCase):
                 if si in moved:
                     self.assertIn((s.get("modeId"), moved[si], s.get("stepIndex")), mod_keys,
                                   f"{rel}: state for skill {si} must move to {moved[si]}")
+
+
+    def test_sorc_staff_and_orb_automagic_coherence_and_affix_exclusions(self):
+        _, auto_rows = read_mod_tsv("automagic.txt")
+        tree_blocks = {"extra-fire": (36, 45), "extra-ltng": (46, 55), "extra-cold": (56, 65)}
+        for r in auto_rows:
+            grp = r.get("group", "")
+            if grp not in ("303", "310"):
+                continue
+            ranges = [(int(r[f"mod{i}min"]), int(r[f"mod{i}max"])) for i in (1, 2, 3) if r.get(f"mod{i}code") == "skill-rand"]
+            self.assertTrue(ranges, f"group {grp} row missing skill-rand")
+            # All skill-rand ranges on a Staff (310) or Orb (303) row must lie inside ONE Sorc tree block
+            trees_hit = set()
+            for lo, hi in ranges:
+                for sid in range(lo, hi + 1):
+                    trees_hit.add((sid - 36) // 10)
+            self.assertEqual(len(trees_hit), 1, f"group {grp} spans multiple Sorc trees: {ranges}")
+            # If elemental skill damage is present, must unlock >= 32, cap <= 20%, and match the tree!
+            m1 = r.get("mod1code", "")
+            if m1 in tree_blocks:
+                self.assertGreaterEqual(int(r.get("level", "0")), 32, f"elem dmg automagic unlocked below lvl 32: {r}")
+                self.assertLessEqual(int(r.get("mod1max", "0")), 20, f"elem dmg automagic exceeds 20% cap: {r}")
+                tlo, thi = tree_blocks[m1]
+                for lo, hi in ranges:
+                    self.assertTrue(tlo <= lo <= hi <= thi, f"{m1} row has mismatched skill-rand {(lo, hi)}")
+
+        # Verify blocked melee affixes (dmg-demon/undead, IAS, OW, DS, CB) cannot spawn on staf or orb
+        _, it_rows = read_mod_tsv("itemtypes.txt")
+        parents = {r["Code"]: [p for p in (r.get("Equiv1", ""), r.get("Equiv2", "")) if p] for r in it_rows if r.get("Code")}
+        def anc(code):
+            s, st = {code}, [code]
+            while st:
+                c = st.pop()
+                for p in parents.get(c, []):
+                    if p not in s:
+                        s.add(p); st.append(p)
+            return s
+        staf_a, orb_a = anc("staf"), anc("orb")
+        for fname, blocked_grps in (("magicprefix.txt", {"123", "142"}), ("magicsuffix.txt", {"7", "61", "62", "63"})):
+            _, arows = read_mod_tsv(fname)
+            for r in arows:
+                if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("group") not in blocked_grps:
+                    continue
+                its = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+                ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
+                self.assertFalse(bool(its & staf_a) and not bool(ets & staf_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on staf")
+                self.assertFalse(bool(its & orb_a) and not bool(ets & orb_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on orb")
 
 
 if __name__ == "__main__":

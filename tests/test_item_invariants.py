@@ -120,9 +120,14 @@ class TestItemInvariants(unittest.TestCase):
         }
         bracket_to_reqcap = {
             ("1", "7"): 1, ("8", "13"): 8, ("14", "20"): 16,
-            ("21", "28"): 24, ("29", "36"): 32, ("37", ""): 40,
+            ("21", "28"): 24, ("29", "36"): 32, ("32", "36"): 32, ("37", ""): 40,
         }
-        seen_by_grp_bracket = {(g, b): set() for g in grp_to_cls for b in bracket_to_reqcap}
+        seen_by_grp_bracket = {
+            (g, b): set()
+            for g in grp_to_cls
+            for b in bracket_to_reqcap
+            if b != ("32", "36") or g == "310"
+        }
 
         for r in auto_rows:
             grp = r.get("group", "")

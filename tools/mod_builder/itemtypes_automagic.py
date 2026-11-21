@@ -470,13 +470,51 @@ def build_automagic(cfg: dict) -> str:
     # Everything appended so far is a small fixed group; the class staffmod groups below are large.
     head_count = len(rows)
 
-    # 3. Rebuild group 303 (Sorceress Orbs: innate +Life or +Mana in mod1 + 1-2 Sorceress skill-rand in mod2/mod3)
-    # Sorceress tiers come from the 1:1 skill map and are NOT contiguous id blocks, so every skill pool is
-    # decomposed into maximal contiguous [lo, hi] intervals (one automagic row per interval).
-    sor_sets = CLASS_SKILL_ID_SETS["sor"]
+    # 3. Rebuild group 303 (Sorceress Orbs: innate +Life or +Mana in mod1 + 1-2 SAME-TREE skill-rand in mod2/mod3)
+    # Sorceress final IDs are ordered by (Tree, Tier): Fire 36..45, Lightning 46..55, Cold 56..65.
+    sor_tree_tiers = _skill_order.final_sorc_tree_tier_ranges()
+    TREE_ELEM_STAT = {"fire": "extra-fire", "lightning": "extra-ltng", "cold": "extra-cold"}
 
-    def sor_union(t_lo: int, t_hi: int) -> List[int]:
-        return sorted({i for t in range(t_lo - 1, t_hi) for i in sor_sets[t]})
+    def _emit_sorc_tree_bundle(
+        grp: str,
+        k: int,
+        min_lvl: str,
+        max_lvl: str,
+        lreq: str,
+        tree: str,
+        stat_mod: tuple,
+        itype1: str,
+        itype2: str,
+    ) -> None:
+        trs = sor_tree_tiers[tree]
+        tree_lo = trs[0][0]
+        tk_lo, tk_hi = trs[k - 1]
+        for slvl, freq in (("1", "3"), ("2", "2"), ("3", "1")):
+            rows.append(
+                _make_auto_row(
+                    headers, grp, min_lvl, max_lvl, lreq, freq,
+                    [stat_mod, ("skill-rand", slvl, tree_lo, tk_hi)],
+                    itype1=itype1, itype2=itype2,
+                )
+            )
+        if k >= 2:
+            prev_hi = trs[k - 2][1]
+            for s1, s2, freq in (("2", "1", "2"), ("2", "2", "1"), ("3", "2", "1"), ("3", "3", "1")):
+                rows.append(
+                    _make_auto_row(
+                        headers, grp, min_lvl, max_lvl, lreq, freq,
+                        [stat_mod, ("skill-rand", s1, tk_lo, tk_hi), ("skill-rand", s2, tree_lo, prev_hi)],
+                        itype1=itype1, itype2=itype2,
+                    )
+                )
+        elif tk_hi > tk_lo:
+            rows.append(
+                _make_auto_row(
+                    headers, grp, min_lvl, max_lvl, lreq, "2",
+                    [stat_mod, ("skill-rand", "2", tk_lo, tk_lo), ("skill-rand", "1", tk_hi, tk_hi)],
+                    itype1=itype1, itype2=itype2,
+                )
+            )
 
     orb_stat_tiers = [
         # (k, min_lvl, max_lvl, lreq, hp_min, hp_max, mana_min, mana_max)
@@ -488,45 +526,45 @@ def build_automagic(cfg: dict) -> str:
         (6, "37", "", "30", "55", "80", "55", "80"),
     ]
     for k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi in orb_stat_tiers:
-        full_ids = sor_union(1, k)
-        for base_stat, st_lo, st_hi in (("hp", hp_lo, hp_hi), ("mana", mp_lo, mp_hi)):
-            for slvl, freq in (("1", 3), ("2", 2), ("3", 1)):
-                ivs = _to_intervals(full_ids)
-                for lo, hi in ivs:
-                    f = str(max(1, (freq * (hi - lo + 1) + 2) // 5)) if len(ivs) > 1 else str(freq)
-                    rows.append(
-                        _make_auto_row(
-                            headers, "303", min_lvl, max_lvl, lreq, f,
-                            [(base_stat, "", st_lo, st_hi), ("skill-rand", slvl, lo, hi)],
-                        )
-                    )
-            if k >= 2:
-                top_ivs = _to_intervals(sor_sets[k - 1])
-                low_ivs = _to_intervals(sor_union(1, k - 1))
-                pairs = ((("2", "1", "2"), ("2", "2", "1"), ("3", "2", "1"), ("3", "3", "1")))
-                for s1, s2, freq in pairs:
-                    for i in range(max(len(top_ivs), len(low_ivs))):
-                        t_lo, t_hi = top_ivs[i % len(top_ivs)]
-                        l_lo, l_hi = low_ivs[i % len(low_ivs)]
-                        rows.append(
-                            _make_auto_row(
-                                headers, "303", min_lvl, max_lvl, lreq, freq,
-                                [(base_stat, "", st_lo, st_hi), ("skill-rand", s1, t_lo, t_hi), ("skill-rand", s2, l_lo, l_hi)],
-                            )
-                        )
-            else:
-                half = max(1, len(full_ids) // 2)
-                a_ivs = _to_intervals(full_ids[:half])
-                b_ivs = _to_intervals(full_ids[half:])
-                for i in range(max(len(a_ivs), len(b_ivs))):
-                    a_lo, a_hi = a_ivs[i % len(a_ivs)]
-                    b_lo, b_hi = b_ivs[i % len(b_ivs)]
-                    rows.append(
-                        _make_auto_row(
-                            headers, "303", min_lvl, max_lvl, lreq, "2",
-                            [(base_stat, "", st_lo, st_hi), ("skill-rand", "2", a_lo, a_hi), ("skill-rand", "1", b_lo, b_hi)],
-                        )
-                    )
+        for tree in _skill_order.SORC_TREE_ORDER:
+            for base_stat, st_lo, st_hi in (("hp", hp_lo, hp_hi), ("mana", mp_lo, mp_hi)):
+                _emit_sorc_tree_bundle(
+                    "303", k, min_lvl, max_lvl, lreq, tree,
+                    (base_stat, "", st_lo, st_hi),
+                    itype1="orb", itype2="",
+                )
+
+    # 3b. Build group 310 (2H Staves: Life / Mana / FCR / Element-Matched +% Elem Dmg [lvl 32+, cap 20%] + 1-2 SAME-TREE skills)
+    staff_stat_tiers = [
+        # (k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi, fcr_lo, fcr_hi, elem_lo, elem_hi)
+        (1, "1", "7", "1",   "10", "20",  "10", "20",  "10", "10", "",   ""),
+        (2, "8", "13", "6",  "20", "35",  "20", "35",  "10", "10", "",   ""),
+        (3, "14", "20", "12","35", "55",  "35", "55",  "15", "15", "",   ""),
+        (4, "21", "28", "18","55", "80",  "55", "80",  "15", "15", "",   ""),
+        (5, "29", "36", "24","80", "110", "80", "110", "20", "20", "6",  "12"),
+        (6, "37", "",   "30","110","150", "110","150", "25", "25", "10", "20"),
+    ]
+    for k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi, fcr_lo, fcr_hi, el_lo, el_hi in staff_stat_tiers:
+        for tree in _skill_order.SORC_TREE_ORDER:
+            for base_stat, st_lo, st_hi in (
+                ("hp", hp_lo, hp_hi),
+                ("mana", mp_lo, mp_hi),
+                ("cast1", fcr_lo, fcr_hi),
+            ):
+                _emit_sorc_tree_bundle(
+                    "310", k, min_lvl, max_lvl, lreq, tree,
+                    (base_stat, "", st_lo, st_hi),
+                    itype1="staf", itype2="",
+                )
+            if el_lo:
+                # Elemental Skill Damage automagic unlocks strictly at level 32 (capped at +20%)
+                el_min_lvl = "32" if k == 5 else min_lvl
+                el_lreq = "32" if k == 5 else "35"
+                _emit_sorc_tree_bundle(
+                    "310", k, el_min_lvl, max_lvl, el_lreq, tree,
+                    (TREE_ELEM_STAT[tree], "", el_lo, el_hi),
+                    itype1="staf", itype2="",
+                )
 
     # 4. Rebuild group 305 (Necromancer Shrunken Heads: innate dmg-pois in mod1 + 1-2 Necromancer skill-rand in mod2/mod3)
     nec_tiers = CLASS_SKILL_TIERS["nec"]
@@ -574,10 +612,10 @@ def build_automagic(cfg: dict) -> str:
                 )
             )
 
-    # 5. Build dedicated 1..3 skill-rand groups for Staves (310), Wands (311), Scepters (312),
+    # 5. Build dedicated 1..3 skill-rand groups for Wands (311), Scepters (312),
     # Primal Helms (313), Druid Pelts (314), and Assassin Claws (315)
+    # (Group 310 for 2H Staves is built above with same-tree + element-matched automagic!)
     staffmod_groups = [
-        ("310", "sor"),
         ("311", "nec"),
         ("312", "pal"),
         ("313", "bar"),

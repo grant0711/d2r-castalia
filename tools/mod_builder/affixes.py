@@ -297,7 +297,17 @@ def build_magicprefix(cfg: dict) -> str:
 
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
+        # Fix vanilla D2R typo: 'staff' -> 'staf' so Sorceress +1/+2/+3 Skill Tab prefixes spawn on Staves!
+        for _idx in range(1, 8):
+            if r.get(f"itype{_idx}", "").strip() == "staff":
+                r[f"itype{_idx}"] = "staf"
         grp = r.get("group", "")
+        # Strip vs-Demon and vs-Undead melee prefixes from Staves & Orbs
+        if grp in ("123", "142"):
+            _add_etypes(r, ["staf", "orb"])
+        # Allow All Resistances (grp 116: Shimmering -> Chromatic) on 2H Staves
+        if grp == "116" and r.get("mod1code") == "res-all":
+            _add_itypes(r, ["staf"])
         it1 = r.get("itype1", "")
         itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}
         is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all
@@ -451,6 +461,34 @@ def build_magicprefix(cfg: dict) -> str:
         nr["add"] = "0"
         rows.append(nr)
 
+    # 7b. Narrowly extend 2H Staff-only caster prefixes (Skills & Mana ceilings above 1H Orbs)
+    staff_extra_prefixes = [
+        # (Name, rare, level, levelreq, freq, grp, mcode, mparam, mmin, mmax)
+        ("Seraph's",    "",  "72", "65", "1", "125", "sor",      "",  "3",   "3"),
+        ("Hellfire",    "",  "76", "68", "1", "125", "skilltab", "3", "4",   "4"),
+        ("Tempest",     "",  "76", "68", "1", "125", "skilltab", "4", "4",   "4"),
+        ("Frostbound",  "",  "76", "68", "1", "125", "skilltab", "5", "4",   "4"),
+        ("Leviathan's", "1", "65", "55", "2", "115", "mana",     "",  "121", "180"),
+    ]
+    for pname, prare, plvl, plreq, pfreq, pgrp, pmcode, pmparam, pmin, pmax in staff_extra_prefixes:
+        sp = {h: "" for h in headers}
+        sp["Name"] = pname
+        sp["version"] = "100"
+        sp["spawnable"] = "1"
+        sp["rare"] = prare
+        sp["level"] = plvl
+        sp["levelreq"] = plreq
+        sp["frequency"] = pfreq
+        sp["group"] = pgrp
+        sp["mod1code"] = pmcode
+        sp["mod1param"] = pmparam
+        sp["mod1min"] = pmin
+        sp["mod1max"] = pmax
+        sp["itype1"] = "staf"
+        sp["multiply"] = "0"
+        sp["add"] = "0"
+        rows.append(sp)
+
     # 7. Add level=1 prefix for Blacksmith's Malus (malu) so Gamble rolls cleanly
     mp = {h: "" for h in headers}
     mp["Name"] = "Forgemaster's"
@@ -516,6 +554,9 @@ def build_magicsuffix(cfg: dict) -> str:
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
         grp = r.get("group", "")
+        # Strip IAS (grp 7) from Staves & Orbs
+        if grp == "7":
+            _add_etypes(r, ["staf", "orb"])
         it1 = r.get("itype1", "")
         itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}
         is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all
@@ -630,9 +671,34 @@ def build_magicsuffix(cfg: dict) -> str:
             nr[f"itype{idx}"] = it
         if "helm" in itypes:
             nr["etype1"] = "bhlm"
+        # Strip Open Wounds (61), Deadly Strike (62), and Crushing Blow (63) from Staves & Orbs
+        if grp in ("61", "62", "63"):
+            _add_etypes(nr, ["staf", "orb"])
         nr["multiply"] = "0"
         nr["add"] = "0"
         rows.append(nr)
+
+    # 4b. Narrowly extend 2H Staff-only FCR suffixes (30% Rare-eligible, 40% Magic-only vs 1H Orb max 20%)
+    for sname, srare, slvl, slreq, sfreq, sval in (
+        ("of the Archmage",  "1", "52", "44", "2", "30"),
+        ("of the Ascendant", "",  "68", "60", "1", "40"),
+    ):
+        sf = {h: "" for h in headers}
+        sf["Name"] = sname
+        sf["version"] = "100"
+        sf["spawnable"] = "1"
+        sf["rare"] = srare
+        sf["level"] = slvl
+        sf["levelreq"] = slreq
+        sf["frequency"] = sfreq
+        sf["group"] = "9"
+        sf["mod1code"] = "cast1"
+        sf["mod1min"] = sval
+        sf["mod1max"] = sval
+        sf["itype1"] = "staf"
+        sf["multiply"] = "0"
+        sf["add"] = "0"
+        rows.append(sf)
 
     # 5. Add level=1 suffix for Blacksmith's Malus (malu) so Gamble rolls cleanly
     ms = {h: "" for h in headers}
@@ -716,6 +782,13 @@ def build_affix_strings(cfg: dict) -> str:
         (60078, "of Crippling", "of Crippling"),
         (60079, "Forgemaster's", ""),
         (60080, "of Socketing", ""),
+        (60081, "Seraph's", "Seraph's"),
+        (60082, "Hellfire", "Hellfire"),
+        (60083, "Tempest", "Tempest"),
+        (60084, "Frostbound", "Frostbound"),
+        (60085, "Leviathan's", "Leviathan's"),
+        (60086, "of the Archmage", "of the Archmage"),
+        (60087, "of the Ascendant", "of the Ascendant"),
     ]
     return update_mod_strings_json("item-nameaffixes.json", updates)
 

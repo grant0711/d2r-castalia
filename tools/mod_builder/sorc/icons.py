@@ -2,11 +2,18 @@
 Sorceress skill icons (soskillicon.sprite / .lowend.sprite).
 
 Fire tree icon changes (cel = normal frame, cel+1 = pressed frame; each cel is 132x130 HD / 67x65 lowend):
-  - Ignition      (row 'fire mastery', cel 50) <- vanilla Warmth icon (cel 2)
-  - Conflagration (row 'enchant',      cel 32) <- vanilla Fire Mastery icon (cel 50)
-  - Brimstone     (row 'inferno',      cel 10) <- vanilla Fire Ball icon (cel 22)
-  - Kindling      (row 'warmth',       cel  2) <- NEW: simplified flaming sword & horned demon silhouette (assets/skill_icons/kindling.jpg)
-  - Pyroclasm     (row 'fire ball',    cel 22) <- NEW: four radial fire bolts (assets/skill_icons/pyroclasm.jpg)
+  - Ignition      (row 'fire mastery',      cel 50) <- vanilla Warmth icon (cel 2)
+  - Conflagration (row 'enchant',           cel 32) <- vanilla Fire Mastery icon (cel 50)
+  - Brimstone     (row 'inferno',           cel 10) <- vanilla Fire Ball icon (cel 22)
+  - Kindling      (row 'warmth',            cel  2) <- NEW: simplified flaming sword & horned demon silhouette (assets/skill_icons/kindling.jpg)
+  - Pyroclasm     (row 'fire ball',         cel 22) <- NEW: four radial fire bolts (assets/skill_icons/pyroclasm.jpg)
+
+Lightning tree icon changes:
+  - Overcharge     (row 'energy shield',     cel 44) <- vanilla Lightning Mastery icon (cel 54)
+  - Echo           (row 'lightning mastery', cel 54) <- NEW: concentric echo wave arcs (assets/skill_icons/echo.jpg)
+  - Conduction     (row 'telekinesis',       cel 14) <- NEW: lightning bolt & horned demon silhouette (assets/skill_icons/conduction.jpg)
+  - Sunderbolt     (row 'static field',      cel 12) <- NEW: downward bolt splitting shock wedges (assets/skill_icons/sunderbolt.jpg)
+  - Heaven's Wrath (row 'charged bolt',      cel  4) <- NEW: storm cloud & three lightning bolts (assets/skill_icons/heavens_wrath.jpg)
 New icons are stamped as silver-plate silhouettes on the same brown stone tile as the vanilla icons.
 """
 import math
@@ -21,7 +28,7 @@ PX0, PX1, PY0, PY1 = 19, 112, 19, 111  # plate interior (93x92)
 CX, CY = 65.5, 65.0
 
 # dst cel <- src cel (verbatim copies of vanilla art)
-COPY_CELS = {50: 2, 32: 50, 10: 22}
+COPY_CELS = {50: 2, 32: 50, 10: 22, 44: 54}
 
 
 def _cel(buf: bytes, cel: int, w: int, h: int) -> bytearray:
@@ -186,6 +193,22 @@ def pyroclasm_mask(src_cels: dict, pressed: int) -> list:
     return _mask_from_icon_jpg("pyroclasm.jpg", inset=6)
 
 
+def echo_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("echo.jpg", inset=6)
+
+
+def conduction_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("conduction.jpg", inset=4)
+
+
+def sunderbolt_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("sunderbolt.jpg", inset=5)
+
+
+def heavens_wrath_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("heavens_wrath.jpg", inset=5)
+
+
 def build_soskillicon_pair() -> str:
     rel = "data/hd/global/ui/spells/sorceress/"
     src_hd = os.path.join(VANILLA_ROOT, rel, "soskillicon.sprite")
@@ -214,7 +237,14 @@ def build_soskillicon_pair() -> str:
     src_cels = {c: _cel(sor_raw, c, FW, FH) for c in (0, 1, 32, 33)}
     brown = _brown_templates(sor_raw)
     silver = _silver_templates(bar_raw)
-    for dst, maker in ((2, kindling_mask), (22, pyroclasm_mask)):
+    for dst, maker in (
+        (2, kindling_mask),
+        (22, pyroclasm_mask),
+        (54, echo_mask),
+        (14, conduction_mask),
+        (12, sunderbolt_mask),
+        (4, heavens_wrath_mask),
+    ):
         for p in (0, 1):
             mask = maker(src_cels, p)
             if p:

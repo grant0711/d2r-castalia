@@ -13,7 +13,7 @@ Lightning tree icon changes:
   - Echo           (row 'lightning mastery', cel 54) <- NEW: concentric echo wave arcs (assets/skill_icons/echo.jpg)
   - Conduction     (row 'telekinesis',       cel 14) <- NEW: lightning bolt & horned demon silhouette (assets/skill_icons/conduction.jpg)
   - Sunderbolt     (row 'static field',      cel 12) <- NEW: downward bolt splitting shock wedges (assets/skill_icons/sunderbolt.jpg)
-  - Heaven's Wrath (row 'charged bolt',      cel  4) <- NEW: storm cloud & three lightning bolts (assets/skill_icons/heavens_wrath.jpg)
+  - Heaven's Wrath (row 'charged bolt',      cel  4) <- NEW: celestial starburst halo pierced by thunderbolt (assets/skill_icons/heavens_wrath.jpg)
 New icons are stamped as silver-plate silhouettes on the same brown stone tile as the vanilla icons.
 """
 import math
@@ -194,19 +194,19 @@ def pyroclasm_mask(src_cels: dict, pressed: int) -> list:
 
 
 def echo_mask(src_cels: dict, pressed: int) -> list:
-    return _mask_from_icon_jpg("echo.jpg", inset=6)
+    return _mask_from_icon_jpg("echo.jpg", inset=3)
 
 
 def conduction_mask(src_cels: dict, pressed: int) -> list:
-    return _mask_from_icon_jpg("conduction.jpg", inset=4)
+    return _mask_from_icon_jpg("conduction.jpg", inset=3)
 
 
 def sunderbolt_mask(src_cels: dict, pressed: int) -> list:
-    return _mask_from_icon_jpg("sunderbolt.jpg", inset=5)
+    return _mask_from_icon_jpg("sunderbolt.jpg", inset=3)
 
 
 def heavens_wrath_mask(src_cels: dict, pressed: int) -> list:
-    return _mask_from_icon_jpg("heavens_wrath.jpg", inset=5)
+    return _mask_from_icon_jpg("heavens_wrath.jpg", inset=3)
 
 
 def build_soskillicon_pair() -> str:

@@ -19,7 +19,7 @@
             "Vel": "8",
             "MaxVel": "16",
             "VelLev": "3",
-            "Range": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : (9 * (100 + stat('ironmaiden_level'.accr)) / 100)",
+            "Range": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : (9 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600)",
             "NextDelay": "9",
             "ExplosionMissile": "ringoffireexplode",
             "sHitPar1": "0",

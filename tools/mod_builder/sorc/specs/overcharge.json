@@ -12,7 +12,7 @@
             "srvstfunc": "",
             "srvdofunc": "18",
             "aurastate": "sorc_stance_light",
-            "auralencalc": "(1500 + (skill('Energy Shield'.lvl) * 250)) * (100 + stat('conversion_maxhp'.accr)) / 100",
+            "auralencalc": "(1500 + (skill('Energy Shield'.lvl) * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300",
             "auraevent1": "damagedinmelee",
             "auraeventfunc1": "3",
             "castoverlay": "light_cast_2",

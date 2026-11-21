@@ -187,7 +187,7 @@
             "Param3": "",
             "Param4": "",
             "Param5": "",
-            "Param8": "8",
+            "Param8": "6",
             "*Param8 Description": "Damage synergy %",
             "HitShift": "8",
             "EType": "ltng",
@@ -203,7 +203,7 @@
             "EMaxLev3": "32",
             "EMaxLev4": "54",
             "EMaxLev5": "84",
-            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Nova'.blvl) + skill('Static Field'.blvl)) * par8)"
+            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : (skill('Nova'.blvl) * par8)"
           }
         },
         "skilldesc.txt": {
@@ -237,11 +237,11 @@
             "dsc3line2": "76",
             "dsc3texta2": "Ltngdplev",
             "dsc3textb2": "ModSorc_pulse_ring_name",
-            "dsc3calca2": "8",
-            "dsc3line3": "76",
-            "dsc3texta3": "Ltngdplev",
-            "dsc3textb3": "ModSorc_tesla_field_name",
-            "dsc3calca3": "8",
+            "dsc3calca2": "6",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": "",
             "dsc3line4": "",
             "dsc3texta4": "",
             "dsc3textb4": "",

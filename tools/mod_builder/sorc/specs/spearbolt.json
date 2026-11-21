@@ -106,7 +106,7 @@
             "MaxELev3": "12",
             "MaxELev4": "20",
             "MaxELev5": "32",
-            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Lightning'.blvl) + skill('Thunder Storm'.blvl)) * 8)"
+            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Charged Bolt'.blvl) + skill('Lightning'.blvl)) * 6)"
           },
           "spearbolt_chain": {
             "_clone": "chainlightning",
@@ -191,7 +191,7 @@
             "Param3": "",
             "Param4": "",
             "Param5": "",
-            "Param8": "8",
+            "Param8": "6",
             "*Param8 Description": "Damage synergy %",
             "HitShift": "8",
             "EType": "ltng",
@@ -207,7 +207,7 @@
             "EMaxLev3": "32",
             "EMaxLev4": "52",
             "EMaxLev5": "80",
-            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Lightning'.blvl) + skill('Thunder Storm'.blvl)) * par8)",
+            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Charged Bolt'.blvl) + skill('Lightning'.blvl)) * par8)",
             "seqnum": "",
             "UseAttackRate": "",
             "monanim": "xx"
@@ -243,12 +243,12 @@
             "dsc3calca1": "2",
             "dsc3line2": "76",
             "dsc3texta2": "Ltngdplev",
-            "dsc3textb2": "ModSorc_static_lance_name",
-            "dsc3calca2": "8",
+            "dsc3textb2": "ModSorc_heavens_wrath_name",
+            "dsc3calca2": "6",
             "dsc3line3": "76",
             "dsc3texta3": "Ltngdplev",
-            "dsc3textb3": "ModSorc_stormcall_name",
-            "dsc3calca3": "8",
+            "dsc3textb3": "ModSorc_static_lance_name",
+            "dsc3calca3": "6",
             "dsc3line4": "",
             "dsc3texta4": "",
             "dsc3textb4": "",

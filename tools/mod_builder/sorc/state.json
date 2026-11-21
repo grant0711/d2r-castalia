@@ -112,8 +112,8 @@
     "variant": "p1_static_lance"
   },
   "stormcall": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "p9_consistent_nova_damage"
   },
   "tesla_field": {
     "status": "done",

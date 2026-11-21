@@ -20,16 +20,16 @@
 
 | r.c | lvl | new skill | replaces (id) | role | status | variant |
 |---|---|---|---|---|---|---|
-| 1.2 | 1 | **Static Lance** (`static_lance`) | Lightning (49) | line 1 (levelling) | done | p1_static_lance |
+| 1.2 | 1 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | done | final1 |
+| 1.3 | 1 | **Static Lance** (`static_lance`) | Lightning (49) | line 1 (levelling) | done | p1_static_lance |
 | 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | Nova (48) | AoE 1 (levelling) | done | final1 |
-| 2.3 | 8 | **Phase Step** (`phase_step`) | Teleport (54) | utility (mobility) | done | p10_scaling_frenzy |
-| 3.1 | 16 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | done | final1 |
-| 3.2 | 16 | **Sunderbolt** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | done | final1 |
-| 3.3 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | done | final2 |
-| 4.2 | 24 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | final5 |
-| 4.3 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | stub | baseline |
-| 5.2 | 32 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | done | p13_snappy_shock_wake |
-| 6.2 | 40 | **Heaven's Wrath** (`heavens_wrath`) | Charged Bolt (38) | capstone | done | p6_stance_cancel |
+| 3.2 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | done | final2 |
+| 3.3 | 16 | **Sunderbolt** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | done | final1 |
+| 4.1 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | done | p9_consistent_nova_damage |
+| 4.3 | 24 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | done | p13_snappy_shock_wake |
+| 5.2 | 32 | **Overcharge** (`overcharge`) | Energy Shield (58) | STANCE | done | final5 |
+| 5.3 | 32 | **Phase Step** (`phase_step`) | Teleport (54) | utility (mobility) | done | p10_scaling_frenzy |
+| 6.3 | 40 | **Heaven's Wrath** (`heavens_wrath`) | Charged Bolt (38) | capstone | done | p6_stance_cancel |
 
 ## Cold (skill page 3)
 

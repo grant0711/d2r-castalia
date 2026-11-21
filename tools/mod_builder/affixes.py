@@ -276,10 +276,10 @@ def build_magicprefix(cfg: dict) -> str:
     # - 126..155: Reworked Barbarian skills
     # - 54 / "Teleport": Retired Teleport (planned stance-specific refactor)
     # - 91 / "Lower Resist": Removed from item charges/oskills/procs (no elemental pierce on items)
-    # - 37, 40, 43, 46, 50, 52, 58, 60, 61, 63, 65: Reworked Sorceress stances, stance-gated skills & passives
+    # - 37, 38, 40, 43, 46, 50, 52, 58, 60, 61, 63, 65: Reworked Sorceress stances, stance-gated skills, passives & Heaven's Wrath capstone
     retired_affix_skill_refs = {
-        "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
-        "Teleport", "Lower Resist", "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+        "37", "38", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+        "Teleport", "Lower Resist", "Warmth", "Charged Bolt", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
         "Enchant", "Energy Shield", "Chilling Armor", "Fire Mastery", "Lightning Mastery", "Cold Mastery",
     }
 
@@ -494,10 +494,10 @@ def build_magicsuffix(cfg: dict) -> str:
     # - 126..155: Reworked Barbarian skills
     # - 54 / "Teleport": Retired Teleport (planned stance-specific refactor)
     # - 91 / "Lower Resist": Removed from item charges/oskills/procs (no elemental pierce on items)
-    # - 37, 40, 43, 46, 50, 52, 58, 60, 61, 63, 65: Reworked Sorceress stances, stance-gated skills & passives
+    # - 37, 38, 40, 43, 46, 50, 52, 58, 60, 61, 63, 65: Reworked Sorceress stances, stance-gated skills, passives & Heaven's Wrath capstone
     retired_affix_skill_refs = {
-        "37", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
-        "Teleport", "Lower Resist", "Warmth", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
+        "37", "38", "40", "43", "46", "50", "52", "54", "58", "60", "61", "63", "65", "91",
+        "Teleport", "Lower Resist", "Warmth", "Charged Bolt", "Frozen Armor", "Telekinesis", "Blaze", "Shiver Armor",
         "Enchant", "Energy Shield", "Chilling Armor", "Fire Mastery", "Lightning Mastery", "Cold Mastery",
     }
 

@@ -104,12 +104,12 @@
     "variant": "test_fizzle"
   },
   "spearbolt": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "p13_snappy_shock_wake"
   },
   "static_lance": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "done",
+    "variant": "p1_static_lance"
   },
   "stormcall": {
     "status": "stub",

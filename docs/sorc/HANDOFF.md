@@ -5,7 +5,7 @@
 Start here without grepping the codebase:
 
 ```bash
-# 1. View all 30 Sorceress skill slots, vanilla row IDs, status (21 done, 9 stub), and active variants:
+# 1. View all 30 Sorceress skill slots, vanilla row IDs, status (23 done, 7 stub), and active variants:
 /home/grant/games/d2r/bin/d2r-sorc map
 
 # 2. Run the 30-skill TDD formula linter & stance-matrix simulator:
@@ -31,9 +31,9 @@ Key reference files:
 
 ---
 
-## 2. Current Progress (`21 done`, `9 stub`)
+## 2. Current Progress (`23 done`, `7 stub`)
 
-### A. Completed & Locked In (`16 / 30 done`)
+### A. Completed & Locked In (`23 / 30 done`)
 1. **Entire Fire Tree (`10 / 10 done`)** — including prerequisite DAG (`registry.py`), stone connector arrows (`tools/mod_builder/sorc/tree.py`), custom skill icons (`tools/mod_builder/sorc/icons.py`), Conflagration empowerment, and cross-stance fizzle (`test_fizzle`):
    - **Cinder Lance** (`cinder_lance` $\rightarrow$ `Fire Bolt` 36, R1C1, Lvl 1, Line 1): `srvdofunc=1/cltdofunc=1`, velocity scales with level (`Vel=14, VelLev=4, MaxVel=40`); in Conflagration range doubles (`15 -> 30`) and impact triggers radius-4 AoE (`cinder_lance_crater`, `pCltDoFunc=48`).
    - **Pyroclasm** (`pyroclasm` $\rightarrow$ `Fire Ball` 47, R2C1, Lvl 8, AoE 1): `srvdofunc=154/cltdofunc=99` (`pyroclasm_ring`), 360° knockback ring whose radius scales via `VelLev=3` (`Accel=""`) and bolt count scales `5 -> 8` (`+5` in Conflagration, up to 16).
@@ -54,7 +54,9 @@ Key reference files:
    - **Brittle Touch** (`brittle_touch` $\rightarrow$ `Shiver Armor` 50, Cold R4C3, Lvl 24, `final2`): Passive extending Cryostasis melee freeze retaliation length by `+5%/lvl`.
    - **Conduction** (`conduction` $\rightarrow$ `Telekinesis` 43, Lightning R3C3, Lvl 16, `final2`): Passive boosting Overcharge melee lightning retaliation damage by `+10%/lvl`.
 
-3. **Cold & Lightning Active Spells Done (`5` done)**:
+3. **Cold & Lightning Active Spells Done (`7` done)**:
+   - **Static Lance** (`static_lance` $\rightarrow$ `Lightning` 49, Lightning R1C2, Lvl 1, `p1_static_lance`): Parallel to Cinder Lance (`srvdofunc=1/cltdofunc=1`, `Vel=16 + 3/lvl` max `42`). In Overcharge range doubles (`15 -> 30`) and impact triggers a radius-4 AoE shock burst (`static_lance_impact`). Supercharges struck foes (`+20..40%` speed/IAS, `+40..80%` FHR, 3s). Fizzles in Conflagration/Cryostasis.
+   - **Spearbolt** (`spearbolt` $\rightarrow$ `Chain Lightning` 53, Lightning R5C2, Lvl 32, `p13_snappy_shock_wake`): Non-piercing (`CollideKill=1`) high-voltage lightning spear (`1/1`, `Vel=20 + 4/lvl` max `44`, `Range=32 + 10 OC`) dropping a sparse `expansion_shock_field` wake (`pSrvDoFunc=2/pCltDoFunc=3`, `SrvCalc1=3/CltCalc1=3`, cloned from `shock field on ground`: `0.6s` neutral / `2.0s` Overcharge, `NextDelay=6` = ~4 zaps/sec) and erupting on impact via `pSrvHitFunc=20 / pCltHitFunc=25` into `2 -> 5` (`+3` Overcharge) `chainlightningBolt` arcs (`aurarangecalc=12 -> 18`) + supercharge. Fizzles in Conflagration/Cryostasis.
    - **Glacier Step** (`glacier_step` $\rightarrow$ `Chilling Armor`, Cold R3C1, Lvl 16, `p3_freeze_curve`): `166/104` blink gated to Cryostasis (`restrict=2`, 3s cooldown). Landing freeze damage is `srvdofunc=166`'s own hit (radius 9); path freeze is dropped by the warp's server trail-dropper (`glacier_step_path_srv`); arrival nova is client-only visuals. Freeze curve (`ELen=36`, `+3/+3/+2` per level -> 3.56s raw at lvl 20) targets ~2.5s freeze vs Hell baseline (30% cold res).
    - **Phase Step** (`phase_step` $\rightarrow$ `Teleport`, Lightning R2C3, Lvl 8, `p10_scaling_frenzy`): `166/104` blink gated to Overcharge (`restrict=2`, 1.5s cooldown `localdelay=38`), mana 18 -> ~8 (`manashift=7, lvlmana=-1`). Landing lightning hit (166's own hit, radius `4 + lvl/3`). The warp's **server trail-dropper** (`pSrvDoFunc=2`) drops `phase_step_pulse` (sigil `pSrvDoFunc=14`, `Param1=1`, `Radius=5 + lvl/4`) every frame: every enemy along the path is supercharged (`phase_step_frenzy`: `min(40, 18 + 2*lvl)`% run & attack speed, `min(80, 36 + 4*lvl)`% FHR, 3s) and shocked (`hitfunc 11` -> `phase_step_path_shock`). Tooltip: description + mana + lightning damage only.
    - **Pulse Ring** (`pulse_ring` $\rightarrow$ `Nova`, Lightning R2C1, Lvl 8, `final1`): Expanding 64-bolt lightning ring (`srvdofunc=22/cltdofunc=25`, `GetHit=1`) scaling radius via synced `calc3`/`cltcalc1` velocity adder + `Range` (`126->242` neutral, `198->338` Overcharge; fizzles in opposing stances). Uses **`pSrvHitFunc=4`** to deal full piercing damage AND spawn `pulse_ring_frenzy_pulse` (`sigil func 14`) on monster hit (`+20..40%` run/attack speed, `+40..80%` FHR, 3s).
@@ -89,7 +91,7 @@ Key reference files:
 
 ---
 
-## 4. Next Up: Remaining 9 `stub` Skills
+## 4. Next Up: Remaining 7 `stub` Skills
 
 Run `/home/grant/games/d2r/bin/d2r-sorc patterns <slug>` before starting any skill below to print its parallel Fire template spec and function signature.
 
@@ -103,12 +105,10 @@ Run `/home/grant/games/d2r/bin/d2r-sorc patterns <slug>` before starting any ski
 | **Lvl 32** | R5C3 | **Icicle Spear** (`icicle_spear`) | `Glacial Spike` (`55`) | Line 2 (boss killer) | Copy [`brimstone_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/brimstone_lance.json) (`srvdofunc=1/cltdofunc=1`, `CollideKill=0, Pierce=1, NextDelay=4`, `pSrvDoFunc=2/pCltDoFunc=3`). Heavy all-piercing ice spear dropping a freezing wake that lasts 10x longer in **Cryostasis**. |
 | **Lvl 40** | R6C2 | **Frozen Orb** (`frozen_orb`) | `Frozen Orb` (`64`) | Capstone | Zero-cooldown Level 40 capstone (`srvdofunc=1/cltdofunc=29`, `pSrvDoFunc=16/pCltDoFunc=18` carrier orb + bolt submissiles). Scale orb reach/bolt velocity with level + **Cryostasis** empowerment + cross-stance fizzle. |
 
-### B. Lightning Tree (`3 stubs`)
+### B. Lightning Tree (`1 stub`)
 | Unlock | Grid | Skill (`slug`) | Vanilla Row (`*Id`) | Role | Parallel Template & Function Pair |
 | :---: | :---: | :--- | :--- | :--- | :--- |
-| **Lvl 1** | R1C2 | **Static Lance** (`static_lance`) | `Lightning` (`49`) | Line 1 (levelling) | Parallel to [`cinder_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/cinder_lance.json) (`srvdofunc=1/cltdofunc=1`). Fast piercing/impact lightning projectile scaling velocity/range with level and erupting in an AoE shock burst in **Overcharge** (`skill_decrepify`). |
 | **Lvl 24** | R4C3 | **Stormcall** (`stormcall`) | `Thunder Storm` (`57`) | AoE 2 (power spike) | Copy [`skyfall.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/skyfall.json) (`srvdofunc=28/cltdofunc=28`). Cursor delayed lightning bombardment zone with level-scaling radius (`calc1`/`cltcalc1`) and electrified ground crater, expanded in **Overcharge**. |
-| **Lvl 32** | R5C2 | **Spearbolt** (`spearbolt`) | `Chain Lightning` (`53`) | Line 2 (boss killer) | Copy [`brimstone_lance.json`](file:///home/grant/games/d2r/tools/mod_builder/sorc/specs/brimstone_lance.json) (`1/1` all-piercing lightning spear with electrified wake) or `26/27` (multi-bounce Chain Lightning scaling bounce count & range in **Overcharge**). |
 
 ---
 

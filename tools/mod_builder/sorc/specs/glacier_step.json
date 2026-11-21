@@ -131,7 +131,7 @@
             "aurastatcalc6": "",
             "auraevent1": "",
             "auraeventfunc1": "",
-            "aurarangecalc": "9",
+            "aurarangecalc": "9 * (100 + stat('ironmaiden_level'.accr)) / 100",
             "stsound": "sorceress_cast_cold",
             "dosound": "sorceress_frostnova",
             "castoverlay": "teleport",
@@ -153,7 +153,7 @@
             "manashift": "8",
             "mana": "10",
             "lvlmana": "0",
-            "calc1": "9",
+            "calc1": "9 * (100 + stat('ironmaiden_level'.accr)) / 100",
             "*calc1 desc": "Landing Freeze Radius (subtiles; mirrors aurarangecalc for the tooltip)",
             "calc2": "0",
             "*calc2 desc": "Unused",
@@ -165,7 +165,7 @@
             "*calc5 desc": "Amount of attacks (required by srvdofunc 166)",
             "calc6": "100",
             "*calc6 desc": "Follow-up damage %",
-            "cltcalc1": "8",
+            "cltcalc1": "8 * (100 + stat('ironmaiden_level'.accr)) / 100",
             "*cltcalc1 desc": "Client arrival nova visual radius",
             "cltcalc2": "1",
             "*cltcalc2 desc": "Client arrival nova visual spawn interval (frames)",
@@ -194,7 +194,8 @@
             "ELen": "36",
             "ELevLen1": "3",
             "ELevLen2": "3",
-            "ELevLen3": "2"
+            "ELevLen3": "2",
+            "ELenSymPerCalc": "stat('conversion_maxhp'.accr)"
           }
         },
         "skilldesc.txt": {

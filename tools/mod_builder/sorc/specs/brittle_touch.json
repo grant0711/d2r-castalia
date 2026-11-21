@@ -5,13 +5,13 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final2": {
-      "description": "final2: tooltip uses lvl so the next-level panel shows the next value",
+      "description": "Stasis: Cross-tree passive increasing duration of all lingering Sorceress spell effects, wakes, storms, summons, CC, and stances on a logistic S-curve (up to +100%, stored in conversion_maxhp).",
       "tables": {
         "skills.txt": {
           "Shiver Armor": {
             "passive": "1",
-            "calc1": "lvl*5",
-            "*calc1 desc": "Cold Stance Freeze Length +% (5%/lvl)",
+            "calc1": "max(1, 100 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
+            "*calc1 desc": "Lingering Effect Duration +% (logistic S-curve, 100% cap, midpoint lvl 9)",
             "leftskill": "0",
             "rightskill": "0",
             "srvstfunc": "",
@@ -37,8 +37,8 @@
             "minmana": "0",
             "lvlmana": "0",
             "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": "",
+            "passivestat1": "conversion_maxhp",
+            "passivecalc1": "max(1, 100 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
             "aurastat1": "",
             "aurastatcalc1": "",
             "aurastat2": "",
@@ -70,9 +70,9 @@
             "descmissile2": "",
             "descmissile3": "",
             "descline1": "74",
-            "desctexta1": "ModSorcBrittleLen",
+            "desctexta1": "ModSorcStasisDur",
             "desctextb1": "",
-            "desccalca1": "lvl*5",
+            "desccalca1": "clc1",
             "desccalcb1": "",
             "descline2": "",
             "desctexta2": "",
@@ -163,12 +163,13 @@
         }
       },
       "strings": {
-        "short": "passive - extends Cryostasis's freeze retaliation",
-        "long": "Passive\n\nlengthens how long melee attackers are frozen when they strike you during Cryostasis"
+        "name": "Stasis",
+        "short": "passive - extends duration of lingering spell effects",
+        "long": "Passive\n\nextends the duration of all lingering Sorceress\nspell effects, wakes, storms, summons, and stances"
       },
       "no_label": true,
       "strings_extra": {
-        "ModSorcBrittleLen": "Cold Stance Freeze Length: +%d%%"
+        "ModSorcStasisDur": "Effect Duration: +%d%%"
       }
     }
   }

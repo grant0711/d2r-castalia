@@ -5,15 +5,15 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final2": {
-      "description": "final2: tooltip uses lvl so the next-level panel shows the next value",
+      "description": "Expansion: Cross-tree passive increasing AoE radius of all Sorceress spells on a logistic S-curve (up to +50%, stored in ironmaiden_level).",
       "tables": {
         "skills.txt": {
           "Warmth": {
-            "calc1": "lvl*10",
-            "*calc1 desc": "Fire Stance Retaliation Damage +% (10%/lvl)",
+            "calc1": "max(1, 50 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
+            "*calc1 desc": "Spell AoE Radius +% (logistic S-curve, 50% cap, midpoint lvl 9)",
             "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": "",
+            "passivestat1": "ironmaiden_level",
+            "passivecalc1": "max(1, 50 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
             "passivestat2": "",
             "passivecalc2": ""
           }
@@ -37,9 +37,9 @@
             "descmissile2": "",
             "descmissile3": "",
             "descline1": "74",
-            "desctexta1": "ModSorcKindlingDmg",
+            "desctexta1": "ModSorcExpansionAoe",
             "desctextb1": "",
-            "desccalca1": "lvl*10",
+            "desccalca1": "clc1",
             "desccalcb1": "",
             "descline2": "",
             "desctexta2": "",
@@ -130,12 +130,13 @@
         }
       },
       "strings": {
-        "short": "passive - fuels Conflagration's fiery retaliation",
-        "long": "Passive\n\nincreases the fire damage dealt to melee attackers while Conflagration is active"
+        "name": "Expansion",
+        "short": "passive - increases area of effect of all spells",
+        "long": "Passive\n\nincreases the area of effect radius of all Sorceress spells"
       },
       "no_label": true,
       "strings_extra": {
-        "ModSorcKindlingDmg": "Fire Stance Retaliation Damage: +%d%%"
+        "ModSorcExpansionAoe": "Spell Area of Effect: +%d%%"
       }
     }
   }

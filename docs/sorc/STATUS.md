@@ -10,7 +10,7 @@
 | 2.3 | 8 | **Backdraft** (`backdraft`) | Fire Wall (51) | combo (CC/AoE) | done | test_fizzle |
 | 3.2 | 16 | **Conflagration** (`conflagration`) | Enchant (52) | STANCE | done | final5 |
 | 3.3 | 16 | **Flashfire** (`flashfire`) | Blaze (46) | utility (mobility) | done | final1 |
-| 4.2 | 24 | **Kindling** (`kindling`) | Warmth (37) | support passive | done | final2 |
+| 4.2 | 24 | **Expansion** (`kindling`) | Warmth (37) | support passive | done | final2 |
 | 4.3 | 24 | **Skyfall** (`skyfall`) | Meteor (56) | AoE 2 (power spike) | done | test_fizzle |
 | 5.1 | 32 | **Brimstone Lance** (`brimstone_lance`) | Inferno (41) | line 2 (boss killer) | done | test_fizzle |
 | 5.3 | 32 | **Ignition** (`ignition`) | Fire Mastery (61) | dial (potency) | done | final2 |
@@ -23,7 +23,7 @@
 | 1.2 | 1 | **Echo** (`afterglow`) | Lightning Mastery (63) | dial (cross-stance synergy) | done | final1 |
 | 1.3 | 1 | **Static Lance** (`static_lance`) | Lightning (49) | line 1 (levelling) | done | p1_static_lance |
 | 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | Nova (48) | AoE 1 (levelling) | done | final1 |
-| 3.2 | 16 | **Conduction** (`conduction`) | Telekinesis (43) | support passive | done | final2 |
+| 3.2 | 16 | **Arc** (`conduction`) | Telekinesis (43) | support passive | done | final2 |
 | 3.3 | 16 | **Sunderbolt** (`tesla_field`) | Static Field (42) | combo (CC/AoE) | done | final1 |
 | 4.1 | 24 | **Stormcall** (`stormcall`) | Thunder Storm (57) | AoE 2 (power spike) | done | p9_consistent_nova_damage |
 | 4.3 | 24 | **Spearbolt** (`spearbolt`) | Chain Lightning (53) | line 2 (boss killer) | done | p13_snappy_shock_wake |
@@ -41,7 +41,7 @@
 | 3.3 | 16 | **Permafrost** (`permafrost`) | Ice Blast (45) | combo (CC/AoE) | stub | baseline |
 | 4.1 | 24 | **Cryostasis** (`cryostasis`) | Frozen Armor (40) | STANCE | done | final5 |
 | 4.2 | 24 | **Equilibrium** (`equilibrium`) | Cold Mastery (65) | dial (penalty reduction) | done | final1 |
-| 4.3 | 24 | **Brittle Touch** (`brittle_touch`) | Shiver Armor (50) | support passive | done | final2 |
+| 4.3 | 24 | **Stasis** (`brittle_touch`) | Shiver Armor (50) | support passive | done | final2 |
 | 5.1 | 32 | **Whiteout** (`whiteout`) | Blizzard (59) | AoE 2 (power spike) | stub | baseline |
 | 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | Glacial Spike (55) | line 2 (boss killer) | stub | baseline |
 | 6.2 | 40 | **Frozen Orb** (`frozen_orb`) | Frozen Orb (64) | capstone | stub | baseline |

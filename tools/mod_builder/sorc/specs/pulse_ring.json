@@ -37,7 +37,7 @@
             "HitSubMissile1": "pulse_ring_frenzy_pulse",
             "Vel": "14",
             "MaxVel": "32",
-            "Range": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 1 : (9 + lvl / 7 + ((stat('skill_decrepify'.accr) > 0) ? 2 : 0))",
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 1 : ((9 + lvl / 7 + ((stat('skill_decrepify'.accr) > 0) ? 2 : 0)) * (100 + stat('ironmaiden_level'.accr)) / 100)",
             "CollideType": "3",
             "CollideKill": "",
             "AlwaysExplode": "",

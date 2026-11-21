@@ -9,7 +9,7 @@
       "tables": {
         "missiles.txt": {
           "blaze": {
-            "Range": "75"
+            "Range": "75 * (100 + stat('conversion_maxhp'.accr)) / 100"
           }
         },
         "skills.txt": {
@@ -17,14 +17,14 @@
             "restrict": "2",
             "State1": "sorc_stance_fire",
             "localdelay": "250",
-            "auralencalc": "75",
+            "auralencalc": "75 * (100 + stat('conversion_maxhp'.accr)) / 100",
             "passivestat1": "velocitypercent",
             "passivecalc1": "50+((stat('skill_handofathena'.accr)>0)?50:0)",
             "calc1": "50+((stat('skill_handofathena'.accr)>0)?50:0)",
             "*calc1 desc": "Run/Walk Speed % (50%, +50% in Conflagration)",
-            "calc2": "75",
+            "calc2": "75 * (100 + stat('conversion_maxhp'.accr)) / 100",
             "*calc2 desc": "Sprint Duration (3s)",
-            "calc3": "75",
+            "calc3": "75 * (100 + stat('conversion_maxhp'.accr)) / 100",
             "*calc3 desc": "Fire Trail Duration (3s)",
             "EMin": "3",
             "EMinLev1": "2",

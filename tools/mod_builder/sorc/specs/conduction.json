@@ -5,13 +5,15 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final2": {
-      "description": "final2: tooltip uses lvl so the next-level panel shows the next value",
+      "description": "Arc: Cross-tree passive increasing projectile range of all Sorceress spells on a logistic S-curve (up to +75%, stored in lifetap_level) and adding +1 bonus chain/bolt every 6 levels (cap +3, stored in conversion_level).",
       "tables": {
         "skills.txt": {
           "Telekinesis": {
             "passive": "1",
-            "calc1": "lvl*10",
-            "*calc1 desc": "Lightning Stance Retaliation Damage +% (10%/lvl)",
+            "calc1": "max(1, 75 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
+            "*calc1 desc": "Spell Range +% (logistic S-curve, 75% cap, midpoint lvl 9)",
+            "calc2": "min(3, lvl / 6)",
+            "*calc2 desc": "Bonus Chains & Bolts (+1 every 6 lvls, cap +3)",
             "leftskill": "0",
             "rightskill": "0",
             "srvstfunc": "",
@@ -37,8 +39,10 @@
             "minmana": "0",
             "lvlmana": "0",
             "passivestate": "",
-            "passivestat1": "",
-            "passivecalc1": "",
+            "passivestat1": "lifetap_level",
+            "passivecalc1": "max(1, 75 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
+            "passivestat2": "conversion_level",
+            "passivecalc2": "min(3, lvl / 6)",
             "aurastat1": "",
             "aurastatcalc1": "",
             "aurastat2": "",
@@ -70,14 +74,14 @@
             "descmissile2": "",
             "descmissile3": "",
             "descline1": "74",
-            "desctexta1": "ModSorcConductionDmg",
+            "desctexta1": "ModSorcArcRange",
             "desctextb1": "",
-            "desccalca1": "lvl*10",
+            "desccalca1": "clc1",
             "desccalcb1": "",
-            "descline2": "",
-            "desctexta2": "",
+            "descline2": "74",
+            "desctexta2": "ModSorcArcBolts",
             "desctextb2": "",
-            "desccalca2": "",
+            "desccalca2": "clc2",
             "desccalcb2": "",
             "descline3": "",
             "desctexta3": "",
@@ -163,12 +167,14 @@
         }
       },
       "strings": {
-        "short": "passive - empowers Overcharge's retaliation",
-        "long": "Passive\n\nincreases the lightning damage dealt to melee attackers\nthat hit you while Overcharge is active"
+        "name": "Arc",
+        "short": "passive - increases spell range and bonus chains/bolts",
+        "long": "Passive\n\nincreases the range of all Sorceress projectiles\nand adds bonus chains or bolts"
       },
       "no_label": true,
       "strings_extra": {
-        "ModSorcConductionDmg": "Lightning Stance Retaliation Damage: +%d%%"
+        "ModSorcArcRange": "Spell Range: +%d%%",
+        "ModSorcArcBolts": "Bonus Chains & Bolts: +%d"
       }
     }
   }

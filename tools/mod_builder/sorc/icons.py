@@ -5,15 +5,18 @@ Fire tree icon changes (cel = normal frame, cel+1 = pressed frame; each cel is 1
   - Ignition      (row 'fire mastery',      cel 50) <- vanilla Warmth icon (cel 2)
   - Conflagration (row 'enchant',           cel 32) <- vanilla Fire Mastery icon (cel 50)
   - Brimstone     (row 'inferno',           cel 10) <- vanilla Fire Ball icon (cel 22)
-  - Kindling      (row 'warmth',            cel  2) <- NEW: simplified flaming sword & horned demon silhouette (assets/skill_icons/kindling.jpg)
+  - Expansion     (row 'warmth',            cel  2) <- NEW: central ring with four outward arrows (assets/skill_icons/expansion.jpg)
   - Pyroclasm     (row 'fire ball',         cel 22) <- NEW: four radial fire bolts (assets/skill_icons/pyroclasm.jpg)
 
 Lightning tree icon changes:
   - Overcharge     (row 'energy shield',     cel 44) <- vanilla Lightning Mastery icon (cel 54)
   - Echo           (row 'lightning mastery', cel 54) <- NEW: concentric echo wave arcs (assets/skill_icons/echo.jpg)
-  - Conduction     (row 'telekinesis',       cel 14) <- NEW: lightning bolt & horned demon silhouette (assets/skill_icons/conduction.jpg)
+  - Arc            (row 'telekinesis',       cel 14) <- NEW: sweeping forked lightning arc (assets/skill_icons/arc.jpg)
   - Sunderbolt     (row 'static field',      cel 12) <- NEW: downward bolt splitting shock wedges (assets/skill_icons/sunderbolt.jpg)
   - Heaven's Wrath (row 'charged bolt',      cel  4) <- NEW: celestial starburst halo pierced by thunderbolt (assets/skill_icons/heavens_wrath.jpg)
+
+Cold tree icon changes:
+  - Stasis         (row 'shiver armor',      cel 28) <- NEW: minimalist hourglass silhouette (assets/skill_icons/stasis.jpg)
 New icons are stamped as silver-plate silhouettes on the same brown stone tile as the vanilla icons.
 """
 import math
@@ -185,8 +188,8 @@ def _mask_from_icon_jpg(filename: str, inset: int = 5) -> list:
     return m
 
 
-def kindling_mask(src_cels: dict, pressed: int) -> list:
-    return _mask_from_icon_jpg("kindling.jpg", inset=4)
+def expansion_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("expansion.jpg", inset=6)
 
 
 def pyroclasm_mask(src_cels: dict, pressed: int) -> list:
@@ -197,8 +200,8 @@ def echo_mask(src_cels: dict, pressed: int) -> list:
     return _mask_from_icon_jpg("echo.jpg", inset=3)
 
 
-def conduction_mask(src_cels: dict, pressed: int) -> list:
-    return _mask_from_icon_jpg("conduction.jpg", inset=3)
+def arc_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("arc.jpg", inset=4)
 
 
 def sunderbolt_mask(src_cels: dict, pressed: int) -> list:
@@ -207,6 +210,10 @@ def sunderbolt_mask(src_cels: dict, pressed: int) -> list:
 
 def heavens_wrath_mask(src_cels: dict, pressed: int) -> list:
     return _mask_from_icon_jpg("heavens_wrath.jpg", inset=3)
+
+
+def stasis_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("stasis.jpg", inset=4)
 
 
 def build_soskillicon_pair() -> str:
@@ -238,12 +245,13 @@ def build_soskillicon_pair() -> str:
     brown = _brown_templates(sor_raw)
     silver = _silver_templates(bar_raw)
     for dst, maker in (
-        (2, kindling_mask),
+        (2, expansion_mask),
         (22, pyroclasm_mask),
         (54, echo_mask),
-        (14, conduction_mask),
+        (14, arc_mask),
         (12, sunderbolt_mask),
         (4, heavens_wrath_mask),
+        (28, stasis_mask),
     ):
         for p in (0, 1):
             mask = maker(src_cels, p)

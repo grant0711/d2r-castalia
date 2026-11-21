@@ -7,6 +7,11 @@
     "final2": {
       "description": "Arc: Cross-tree passive increasing projectile range of all Sorceress spells on a logistic S-curve (up to +75%, stored in lifetap_level) and adding +1 bonus chain/bolt every 6 levels (cap +3, stored in conversion_level).",
       "tables": {
+        "states.txt": {
+          "sorc_passive_arc": {
+            "_clone": "firemastery"
+          }
+        },
         "skills.txt": {
           "Telekinesis": {
             "passive": "1",
@@ -38,7 +43,7 @@
             "mana": "0",
             "minmana": "0",
             "lvlmana": "0",
-            "passivestate": "",
+            "passivestate": "sorc_passive_arc",
             "passivestat1": "lifetap_level",
             "passivecalc1": "max(1, 75 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
             "passivestat2": "conversion_level",

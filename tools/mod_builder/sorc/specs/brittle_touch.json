@@ -7,6 +7,11 @@
     "final2": {
       "description": "Stasis: Cross-tree passive increasing duration of all lingering Sorceress spell effects, wakes, storms, summons, CC, and stances on a logistic S-curve (up to +100%, stored in conversion_maxhp).",
       "tables": {
+        "states.txt": {
+          "sorc_passive_stasis": {
+            "_clone": "firemastery"
+          }
+        },
         "skills.txt": {
           "Shiver Armor": {
             "passive": "1",
@@ -36,7 +41,7 @@
             "mana": "0",
             "minmana": "0",
             "lvlmana": "0",
-            "passivestate": "",
+            "passivestate": "sorc_passive_stasis",
             "passivestat1": "conversion_maxhp",
             "passivecalc1": "max(1, 100 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
             "aurastat1": "",

@@ -7,11 +7,16 @@
     "final2": {
       "description": "Expansion: Cross-tree passive increasing AoE radius of all Sorceress spells on a logistic S-curve (up to +50%, stored in ironmaiden_level).",
       "tables": {
+        "states.txt": {
+          "sorc_passive_expansion": {
+            "_clone": "firemastery"
+          }
+        },
         "skills.txt": {
           "Warmth": {
             "calc1": "max(1, 50 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
             "*calc1 desc": "Spell AoE Radius +% (logistic S-curve, 50% cap, midpoint lvl 9)",
-            "passivestate": "",
+            "passivestate": "sorc_passive_expansion",
             "passivestat1": "ironmaiden_level",
             "passivecalc1": "max(1, 50 * lvl * lvl * lvl / (lvl * lvl * lvl + 729))",
             "passivestat2": "",

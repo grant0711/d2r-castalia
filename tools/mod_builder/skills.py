@@ -70,9 +70,9 @@ from mod_builder.common import (
 )
 
 
-def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]]) -> None:
+def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]], rows: list = None) -> None:
     """Apply all class and environmental skill-related missile updates (called by weapons_armor.build_missiles)."""
-    apply_paladin_missiles(rows_by_name)
+    apply_paladin_missiles(rows_by_name, rows)
     apply_env_and_boss_missiles(rows_by_name)
     apply_barbarian_missiles(rows_by_name)
     apply_assassin_missiles(rows_by_name)
@@ -150,6 +150,34 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     sorc_engine.apply_table_patches("skills.txt", s_headers, s_rows)
     sorc_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
 
+    # 4b. Append hidden QA Conduction self-aura skill (always present to keep skill IDs stable;
+    #     lvl 1 = Fire, lvl 2 = Lightning, lvl 3 = Cold; crafted via qa_conduction_test Cube recipes).
+    if "QA Conduction" not in by_name and "Might" in by_name:
+        qa_id = max(int(r.get("*Id") or 0) for r in s_rows) + 1
+        qa_row = {h: "" for h in s_headers}
+        qa_row["skill"] = "QA Conduction"
+        qa_row["*Id"] = str(qa_id)
+        qa_row["srvdofunc"] = "65"
+        qa_row["cltdofunc"] = ""
+        qa_row["aura"] = "1"
+        qa_row["InTown"] = "1"
+        qa_row["immediate"] = "1"
+        qa_row["aurafilter"] = "3"
+        qa_row["aurastate"] = "sorc_conduction"
+        qa_row["aurarangecalc"] = "2"
+        qa_row["perdelay"] = "10"
+        qa_row["aurastat1"] = "modifierlist_level"
+        qa_row["aurastatcalc1"] = "lvl"
+        qa_row["aurastat2"] = "passive_fire_mastery"
+        qa_row["aurastatcalc2"] = "(lvl == 1) ? 60 : 0"
+        qa_row["aurastat3"] = "passive_ltng_mastery"
+        qa_row["aurastatcalc3"] = "(lvl == 2) ? 60 : 0"
+        qa_row["aurastat4"] = "passive_cold_mastery"
+        qa_row["aurastatcalc4"] = "(lvl == 3) ? 60 : 0"
+        qa_row["*eol"] = "0"
+        s_rows.append(qa_row)
+        by_name["QA Conduction"] = qa_row
+
     # 5. Globally scrub all player-side elemental resistance pierce (passive_*_pierce)
     #    and Sunder Charm immunity pierce (item_pierce_*_immunity) stats/calcs across skills.txt
     if "Apocalypse" in by_name:
@@ -220,7 +248,11 @@ def build_skills_all(cfg: dict) -> str:
     p12 = build_pettype(cfg)
     p13 = _build_assassin_state_machine()
     p14 = _build_animdata()
-    p15 = update_mod_hd_missiles_json(list(ASSASSIN_HD_MISSILE_PAIRS) + sorc_engine.hd_missile_pairs())
+    p15 = update_mod_hd_missiles_json(
+        list(ASSASSIN_HD_MISSILE_PAIRS)
+        + [("foh_conduction_nova", "nova")]
+        + sorc_engine.hd_missile_pairs()
+    )
     p16 = _build_chargeboltsentry_hd()
     p17 = _build_asskilltree_pair()
     p18 = _build_asskillicon_pair()

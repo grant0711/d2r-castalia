@@ -14,7 +14,8 @@
     "vendor_sell_cap_hell": 3500,
     "rune_drop_boost": 3.5,
     "qa_blood_moor_boost": false,
-    "qa_cube_starter_kit": false
+    "qa_cube_starter_kit": false,
+    "qa_conduction_test": true
   },
   "pacing": {
     "zone_density_multiplier": 0.45,

@@ -424,6 +424,118 @@ class TestSkillSimulation(unittest.TestCase):
                 f"Barbarian Exhaustion {sk_name}.calc1: Bloodlust active ({v_blust}) must be > unbuffed Empty Stamina ({v_empty})",
             )
 
+    def test_conduction_coop_paladin_assassin_and_sorc_contracts(self):
+        """Verify Conduction (modifierlist_level 1=Fire, 2=Ltng, 3=Cold) co-op upgrades and zero solo regression."""
+        idx = get_indexed_tables()
+        skills_by_name = idx["skills_by_name"]
+        missiles_by_name = idx["missiles_by_name"]
+
+        solo = {"modifierlist_level": 0}
+        cond_fire = {"modifierlist_level": 1}
+        cond_ltng = {"modifierlist_level": 2}
+        cond_cold = {"modifierlist_level": 3}
+
+        # 1. Assassin 3 Elemental Sentries: instant 3-charge deployment + orb preservation under matching Conduction
+        sentry_specs = [
+            ("Wake of Fire Sentry", 1, "progressive_fire", "item_slash_damage"),
+            ("Lightning Sentry", 2, "progressive_lightning", "item_thrust_damage_percent"),
+            ("Death Sentry", 3, "progressive_cold", "item_crush_damage"),
+        ]
+        for s_name, elem_id, orb_stat, buff_stat in sentry_specs:
+            row = skills_by_name[s_name]
+            match_st = {"modifierlist_level": elem_id}
+            other_st = {"modifierlist_level": 1 if elem_id != 1 else 2}
+            # 0 orbs held -> 0 solo, 0 wrong conduction, 3 matching conduction
+            self.assertEqual(eval_d2_expr(row["sumsk5calc"], row, slvl=10, stats=solo, skills_by_name=skills_by_name), 0)
+            self.assertEqual(eval_d2_expr(row["sumsk5calc"], row, slvl=10, stats=other_st, skills_by_name=skills_by_name), 0)
+            self.assertEqual(eval_d2_expr(row["sumsk5calc"], row, slvl=10, stats=match_st, skills_by_name=skills_by_name), 3)
+            # 2 orbs held + buff=50 -> preserved under matching conduction, consumed in solo
+            held_match = {"modifierlist_level": elem_id, orb_stat: 2, buff_stat: 50}
+            held_solo = {"modifierlist_level": 0, orb_stat: 2, buff_stat: 50}
+            self.assertEqual(eval_d2_expr(row["auralencalc"], row, slvl=10, stats=held_match, skills_by_name=skills_by_name), 22500)
+            self.assertEqual(eval_d2_expr(row["aurastatcalc1"], row, slvl=10, stats=held_match, skills_by_name=skills_by_name), 0)
+            self.assertEqual(eval_d2_expr(row["aurastatcalc2"], row, slvl=10, stats=held_match, skills_by_name=skills_by_name), 2)
+            self.assertEqual(eval_d2_expr(row["aurastatcalc3"], row, slvl=10, stats=held_match, skills_by_name=skills_by_name), 50)
+            self.assertEqual(eval_d2_expr(row["auralencalc"], row, slvl=10, stats=held_solo, skills_by_name=skills_by_name), 12)
+            self.assertEqual(eval_d2_expr(row["aurastatcalc1"], row, slvl=10, stats=held_solo, skills_by_name=skills_by_name), 2)
+            self.assertEqual(eval_d2_expr(row["aurastatcalc2"], row, slvl=10, stats=held_solo, skills_by_name=skills_by_name), 0)
+
+        # 2. Assassin Charge-Up Releases
+        fof = skills_by_name["Fists of Fire"]
+        self.assertEqual(eval_d2_expr(fof["prgcalc1"], fof, slvl=10, stats=solo, skills_by_name=skills_by_name), 6)
+        self.assertEqual(eval_d2_expr(fof["prgcalc1"], fof, slvl=10, stats=cond_fire, skills_by_name=skills_by_name), 9)
+        self.assertEqual(eval_d2_expr(fof["prgcalc3"], fof, slvl=10, stats=cond_fire, skills_by_name=skills_by_name), 13)
+
+        boi = skills_by_name["Blades of Ice"]
+        self.assertEqual(eval_d2_expr(boi["prgcalc1"], boi, slvl=10, stats=solo, skills_by_name=skills_by_name), 6)
+        self.assertEqual(eval_d2_expr(boi["prgcalc1"], boi, slvl=10, stats=cond_cold, skills_by_name=skills_by_name), 10)
+        self.assertEqual(eval_d2_expr(boi["prgcalc2"], boi, slvl=10, stats=cond_cold, skills_by_name=skills_by_name), 18)
+        self.assertEqual(eval_d2_expr(boi["passivecalc2"], boi, slvl=10, stats=solo, skills_by_name=skills_by_name), 75)
+        self.assertEqual(eval_d2_expr(boi["passivecalc2"], boi, slvl=10, stats=cond_cold, skills_by_name=skills_by_name), 150)
+        self.assertEqual(eval_d2_expr(boi["ELenSymPerCalc"], boi, slvl=10, stats=solo, skills_by_name=skills_by_name), 0)
+        self.assertEqual(eval_d2_expr(boi["ELenSymPerCalc"], boi, slvl=10, stats=cond_cold, skills_by_name=skills_by_name), 100)
+        for mname, base_r in (("royalstrikechaosice", 18), ("catapult cold ball", 25)):
+            mrow = missiles_by_name[mname]
+            self.assertEqual(eval_d2_expr(mrow["Range"], mrow, slvl=10, stats=solo, skills_by_name=skills_by_name), base_r)
+            self.assertEqual(eval_d2_expr(mrow["Range"], mrow, slvl=10, stats=cond_cold, skills_by_name=skills_by_name), base_r + 8)
+
+        cot = skills_by_name["Claws of Thunder"]
+        self.assertEqual(eval_d2_expr(cot["prgcalc1"], cot, slvl=20, stats=solo, skills_by_name=skills_by_name), 4)
+        self.assertEqual(eval_d2_expr(cot["prgcalc1"], cot, slvl=20, stats=cond_ltng, skills_by_name=skills_by_name), 2)
+        self.assertGreater(
+            eval_d2_expr(cot["aurarangecalc"], cot, slvl=10, stats=cond_ltng, skills_by_name=skills_by_name),
+            eval_d2_expr(cot["aurarangecalc"], cot, slvl=10, stats=solo, skills_by_name=skills_by_name),
+        )
+        cotn = missiles_by_name["clawsofthundernova"]
+        self.assertEqual(eval_d2_expr(cotn["Range"], cotn, slvl=10, stats=solo, skills_by_name=skills_by_name), 13)
+        self.assertEqual(eval_d2_expr(cotn["Range"], cotn, slvl=10, stats=cond_ltng, skills_by_name=skills_by_name), 18)
+
+        # 3. Paladin 3 Elemental Auras
+        for aura_name, elem_st in (("Holy Fire", cond_fire), ("Holy Shock", cond_ltng), ("Holy Freeze", cond_cold)):
+            arow = skills_by_name[aura_name]
+            r_solo = eval_d2_expr(arow["aurarangecalc"], arow, slvl=10, stats=solo, skills_by_name=skills_by_name)
+            r_cond = eval_d2_expr(arow["aurarangecalc"], arow, slvl=10, stats=elem_st, skills_by_name=skills_by_name)
+            self.assertEqual(r_cond, r_solo + 4, f"{aura_name}: radius should gain +4 sub-tiles under Conduction")
+            self.assertEqual(eval_d2_expr(arow["perdelay"], arow, slvl=10, stats=solo, skills_by_name=skills_by_name), 50)
+            self.assertEqual(eval_d2_expr(arow["perdelay"], arow, slvl=10, stats=elem_st, skills_by_name=skills_by_name), 35)
+        hfrz = skills_by_name["Holy Freeze"]
+        slow_solo = eval_d2_expr(hfrz["aurastatcalc1"], hfrz, slvl=10, stats=solo, skills_by_name=skills_by_name)
+        slow_cold = eval_d2_expr(hfrz["aurastatcalc1"], hfrz, slvl=10, stats=cond_cold, skills_by_name=skills_by_name)
+        self.assertEqual(slow_cold, slow_solo - 15)
+
+        # 4. Paladin Fist of the Heavens & Vengeance
+        fohd = missiles_by_name["fistoftheheavensdelay"]
+        self.assertEqual(fohd["pSrvHitFunc"], "22")
+        self.assertEqual(fohd["HitSubMissile1"], "fistoftheheavensbolt")
+        self.assertEqual(fohd["SubMissile1"], "foh_conduction_trigger")
+        foh_nova = missiles_by_name["foh_conduction_nova"]
+        self.assertEqual(eval_d2_expr(foh_nova["Range"], foh_nova, slvl=10, stats=solo, skills_by_name=skills_by_name), 0)
+        self.assertEqual(eval_d2_expr(foh_nova["Range"], foh_nova, slvl=10, stats=cond_fire, skills_by_name=skills_by_name), 0)
+        self.assertEqual(eval_d2_expr(foh_nova["Range"], foh_nova, slvl=10, stats=cond_ltng, skills_by_name=skills_by_name), 13)
+
+        veng = skills_by_name["Vengeance"]
+        self.assertEqual(eval_d2_expr(veng["calc5"], veng, slvl=10, stats=solo, skills_by_name=skills_by_name), 13)
+        self.assertEqual(eval_d2_expr(veng["calc7"], veng, slvl=10, stats=solo, skills_by_name=skills_by_name), 0)
+        for st in (cond_fire, cond_ltng, cond_cold):
+            self.assertEqual(eval_d2_expr(veng["calc5"], veng, slvl=10, stats=st, skills_by_name=skills_by_name), 20)
+            self.assertEqual(eval_d2_expr(veng["calc7"], veng, slvl=10, stats=st, skills_by_name=skills_by_name), 2)
+        self.assertEqual(eval_d2_expr(veng["ELenSymPerCalc"], veng, slvl=10, stats=cond_fire, skills_by_name=skills_by_name), 0)
+        self.assertEqual(eval_d2_expr(veng["ELenSymPerCalc"], veng, slvl=10, stats=cond_cold, skills_by_name=skills_by_name), 100)
+
+        # 5. Sorceress Option 1: matching Conduction activates stance bonuses without opposing-stance fizzle
+        nova = skills_by_name["Nova"]
+        pr_solo = eval_d2_expr(nova["calc3"], nova, slvl=10, stats=solo, skills_by_name=skills_by_name)
+        pr_ltng = eval_d2_expr(nova["calc3"], nova, slvl=10, stats=cond_ltng, skills_by_name=skills_by_name)
+        pr_fire = eval_d2_expr(nova["calc3"], nova, slvl=10, stats=cond_fire, skills_by_name=skills_by_name)
+        self.assertEqual(pr_ltng, pr_solo + 4, "Pulse Ring must gain Overcharge bonus under Lightning Conduction")
+        self.assertEqual(pr_fire, pr_solo, "Pulse Ring must NOT fizzle under Fire Conduction")
+
+        # 6. QA Conduction hidden aura row
+        self.assertIn("QA Conduction", skills_by_name)
+        qa = skills_by_name["QA Conduction"]
+        self.assertEqual(qa["aurastate"], "sorc_conduction")
+        self.assertEqual(qa["aurastat1"], "modifierlist_level")
+
 
 if __name__ == "__main__":
     unittest.main()

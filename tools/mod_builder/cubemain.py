@@ -874,6 +874,25 @@ def build_cubemain(cfg: dict) -> str:
                 "ilvl": "100",
             }))
 
+    # QA Conduction Solo-Test Rings (only when qa_conduction_test is enabled in mod_config.json)
+    if cfg.get("economy", {}).get("qa_conduction_test", False):
+        for pot_code, elem_label, aura_lvl in [
+            ("hpot", "Fire", "1"),
+            ("mpot", "Lightning", "2"),
+            ("vps", "Cold", "3"),
+        ]:
+            lines.append(_make_row_str(num_cols, col_idx, {
+                "description": f"QA: {pot_code} -> {elem_label} Conduction Test Ring (lvl {aura_lvl})",
+                "enabled": "1", "version": "100", "numinputs": "1",
+                "input 1": pot_code,
+                "output": '"rin,mag"',
+                "ilvl": "1",
+                "mod 1": "aura",
+                "mod 1 param": "QA Conduction",
+                "mod 1 min": aura_lvl,
+                "mod 1 max": aura_lvl,
+            }))
+
     # 5. Unique / Set / Boss Charm -> Jewel Distillation (~545 rows)
     distill_lines = _build_distillation_rows(num_cols, col_idx)
     lines.extend(distill_lines)

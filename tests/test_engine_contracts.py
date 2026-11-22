@@ -211,17 +211,20 @@ class TestEngineContracts(unittest.TestCase):
                         f"missiles.txt ({cma}): pCltDoFunc=48 requires CltSubMissile1",
                     )
 
-            # Rule 4: srvstfunc=39 charge consumer contract
+            # Rule 4: srvstfunc=39 charge consumer contract (must evaluate to 12 frames in solo play)
             if r.get("srvstfunc") == "39" and r.get("aurastate", "").startswith("progressive_"):
+                from tests.calc_eval import eval_d2_expr
+
                 self.assertEqual(
                     r.get("calc2", "").strip(),
                     "",
                     f"skills.txt ({sname}): srvstfunc=39 charge consumer must have calc2=''",
                 )
+                al_expr = r.get("auralencalc", "").strip()
                 self.assertEqual(
-                    r.get("auralencalc", "").strip(),
-                    "12",
-                    f"skills.txt ({sname}): srvstfunc=39 charge consumer must have auralencalc='12'",
+                    eval_d2_expr(al_expr, r, slvl=10, stats={"modifierlist_level": 0}, skills_by_name=idx["skills_by_name"]),
+                    12,
+                    f"skills.txt ({sname}): srvstfunc=39 charge consumer must evaluate auralencalc to 12 in solo play, got {al_expr!r}",
                 )
 
             # Rule 5: Assassin Charge-Up attacks (srvstfunc=23, srvdofunc=34)

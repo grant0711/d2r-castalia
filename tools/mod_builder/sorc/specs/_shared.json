@@ -135,7 +135,10 @@
             "restrict": "1"
           },
           "Lightning Mastery": {
-            "restrict": "1"
+            "restrict": "2",
+            "State1": "sorc_stance_fire",
+            "State2": "sorc_stance_light",
+            "State3": "sorc_stance_cold"
           },
           "Frozen Orb": {
             "restrict": "1"

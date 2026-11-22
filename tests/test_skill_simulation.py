@@ -150,6 +150,28 @@ class TestSkillSimulation(unittest.TestCase):
                 )
                 continue
 
+            # 3b. Cross-stance ally stance-transfer (Conduction): fizzles with no stance, succeeds in all 3 stances
+            if slug == "afterglow":
+                al_expr = srow.get("auralencalc", "").strip()
+                mk_expr = srow.get("aurastatcalc1", "").strip()
+                self.assertEqual(
+                    eval_d2_expr(al_expr, srow, slvl=10, skill_levels={vname: 10}, stats={}, skills_by_name=skills_by_name),
+                    1,
+                    "Conduction must fizzle (auralencalc == 1) when no stance is active",
+                )
+                for idx_m, m_stat in enumerate(("skill_handofathena", "skill_decrepify", "skill_frenzy"), start=1):
+                    self.assertGreater(
+                        eval_d2_expr(al_expr, srow, slvl=10, skill_levels={vname: 10}, stats={m_stat: 1}, skills_by_name=skills_by_name),
+                        1000,
+                        f"Conduction must apply full duration in stance {m_stat}",
+                    )
+                    self.assertEqual(
+                        eval_d2_expr(mk_expr, srow, slvl=10, skill_levels={vname: 10}, stats={m_stat: 1}, skills_by_name=skills_by_name),
+                        idx_m,
+                        f"Conduction marker must equal {idx_m} in stance {m_stat}",
+                    )
+                continue
+
             # 4. Offensive active spells: locate all expressions carrying cross-stance fizzle guards
             candidate_exprs = []
             for col in ("EDmgSymPerCalc", "ELenSymPerCalc", "auralencalc", "aurarangecalc", "calc1", "calc2", "calc3", "calc4", "cltcalc1"):

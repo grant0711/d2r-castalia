@@ -5,33 +5,105 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final1": {
-      "description": "final1: Always-on passive that grants 5% -> 75% Damage Taken Goes to Mana at lvl 20 (cap 100%)",
+      "description": "final1 (Conduction): Targeted ally/pet stance-transfer buff (srvdofunc=25, TargetAlly=1, TargetPet=1). Transfers the Sorceress's active stance element mastery (40% -> 100% at lvl 20) and primary defensive boon/bust (100% -> 50% drawback at lvl 20) onto an ally or mercenary via a single shared aurastate (sorc_conduction). Inactive slots write 1 (non-zero) so srvdofunc=25 overwrites all 6 slots cleanly on stance swap.",
       "no_label": true,
       "strings": {
-        "name": "Echo",
-        "short": "passive - damage taken goes to mana",
-        "long": "Passive\n\nconverts a percentage of damage taken into mana"
+        "name": "Conduction",
+        "short": "transfer your active elemental stance to an ally",
+        "long": "conducts your active elemental stance onto a targeted ally or hireling\ntransfers matching elemental mastery and stance properties while remaining mutually exclusive\nrequires an active stance"
       },
       "strings_extra": {
-        "ModSorc_EchoDmgToMana": "Damage Taken Goes to Mana: %d%%"
+        "ModSorc_CondBoon": "Stance Boons Transferred: %d%%",
+        "ModSorc_CondBust": "Stance Drawbacks Transferred: %d%%"
       },
       "tables": {
+        "states.txt": {
+          "sorc_conduction": {
+            "_clone": "frozenarmor",
+            "group": "",
+            "restrict": "",
+            "castoverlay": "light_cast_2",
+            "removerlay": "",
+            "overlay1": "energyshield",
+            "overlay2": "",
+            "overlay3": "",
+            "stat": "",
+            "armblue": "",
+            "onsound": "sorceress_enchant",
+            "offsound": ""
+          }
+        },
         "skills.txt": {
           "Lightning Mastery": {
-            "passivestate": "lightningmastery",
-            "passivestat1": "item_damagetomana",
-            "passivecalc1": "min(100, 5 + (lvl - 1) * 70 / 19)",
+            "passive": "",
+            "passivestate": "",
+            "passivestat1": "",
+            "passivecalc1": "",
             "passivestat2": "",
-            "passivecalc2": ""
+            "passivecalc2": "",
+            "srvstfunc": "",
+            "srvdofunc": "25",
+            "cltstfunc": "",
+            "cltdofunc": "",
+            "TargetAlly": "1",
+            "TargetPet": "1",
+            "InTown": "1",
+            "range": "none",
+            "leftskill": "0",
+            "rightskill": "1",
+            "anim": "SC",
+            "seqtrans": "SC",
+            "monanim": "xx",
+            "localdelay": "25",
+            "minmana": "1",
+            "manashift": "8",
+            "mana": "20",
+            "lvlmana": "1",
+            "stsound": "sorceress_enchant",
+            "dosound": "",
+            "castoverlay": "light_cast_2",
+            "aurastate": "sorc_conduction",
+            "auratargetstate": "",
+            "auralencalc": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr) + stat('skill_frenzy'.accr)) > 0) ? ((1500 + (lvl * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300) : 1",
+            "calc1": "min(100, 40 + (lvl - 1) * 60 / 19)",
+            "*calc1 desc": "Stance Boon Transfer % (40 -> 100 at lvl 20)",
+            "calc2": "max(40, 100 - (lvl - 1) * 50 / 19)",
+            "*calc2 desc": "Stance Bust Transfer % (100 -> 50 at lvl 20, cap 40)",
+            "calc3": "(stat('skill_handofathena'.accr) > 0) ? skill('Enchant'.lvl) : ((stat('skill_decrepify'.accr) > 0) ? skill('Energy Shield'.lvl) : ((stat('skill_frenzy'.accr) > 0) ? skill('Frozen Armor'.lvl) : 0))",
+            "*calc3 desc": "Active Stance Effective Level",
+            "calc4": "max(1, (5 + (clc3 - 1) * 25 / 19) * clc1 / 100)",
+            "*calc4 desc": "Transferred Elemental Skill Damage %",
+            "aurastat1": "modifierlist_level",
+            "aurastatcalc1": "(stat('skill_handofathena'.accr) > 0) ? 1 : ((stat('skill_decrepify'.accr) > 0) ? 2 : ((stat('skill_frenzy'.accr) > 0) ? 3 : 0))",
+            "aurastat2": "passive_fire_mastery",
+            "aurastatcalc2": "(stat('skill_handofathena'.accr) > 0) ? clc4 : 1",
+            "aurastat3": "passive_ltng_mastery",
+            "aurastatcalc3": "(stat('skill_decrepify'.accr) > 0) ? clc4 : 1",
+            "aurastat4": "passive_cold_mastery",
+            "aurastatcalc4": "(stat('skill_frenzy'.accr) > 0) ? clc4 : 1",
+            "aurastat5": "damageresist",
+            "aurastatcalc5": "(stat('skill_handofathena'.accr) > 0) ? (0 - max(1, min(40, 3 + (clc3 - 1) * 22 / 19) * clc2 / 100)) : ((stat('skill_frenzy'.accr) > 0) ? max(1, min(50, 3 + (clc3 - 1) * 22 / 19) * clc1 / 100) : 1)",
+            "aurastat6": "item_armor_percent",
+            "aurastatcalc6": "(stat('skill_decrepify'.accr) > 0) ? (0 - max(1, min(100, 10 + (clc3 - 1) * 5) * clc2 / 100)) : ((stat('skill_frenzy'.accr) > 0) ? max(1, (10 + (clc3 - 1) * 10) * clc1 / 100) : 1)"
           }
         },
         "skilldesc.txt": {
           "lightning mastery": {
             "descline1": "74",
-            "desctexta1": "ModSorc_EchoDmgToMana",
+            "desctexta1": "ModSorc_CondBoon",
             "desctextb1": "",
-            "desccalca1": "min(100, 5 + (lvl - 1) * 70 / 19)",
-            "desccalcb1": ""
+            "desccalca1": "clc1",
+            "desccalcb1": "",
+            "descline2": "74",
+            "desctexta2": "ModSorc_CondBust",
+            "desctextb2": "",
+            "desccalca2": "clc2",
+            "desccalcb2": "",
+            "descline3": "36",
+            "desctexta3": "StrSkillDurationSingular",
+            "desctextb3": "StrSkill20",
+            "desccalca3": "(1500 + (lvl * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300",
+            "desccalcb3": "25"
           }
         }
       }

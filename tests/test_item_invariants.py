@@ -92,7 +92,12 @@ class TestItemInvariants(unittest.TestCase):
             if wtype in expected_weap_ap:
                 self.assertEqual(r.get("auto prefix"), expected_weap_ap[wtype])
 
-        expected_arm_ap = {"phlm": "313", "pelt": "314", "head": "305"}
+        expected_arm_ap = {
+            "phlm": {"313", "322"},
+            "pelt": {"314", "323"},
+            "head": {"305"},
+            "ashd": {"304", "318", "319"},
+        }
         for r in arm_rows:
             code = r.get("code", "")
             if not code:
@@ -103,7 +108,7 @@ class TestItemInvariants(unittest.TestCase):
                 continue
             atype = r.get("type", "")
             if atype in expected_arm_ap:
-                self.assertEqual(r.get("auto prefix"), expected_arm_ap[atype])
+                self.assertIn(r.get("auto prefix"), expected_arm_ap[atype])
             self.assertTrue(50 <= int(r.get("cost") or "0") <= 50000)
 
     def test_automagic_staffmod_brackets_match_skill_reqlevel_gates(self):
@@ -115,8 +120,9 @@ class TestItemInvariants(unittest.TestCase):
             if r.get("*Id")
         }
         grp_to_cls = {
-            "303": "sor", "305": "nec", "310": "sor", "311": "nec",
+            "303": "sor", "304": "pal", "305": "nec", "310": "sor", "311": "nec",
             "312": "pal", "313": "bar", "314": "dru", "315": "ass",
+            "318": "pal", "319": "pal", "322": "bar", "323": "dru",
         }
         bracket_to_reqcap = {
             ("1", "7"): 1, ("8", "13"): 8, ("14", "20"): 16,
@@ -188,21 +194,27 @@ class TestItemInvariants(unittest.TestCase):
                 if m1c in ("charged", "oskill", "skill", "att-skill", "hit-skill", "gethit-skill"):
                     self.assertNotIn(m1p, forbidden_skill_refs)
                 if r.get("version") != "0":
+                    name = r.get("Name", "")
                     alvl = int(r.get("level") or "1")
                     lreq = int(r.get("levelreq") or "0")
+                    self.assertLessEqual(lreq, 74, f"{afx_fn} {name} levelreq={lreq} exceeds 74 cap")
+                    # Iconic high-tier Rare affixes must retain authentic Vanilla levelreq
+                    # (Crafted penalty is softened directly via -5 item_levelreq in cubemain.txt)
                     if r.get("rare") == "1":
-                        if alvl <= 22:
-                            self.assertEqual(lreq, 0)
-                        elif alvl <= 29:
-                            self.assertLessEqual(lreq, 3)
-                        elif alvl <= 44:
-                            self.assertLessEqual(lreq, 14)
-                        elif alvl <= 59:
-                            self.assertLessEqual(lreq, 26)
-                        else:
-                            self.assertLessEqual(lreq, 46)
-                    else:
-                        self.assertLessEqual(lreq, max(1, min(62, alvl - 15)))
+                        if name == "Cruel" and alvl == 56:
+                            self.assertGreaterEqual(lreq, 48)
+                        elif name == "Ferocious" and alvl == 41:
+                            self.assertGreaterEqual(lreq, 33)
+                        elif name == "Godly" and alvl == 50:
+                            self.assertGreaterEqual(lreq, 43)
+
+        # Verify item_levelreq is signed 8-bit (Save Add = 32) so negative Crafted offsets save cleanly
+        _, isc_rows = read_mod_tsv("itemstatcost.txt")
+        lreq_stat = next((r for r in isc_rows if r.get("Stat") == "item_levelreq"), None)
+        self.assertIsNotNone(lreq_stat)
+        self.assertEqual(lreq_stat.get("Signed"), "1")
+        self.assertEqual(lreq_stat.get("Save Bits"), "8")
+        self.assertEqual(lreq_stat.get("Save Add"), "32")
 
         # Verify locked unique/set table parity & oskill compatibility
         locked_dir = os.path.abspath(

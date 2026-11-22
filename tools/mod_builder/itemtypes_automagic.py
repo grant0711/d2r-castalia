@@ -203,6 +203,41 @@ def build_itemtypes(cfg: dict) -> str:
         rows.append(bshd)
         by_code["bshd"] = bshd
 
+    # 5d. Add Light / Medium / Heavy secondary type2 tags for Body Armor, Standard Shields,
+    # Paladin Shields, Gloves, and Boots (leaving primary 'type' untouched for 3D rendering/UI!).
+    weight_subtypes = [
+        ("ltor", "Light Body Armor", "tors"),
+        ("mtor", "Medium Body Armor", "tors"),
+        ("htor", "Heavy Body Armor", "tors"),
+        ("ctor", "Caster Body Armor", "tors"),
+        ("lshi", "Light Shield", "shie"),
+        ("mshi", "Medium Shield", "shie"),
+        ("hshi", "Heavy Shield", "shie"),
+        ("lash", "Light Paladin Shield", "ashd"),
+        ("mash", "Medium Paladin Shield", "ashd"),
+        ("hash", "Heavy Paladin Shield", "ashd"),
+        ("lglv", "Light Gloves", "glov"),
+        ("mglv", "Medium Gloves", "glov"),
+        ("hglv", "Heavy Gloves", "glov"),
+        ("lbot", "Light Boots", "boot"),
+        ("mbot", "Medium Boots", "boot"),
+        ("hbot", "Heavy Boots", "boot"),
+    ]
+    for wcode, wname, parent_code in weight_subtypes:
+        if wcode not in by_code and parent_code in by_code:
+            wr = dict(by_code[parent_code])
+            wr["ItemType"] = wname
+            wr["Code"] = wcode
+            wr["Equiv1"] = ""
+            wr["Equiv2"] = ""
+            wr["Body"] = "0"
+            wr["BodyLoc1"] = ""
+            wr["BodyLoc2"] = ""
+            wr["TreasureClass"] = "0"
+            wr["Rarity"] = "0"
+            rows.append(wr)
+            by_code[wcode] = wr
+
     # 6. Clear hardcoded StaffMods in itemtypes.txt so our automagic.txt 'skill-rand' groups (303, 305, 310..315)
     # control 100% of class skill rolls across all 6 progression tiers (reqlevel 1/8/16/24/32/40)!
     for row in rows:
@@ -295,11 +330,16 @@ def _make_auto_row(
     return r
 
 
-def _build_class_staffmod_rows(headers: List[str], group: str, cls: str) -> List[Dict[str, str]]:
+def _build_class_staffmod_rows(
+    headers: List[str],
+    group: str,
+    cls: str,
+    extra_mod: tuple = None,
+) -> List[Dict[str, str]]:
     """
     Build progressive 1-skill, 2-skill, and 3-skill 'skill-rand' rows for a class across the 6 brackets.
-    Disjoint [min_id, max_id] tier partitions on multi-skill rows guarantee an item never rolls duplicate skills,
-    while spanning Tiers 1..K so every unlocked tier (1..6 in Bracket 6) can spawn without leaking locked higher-tier skills!
+    When extra_mod is provided (e.g. block2 +15/-15 or light -2), emits 1-skill and 2-skill rows with
+    extra_mod in the trailing mod slot so all 3 slots stay cleanly populated.
     """
     tier_sets = CLASS_SKILL_ID_SETS[cls]
     out: List[Dict[str, str]] = []
@@ -314,12 +354,10 @@ def _build_class_staffmod_rows(headers: List[str], group: str, cls: str) -> List
         ivs = _to_intervals(id_list)
         for lo, hi in ivs:
             f = str(max(1, (base_freq * (hi - lo + 1) + 2) // 5)) if len(ivs) > 1 else str(base_freq)
-            out.append(
-                _make_auto_row(
-                    headers, group, min_lvl, max_lvl, lreq, f,
-                    [("skill-rand", slvl, lo, hi)],
-                )
-            )
+            mods = [("skill-rand", slvl, lo, hi)]
+            if extra_mod is not None:
+                mods.append(extra_mod)
+            out.append(_make_auto_row(headers, group, min_lvl, max_lvl, lreq, f, mods))
 
     def emit_2skill(min_lvl: str, max_lvl: str, lreq: str, freq: str, s1: str, s2: str, ids1: List[int], ids2: List[int]) -> None:
         ivs1 = _to_intervals(ids1)
@@ -328,14 +366,14 @@ def _build_class_staffmod_rows(headers: List[str], group: str, cls: str) -> List
         for i in range(n):
             a_lo, a_hi = ivs1[i % len(ivs1)]
             b_lo, b_hi = ivs2[i % len(ivs2)]
-            out.append(
-                _make_auto_row(
-                    headers, group, min_lvl, max_lvl, lreq, freq,
-                    [("skill-rand", s1, a_lo, a_hi), ("skill-rand", s2, b_lo, b_hi)],
-                )
-            )
+            mods = [("skill-rand", s1, a_lo, a_hi), ("skill-rand", s2, b_lo, b_hi)]
+            if extra_mod is not None:
+                mods.append(extra_mod)
+            out.append(_make_auto_row(headers, group, min_lvl, max_lvl, lreq, freq, mods))
 
     def emit_3skill(min_lvl: str, max_lvl: str, lreq: str, freq: str, s1: str, s2: str, s3: str, ids1: List[int], ids2: List[int], ids3: List[int]) -> None:
+        if extra_mod is not None:
+            return
         ivs1 = _to_intervals(ids1)
         ivs2 = _to_intervals(ids2)
         ivs3 = _to_intervals(ids3)
@@ -445,7 +483,7 @@ def build_automagic(cfg: dict) -> str:
     ajav_rows: List[Dict[str, str]] = []
     for r in rows:
         grp = r.get("group", "")
-        if grp in ("303", "305"):
+        if grp in ("303", "304", "305"):
             continue
         kept_rows.append(r)
         if grp == "302":
@@ -612,24 +650,28 @@ def build_automagic(cfg: dict) -> str:
                 )
             )
 
-    # 5. Build dedicated 1..3 skill-rand groups for Wands (311), Scepters (312),
-    # Primal Helms (313), Druid Pelts (314), and Assassin Claws (315)
-    # (Group 310 for 2H Staves is built above with same-tree + element-matched automagic!)
+    # 5. Build dedicated skill-rand groups:
+    # - 304 (Medium Paladin Shields), 318 (Light Paladin Shields +15% FBR), 319 (Heavy Paladin Shields -15% FBR)
+    # - 311 (Wands), 312 (Scepters), 313 (Open Barb Helms), 314 (Open Druid Pelts), 315 (Assassin Claws)
+    # - 322 (Enclosed Barb Helms -2 Light Radius), 323 (Enclosed Druid Pelts -2 Light Radius)
     staffmod_groups = [
-        ("311", "nec"),
-        ("312", "pal"),
-        ("313", "bar"),
-        ("314", "dru"),
-        ("315", "ass"),
+        ("304", "pal", None),
+        ("318", "pal", ("block2", "", "15", "15")),
+        ("319", "pal", ("block2", "", "-15", "-15")),
+        ("311", "nec", None),
+        ("312", "pal", None),
+        ("313", "bar", None),
+        ("314", "dru", None),
+        ("315", "ass", None),
+        ("322", "bar", ("light", "", "-4", "-4")),
+        ("323", "dru", ("light", "", "-4", "-4")),
     ]
-    for grp_id, cls_code in staffmod_groups:
-        rows.extend(_build_class_staffmod_rows(headers, grp_id, cls_code))
+    for grp_id, cls_code, extra_mod in staffmod_groups:
+        rows.extend(_build_class_staffmod_rows(headers, grp_id, cls_code, extra_mod=extra_mod))
 
-    # 6. Add Shield Block Rate & Helm Light Radius implicit automagic groups (316..321):
-    # - 316: Light Shields (+15% Faster Block Rate)
-    # - 317: Heavy Shields (-15% Faster Block Rate)
-    # - 318: Light Paladin Shields (clones 304 + mod3code=block2 +15%)
-    # - 319: Heavy Paladin Shields (clones 304 + mod3code=block2 -15%)
+    # 6. Add Shield Block Rate & Helm Light Radius implicit automagic groups (316, 317, 320, 321):
+    # - 316: Light Standard Shields (+15% Faster Block Rate)
+    # - 317: Heavy Standard Shields (-15% Faster Block Rate)
     # - 320: Enclosed Visor Helms (Mask & Full Helm lines: -2 Light Radius)
     # - 321: Fully Enclosed Greathelms (Great/Winged/Spired Helm line: -3 Light Radius)
     # These are inserted BEFORE the large class staffmod groups so common shields/helms always get low row ids.
@@ -648,27 +690,17 @@ def build_automagic(cfg: dict) -> str:
             itype1="shie", itype2="",
         )
     )
-    for r in list(kept_rows):
-        if r.get("group") == "304":
-            for new_grp, fbr_val in (("318", "15"), ("319", "-15")):
-                pr = dict(r)
-                pr["group"] = new_grp
-                pr["mod3code"] = "block2"
-                pr["mod3param"] = ""
-                pr["mod3min"] = fbr_val
-                pr["mod3max"] = fbr_val
-                fixed_rows.append(pr)
     fixed_rows.append(
         _make_auto_row(
             headers, "320", "1", "", "1", "1",
-            [("light", "", "-2", "-2")],
+            [("light", "", "-4", "-4")],
             itype1="helm", itype2="",
         )
     )
     fixed_rows.append(
         _make_auto_row(
             headers, "321", "1", "", "1", "1",
-            [("light", "", "-3", "-3")],
+            [("light", "", "-6", "-6")],
             itype1="helm", itype2="",
         )
     )

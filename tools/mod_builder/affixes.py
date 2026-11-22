@@ -225,6 +225,25 @@ def build_itemstatcost(cfg: dict) -> str:
             # Revert Patch 2.4's attackedinmelee back to damagedinmelee so missed and blocked
             # swings do NOT trigger Thorns; only landed melee hits reflect damage.
             r["itemevent1"] = "damagedinmelee"
+        elif st == "item_levelreq":
+            # Allow negative item_levelreq (-5) on Gem+Rune Crafted items in cubemain.txt
+            # to soften D2R's hardcoded Crafted +10 + 3*N_affixes levelreq penalty directly,
+            # so Magic & Rare affixes keep their authentic Vanilla levelreq without under-leveling drops.
+            r["Signed"] = "1"
+            r["Save Bits"] = "8"
+            r["Save Add"] = "32"
+            r["1.09-Save Bits"] = "8"
+            r["1.09-Save Add"] = "32"
+        elif st == "item_lightradius":
+            # Vanilla Save Bits=4 / Save Add=4 only stores -4..+11, causing -6 Light Radius on
+            # Greathelm/Winged Helm/Spired Helm (automagic 321) to underflow to +10/+11!
+            # Expand to Save Bits=5 / Save Add=10 (-10..+21) and Send Bits=6.
+            r["Signed"] = "1"
+            r["Send Bits"] = "6"
+            r["Save Bits"] = "5"
+            r["Save Add"] = "10"
+            r["1.09-Save Bits"] = "5"
+            r["1.09-Save Add"] = "10"
         elif st == "skill_channeling_tick":
             # Used by Frenzy (Id 147, aurastat3=skill_channeling_tick) so srvdofunc=9 registers
             # domeleeattack -> 36 (sWarHexOnAttack -> installs bar_stamina_reflex + Param1=3 Shiver Armor)
@@ -265,7 +284,7 @@ def build_magicprefix(cfg: dict) -> str:
     }
     # Expansion (version >= 1) core prefix groups for low/mid-tier maxlevel cutoffs
     cutoff_groups = {
-        "101", "105", "109", "110", "111", "112", "115",
+        "101", "105", "108", "109", "110", "111", "112", "115",
         "116", "117", "118", "119", "120",
         "137", "138", "139", "140", "142",
     }
@@ -325,11 +344,8 @@ def build_magicprefix(cfg: dict) -> str:
                     r[f"mod{m_idx}min"] = _scale_mod_val(r.get(f"mod{m_idx}min", ""), 1.33)
                     r[f"mod{m_idx}max"] = _scale_mod_val(r.get(f"mod{m_idx}max", ""), 1.33)
 
-        # 2. Enforce progressive maxlevel cutoffs on low/mid-tier Rare-eligible prefixes (lvl <= 32 -> lvl + 28)
-        if r.get("rare") == "1" and grp in cutoff_groups and not r.get("maxlevel") and not is_charm_or_jewel:
-            lvl = int(r.get("level") or "1")
-            if lvl <= 32:
-                r["maxlevel"] = str(lvl + 28)
+        # 2. (Progressive maxlevel cutoffs are applied via _apply_smart_maxlevel_cutoffs at the end of build_magicprefix
+        #     so no top-tier Rare affix ever drops off on any item slot!)
 
         # 3. Tune Group 105 (% ED) & Group 111 (% ED + AR) high-tier weights for exciting endgame Rare/Craft chases
         if r.get("rare") == "1" and not is_charm_or_jewel:
@@ -507,8 +523,274 @@ def build_magicprefix(cfg: dict) -> str:
     mp["add"] = "0"
     rows.append(mp)
 
-    _calibrate_rare_affix_levelreqs(rows)
+    _apply_prefix_archetype_weights(headers, rows)
+    _apply_smart_maxlevel_cutoffs(rows, cutoff_groups, max_lvl_threshold=32, window=28)
+
+    # Re-level Magic-only apex prefixes buffed by Castalia (+33%) so they sit cleanly
+    # above their weaker Rare counterparts, and fill missing Vanilla Lucky charm levelreqs.
+    for r in rows:
+        if r.get("spawnable") != "1" or r.get("version") == "0":
+            continue
+        name = r.get("Name", "")
+        grp = r.get("group", "")
+        if r.get("rare") != "1":
+            if name == "Cruel" and grp == "105" and r.get("mod1code") == "dmg%":
+                r["level"] = "62"
+                r["levelreq"] = "54"
+            elif name == "Godly" and grp == "101" and r.get("mod1code") == "ac%":
+                r["level"] = "55"
+                r["levelreq"] = "47"
+            elif name == "Lucky" and grp == "114" and not r.get("levelreq"):
+                lvl_i = int(r.get("level") or "0")
+                if lvl_i >= 20:
+                    r["levelreq"] = str(int(round(lvl_i * 0.75)))
+            elif name == "Chromatic" and grp == "116" and r.get("mod1min") != "33":
+                # Generic Chromatic (28-40%): strip redundant 'shld' from itypes (Shields use dedicated 33-40% row)
+                kept = [r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip() and r.get(f"itype{i}", "").strip() != "shld"]
+                for i in range(1, 8):
+                    r[f"itype{i}"] = kept[i - 1] if i - 1 < len(kept) else ""
+        if int(r.get("levelreq") or "0") > 74:
+            r["levelreq"] = "74"
+
     return write_excel_tsv("magicprefix.txt", headers, rows)
+
+
+def _clone_affix_for_types(
+    src: Dict[str, str],
+    itypes: List[str],
+    freq: str = None,
+    etypes: List[str] = None,
+    maxlevel: str = None,
+) -> Dict[str, str]:
+    nr = dict(src)
+    for i in range(1, 8):
+        nr[f"itype{i}"] = itypes[i - 1] if i <= len(itypes) else ""
+    if etypes is not None:
+        for i in range(1, 6):
+            nr[f"etype{i}"] = etypes[i - 1] if i <= len(etypes) else ""
+    if freq is not None:
+        nr["frequency"] = freq
+    if maxlevel is not None:
+        nr["maxlevel"] = maxlevel
+    return nr
+
+
+def _apply_prefix_archetype_weights(headers: List[str], rows: List[Dict[str, str]]) -> None:
+    """Apply weapon & armor family probability biasing, shield resistance tier buffs, and cleanups."""
+    extra_rows: List[Dict[str, str]] = []
+
+    for r in rows:
+        if r.get("spawnable") != "1" or r.get("version") == "0":
+            continue
+        grp = r.get("group", "")
+        it1 = r.get("itype1", "").strip()
+        itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+        if it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all:
+            continue
+        mod1 = r.get("mod1code", "")
+        name = r.get("Name", "")
+        freq_i = int(r.get("frequency") or "1")
+
+        # 1. Strip obsolete stack size (grp 141) from auto-replenishing Throwing Weapons
+        if grp == "141" and ({"thro", "jave", "taxe", "tkni"} & itypes_all):
+            r["spawnable"] = "0"
+            continue
+
+        # 2. Strip Dmg vs Demon / Undead from Wands (matching Staves & Orbs)
+        if grp in ("123", "142"):
+            _add_etypes(r, ["wand"])
+
+        # 3. Shield Resistance Tier Buffs (exclude shld from generic armo/shld res rows; emit dedicated buffed shld rows below)
+        if grp in ("116", "117", "118", "119", "120") and ({"armo", "shld"} & itypes_all):
+            _add_etypes(r, ["shld"])
+
+        # 4. Weapon %ED (grp 105, Rare high tiers): boost Blunt (club/mace/hamm), Axes, Polearms, Crossbows; soften Daggers
+        if grp == "105" and mod1 == "dmg%" and "weap" in itypes_all and r.get("rare") == "1" and int(r.get("level") or "0") >= 30:
+            # Base row already has etype1..3 = wand/staf/orb; only 2 etype slots left, so boost favored types cleanly
+            _add_etypes(r, ["knif"])
+            extra_rows.append(_clone_affix_for_types(r, ["blun", "axe", "pole", "xbow"], freq="3", etypes=["staf", "wand", "orb"]))
+            extra_rows.append(_clone_affix_for_types(r, ["knif"], freq=str(max(1, freq_i - 2)), etypes=[]))
+
+        # 5. Weapon %ED+AR (grp 111, Rare high tiers): boost Swords & Spears; soften Blunt & Axes
+        if grp == "111" and mod1 == "att" and "weap" in itypes_all and r.get("rare") == "1" and int(r.get("level") or "0") >= 30:
+            _add_etypes(r, ["blun", "axe"])
+            extra_rows.append(_clone_affix_for_types(r, ["swor", "spea"], freq="2", etypes=[]))
+            extra_rows.append(_clone_affix_for_types(r, ["blun", "axe"], freq=str(max(1, freq_i - 1)), etypes=["staf", "wand", "orb"]))
+
+        # 6. Dmg vs Undead (grp 142): 3x weight on Blunt & Scepters
+        if grp == "142" and "weap" in itypes_all and int(r.get("level") or "0") >= 15:
+            _add_etypes(r, ["blun", "scep"])
+            extra_rows.append(_clone_affix_for_types(r, ["blun", "scep"], freq=str(min(9, max(3, freq_i * 3))), etypes=["staf", "wand", "orb"]))
+
+        # 7. Dmg vs Demons (grp 123): boost Axes & Crossbows
+        if grp == "123" and "weap" in itypes_all and int(r.get("level") or "0") >= 20:
+            _add_etypes(r, ["axe", "xbow"])
+            extra_rows.append(_clone_affix_for_types(r, ["axe", "xbow"], freq=str(min(9, freq_i + 2)), etypes=[]))
+
+        # 8. Poison Dmg (grp 140): 3x weight on Daggers & Throwing Knives
+        if grp == "140" and "weap" in itypes_all and int(r.get("level") or "0") >= 15:
+            _add_etypes(r, ["knif", "tkni"])
+            extra_rows.append(_clone_affix_for_types(r, ["knif", "tkni"], freq=str(min(9, max(3, freq_i * 3))), etypes=[]))
+
+        # 9. Elemental Dmg (grps 137, 138, 139): boost Bows, Claws, Bow Quivers (bowq); soften Crossbows (xbow)
+        if grp in ("137", "138", "139") and "weap" in itypes_all and int(r.get("level") or "0") >= 25:
+            _add_etypes(r, ["bow", "h2h", "xbow"])
+            extra_rows.append(_clone_affix_for_types(r, ["bow", "h2h", "bowq"], freq=str(min(9, freq_i + 2)), etypes=[]))
+            extra_rows.append(_clone_affix_for_types(r, ["xbow"], freq="1", etypes=[]))
+
+        # 10. Hit Causes Monster to Flee (howl, grp 113): slash on Claws & Scepters
+        if grp == "113" and ({"weap", "mele", "blun", "h2h", "scep"} & itypes_all):
+            _add_etypes(r, ["h2h", "scep"])
+
+        # 11. Armor %EDef (grp 101, ac%, Rare high tiers): cleanly partition armo so Light (freq=1), Med (freq=2), Heavy (freq=4)
+        #     never overflow etype1..5! Base row covers non-weight-split slots (helm, belt, circ, head) at balanced freq.
+        #     Caster Body Armor ('ctor': Light/Mage/Archon Plate) gets low freq=1 alongside Light armor.
+        if grp == "101" and mod1 == "ac%" and "armo" in itypes_all and r.get("rare") == "1" and int(r.get("level") or "0") >= 25:
+            for idx, it in enumerate(["helm", "belt", "circ", "head"], start=1):
+                r[f"itype{idx}"] = it
+            for idx in range(5, 8):
+                r[f"itype{idx}"] = ""
+            r["frequency"] = str(min(3, freq_i))
+            extra_rows.append(_clone_affix_for_types(r, ["ltor", "ctor", "lshi", "lash", "lglv", "lbot"], freq="1", etypes=["bcas"]))
+            extra_rows.append(_clone_affix_for_types(r, ["mtor", "mshi", "mash", "mglv", "mbot"], freq="2", etypes=["bcas"]))
+            extra_rows.append(_clone_affix_for_types(r, ["htor", "hshi", "hash", "hglv", "hbot"], freq="4", etypes=["bcas"]))
+
+        # 12. Flat Mana (grp 115, high tiers): boost on Light/Caster Armor, Light Shields, Wands, Necro Heads
+        if grp == "115" and mod1 == "mana" and r.get("rare") == "1" and int(r.get("level") or "0") >= 25:
+            if "wand" in itypes_all or "rod" in itypes_all:
+                r["frequency"] = str(min(6, freq_i + 2))
+            if "circ" in itypes_all or "armo" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["ltor", "ctor", "lshi", "lash", "head"], freq="3", etypes=[]))
+
+        # 12b. Dedicated Caster Body Armor ('ctor': Light/Mage/Archon Plate) prefixes:
+        #      Unlock All Res (grp 116), MAEK (grp 121), and Vulpine Dmg-to-Mana (grp 107)
+        if grp == "116" and mod1 == "res-all" and "circ" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["ctor"], freq=str(max(2, freq_i)), etypes=[]))
+        if grp == "121" and "circ" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["ctor"], freq=str(freq_i), etypes=[]))
+        if grp == "107" and "shld" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["ctor"], freq=str(freq_i), etypes=[]))
+
+        # 13. Modest All Res (Shimmering 5-10 / Rainbow 8-11) on Medium Body Armor (mtor)
+        if grp == "116" and mod1 == "res-all" and name in ("Shimmering", "Rainbow") and "circ" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["mtor"], freq="2", etypes=[], maxlevel=""))
+
+        # 14. Rebalance Circlet +Skill prefix saturation slightly so Res/Mana/Sockets also roll
+        if grp == "125" and "circ" in itypes_all and freq_i >= 2:
+            r["frequency"] = str(max(1, freq_i - 1))
+
+        # 15. Crossbow Quivers (xboq): enable %ED + AR flavor (modest high-tier prefix)
+        if grp == "111" and name in ("Lord's", "King's", "Master's") and "weap" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["xboq"], freq="2", etypes=[]))
+
+    # 16. Append Buffed Shield Resistance Prefixes (all 'shld' = shie, ashd, head)
+    # Single-Element Resistances: 8-15 / 16-25 / 26-37 / 38-50% (Rare+Magic) + 51-65% (5th Magic-only apex tier)
+    shld_single_res = [
+        ("117", "res-cold", [
+            ("Azure",    "1", "5",  "33", "3",  "3", "8",  "15"),
+            ("Lapis",    "1", "12", "40", "9",  "4", "16", "25"),
+            ("Cobalt",   "1", "18", "46", "13", "4", "26", "37"),
+            ("Sapphire", "1", "25", "",   "18", "4", "38", "50"),
+            ("Cerulean", "",  "45", "",   "36", "2", "51", "65"),
+        ]),
+        ("118", "res-fire", [
+            ("Crimson",  "1", "5",  "33", "3",  "3", "8",  "15"),
+            ("Russet",   "1", "12", "40", "9",  "4", "16", "25"),
+            ("Garnet",   "1", "18", "46", "13", "4", "26", "37"),
+            ("Ruby",     "1", "25", "",   "18", "4", "38", "50"),
+            ("Infernal", "",  "45", "",   "36", "2", "51", "65"),
+        ]),
+        ("119", "res-ltng", [
+            ("Tangerine", "1", "5",  "33", "3",  "3", "8",  "15"),
+            ("Ocher",     "1", "12", "40", "9",  "4", "16", "25"),
+            ("Coral",     "1", "18", "46", "13", "4", "26", "37"),
+            ("Amber",     "1", "25", "",   "18", "4", "38", "50"),
+            ("Voltaic",   "",  "45", "",   "36", "2", "51", "65"),
+        ]),
+        ("120", "res-pois", [
+            ("Beryl",    "1", "5",  "33", "3",  "3", "8",  "15"),
+            ("Viridian", "1", "12", "40", "9",  "4", "16", "25"),
+            ("Jade",     "1", "18", "46", "13", "4", "26", "37"),
+            ("Emerald",  "1", "25", "",   "18", "4", "38", "50"),
+            ("Verdant",  "",  "45", "",   "36", "2", "51", "65"),
+        ]),
+    ]
+    for grp_id, mcode, tiers in shld_single_res:
+        for tname, trare, tlvl, tmaxl, tlreq, tfreq, tmin, tmax in tiers:
+            sr = {h: "" for h in headers}
+            sr["Name"] = tname
+            sr["version"] = "100"
+            sr["spawnable"] = "1"
+            sr["rare"] = trare
+            sr["level"] = tlvl
+            sr["maxlevel"] = tmaxl
+            sr["levelreq"] = tlreq
+            sr["frequency"] = tfreq
+            sr["group"] = grp_id
+            sr["mod1code"] = mcode
+            sr["mod1min"] = tmin
+            sr["mod1max"] = tmax
+            sr["itype1"] = "shld"
+            sr["multiply"] = "0"
+            sr["add"] = "0"
+            extra_rows.append(sr)
+
+    # All Resistances on Shields ('shld'): 6-10 / 11-17 / 18-24 / 25-32 / 33-40% (magic-only top tier 40%)
+    shld_all_res = [
+        ("Shimmering",    "1", "6",  "34", "4",  "3", "6",  "10"),
+        ("Rainbow",       "1", "18", "46", "13", "3", "11", "17"),
+        ("Scintillating", "1", "28", "56", "21", "3", "18", "24"),
+        ("Prismatic",     "1", "39", "",   "31", "4", "25", "32"),
+        ("Chromatic",     "",  "50", "",   "42", "2", "33", "40"),
+    ]
+    for tname, trare, tlvl, tmaxl, tlreq, tfreq, tmin, tmax in shld_all_res:
+        ar = {h: "" for h in headers}
+        ar["Name"] = tname
+        ar["version"] = "100"
+        ar["spawnable"] = "1"
+        ar["rare"] = trare
+        ar["level"] = tlvl
+        ar["maxlevel"] = tmaxl
+        ar["levelreq"] = tlreq
+        ar["frequency"] = tfreq
+        ar["group"] = "116"
+        ar["mod1code"] = "res-all"
+        ar["mod1min"] = tmin
+        ar["mod1max"] = tmax
+        ar["itype1"] = "shld"
+        ar["multiply"] = "0"
+        ar["add"] = "0"
+        extra_rows.append(ar)
+
+    # 17. Append NM/Hell Rare & Magic-only Apex Stamina (grp 109) and Stamina Regen (grp 108) prefixes
+    stamina_extra_prefixes = [
+        # (Name, rare, lvl, lreq, freq, grp, mod1code, min, max, itypes)
+        ("Enduring",   "1", "34", "26", "3", "109", "stam",       "31", "50",  ["boot", "belt", "ltor", "mtor", "ring", "amul", "circ"]),
+        ("Relentless", "1", "52", "44", "3", "109", "stam",       "51", "75",  ["boot", "belt", "ltor", "mtor"]),
+        ("Boundless",  "",  "64", "56", "2", "109", "stam",       "76", "110", ["boot", "belt", "ltor", "mtor"]),
+        ("Untiring",   "1", "36", "28", "3", "108", "regen-stam", "65", "85",  ["boot", "belt", "ltor", "mtor"]),
+        ("Ceaseless",  "",  "54", "46", "2", "108", "regen-stam", "90", "125", ["boot", "belt", "ltor", "mtor"]),
+    ]
+    for tname, trare, tlvl, tlreq, tfreq, grp_id, mcode, tmin, tmax, its in stamina_extra_prefixes:
+        sr = {h: "" for h in headers}
+        sr["Name"] = tname
+        sr["version"] = "100"
+        sr["spawnable"] = "1"
+        sr["rare"] = trare
+        sr["level"] = tlvl
+        sr["levelreq"] = tlreq
+        sr["frequency"] = tfreq
+        sr["group"] = grp_id
+        sr["mod1code"] = mcode
+        sr["mod1min"] = tmin
+        sr["mod1max"] = tmax
+        for idx, it in enumerate(its[:7], start=1):
+            sr[f"itype{idx}"] = it
+        sr["multiply"] = "0"
+        sr["add"] = "0"
+        extra_rows.append(sr)
+
+    rows.extend(extra_rows)
 
 
 def build_magicsuffix(cfg: dict) -> str:
@@ -525,8 +807,8 @@ def build_magicsuffix(cfg: dict) -> str:
         "17", "19", "21", "22", "23", "26", "27", "28", "33",
     }
     # Expansion (version >= 1) Quiver suffix groups:
-    # 7 = IAS (swing1..3), 10 = Cold Dmg, 12 = Fire Dmg, 13 = Ltng Dmg, 16 = Pois Dmg, 24 = Knockback
-    quiver_suffix_groups = {"7", "10", "12", "13", "16", "24"}
+    # 7 = IAS (swing1..3), 10 = Cold Dmg, 12 = Fire Dmg, 13 = Ltng Dmg, 16 = Pois Dmg (NO Knockback on Quivers!)
+    quiver_suffix_groups = {"7", "10", "12", "13", "16"}
 
     # Reworked/retired skills that must never spawn as charged/oskill/proc magic affixes:
     # - 126..155: Reworked Barbarian skills
@@ -580,11 +862,8 @@ def build_magicsuffix(cfg: dict) -> str:
                 r[f"mod{m_idx}min"] = _scale_mod_val(r.get(f"mod{m_idx}min", ""), 0.50)
                 r[f"mod{m_idx}max"] = _scale_mod_val(r.get(f"mod{m_idx}max", ""), 0.50)
 
-        # 2. Enforce progressive maxlevel cutoffs on low/mid-tier Rare-eligible suffixes (lvl <= 28 -> lvl + 26)
-        if r.get("rare") == "1" and grp in cutoff_groups and not r.get("maxlevel") and not is_charm_or_jewel:
-            lvl = int(r.get("level") or "1")
-            if lvl <= 28:
-                r["maxlevel"] = str(lvl + 26)
+        # 2. (Progressive maxlevel cutoffs are applied via _apply_smart_maxlevel_cutoffs at the end of build_magicsuffix
+        #     so no top-tier Rare affix ever drops off on any item slot!)
 
         # 3. Expose primary weapon IAS (group 7), Elemental Damage (10, 12, 13, 16), and Knockback (24) to Quivers
         if grp in quiver_suffix_groups and it1 in ("weap", "mele"):
@@ -629,54 +908,8 @@ def build_magicsuffix(cfg: dict) -> str:
                 elif "circ" in itypes_all:
                     _add_itypes(r, ["bcas"])
 
-    # 4. Add Progressive Tactical Suffix Groups (60..64) for Pierce, Open Wounds, Deadly, Crushing, Slow
-    # Strict frequency = "1" and non-overlapping maxlevel on Rare tiers so these are genuinely rare chase rolls!
-    new_suffixes = [
-        # Group 60: Piercing Attack (pierce)
-        ("of Puncturing", "1", "10", "27", "7", "60", "pierce", "10", "15", ["bowq", "xboq", "miss", "jave"]),
-        ("of Impaling", "1", "28", "", "21", "60", "pierce", "16", "25", ["bowq", "xboq", "miss", "jave"]),
-        ("of Skewering", "", "48", "", "36", "60", "pierce", "26", "40", ["bowq", "xboq", "miss", "jave"]),
-        # Group 61: Open Wounds (openwounds)
-        ("of Bleeding", "1", "10", "25", "7", "61", "openwounds", "10", "15", ["bowq", "xboq", "weap"]),
-        ("of Laceration", "1", "26", "", "19", "61", "openwounds", "16", "25", ["bowq", "xboq", "weap"]),
-        ("of Hemorrhage", "", "46", "", "35", "61", "openwounds", "26", "40", ["bowq", "xboq", "weap"]),
-        # Group 62: Deadly Strike (deadly)
-        ("of Precision", "1", "12", "29", "9", "62", "deadly", "8", "12", ["bowq", "xboq", "weap", "amul"]),
-        ("of Lethality", "1", "30", "", "22", "62", "deadly", "13", "20", ["bowq", "xboq", "weap", "amul"]),
-        ("of Execution", "", "50", "", "38", "62", "deadly", "21", "32", ["bowq", "xboq", "weap", "helm", "amul"]),
-        # Group 63: Crushing Blow (crush)
-        ("of Impact", "1", "14", "33", "10", "63", "crush", "5", "10", ["bowq", "xboq", "weap", "glov"]),
-        ("of Battering", "1", "34", "", "25", "63", "crush", "11", "16", ["bowq", "xboq", "weap", "glov"]),
-        ("of Crushing", "", "54", "", "40", "63", "crush", "17", "25", ["bowq", "xboq", "weap", "glov", "boot"]),
-        # Group 64: Slows Target (slow)
-        ("of Snaring", "1", "12", "31", "9", "64", "slow", "10", "15", ["bowq", "xboq", "miss"]),
-        ("of Entangling", "1", "32", "", "24", "64", "slow", "16", "22", ["bowq", "xboq", "miss"]),
-        ("of Crippling", "", "52", "", "39", "64", "slow", "23", "30", ["bowq", "xboq", "miss"]),
-    ]
-    for name, is_rare, lvl, maxlvl, lreq, grp, mcode, vmin, vmax, itypes in new_suffixes:
-        nr = {h: "" for h in headers}
-        nr["Name"] = name
-        nr["version"] = "100"
-        nr["spawnable"] = "1"
-        nr["rare"] = is_rare
-        nr["level"] = lvl
-        nr["maxlevel"] = maxlvl
-        nr["levelreq"] = lreq
-        nr["frequency"] = "1"
-        nr["group"] = grp
-        nr["mod1code"] = mcode
-        nr["mod1min"] = vmin
-        nr["mod1max"] = vmax
-        for idx, it in enumerate(itypes[:7], start=1):
-            nr[f"itype{idx}"] = it
-        if "helm" in itypes:
-            nr["etype1"] = "bhlm"
-        # Strip Open Wounds (61), Deadly Strike (62), and Crushing Blow (63) from Staves & Orbs
-        if grp in ("61", "62", "63"):
-            _add_etypes(nr, ["staf", "orb"])
-        nr["multiply"] = "0"
-        nr["add"] = "0"
-        rows.append(nr)
+    # 4. Tactical suffix groups 60..64 (Pierce, Open Wounds, Deadly Strike, Crushing Blow, Slows Target)
+    # are intentionally omitted from magic/rare rolls so they stay exclusive to Uniques, Sets, Runes, and Crafts!
 
     # 4b. Narrowly extend 2H Staff-only FCR suffixes (30% Rare-eligible, 40% Magic-only vs 1H Orb max 20%)
     for sname, srare, slvl, slreq, sfreq, sval in (
@@ -718,45 +951,537 @@ def build_magicsuffix(cfg: dict) -> str:
     ms["add"] = "0"
     rows.append(ms)
 
-    _calibrate_rare_affix_levelreqs(rows)
-    return write_excel_tsv("magicsuffix.txt", headers, rows)
+    _apply_suffix_archetype_weights(headers, rows)
+    _apply_smart_maxlevel_cutoffs(rows, cutoff_groups, max_lvl_threshold=28, window=26)
+    _stabilize_block_suffixes(headers, rows, target_pct=0.15)
+    _rebalance_charged_suffixes(rows)
 
-
-def _calibrate_rare_affix_levelreqs(rows: List[Dict[str, str]]) -> None:
-    """
-    Calibrate the `levelreq` column of all spawnable affixes:
-    1) Rare/Craft-eligible (`rare == "1"`): pre-absorb D2R's hardcoded Crafted item Required Level
-       penalty (`+ 10 + 3 * N_affixes`, i.e. +13..+22) so normal slots are immediately equippable
-       at the Gem tier (`14 / 29 / 44 / 59 / plvl=100`), while Circlets/Coronets/Tiaras/Diadems
-       (`magic lvl = 3 / 8 / 13 / 18`) have a moderated +3 to +8 level aspirational stretch when
-       rolling higher-alvl chase affixes:
-         - alvl 1..22  -> max affix levelreq = 0   (Crafted req: 13..22)
-         - alvl 23..29 -> max affix levelreq = 1..3 (Flawed ilvl 29: 1-2 affixes = 13..19, 4-affix cap = 25)
-         - alvl 30..44 -> max affix levelreq = 4..14 (Standard ilvl 44: 2 affixes = 16..30, 3 affixes = 19..33, 4-affix cap = 36)
-         - alvl 45..59 -> max affix levelreq = 15..26 (Flawless ilvl 59: 3 affixes = 19..45, 4-affix cap = 48)
-         - alvl 60..99 -> max affix levelreq = 26 + min(20, round((alvl - 59) * 20 / 31)) (27..46; 4-affix cap = 49..68!)
-    2) Magic-only (`rare != "1"`): cap at `max(1, min(62, alvl - 15))` so vendor-shopped Magic
-       Circlets/Coronets/Tiaras/Diadems (`alvl = clvl + 5 + magic_lvl`) never exceed a +3 to +8 level stretch.
-    """
+    # Re-level Magic-only apex suffixes buffed by Castalia (+33%) so they don't overpower Act 4 Norm / Act 1 NM
+    # and cap all spawnable affix levelreqs at 74 (so 4-affix Crafted items with -5 offset cap at 91).
     for r in rows:
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
-        lvl = int(r.get("level") or "1")
-        cur_req = int(r.get("levelreq") or "0")
-        if r.get("rare") == "1":
-            if lvl <= 22:
-                cap_req = 0
-            elif lvl <= 29:
-                cap_req = max(1, int(round((lvl - 22) * 3.0 / 7.0)))
-            elif lvl <= 44:
-                cap_req = 3 + int(round((lvl - 29) * 11.0 / 15.0))
-            elif lvl <= 59:
-                cap_req = 14 + int(round((lvl - 44) * 12.0 / 15.0))
-            else:
-                cap_req = 26 + min(20, int(round((lvl - 59) * 20.0 / 31.0)))
+        if r.get("rare") != "1":
+            name = r.get("Name", "")
+            grp = r.get("group", "")
+            if name == "of Butchery" and grp == "14" and r.get("mod1code") == "dmg-max":
+                r["level"] = "42"
+                r["levelreq"] = "34"
+            elif name == "of Evisceration" and grp == "14" and r.get("mod1code") == "dmg-max":
+                r["level"] = "55"
+                r["levelreq"] = "47"
+            elif name == "of the Whale" and grp == "26" and r.get("mod1code") == "hp":
+                r["level"] = "55"
+                r["levelreq"] = "47"
+            elif name == "of Life Everlasting" and grp == "1" and r.get("mod1code") == "red-dmg":
+                r["level"] = "52"
+                r["levelreq"] = "44"
+        if int(r.get("levelreq") or "0") > 74:
+            r["levelreq"] = "74"
+
+    return write_excel_tsv("magicsuffix.txt", headers, rows)
+
+
+def _apply_suffix_archetype_weights(headers: List[str], rows: List[Dict[str, str]]) -> None:
+    """Apply weapon & armor family suffix probability biasing, Light/Med/Heavy splits, and cleanups."""
+    extra_rows: List[Dict[str, str]] = []
+
+    for r in rows:
+        if r.get("spawnable") != "1" or r.get("version") == "0":
+            continue
+        grp = r.get("group", "")
+        it1 = r.get("itype1", "").strip()
+        itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+        if it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all:
+            continue
+        mod1 = r.get("mod1code", "")
+        name = r.get("Name", "")
+        freq_i = int(r.get("frequency") or "1")
+
+        # 1. Strip dead melee suffixes from Wands (LL, ML, KB, ITD)
+        if grp in ("27", "28", "24", "4"):
+            _add_etypes(r, ["wand"])
+
+        # 2. Strip obsolete Replenish Quantity (indestruct, grp 39) from auto-replenishing Throwing Weapons
+        if grp == "39" and ({"thro", "jave", "taxe", "tkni"} & itypes_all):
+            r["spawnable"] = "0"
+            continue
+
+        # 3. Weapon & Glove IAS (grp 7):
+        #    - Hammers & Maces capped at 20% (excluded from Swiftness 30% & Quickness 40%), low weight (freq=2)
+        #    - Scepters capped at 30% (excluded from Quickness 40%)
+        #    - Bows unlock Swiftness (30%); Crossbows capped at Alacrity (20%) with low weight (freq=1)
+        #    - Daggers, Swords, Claws boosted; Crossbow Quivers (xboq) lowered vs Bow Quivers (bowq)
+        #    - Gloves split: Light (lglv) boosted, Medium (mglv) balanced, Heavy (hglv) lowered
+        if grp == "7":
+            if name == "of Alacrity" and "weap" in itypes_all:
+                # Base row keeps remaining weap/bowq; replace etypes cleanly within 5 slots
+                r["itype1"], r["itype2"], r["itype3"] = "mele", "", ""
+                for idx in range(1, 6):
+                    r[f"etype{idx}"] = ""
+                _add_etypes(r, ["staf", "orb", "wand", "hamm", "mace"])
+                extra_rows.append(_clone_affix_for_types(r, ["hamm", "mace"], freq="2", etypes=[], maxlevel=""))
+                extra_rows.append(_clone_affix_for_types(r, ["xbow"], freq="1", etypes=[], maxlevel=""))
+                extra_rows.append(_clone_affix_for_types(r, ["bow"], freq="4", etypes=[], maxlevel=""))
+                extra_rows.append(_clone_affix_for_types(r, ["bowq"], freq="2", etypes=[], maxlevel=""))
+                extra_rows.append(_clone_affix_for_types(r, ["xboq"], freq="1", etypes=[], maxlevel=""))
+            elif name == "of Swiftness" and "mele" in itypes_all:
+                # Cap Hammers/Maces at 20%; keep xboq lower; unlock 30% on Bows; boost fast blades modestly
+                r["itype1"], r["itype2"], r["itype3"] = "mele", "", ""
+                for idx in range(1, 6):
+                    r[f"etype{idx}"] = ""
+                _add_etypes(r, ["staf", "orb", "wand", "hamm", "mace"])
+                extra_rows.append(_clone_affix_for_types(r, ["knif", "swor", "h2h", "bow"], freq="2", etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["bowq"], freq="2", etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["xboq"], freq="1", etypes=[]))
+            elif name == "of Quickness" and "mele" in itypes_all:
+                # Cap Hammers/Maces at 20%, Scepters at 30%; keep xboq lower; boost fast blades modestly
+                r["itype1"], r["itype2"], r["itype3"] = "mele", "", ""
+                for idx in range(1, 6):
+                    r[f"etype{idx}"] = ""
+                _add_etypes(r, ["rod", "orb", "hamm", "mace"])
+                extra_rows.append(_clone_affix_for_types(r, ["knif", "swor", "h2h"], freq="2", etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["bowq"], freq="2", etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["xboq"], freq="1", etypes=[]))
+            elif "glov" in itypes_all:
+                r["itype1"] = "mglv"
+                for idx in range(2, 8):
+                    r[f"itype{idx}"] = ""
+                extra_rows.append(_clone_affix_for_types(r, ["lglv"], freq=str(min(9, freq_i + 3)), etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["hglv"], freq="1", etypes=[]))
+
+        # 4. Knockback (grp 24):
+        #    - Strip from Daggers, Claws, and Quivers (already removed from quiver_suffix_groups)
+        #    - Boost 2x on Blunt (club/mace/hamm); enable on Crossbows (xbow); lower on Swords & Spears
+        if grp == "24" and ({"mele", "blun", "weap"} & itypes_all):
+            _add_etypes(r, ["knif", "h2h", "bowq", "xboq", "swor", "spea", "blun"])
+            extra_rows.append(_clone_affix_for_types(r, ["blun", "xbow"], freq=str(min(9, max(4, freq_i * 2))), etypes=["staf", "wand", "orb"]))
+            extra_rows.append(_clone_affix_for_types(r, ["swor", "spea"], freq="1", etypes=[]))
+
+        # 5. FCR (grp 9):
+        #    - Unlock 10% FCR (of the Apprentice) on Light Gloves (lglv ONLY!) and Necromancer Heads (head)
+        #    - Unlock 10% & 20% FCR (Apprentice & Magus) on Caster Body Armor ('ctor': Light/Mage/Archon Plate)
+        #    - Boost FCR on Wands, Scepters, Circlets
+        if grp == "9" and mod1 == "cast1":
+            if name == "of the Apprentice" and "circ" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["lglv", "head", "ctor"], freq="4", etypes=[]))
+            elif name == "of the Magus" and "circ" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["ctor"], freq="3", etypes=[]))
+            if "wand" in itypes_all or "scep" in itypes_all or "circ" in itypes_all:
+                r["frequency"] = str(min(9, freq_i + 2))
+
+        # 5b. Dedicated Caster Body Armor ('ctor') suffixes:
+        #     Unlock Energy (grp 23) & MDR (grp 2); exclude Thorns (grp 6), PDR (grp 1), and +Str (grp 31)
+        if grp == "23" and "circ" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["ctor"], freq=str(freq_i), etypes=[]))
+        if grp == "2" and "shld" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["ctor"], freq=str(freq_i), etypes=[]))
+        if grp in ("6", "1", "31") and ({"armo", "tors"} & itypes_all):
+            _add_etypes(r, ["ctor"])
+
+        # 6. Weapon Min/Max Damage (grp 14, 15, 16): boost Axes (Max), Blunt & Crossbows & xboq (Min/Max), Spears (Min)
+        if grp in ("14", "15", "16") and "weap" in itypes_all and r.get("rare") == "1" and int(r.get("level") or "0") >= 20:
+            extra_rows.append(_clone_affix_for_types(r, ["blun", "xbow", "xboq"], freq=str(min(6, freq_i + 1)), etypes=["staf", "wand", "orb"]))
+            if grp in ("14", "16"):
+                extra_rows.append(_clone_affix_for_types(r, ["axe"], freq=str(min(6, freq_i + 2)), etypes=[]))
+            if grp == "15":
+                extra_rows.append(_clone_affix_for_types(r, ["spea"], freq=str(min(6, freq_i + 1)), etypes=[]))
+
+        # 7. Prevent Monster Heal (grp 20) & Ignore Target Defense (grp 4): boost Daggers & Spears
+        if grp == "20" and "weap" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["knif"], freq=str(min(8, freq_i * 2)), etypes=[]))
+        if grp == "4" and "weap" in itypes_all:
+            extra_rows.append(_clone_affix_for_types(r, ["knif", "spea"], freq=str(min(8, max(3, freq_i * 2))), etypes=[]))
+
+        # 8. Life/Mana Leech (grp 27, 28): boost Swords, Polearms (LL), Gloves; unlock mid-tier leech on Bows/Crossbows (miss)
+        if grp == "27" and "mele" in itypes_all and int(r.get("level") or "0") >= 25:
+            extra_rows.append(_clone_affix_for_types(r, ["swor", "pole"], freq="2", etypes=[]))
+            if name == "of the Locust":
+                extra_rows.append(_clone_affix_for_types(r, ["miss"], freq="3", etypes=[]))
+        if grp == "28" and "mele" in itypes_all and name == "of the Wraith":
+            extra_rows.append(_clone_affix_for_types(r, ["miss"], freq="3", etypes=[]))
+        if grp in ("27", "28") and "glov" in itypes_all:
+            r["frequency"] = str(min(8, freq_i + 1))
+
+        # 9. Boots FRW (grp 35, move1..3): differentiate Light (lbot high), Med (mbot balanced), Heavy (hbot low); boost Circlets
+        if grp == "35":
+            if "boot" in itypes_all and r.get("rare") == "1" and int(r.get("level") or "0") >= 15:
+                _add_etypes(r, ["lbot", "mbot", "hbot"])
+                extra_rows.append(_clone_affix_for_types(r, ["lbot"], freq=str(min(9, freq_i + 3)), etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["mbot"], freq=str(freq_i), etypes=[]))
+                extra_rows.append(_clone_affix_for_types(r, ["hbot"], freq="1", etypes=[]))
+            elif "circ" in itypes_all:
+                r["frequency"] = str(min(9, freq_i + 2))
+
+        # 10. Thorns (grp 6): strip from Circlets; slash on Light Armor/Shields, Necro Heads, Belts; boost on Heavy Armor/Shields
+        if grp == "6" and ({"armo", "tors", "shld", "belt", "circ"} & itypes_all):
+            _add_etypes(r, ["circ", "ltor", "lshi", "lash", "head", "htor", "hshi", "hash"])
+            extra_rows.append(_clone_affix_for_types(r, ["htor", "hshi", "hash"], freq=str(min(9, freq_i + 2)), etypes=["bcas"]))
+            extra_rows.append(_clone_affix_for_types(r, ["ltor", "lshi", "lash", "head"], freq="1", etypes=["bcas"]))
+            if "belt" in itypes_all and freq_i >= 2:
+                r["frequency"] = str(max(1, freq_i // 2))
+
+        # 11. Flat PDR (grp 1) & MDR (grp 2): boost Heavy Armor/Shields/Gloves/Boots; lower on Light Armor/Shields & Necro Heads
+        if grp in ("1", "2") and ({"armo", "tors", "shld"} & itypes_all) and r.get("rare") == "1" and int(r.get("level") or "0") >= 15:
+            _add_etypes(r, ["ltor", "lshi", "lash", "head", "htor", "hshi", "hash"])
+            extra_rows.append(_clone_affix_for_types(r, ["htor", "hshi", "hash", "hglv", "hbot"], freq=str(min(9, max(4, freq_i * 2))), etypes=["bcas"]))
+            extra_rows.append(_clone_affix_for_types(r, ["ltor", "lshi", "lash", "head"], freq="1", etypes=["bcas"]))
+
+        # 12. FHR (grp 18, balance1..3): boost Medium Body Armor/Shields, Heavy Shields/Boots, Helms/Barb Helms/Pelts
+        if grp == "18" and r.get("rare") == "1" and int(r.get("level") or "0") >= 10:
+            if "armo" in itypes_all or "tors" in itypes_all or "shld" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["mtor", "mshi", "mash", "hshi", "hash", "hbot", "helm"], freq="3", etypes=[]))
+
+        # 13. Block/FBR (grp 8): handled via _stabilize_block_suffixes for constant ~15% rate across all levels & shield types
+
+        # 14. Life (grp 26): boost Heavy Armor/Shields/Gloves, Medium Armor, Belts, Circlets, Necro Heads, Blunt
+        if grp == "26" and r.get("rare") == "1" and int(r.get("level") or "0") >= 20:
+            if "belt" in itypes_all or "circ" in itypes_all or "shld" in itypes_all or "tors" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["htor", "mtor", "hshi", "hash", "hglv", "belt", "head"], freq="3", etypes=[]))
+
+        # 15. Strength (grp 31): boost Heavy Armor/Shields/Gloves/Boots, Barb Helms, Belts (modest so Str doesn't crowd out)
+        if grp == "31" and r.get("rare") == "1" and int(r.get("level") or "0") >= 20:
+            if "armo" in itypes_all or "tors" in itypes_all or "shld" in itypes_all or "belt" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["htor", "hshi", "hash", "hglv", "hbot", "phlm"], freq="2", etypes=["bcas"]))
+
+        # 16. Dexterity (grp 17) & MF (grp 22): boost Light Armor/Gloves/Boots + Arrows (bowq)
+        if grp == "17" and r.get("rare") == "1" and int(r.get("level") or "0") >= 15:
+            if "armo" in itypes_all or "glov" in itypes_all or "boot" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["ltor", "lglv", "lbot", "bowq"], freq="3", etypes=[]))
+        if grp == "22" and r.get("rare") == "1" and int(r.get("level") or "0") >= 15:
+            if "glov" in itypes_all or "boot" in itypes_all or "circ" in itypes_all:
+                extra_rows.append(_clone_affix_for_types(r, ["ltor", "lglv", "lbot"], freq="3", etypes=[]))
+
+        # 17. Trim clutter: hit-skill (grp 44) on Gloves/Circlets/Shields/Heads/Caster Rods, rep-dur (grp 37) on Helms/Boots, light (grp 25) on Helms
+        if grp == "44" and ({"glov", "circ", "shld", "head", "ashd", "wand", "staf", "orb", "weap"} & itypes_all) and freq_i >= 2:
+            r["frequency"] = str(max(1, freq_i // 2))
+        if grp == "37" and ({"helm", "boot", "phlm", "pelt"} & itypes_all) and freq_i >= 2:
+            r["frequency"] = str(max(1, freq_i // 2))
+        if grp == "25" and ({"helm", "phlm", "pelt"} & itypes_all) and freq_i >= 2:
+            r["frequency"] = str(max(1, freq_i // 2))
+
+    rows.extend(extra_rows)
+
+
+def _apply_smart_maxlevel_cutoffs(
+    rows: List[Dict[str, str]],
+    cutoff_groups: set,
+    max_lvl_threshold: int,
+    window: int,
+) -> None:
+    """
+    Apply progressive maxlevel cutoffs (lvl + window) ONLY to Rare-eligible rows whose group has a
+    strictly higher Rare-eligible tier covering EVERY item type on the row. This phases out low-tier
+    clutter while guaranteeing ZERO affix groups ever drop off in Nightmare/Hell on any item type!
+    """
+    # Build minimal parent hierarchy for common umbrella item types
+    ancestors = {
+        "tors": {"armo"}, "ltor": {"tors", "armo"}, "mtor": {"tors", "armo"}, "htor": {"tors", "armo"}, "ctor": {"tors", "armo"},
+        "shie": {"shld", "armo"}, "lshi": {"shie", "shld", "armo"}, "mshi": {"shie", "shld", "armo"}, "hshi": {"shie", "shld", "armo"},
+        "ashd": {"shld", "armo"}, "lash": {"ashd", "shld", "armo"}, "mash": {"ashd", "shld", "armo"}, "hash": {"ashd", "shld", "armo"},
+        "head": {"shld", "armo"}, "shld": {"armo"},
+        "helm": {"armo"}, "phlm": {"helm", "armo"}, "pelt": {"helm", "armo"}, "circ": {"armo"},
+        "glov": {"armo"}, "lglv": {"glov", "armo"}, "mglv": {"glov", "armo"}, "hglv": {"glov", "armo"},
+        "boot": {"armo"}, "lbot": {"boot", "armo"}, "mbot": {"boot", "armo"}, "hbot": {"boot", "armo"},
+        "belt": {"armo"},
+        "mele": {"weap"}, "miss": {"weap"}, "blun": {"mele", "weap"}, "rod": {"blun", "mele", "weap"},
+        "swor": {"mele", "weap"}, "axe": {"mele", "weap"}, "knif": {"mele", "weap"},
+        "club": {"blun", "mele", "weap"}, "mace": {"blun", "mele", "weap"}, "hamm": {"blun", "mele", "weap"},
+        "pole": {"mele", "weap"}, "spea": {"mele", "weap"}, "h2h": {"mele", "weap"}, "h2h2": {"h2h", "mele", "weap"},
+        "scep": {"rod", "blun", "mele", "weap"}, "wand": {"rod", "blun", "mele", "weap"}, "staf": {"rod", "blun", "mele", "weap"},
+        "orb": {"weap"}, "bow": {"miss", "weap"}, "xbow": {"miss", "weap"},
+        "jave": {"thro", "mele", "weap"}, "taxe": {"thro", "mele", "weap"}, "tkni": {"thro", "mele", "weap"},
+        "thro": {"weap"}, "bhlm": {"bcas", "helm", "armo"}, "bshd": {"bcas", "shie", "shld", "armo"},
+    }
+    def get_anc(c: str) -> set:
+        return {c} | ancestors.get(c, set())
+
+    by_grp: Dict[str, List[Dict[str, str]]] = {}
+    for r in rows:
+        if r.get("spawnable") == "1" and r.get("version") != "0" and r.get("rare") == "1":
+            it1 = r.get("itype1", "").strip()
+            if it1 in ("lcha", "mcha", "scha", "jewl"):
+                continue
+            by_grp.setdefault(r.get("group", ""), []).append(r)
+
+    split_rows: List[Dict[str, str]] = []
+    for grp in cutoff_groups:
+        gr = by_grp.get(grp, [])
+        if len(gr) < 2:
+            continue
+        for r in gr:
+            if r.get("maxlevel"):
+                continue
+            lvl = int(r.get("level") or "1")
+            if lvl > max_lvl_threshold:
+                continue
+            r_its = [r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()]
+            if not r_its:
+                continue
+            covered_its: List[str] = []
+            uncovered_its: List[str] = []
+            for it in r_its:
+                it_anc = get_anc(it)
+                has_higher = False
+                for r2 in gr:
+                    if int(r2.get("level") or "1") <= lvl:
+                        continue
+                    r2_its = {r2.get(f"itype{i}", "").strip() for i in range(1, 8) if r2.get(f"itype{i}", "").strip()}
+                    r2_ets = {r2.get(f"etype{i}", "").strip() for i in range(1, 6) if r2.get(f"etype{i}", "").strip()}
+                    if (r2_its & it_anc) and not (r2_ets & it_anc):
+                        has_higher = True
+                        break
+                if has_higher:
+                    covered_its.append(it)
+                else:
+                    uncovered_its.append(it)
+            if covered_its and not uncovered_its:
+                r["maxlevel"] = str(lvl + window)
+            elif covered_its and uncovered_its:
+                # Split mixed-slot row: keep uncovered slots uncapped, phase out covered slots cleanly!
+                for idx in range(1, 8):
+                    r[f"itype{idx}"] = uncovered_its[idx - 1] if idx <= len(uncovered_its) else ""
+                split_rows.append(_clone_affix_for_types(r, covered_its, maxlevel=str(lvl + window)))
+    rows.extend(split_rows)
+
+
+def _stabilize_block_suffixes(
+    headers: List[str],
+    rows: List[Dict[str, str]],
+    target_pct: float = 0.15,
+) -> None:
+    """
+    Replace flat group-8 (of Blocking / of Deflecting) shield rows with 4 non-overlapping alvl brackets
+    whose integer frequencies are auto-calibrated against live non-block TotW so every shield family
+    (Light/Med/Heavy Standard & Paladin Shields, Necro Heads, Bone Shields) rolls ~target_pct (15%)
+    at Normal, Nightmare, and Hell!
+    """
+    ancestors = {
+        "lshi": {"shie", "shld", "armo"}, "mshi": {"shie", "shld", "armo"}, "hshi": {"shie", "shld", "armo"},
+        "lash": {"ashd", "shld", "armo"}, "mash": {"ashd", "shld", "armo"}, "hash": {"ashd", "shld", "armo"},
+        "head": {"shld", "armo"}, "bshd": {"bcas", "shie", "shld", "armo"},
+    }
+    tpl_blk = None
+    tpl_def = None
+    for r in rows:
+        if r.get("spawnable") == "1" and r.get("version") != "0" and r.get("group") == "8":
+            if "Deflect" in r.get("Name", "") and tpl_def is None:
+                tpl_def = dict(r)
+            elif "Block" in r.get("Name", "") and tpl_blk is None:
+                tpl_blk = dict(r)
+            r["spawnable"] = "0"
+    if not tpl_blk or not tpl_def:
+        return
+
+    # Each bucket: (representative_code, itypes_list)
+    buckets = [
+        ("lshi", ["lshi", "lash"]),
+        ("mshi", ["mshi", "mash"]),
+        ("hshi", ["hshi", "hash"]),
+        ("head", ["head"]),
+        ("bshd", ["bshd"]),
+    ]
+    # Non-overlapping alvl brackets: (min_lvl, max_lvl, sample_alvl, deflecting_share)
+    # Act 1-3 Normal (1-24): 100% Blocking | Act 4-5 Normal (25-44): 35% Deflecting |
+    # Nightmare (45-64): 50% Deflecting | Hell (65+): 67% Deflecting (~2/3)
+    brackets = [
+        ("1",  "24", 12, 0.00),
+        ("25", "44", 30, 0.35),
+        ("45", "64", 50, 0.50),
+        ("65", "",   75, 0.67),
+    ]
+
+    new_rows: List[Dict[str, str]] = []
+    for rep, its in buckets:
+        a = {rep} | ancestors[rep]
+        for min_l, max_l, sample_alvl, defl_share in brackets:
+            other_w = 0
+            for r in rows:
+                if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("rare") != "1":
+                    continue
+                if r.get("group") == "8":
+                    continue
+                if not (int(r.get("level") or 0) <= sample_alvl <= int(r.get("maxlevel") or 999)):
+                    continue
+                r_its = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+                r_ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
+                if (r_its & a) and not (r_ets & a):
+                    other_w += int(r.get("frequency") or 0)
+            target_w = max(2, int(round(other_w * target_pct / (1.0 - target_pct))))
+            w_def = int(round(target_w * defl_share)) if defl_share > 0.0 else 0
+            w_blk = max(1, target_w - w_def)
+
+            rb = _clone_affix_for_types(tpl_blk, its, freq=str(w_blk), etypes=[], maxlevel=max_l)
+            rb["level"] = min_l
+            rb["levelreq"] = "1"
+            rb["spawnable"] = "1"
+            new_rows.append(rb)
+
+            if w_def > 0:
+                rd = _clone_affix_for_types(tpl_def, its, freq=str(w_def), etypes=[], maxlevel=max_l)
+                rd["level"] = min_l
+                rd["levelreq"] = "18"
+                rd["spawnable"] = "1"
+                new_rows.append(rd)
+
+    rows.extend(new_rows)
+
+
+def _rebalance_charged_suffixes(rows: List[Dict[str, str]]) -> None:
+    """
+    Overhaul spawnable `charged` suffixes in magicsuffix.txt:
+    1) Disable dead-weight late-game (alvl 48-72) off-class unsynergized nuke charges that
+       dilute Hell Magic/Rare jewelry, weapon, and glove pools.
+    2) Keep all 10 Amazon Bow/Spear attack charges on Gloves (`glov`), bringing their absurd
+       Vanilla alvl (40-94) down to match their actual skill tier (req 10-44) with fixed slvl 6-8
+       so cross-class Bow/Spear + Stance builds can genuinely use them during playthrough.
+    3) Sync all remaining class & utility charged suffixes so `levelreq >= skill_reqlevel`
+       (Castalia's 1/8/16/24/32/40 tiers) and replace Vanilla's negative scaling `mod1max`
+       (which always rolled slvl 1 at unlock) with fixed playthrough-viable skill levels (5-8).
+    """
+    # Map charged suffix Name -> (sk_req, is_utility, is_ama_glov_atk)
+    # Keyed by Name so it is completely immune to Sorceress skill ID permutation order.
+    sk_meta = {
+        # Amazon Bow/Spear attacks & utility
+        "of Magic Arrows":     (1, False, True),
+        "of Fire Arrows":      (1, False, True),
+        "of Inner Sight":      (1, True, False),
+        "of Cold Arrows":      (8, False, True),
+        "of Multiple Shot":    (8, False, True),
+        "of Power Strike":     (8, False, True),
+        "of Exploding Arrows": (16, False, True),
+        "of Ice Arrows":       (24, False, True),
+        "of Charged Strike":   (24, False, True),
+        "of Freezing Arrows":  (40, False, True),
+        "of Lightning Strike": (40, False, True),
+        # Sorceress
+        "of Fire Bolts":       (1, False, False),
+        "of Fire Balls":       (8, False, False),
+        "of Meteors":          (24, False, False),
+        "of Lightning":        (1, False, False),
+        "of Novas":            (8, False, False),
+        "of Chain Lightning":  (24, False, False),
+        "of Ice Bolts":        (1, False, False),
+        "of Frost Novas":      (8, True, False),
+        "of Ice Blasts":       (16, False, False),
+        "of Glacial Spikes":   (32, False, False),
+        "of Blizzards":        (32, False, False),
+        "of Frozen Orbs":      (40, False, False),
+        # Necromancer
+        "of Teeth":            (1, False, False),
+        "of Dim Vision":       (8, True, False),
+        "of Weaken":           (8, True, False),
+        "of Poison Dagger":    (8, False, False),
+        "of Terror":           (16, True, False),
+        "of Confusion":        (24, True, False),
+        "of Life Tap":         (24, True, False),
+        "of Bone Spears":      (24, False, False),
+        "of Attraction":       (32, True, False),
+        "of Poison Novas":     (40, False, False),
+        "of Bone Spirits":     (40, False, False),
+        # Paladin
+        "of Sacrifice":        (1, False, False),
+        "of Holy Bolts":       (8, False, False),
+        "of Zeal":             (16, False, False),
+        "of Vengeance":        (24, False, False),
+        "of Blessed Hammers":  (24, False, False),
+        # Druid
+        "of Firestorms":       (1, False, False),
+        "of Eruption":         (16, False, False),
+        "of Twister":          (24, False, False),
+        "of Volcano":          (32, False, False),
+        "of Tornado":          (32, False, False),
+        # Warlock
+        "of Miasma Bolt":      (1, False, False),
+        "of Lethargy":         (8, True, False),
+        "of Rancor":           (16, True, False),
+        "of Apocalypse":       (40, False, False),
+    }
+
+    # Dead-weight late-game off-class unsynergized nuke charges to disable
+    dead_offclass_nukes = {
+        ("of Frozen Orbs", "knif"),
+        ("of Bone Spirits", "amul"),
+        ("of Poison Novas", "glov"),
+        ("of Apocalypse", "glov"),
+        ("of Blizzards", "knif"),
+        ("of Meteors", "knif"),
+        ("of Tornado", "amul"),
+        ("of Volcano", "hamm"),
+        ("of Blessed Hammers", "hamm"),
+        ("of Bone Spears", "spea"),
+        ("of Chain Lightning", "spea"),
+        ("of Glacial Spikes", "knif"),
+        ("of Twister", "amul"),
+        ("of Vengeance", "swor"),
+    }
+
+    # Tier -> (fixed_slvl_class, fixed_slvl_glov, glov_alvl, glov_req, chg_cls, chg_off, chg_high)
+    # Progressive total charges (~2x Vanilla baseline) scaled cleanly by skill tier (all <= 140, well below 8-bit 255 cap)
+    tier_cfg = {
+        1:  (6, 6, 12, 10,  50, 40,  80),
+        8:  (6, 6, 18, 15,  65, 50,  95),
+        16: (6, 6, 24, 21,  80, 60, 110),
+        24: (6, 7, 32, 28,  95, 70, 120),
+        32: (7, 7, 40, 36, 110, 80, 130),
+        40: (8, 8, 48, 44, 120, 80, 140),
+    }
+
+    for r in rows:
+        if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("mod1code") != "charged":
+            continue
+        name = r.get("Name", "")
+        it1 = r.get("itype1", "").strip()
+        if (name, it1) in dead_offclass_nukes:
+            r["spawnable"] = "0"
+            continue
+
+        if name not in sk_meta:
+            continue
+        sk_req, is_util, is_ama_atk = sk_meta[name]
+        slvl_cls, slvl_glov, glov_alvl, glov_req, chg_cls, chg_off, chg_high = tier_cfg.get(
+            sk_req, (6, 6, 24, 20, 80, 60, 110)
+        )
+
+        # Preserve Vanilla's relative pool sizing (high-charge -60 rows vs standard -30 vs off-class -20)
+        orig_chg = abs(int(r.get("mod1min") or "30"))
+        if orig_chg >= 55:
+            target_chg = chg_high
+        elif orig_chg <= 22:
+            target_chg = chg_off
         else:
-            cap_req = max(1, min(62, lvl - 15))
-        r["levelreq"] = str(min(cur_req, cap_req))
+            target_chg = chg_cls
+
+        # Amazon Bow/Spear attack charges on Gloves: align alvl/req to skill tier + fixed slvl 6-8
+        if is_ama_atk and it1 == "glov":
+            r["level"] = str(glov_alvl)
+            r["levelreq"] = str(glov_req)
+            r["mod1min"] = str(chg_off)
+            r["mod1max"] = str(slvl_glov)
+            continue
+
+        # Inner Sight on Gloves: bring down from alvl 50 / req 42 to alvl 16 / req 14
+        if name == "of Inner Sight" and it1 == "glov":
+            r["level"] = "16"
+            r["levelreq"] = "14"
+            r["mod1min"] = str(chg_off)
+            r["mod1max"] = "6"
+            continue
+
+        # Ensure no charged suffix unlocks earlier than its skill's reqlevel
+        cur_lvl = int(r.get("level") or "1")
+        cur_req = int(r.get("levelreq") or "1")
+        min_req = max(cur_req, sk_req + 2 if sk_req >= 24 else sk_req)
+        min_lvl = max(cur_lvl, min_req)
+        r["level"] = str(min_lvl)
+        r["levelreq"] = str(min_req)
+        r["mod1min"] = str(target_chg)
+
+        # Replace negative scaling slvl (which starts at slvl 1 on unlock) with fixed playthrough-viable slvl
+        if is_util:
+            r["mod1max"] = "6" if sk_req <= 16 else "5"
+        else:
+            r["mod1max"] = str(slvl_cls)
 
 
 def build_affix_strings(cfg: dict) -> str:
@@ -789,6 +1514,15 @@ def build_affix_strings(cfg: dict) -> str:
         (60085, "Leviathan's", "Leviathan's"),
         (60086, "of the Archmage", "of the Archmage"),
         (60087, "of the Ascendant", "of the Ascendant"),
+        (60088, "Cerulean", "Cerulean"),
+        (60089, "Infernal", "Infernal"),
+        (60090, "Voltaic", "Voltaic"),
+        (60091, "Verdant", "Verdant"),
+        (60092, "Enduring", "Enduring"),
+        (60093, "Relentless", "Relentless"),
+        (60094, "Boundless", "Boundless"),
+        (60095, "Untiring", "Untiring"),
+        (60096, "Ceaseless", "Ceaseless"),
     ]
     return update_mod_strings_json("item-nameaffixes.json", updates)
 

@@ -28,9 +28,11 @@ TIERS = [1, 8, 16, 24, 32, 40]
 
 class TestSkillIds(unittest.TestCase):
     def test_automagic_rows_fit_d2s_save_format(self):
+        for fname in ("automagic.txt", "magicprefix.txt", "magicsuffix.txt"):
+            _, trows = read_mod_tsv(fname)
+            self.assertLess(len(trows), 2048, f"{fname} rows >= 2048 cannot be saved in .d2s (11-bit limit)")
+            self.assertLessEqual(len(trows), 2000, f"{fname} ({len(trows)} rows) is within 48 rows of the 2048 save limit")
         _, auto_rows = read_mod_tsv("automagic.txt")
-        self.assertLess(len(auto_rows), 2048, "automagic.txt rows >= 2048 cannot be saved (items get deleted)")
-        self.assertLessEqual(len(auto_rows), 2000, "automagic.txt is within 48 rows of the 2048 save limit")
         last_idx = {}
         for idx, r in enumerate(auto_rows):
             last_idx[r.get("group", "")] = idx
@@ -170,7 +172,7 @@ class TestSkillIds(unittest.TestCase):
                         s.add(p); st.append(p)
             return s
         staf_a, orb_a = anc("staf"), anc("orb")
-        for fname, blocked_grps in (("magicprefix.txt", {"123", "142"}), ("magicsuffix.txt", {"7", "27", "28", "61", "62", "63"})):
+        for fname, blocked_grps in (("magicprefix.txt", {"123", "142"}), ("magicsuffix.txt", {"7", "27", "28", "60", "61", "62", "63", "64"})):
             _, arows = read_mod_tsv(fname)
             for r in arows:
                 if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("group") not in blocked_grps:
@@ -179,6 +181,237 @@ class TestSkillIds(unittest.TestCase):
                 ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
                 self.assertFalse(bool(its & staf_a) and not bool(ets & staf_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on staf")
                 self.assertFalse(bool(its & orb_a) and not bool(ets & orb_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on orb")
+
+    def test_weapon_and_armor_archetype_affix_invariants(self):
+        _, it_rows = read_mod_tsv("itemtypes.txt")
+        _, mp_rows = read_mod_tsv("magicprefix.txt")
+        _, ms_rows = read_mod_tsv("magicsuffix.txt")
+        parents = {r["Code"]: [p for p in (r.get("Equiv1", ""), r.get("Equiv2", "")) if p] for r in it_rows if r.get("Code")}
+        def anc(code):
+            s, st = {code}, [code]
+            while st:
+                c = st.pop()
+                for p in parents.get(c, []):
+                    if p not in s:
+                        s.add(p); st.append(p)
+            return s
+
+        # 1. Tactical suffix groups 60..64 must be absent from magicsuffix.txt
+        tactical_rows = [r for r in ms_rows if r.get("spawnable") == "1" and r.get("group") in {"60", "61", "62", "63", "64"}]
+        self.assertEqual(tactical_rows, [], "Tactical suffix groups 60..64 must not exist in magicsuffix.txt")
+
+        def grp_weight(rows, types, grp, alvl=75):
+            a = set()
+            for t in types:
+                a |= anc(t)
+            w = 0
+            for r in rows:
+                if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("rare") != "1" or r.get("group") != grp:
+                    continue
+                if not (int(r.get("level") or 0) <= alvl <= int(r.get("maxlevel") or 999)):
+                    continue
+                its = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+                ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
+                if (its & a) and not (ets & a):
+                    w += int(r.get("frequency") or 0)
+            return w
+
+        # 2. Hell alvl=75 Rare single-resists restored on Belt/Armor/Boots & IAS restored on Bow
+        for slot in (["belt"], ["tors", "ltor"], ["boot", "lbot"]):
+            self.assertGreater(grp_weight(mp_rows, slot, "117"), 0, f"Single-res missing at alvl=75 on {slot}")
+        self.assertGreater(grp_weight(ms_rows, ["bow"], "7"), 0, "Bow IAS missing at alvl=75")
+
+        # 3. Archetype probability ordering checks
+        self.assertGreater(grp_weight(mp_rows, ["hamm"], "105"), grp_weight(mp_rows, ["knif"], "105"))
+        self.assertGreater(grp_weight(mp_rows, ["hamm"], "142"), grp_weight(mp_rows, ["swor"], "142"))
+        self.assertLess(grp_weight(ms_rows, ["hamm"], "7"), grp_weight(ms_rows, ["swor"], "7"))
+        self.assertEqual(grp_weight(ms_rows, ["wand"], "27"), 0)
+        self.assertEqual(grp_weight(ms_rows, ["wand"], "28"), 0)
+        self.assertEqual(grp_weight(ms_rows, ["bowq"], "24"), 0)
+        self.assertEqual(grp_weight(ms_rows, ["xboq"], "24"), 0)
+        self.assertGreater(grp_weight(ms_rows, ["glov", "lglv"], "9"), 0)
+        self.assertEqual(grp_weight(ms_rows, ["glov", "hglv"], "9"), 0)
+        self.assertGreater(grp_weight(mp_rows, ["tors", "htor"], "101"), grp_weight(mp_rows, ["tors", "ltor"], "101"))
+        self.assertGreater(grp_weight(mp_rows, ["shie", "hshi"], "101"), grp_weight(mp_rows, ["shie", "lshi"], "101"))
+        self.assertGreater(grp_weight(mp_rows, ["ashd", "hash"], "101"), grp_weight(mp_rows, ["ashd", "lash"], "101"))
+        self.assertGreater(grp_weight(ms_rows, ["boot", "lbot"], "35"), grp_weight(ms_rows, ["boot", "hbot"], "35"))
+        # Caster Body Armor ('ctor': Light/Mage/Archon Plate) rolls FCR, MAEK, All Res, and excludes Thorns/Str
+        self.assertGreater(grp_weight(ms_rows, ["tors", "ctor"], "9"), 0)
+        self.assertEqual(grp_weight(ms_rows, ["tors", "ltor"], "9"), 0)
+        self.assertGreater(grp_weight(mp_rows, ["tors", "ctor"], "116"), 0)
+        self.assertGreater(grp_weight(mp_rows, ["tors", "ctor"], "121"), 0)
+        self.assertEqual(grp_weight(ms_rows, ["tors", "ctor"], "6"), 0)
+
+    def test_affix_pool_diversity_no_single_group_monopoly(self):
+        """Across all 38 weapon/armor families and alvls (12, 30, 50, 75), no single affix group may monopolize a Rare pool."""
+        from collections import defaultdict
+        _, it_rows = read_mod_tsv("itemtypes.txt")
+        _, mp_rows = read_mod_tsv("magicprefix.txt")
+        _, ms_rows = read_mod_tsv("magicsuffix.txt")
+        parents = {r["Code"]: [p for p in (r.get("Equiv1", ""), r.get("Equiv2", "")) if p] for r in it_rows if r.get("Code")}
+        def anc(code):
+            s, st = {code}, [code]
+            while st:
+                c = st.pop()
+                for p in parents.get(c, []):
+                    if p not in s:
+                        s.add(p); st.append(p)
+            return s
+
+        slots = [
+            ("Sword", ["swor"]), ("Axe", ["axe"]), ("Hammer", ["hamm"]), ("Mace", ["mace"]),
+            ("Dagger", ["knif"]), ("Polearm", ["pole"]), ("Spear", ["spea"]), ("Bow", ["bow"]),
+            ("Xbow", ["xbow"]), ("Claw", ["h2h"]), ("Scepter", ["scep"]), ("Wand", ["wand"]),
+            ("Staff", ["staf"]), ("Orb", ["orb"]), ("Javelin", ["jave"]),
+            ("LightArm", ["tors", "ltor"]), ("MedArm", ["tors", "mtor"]), ("HeavyArm", ["tors", "htor"]),
+            ("LightShd", ["shie", "lshi"]), ("MedShd", ["shie", "mshi"]), ("HeavyShd", ["shie", "hshi"]),
+            ("LightPal", ["ashd", "lash"]), ("MedPal", ["ashd", "mash"]), ("HeavyPal", ["ashd", "hash"]),
+            ("NecHead", ["head"]), ("Helm", ["helm"]), ("Circlet", ["circ"]),
+            ("BarbHlm", ["phlm"]), ("Pelt", ["pelt"]),
+            ("LightGlv", ["glov", "lglv"]), ("MedGlv", ["glov", "mglv"]), ("HeavyGlv", ["glov", "hglv"]),
+            ("LightBot", ["boot", "lbot"]), ("MedBot", ["boot", "mbot"]), ("HeavyBot", ["boot", "hbot"]),
+            ("Belt", ["belt"]), ("Arrows", ["bowq"]), ("Bolts", ["xboq"]),
+        ]
+        # No single Rare affix group may exceed 58% of the pool (catches accidental monopolies)
+        MAX_SHARE = 0.58
+        for kind, arows in (("prefix", mp_rows), ("suffix", ms_rows)):
+            for label, types in slots:
+                a = set()
+                for t in types:
+                    a |= anc(t)
+                for alvl in (12, 30, 50, 70, 75):
+                    bg = defaultdict(int)
+                    by_grp_lvls = defaultdict(list)
+                    tot = 0
+                    for r in arows:
+                        if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("rare") != "1":
+                            continue
+                        lvl = int(r.get("level") or 0)
+                        if not (lvl <= alvl <= int(r.get("maxlevel") or 999)):
+                            continue
+                        freq = int(r.get("frequency") or 0)
+                        if freq <= 0:
+                            continue
+                        its = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+                        ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
+                        if (its & a) and not (ets & a):
+                            bg[r["group"]] += freq
+                            by_grp_lvls[r["group"]].append((lvl, r.get("Name", ""), r.get("maxlevel", "")))
+                            tot += freq
+                    self.assertGreaterEqual(len(bg), 3, f"{label} {kind} at alvl={alvl} has only {len(bg)} groups")
+                    top_g, top_w = max(bg.items(), key=lambda x: x[1])
+                    share = top_w / tot
+                    self.assertLessEqual(
+                        share, MAX_SHARE,
+                        f"{label} {kind} at alvl={alvl} dominated by grp {top_g} ({share*100:.1f}% > {MAX_SHARE*100:.0f}%, TotW={tot})",
+                    )
+                    # Guard against stale low-tier Normal rows (lvl <= 14) stacking at alvl=75 alongside a Hell tier (lvl >= 35)
+                    # in core cutoff groups (e.g., Tireless lvl 6/14 stacking with Untiring lvl 36 on Heavy Boots)
+                    if alvl == 75 and kind == "prefix":
+                        for grp, entries in by_grp_lvls.items():
+                            if grp in ("101", "105", "108", "116", "117", "118", "119", "120"):
+                                hi_lvls = [lv for lv, _, _ in entries if lv >= 35]
+                                lo_rows = [(lv, nm) for lv, nm, _ in entries if lv <= 14]
+                                if hi_lvls and lo_rows:
+                                    self.fail(
+                                        f"{label} prefix grp {grp} at alvl=75 has stale low-tier rows {lo_rows} "
+                                        f"stacking alongside high-tier lvl {max(hi_lvls)}"
+                                    )
+
+    def test_core_affix_groups_have_magic_only_apex_tier(self):
+        """Every core scalable prefix & suffix group (plus Shield Single/All Res) must possess a Magic-only apex tier."""
+        _, mp_rows = read_mod_tsv("magicprefix.txt")
+        _, ms_rows = read_mod_tsv("magicsuffix.txt")
+
+        core_prefix_groups = {
+            "101", "105", "108", "109", "110", "111", "114", "115", "116",
+            "117", "118", "119", "120", "122", "123", "125", "140", "142", "145",
+        }
+        core_suffix_groups = {
+            "1", "2", "6", "9", "14", "15", "17", "19", "22", "23", "26", "35",
+        }
+
+        for fname, rows, req_groups in (
+            ("magicprefix.txt", mp_rows, core_prefix_groups),
+            ("magicsuffix.txt", ms_rows, core_suffix_groups),
+        ):
+            by_g = {}
+            for r in rows:
+                if r.get("spawnable") != "1" or r.get("version") == "0":
+                    continue
+                if r.get("itype1", "") in ("lcha", "mcha", "scha", "jewl", "malu"):
+                    continue
+                by_g.setdefault(r.get("group", ""), []).append(r)
+            for grp in sorted(req_groups):
+                gr = by_g.get(grp, [])
+                magic_only = [r for r in gr if r.get("rare") != "1"]
+                self.assertTrue(magic_only, f"{fname} group {grp} is missing a Magic-only apex tier")
+
+        # Shield Single-Res (117..120) and All-Res (116) must each have a Magic-only apex strictly exceeding top Rare
+        for grp in ("116", "117", "118", "119", "120"):
+            shld_rows = [
+                r for r in mp_rows
+                if r.get("spawnable") == "1" and r.get("version") != "0"
+                and r.get("group") == grp and r.get("itype1") == "shld" and not r.get("etype1")
+            ]
+            rare_max = max(int(r.get("mod1max") or 0) for r in shld_rows if r.get("rare") == "1")
+            magic_max = max((int(r.get("mod1max") or 0) for r in shld_rows if r.get("rare") != "1"), default=0)
+            self.assertGreater(magic_max, rare_max, f"Shield group {grp} Magic-only apex ({magic_max}) must exceed Rare max ({rare_max})")
+
+    def test_zero_rare_affix_group_dropoffs_across_progression(self):
+        """Every Rare affix group available at alvl 10/30/50 must still be rollable at alvl 75 (zero drop-offs)."""
+        _, it_rows = read_mod_tsv("itemtypes.txt")
+        _, mp_rows = read_mod_tsv("magicprefix.txt")
+        _, ms_rows = read_mod_tsv("magicsuffix.txt")
+        parents = {r["Code"]: [p for p in (r.get("Equiv1", ""), r.get("Equiv2", "")) if p] for r in it_rows if r.get("Code")}
+        def anc(code):
+            s, st = {code}, [code]
+            while st:
+                c = st.pop()
+                for p in parents.get(c, []):
+                    if p not in s:
+                        s.add(p); st.append(p)
+            return s
+
+        slots = [
+            ("Sword", ["swor"]), ("Axe", ["axe"]), ("Hammer", ["hamm"]), ("Mace", ["mace"]),
+            ("Dagger", ["knif"]), ("Polearm", ["pole"]), ("Spear", ["spea"]), ("Bow", ["bow"]),
+            ("Xbow", ["xbow"]), ("Claw", ["h2h"]), ("Scepter", ["scep"]), ("Wand", ["wand"]),
+            ("Staff", ["staf"]), ("Orb", ["orb"]), ("Javelin", ["jave"]),
+            ("LightArm", ["tors", "ltor"]), ("MedArm", ["tors", "mtor"]), ("HeavyArm", ["tors", "htor"]),
+            ("LightShd", ["shie", "lshi"]), ("MedShd", ["shie", "mshi"]), ("HeavyShd", ["shie", "hshi"]),
+            ("LightPal", ["ashd", "lash"]), ("MedPal", ["ashd", "mash"]), ("HeavyPal", ["ashd", "hash"]),
+            ("NecHead", ["head"]), ("Helm", ["helm"]), ("Circlet", ["circ"]),
+            ("BarbHlm", ["phlm"]), ("Pelt", ["pelt"]),
+            ("LightGlv", ["glov", "lglv"]), ("MedGlv", ["glov", "mglv"]), ("HeavyGlv", ["glov", "hglv"]),
+            ("LightBot", ["boot", "lbot"]), ("MedBot", ["boot", "mbot"]), ("HeavyBot", ["boot", "hbot"]),
+            ("Belt", ["belt"]), ("Ring", ["ring"]), ("Amulet", ["amul"]), ("Arrows", ["bowq"]), ("Bolts", ["xboq"]),
+        ]
+
+        def active_grps(rows, types, alvl):
+            a = set()
+            for t in types:
+                a |= anc(t)
+            gs = set()
+            for r in rows:
+                if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("rare") != "1":
+                    continue
+                if not (int(r.get("level") or 0) <= alvl <= int(r.get("maxlevel") or 999)):
+                    continue
+                if int(r.get("frequency") or 0) <= 0:
+                    continue
+                its = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+                ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
+                if (its & a) and not (ets & a):
+                    gs.add(r["group"])
+            return gs
+
+        for kind, arows in (("prefix", mp_rows), ("suffix", ms_rows)):
+            for label, types in slots:
+                early = active_grps(arows, types, 10) | active_grps(arows, types, 30) | active_grps(arows, types, 50)
+                late = active_grps(arows, types, 75)
+                dropped = sorted(early - late)
+                self.assertEqual(dropped, [], f"{label} {kind} groups dropped off by alvl=75: {dropped}")
 
 
 if __name__ == "__main__":

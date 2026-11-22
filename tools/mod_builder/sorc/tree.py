@@ -142,6 +142,32 @@ def build_soskilltree_pair() -> str:
                 draw_v_arrow(frame, s["col"], p["row"], s["row"])
             elif s["col"] == p["col"] + 1 and s["row"] == p["row"] + 1:
                 draw_diag_down_right(frame, p["col"], p["row"], s["col"], s["row"])
+            elif s["col"] == p["col"] + 1 and s["row"] > p["row"] + 1:
+                # Multi-row down-right L-elbow: horizontal bar from p's right edge across to s's column center,
+                # then vertical shaft down into s's top edge + arrowhead.
+                # Sample a clean 1px horizontal cross-section of the vertical arrow shaft from (2, 671..745, y=350)
+                shaft_slice = [src_px[off(2, 671 + i, 350):off(2, 671 + i, 350) + 4] for i in range(75)]
+                # Vertical shaft center in template is at i=37 (x = COL_X[s_col-1] + 40 + 37)
+                x_start = COL_X[p["col"] - 1] + 150
+                x_center = COL_X[s["col"] - 1] + 40 + 37
+                y_bar_center = ROW_Y[p["row"] - 1] + 55  # upper half of p's right edge (clears the skill-level box!)
+                # 1. Draw horizontal bar from x_start to x_center + 14 (overlapping the corner cleanly)
+                for x in range(x_start, x_center + 14):
+                    for i, pix in enumerate(shaft_slice):
+                        if pix[3] > 0:
+                            ty = y_bar_center - 37 + i
+                            if 0 <= ty < H:
+                                d_o = off(frame, x, ty)
+                                px[d_o:d_o + 4] = pix
+                # 2. Draw vertical shaft from y_bar_center down to s_row's top + arrowhead
+                y_top = y_bar_center - 14
+                y_end = ROW_Y[s["row"] - 1] + 4
+                x_col = COL_X[s["col"] - 1] + 40
+                body_h = (y_end - 25) - y_top
+                for dy in range(max(0, body_h)):
+                    sy = 297 + int(dy * 340 / max(1, body_h - 1))
+                    copy_rect(2, 671, sy, frame, x_col, y_top + dy, 75, 1, transparent_skip=True)
+                copy_rect(2, 671, 640, frame, x_col, y_end - 25, 75, 25, transparent_skip=True)
             elif s["col"] == p["col"] - 1 and s["row"] == p["row"] + 1:
                 draw_diag_down_left(frame, p["col"], p["row"], s["col"], s["row"])
 

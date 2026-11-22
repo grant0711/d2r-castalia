@@ -812,37 +812,42 @@ def build_armor(cfg: dict) -> str:
                 row["minac"] = str(max(1, int(round(minac * 2.20))))
                 row["maxac"] = str(max(2, int(round(maxac * 2.20))))
                 row["speed"] = "15"
+                row["type2"] = "htor"
             elif spd == "5":
                 row["minac"] = str(max(1, int(round(minac * 1.45))))
                 row["maxac"] = str(max(2, int(round(maxac * 1.45))))
                 row["speed"] = "8"
+                row["type2"] = "mtor"
             else:
                 row["minac"] = str(max(1, int(round(minac * 0.85))))
                 row["maxac"] = str(max(2, int(round(maxac * 0.85))))
                 row["speed"] = "0"
+                row["type2"] = "ltor"
 
         # 3-Tier Weight Class Progression for Shields (shie & ashd):
         # Light (spd=0): low AC, modest lower Block Chance (14%-24%), +15% Faster Block Rate (auto prefix 316 / 318)
         # Medium (spd=5): medium-high AC, balanced Block Chance (18%-28%), neutral Block Rate (no auto / 304)
         # Heavy (spd=10/12): massive AC, modest higher Block Chance (24%-30%), -15% Faster Block Rate (auto prefix 317 / 319)
+        # Smite damage is aligned between Standard & Paladin Shields (Light < Med < Heavy),
+        # while Spiked Shield (10-18) / Barbed Shield (32-60) / Blade Barrier (58-92) lead as #1 Smite shields!
         shield_specs = {
             # Light Shields (spd=0, auto=316)
-            "buc": ("0", "14", 1.10, None, "316"), "xuc": ("0", "16", 1.10, None, "316"), "uuc": ("0", "18", 1.05, None, "316"),
-            "sml": ("0", "16", 1.10, None, "316"), "xml": ("0", "18", 1.10, None, "316"), "uml": ("0", "20", 1.05, None, "316"),
-            "bsh": ("0", "18", 1.00, None, "316"), "xsh": ("0", "20", 1.00, None, "316"), "ush": ("0", "22", 1.00, None, "316"),
+            "buc": ("0", "14", 1.10, (3, 7), "316"),   "xuc": ("0", "16", 1.10, (13, 21), "316"), "uuc": ("0", "18", 1.05, (30, 50), "316"),
+            "sml": ("0", "16", 1.10, (3, 7), "316"),   "xml": ("0", "18", 1.10, (13, 21), "316"), "uml": ("0", "20", 1.05, (30, 50), "316"),
+            "bsh": ("0", "18", 1.00, (3, 7), "316"),   "xsh": ("0", "20", 1.00, (13, 21), "316"), "ush": ("0", "22", 1.00, (30, 50), "316"),
             # Medium Shields (spd=5, auto="")
-            "lrg": ("5", "20", 1.55, None, ""), "xrg": ("5", "22", 1.55, None, ""), "urg": ("5", "24", 1.55, None, ""),
-            "kit": ("5", "20", 1.55, None, ""), "xit": ("5", "22", 1.55, None, ""), "uit": ("5", "24", 1.55, None, ""),
-            "spk": ("5", "18", 1.55, (10, 18), ""), "xpk": ("5", "20", 1.55, (32, 60), ""), "upk": ("5", "22", 1.55, (58, 92), ""),
+            "lrg": ("5", "20", 1.55, (4, 9), ""),      "xrg": ("5", "22", 1.55, (17, 25), ""),    "urg": ("5", "24", 1.55, (34, 54), ""),
+            "kit": ("5", "20", 1.55, (4, 9), ""),      "xit": ("5", "22", 1.55, (17, 25), ""),    "uit": ("5", "24", 1.55, (34, 54), ""),
+            "spk": ("5", "18", 1.55, (10, 18), ""),    "xpk": ("5", "20", 1.55, (32, 60), ""),    "upk": ("5", "22", 1.55, (58, 92), ""),
             # Heavy Shields (spd=10..12, auto=317)
-            "gts": ("10", "24", 2.40, None, "317"), "xts": ("10", "26", 2.40, None, "317"), "uts": ("10", "28", 2.40, None, "317"),
-            "tow": ("12", "26", 2.75, None, "317"), "xow": ("12", "28", 2.75, None, "317"), "uow": ("12", "30", 2.75, None, "317"),
+            "gts": ("10", "24", 2.40, (5, 11), "317"), "xts": ("10", "26", 2.40, (22, 32), "317"), "uts": ("10", "28", 2.40, (38, 58), "317"),
+            "tow": ("12", "26", 2.75, (5, 11), "317"), "xow": ("12", "28", 2.75, (22, 32), "317"), "uow": ("12", "30", 2.75, (38, 58), "317"),
             # Paladin Shields (ashd): Light=318 (+15% FBR), Med=304 (neutral), Heavy=319 (-15% FBR)
-            "pa1": ("0", "18", 1.05, None, "318"), "pa6": ("0", "20", 1.05, None, "318"), "pab": ("0", "22", 1.05, None, "318"),
-            "pa2": ("0", "20", 1.10, None, "318"), "pa7": ("0", "22", 1.10, None, "318"), "pac": ("0", "24", 1.10, None, "318"),
-            "pa3": ("5", "22", 1.55, None, "304"), "pa8": ("5", "24", 1.55, None, "304"), "pad": ("5", "26", 1.55, None, "304"),
-            "pa4": ("5", "24", 1.65, None, "304"), "pa9": ("5", "26", 1.65, None, "304"), "pae": ("5", "28", 1.65, None, "304"),
-            "pa5": ("10", "26", 2.35, None, "319"), "paa": ("10", "28", 2.35, None, "319"), "paf": ("10", "30", 2.35, None, "319"),
+            "pa1": ("0", "18", 1.05, (3, 7), "318"),   "pa6": ("0", "20", 1.05, (13, 21), "318"), "pab": ("0", "22", 1.05, (30, 50), "318"),
+            "pa2": ("0", "20", 1.10, (3, 7), "318"),   "pa7": ("0", "22", 1.10, (13, 21), "318"), "pac": ("0", "24", 1.10, (30, 50), "318"),
+            "pa3": ("5", "22", 1.55, (4, 9), "304"),   "pa8": ("5", "24", 1.55, (17, 25), "304"), "pad": ("5", "26", 1.55, (34, 54), "304"),
+            "pa4": ("5", "24", 1.65, (4, 9), "304"),   "pa9": ("5", "26", 1.65, (17, 25), "304"), "pae": ("5", "28", 1.65, (34, 54), "304"),
+            "pa5": ("10", "26", 2.35, (5, 11), "319"), "paa": ("10", "28", 2.35, (22, 32), "319"), "paf": ("10", "30", 2.35, (38, 58), "319"),
         }
         if code in shield_specs:
             s_spd, s_blk, s_ac_mult, s_smite, s_auto = shield_specs[code]
@@ -854,6 +859,10 @@ def build_armor(cfg: dict) -> str:
             if s_smite is not None:
                 row["mindam"] = str(s_smite[0])
                 row["maxdam"] = str(s_smite[1])
+            if atype == "shie":
+                row["type2"] = "lshi" if s_spd == "0" else ("mshi" if s_spd == "5" else "hshi")
+            elif atype == "ashd":
+                row["type2"] = "lash" if s_spd == "0" else ("mash" if s_spd == "5" else "hash")
 
         # Helms & Circlets Weight/Defense/Strength & Enclosed Vision (auto prefix 320 / 321) Progression:
         helm_specs = {
@@ -885,6 +894,8 @@ def build_armor(cfg: dict) -> str:
             row["type2"] = "bhlm"
         elif code in ("bsh", "xsh", "ush"):
             row["type2"] = "bshd"
+        elif code in ("ltp", "xtp", "utp"):
+            row["type2"] = "ctor"
 
         # Gloves (glov) 5-Tier Light -> Heavy Progression:
         glove_specs = {
@@ -900,6 +911,7 @@ def build_armor(cfg: dict) -> str:
             row["reqstr"] = g_str
             row["minac"] = str(g_minac)
             row["maxac"] = str(g_maxac)
+            row["type2"] = "lglv" if g_spd == "0" else ("mglv" if g_spd in ("2", "3") else "hglv")
 
         # Boots (boot) 5-Tier Light -> Heavy Progression (Defense, Speed, Str & Kick Damage):
         boot_specs = {
@@ -917,12 +929,16 @@ def build_armor(cfg: dict) -> str:
             row["maxac"] = str(bt_maxac)
             row["mindam"] = str(bt_mindm)
             row["maxdam"] = str(bt_maxdm)
+            row["type2"] = "lbot" if bt_spd == "0" else ("mbot" if bt_spd in ("2", "3") else "hbot")
 
-        # Attach automagic 'skill-rand' staffmod groups (313=bar Primal Helms, 314=dru Pelts)
+        # Attach automagic 'skill-rand' staffmod groups:
+        # 313=open Barb Helms, 322=enclosed Barb Helms (ba4/ba5 lines: -2 Light Radius),
+        # 314=open Druid Pelts, 323=enclosed Druid Pelts (dr4/dr5 lines: -2 Light Radius)
+        norm = row.get("normcode", "")
         if atype == "phlm":
-            row["auto prefix"] = "313"
+            row["auto prefix"] = "322" if norm in ("ba4", "ba5") else "313"
         elif atype == "pelt":
-            row["auto prefix"] = "314"
+            row["auto prefix"] = "323" if norm in ("dr4", "dr5") else "314"
 
         # Enforce 4 / 8 / 12 Belt Slot Progression, Strength, Speed & Defense across Normal, NM, and Hell:
         belt_progression_specs = {

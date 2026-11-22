@@ -379,6 +379,112 @@ def eval_fire_skill(
     }
 
 
+def eval_lightning_skill(
+    world: ModWorldData,
+    slug: str,
+    cp: Checkpoint,
+    gear_skills: int,
+    fcr: int,
+    in_stance: bool,
+    unlock_only: bool = False,
+) -> Optional[Dict[str, float]]:
+    """Return single-target & pack effective DPS for Sorceress Lightning skills (pre-res raw DPS)."""
+    # (vname, reqlevel, syn_specs=[(vname, reqlevel, pct_per_lvl), ...], role, pack_n, pack_s)
+    # Read live Param8 from skills.txt so tuning synergies immediately reflects in the simulator.
+    def _p8(vn: str) -> int:
+        return _int(world.skills[vn].get("Param8", "6"), 6)
+
+    SPEC = {
+        "static_lance":  ("Lightning",       1,  [("Chain Lightning", 24, _p8("Lightning")), ("Charged Bolt", 40, _p8("Lightning"))], "Line 1", 1.5, 3.2),
+        "pulse_ring":    ("Nova",            8,  [("Thunder Storm", 24, _p8("Nova")), ("Static Field", 16, 6)], "AoE 1", 4.0, 5.5),
+        "sunderbolt":    ("Static Field",    16, [("Nova", 8, _p8("Static Field")), ("Thunder Storm", 24, _p8("Static Field"))], "Util", 4.0, 5.5),
+        "spearbolt":     ("Chain Lightning", 24, [("Charged Bolt", 40, _p8("Chain Lightning")), ("Lightning", 1, _p8("Chain Lightning"))], "Line 2", 3.5, 5.5),
+        "stormcall":     ("Thunder Storm",   24, [("Nova", 8, _p8("Thunder Storm")), ("Static Field", 16, 6)], "AoE 2", 4.5, 6.5),
+        "heavens_wrath": ("Charged Bolt",    40, [("Chain Lightning", 24, _p8("Charged Bolt")), ("Lightning", 1, _p8("Charged Bolt"))], "Cap", 4.5, 7.0),
+    }
+    vname, req_lvl, syns, role, pack_n, pack_s = SPEC[slug]
+    if cp.clvl < req_lvl:
+        return None
+
+    # Overcharge (Lightning Stance) unlocks at reqlevel 32
+    main_blvl, syn_blvls, stance_blvl = _alloc_skill_points(
+        cp.clvl, cp.quest_pts, req_lvl, [s[1] for s in syns], stance_req=32, unlock_only=unlock_only
+    )
+    slvl = main_blvl + gear_skills
+    stance_slvl = (stance_blvl + gear_skills) if (in_stance and stance_blvl > 0) else 0
+
+    srow = world.skills[vname]
+    sym_pct = sum(blvl * pct for blvl, (_, _, pct) in zip(syn_blvls, syns))
+    elem_mult = 1.0 + (stance_elem_bonus(stance_slvl) / 100.0 if in_stance else 0.0)
+    syn_mult = 1.0 + sym_pct / 100.0
+
+    # Overcharge grants FRW/FHR/FBR (no FCR bonus)
+    cast_sec = sorc_cast_frames(fcr) / 25.0
+    cd_frames = _int(srow.get("localdelay", "0"))
+    cycle_sec = max(cast_sec, cd_frames / 25.0) if cd_frames > 0 else cast_sec
+    mana_cost = eval_mana_cost(srow, slvl)
+    mana_per_sec = mana_cost / cycle_sec
+
+    lo, hi = eval_edmg_base(srow, slvl, is_missile=False)
+    avg_hit = 0.5 * (lo + hi) * syn_mult * elem_mult
+
+    if slug == "static_lance":
+        # Overcharge fires 4 bolts (NextDelay=6 limits ST to ~1.2x, packs take ~3.2x)
+        st_mult = 1.20 if in_stance else 1.0
+        st_dps = (avg_hit * st_mult) / cast_sec
+        pack_dps = (avg_hit / cast_sec) * (pack_s if in_stance else pack_n)
+
+    elif slug == "pulse_ring":
+        st_dps = avg_hit / cast_sec
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+
+    elif slug == "sunderbolt":
+        # 2.0s CD AoE shock/blind + %HP static pulse; model base skill hit per CD cycle
+        st_dps = avg_hit / cycle_sec
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+
+    elif slug == "spearbolt":
+        # Piercing lance + spearbolt_wake (NextDelay=6) + chain jumps
+        wrow = world.missiles["spearbolt_wake"]
+        wlo, whi = eval_edmg_base(wrow, slvl, is_missile=True)
+        wake_avg = 0.5 * (wlo + whi) * syn_mult * elem_mult
+        # Neutral wake 15f (~0.8 hits/cast); Overcharge wake 50f (~2.2 overlapping hits/cast)
+        st_hit = avg_hit + wake_avg * (2.2 if in_stance else 0.8)
+        st_dps = st_hit / cast_sec
+        pack_dps = (avg_hit / cast_sec) * (pack_s if in_stance else pack_n) + (wake_avg / cast_sec) * (3.5 if in_stance else 1.2)
+
+    elif slug == "stormcall":
+        # 1.6s CD storm: 7 bolts/3s neutral (~2.0 ST hits/cast), 16 bolts/4s Overcharge (~4.2 ST hits/cast)
+        st_hits = 4.2 if in_stance else 2.0
+        st_dps = (avg_hit * st_hits) / cycle_sec
+        pack_dps = (avg_hit * (st_hits * 0.7)) / cycle_sec * (pack_s if in_stance else pack_n)
+
+    elif slug == "heavens_wrath":
+        # Periodic sky-strike buff (perdelay: max(10, 22 - lvl*0.5) Overcharge / max(14, 30 - lvl*0.7) Neutral)
+        # Each strike fires bolt + chain bounces (~1.35 ST hits neutral / ~1.85 Overcharge)
+        per_f = max(10.0, 22.0 - slvl * 0.5) if in_stance else max(14.0, 30.0 - slvl * 0.7)
+        strikes_per_sec = 25.0 / per_f
+        st_hits = 1.85 if in_stance else 1.35
+        st_dps = avg_hit * st_hits * strikes_per_sec
+        pack_dps = avg_hit * strikes_per_sec * (pack_s if in_stance else pack_n)
+        mana_per_sec = mana_cost / 60.0  # long-duration buff, cast once per ~1-3 min
+    else:
+        return None
+
+    return {
+        "slug": slug,
+        "role": role,
+        "slvl": float(slvl),
+        "blvl": float(main_blvl),
+        "sym_pct": float(sym_pct),
+        "lo_hit": lo * syn_mult * elem_mult,
+        "hi_hit": hi * syn_mult * elem_mult,
+        "st_dps": st_dps,
+        "pack_dps": pack_dps,
+        "mana_s": mana_per_sec,
+    }
+
+
 def eval_vanilla_fireball(vanilla: ModWorldData, cp: Checkpoint, gear_skills: int, fcr: int) -> Dict[str, float]:
     """Vanilla D2R Fireball (lvl 12+) / Fire Bolt (lvl 1-11) benchmark on the exact same checkpoints."""
     cast_sec = sorc_cast_frames(fcr) / 25.0
@@ -531,14 +637,122 @@ def run_sorc_fire_report(preset: str = "competent") -> None:
             print("  !", rf)
 
 
+def run_sorc_lightning_report(preset: str = "competent") -> None:
+    world = ModWorldData(EXCEL_DIR)
+    vanilla = ModWorldData(VANILLA_EXCEL)
+    sk_mult, fcr_off = GEAR_PRESETS[preset]
+
+    print("====================================================================================================")
+    print(f"  CASTALIA BALANCE AUDIT — SORCERESS LIGHTNING TREE  (Gear Preset: {preset})")
+    print("====================================================================================================\n")
+
+    cp_metrics = {}
+    van_refs = {}
+    fire_refs = {}
+    for cp in CHECKPOINTS:
+        cp_metrics[cp.label] = world.area_metrics(cp)
+        gsk = int(round(cp.gear_skills * sk_mult))
+        fcr = max(0, cp.fcr + fcr_off)
+        van_refs[cp.label] = eval_vanilla_fireball(vanilla, cp, gsk, fcr)
+        # Fire benchmark at same checkpoint: best primary spam/line skill (Cinder <8, Pyroclasm 8-31, Brimstone 32+)
+        f_slug = "cinder_lance" if cp.clvl < 8 else ("pyroclasm" if cp.clvl < 32 else "brimstone_lance")
+        fire_refs[cp.label] = eval_fire_skill(world, f_slug, cp, gsk, fcr, in_stance=(cp.clvl >= 16))
+
+    # 1. Unlock Viability Check
+    print("1. UNLOCK VIABILITY CHECK (At exact reqlevel, 1 hard pt + expected gear, Overcharge if >=32)")
+    cp_by_clvl = {cp.clvl: cp for cp in CHECKPOINTS}
+    unlock_checks = [
+        ("static_lance",  cp_by_clvl[1]),
+        ("pulse_ring",    cp_by_clvl[8]),
+        ("sunderbolt",    cp_by_clvl[16]),
+        ("spearbolt",     cp_by_clvl[24]),
+        ("stormcall",     cp_by_clvl[24]),
+        ("heavens_wrath", cp_by_clvl[40]),
+    ]
+    print(f"  {'Skill':16s} | {'Unlock':10s} | {'slvl':>4s} | {'ST DPS':>8s} | {'Pack DPS':>8s} | {'Trash TTK':>9s} | {'Area Sec':>8s} | {'vs Fire':>8s}")
+    print("  " + "-" * 88)
+    for slug, cp in unlock_checks:
+        gsk = int(round(cp.gear_skills * sk_mult))
+        fcr = max(0, cp.fcr + fcr_off)
+        res = eval_lightning_skill(world, slug, cp, gsk, fcr, in_stance=(cp.clvl >= 32), unlock_only=True)
+        m = cp_metrics[cp.label]
+        fref = fire_refs[cp.label]
+        ttk = m["trash_ehp"] / max(1.0, res["st_dps"])
+        area_s = m["area_ehp"] / max(1.0, res["pack_dps"])
+        ratio = res["st_dps"] / max(1.0, fref["st_dps"])
+        flag = "  <-- LOW!" if ttk > 3.5 else ""
+        print(
+            f"  {slug:16s} | {cp.label:10s} | {int(res['slvl']):4d} | "
+            f"{res['st_dps']:8.1f} | {res['pack_dps']:8.1f} | {ttk:8.2f}s | {area_s:7.1f}s | {ratio:7.2f}x{flag}"
+        )
+
+    # 2. Full Progression Matrix
+    skills_order = ["static_lance", "pulse_ring", "sunderbolt", "spearbolt", "stormcall", "heavens_wrath"]
+    print("\n2. FULL PROGRESSION — TRASH TTK (sec) / AREA COMBAT TIME (sec)  [Overcharge >= lvl 32]")
+    hdr = f"  {'Checkpoint':10s} |" + "".join(f" {s[:10]:>12s} |" for s in skills_order) + f" {'FireRef':>10s}"
+    print(hdr)
+    print("  " + "-" * (len(hdr) - 2))
+    for cp in CHECKPOINTS:
+        gsk = int(round(cp.gear_skills * sk_mult))
+        fcr = max(0, cp.fcr + fcr_off)
+        m = cp_metrics[cp.label]
+        fref = fire_refs[cp.label]
+        row_cells = []
+        for slug in skills_order:
+            r = eval_lightning_skill(world, slug, cp, gsk, fcr, in_stance=(cp.clvl >= 32))
+            if r is None:
+                row_cells.append(f"{'---':>12s}")
+            else:
+                ttk = m["trash_ehp"] / max(1.0, r["st_dps"])
+                area_s = m["area_ehp"] / max(1.0, r["pack_dps"])
+                row_cells.append(f"{ttk:4.2f}s/{area_s:4.0f}s")
+        f_ttk = m["trash_ehp"] / max(1.0, fref["st_dps"])
+        f_area = m["area_ehp"] / max(1.0, fref["pack_dps"])
+        print(f"  {cp.label:10s} | " + " | ".join(row_cells) + f" | {f_ttk:4.2f}s/{f_area:3.0f}s")
+
+    # 3. Hell A5 Endgame Snapshot vs Fire Tree (Target: Lightning ~1.10x Fire on average)
+    cp_end = CHECKPOINTS[-1]
+    gsk = int(round(cp_end.gear_skills * sk_mult))
+    fcr = max(0, cp_end.fcr + fcr_off)
+    m_end = cp_metrics[cp_end.label]
+    print(f"\n3. HELL A5 ENDGAME SNAPSHOT (clvl 82, mlvl 85, 30% Res — Boss eHP = {m_end['boss_ehp']:.0f})")
+    print(f"  {'Skill':16s} | {'Role':6s} | {'Neut ST':>8s} | {'Stnc ST':>8s} | {'Pack DPS':>9s} | {'BossTTK':>7s} | {'Mana/s':>6s} | {'vs FireEq':>9s}")
+    print("  " + "-" * 94)
+
+    fire_equiv = {
+        "static_lance":  "cinder_lance",
+        "pulse_ring":    "pyroclasm",
+        "sunderbolt":    "backdraft",
+        "spearbolt":     "brimstone_lance",
+        "stormcall":     "skyfall",
+        "heavens_wrath": "pyre_hydra",
+    }
+    ratios = []
+    for slug in skills_order:
+        rn = eval_lightning_skill(world, slug, cp_end, gsk, fcr, in_stance=False)
+        rs = eval_lightning_skill(world, slug, cp_end, gsk, fcr, in_stance=True)
+        fe = eval_fire_skill(world, fire_equiv[slug], cp_end, gsk, fcr, in_stance=True)
+        boss_ttk = m_end["boss_ehp"] / max(1.0, rs["st_dps"])
+        ratio = rs["st_dps"] / max(1.0, fe["st_dps"])
+        ratios.append(ratio)
+        print(
+            f"  {slug:16s} | {rs['role']:6s} | {rn['st_dps']:8.0f} | {rs['st_dps']:8.0f} | "
+            f"{rs['pack_dps']:9.0f} | {boss_ttk:6.2f}s | {rs['mana_s']:6.1f} | {ratio:8.2f}x"
+        )
+    print("  " + "-" * 94)
+    print(f"  Average Lightning ST DPS vs Fire Role-Equivalent: {sum(ratios)/len(ratios):.2f}x  (Target: ~1.10x)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Castalia Data-Driven Balance Simulator")
     parser.add_argument("char_class", choices=["sorc"], help="Class to audit")
-    parser.add_argument("tree", choices=["fire"], help="Skill tree to audit")
+    parser.add_argument("tree", choices=["fire", "lightning"], help="Skill tree to audit")
     parser.add_argument("--preset", choices=list(GEAR_PRESETS), default="competent", help="Expected gear preset")
     args = parser.parse_args()
     if args.char_class == "sorc" and args.tree == "fire":
         run_sorc_fire_report(preset=args.preset)
+    elif args.char_class == "sorc" and args.tree == "lightning":
+        run_sorc_lightning_report(preset=args.preset)
 
 
 if __name__ == "__main__":

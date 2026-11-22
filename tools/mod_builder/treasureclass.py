@@ -906,6 +906,33 @@ def build_treasureclass(cfg: dict) -> str:
                 by_tc[qa_tc]["NoDrop"] = "0"
                 _set_items(by_tc[qa_tc], [("QA Tier Kit Pool", "1")])
 
+    # Cap recursive Equipment TC downgrade probability at 85% (down from Vanilla's 95-98%) so Nightmare
+    # feels like the Exceptional era (51-74% Exc) and Hell feels like the Elite era (42-86% Elite)
+    # while still allowing a trickle of lower-tier bases & Uniques/Sets to drop!
+    max_equip_downgrade = 0.85
+    for r in rows:
+        tc_name = r.get("Treasure Class", "")
+        if not (tc_name.startswith("Act ") and "Equip" in tc_name):
+            continue
+        curr_tot = 0
+        down_idxs = []
+        down_tot = 0
+        for i in range(1, 11):
+            it = r.get(f"Item{i}", "").strip()
+            pr_s = r.get(f"Prob{i}", "").strip()
+            if not it or not pr_s.isdigit():
+                continue
+            pr = int(pr_s)
+            if it.startswith("Act ") and "Equip" in it:
+                down_idxs.append((i, pr))
+                down_tot += pr
+            else:
+                curr_tot += pr
+        if curr_tot > 0 and down_tot > 0 and (down_tot / (curr_tot + down_tot)) > max_equip_downgrade:
+            target_down = max(len(down_idxs), int(round(curr_tot * max_equip_downgrade / (1.0 - max_equip_downgrade))))
+            for idx, pr in down_idxs:
+                r[f"Prob{idx}"] = str(max(1, int(round(target_down * pr / down_tot))))
+
     tc_path = write_excel_tsv("treasureclassex.txt", headers, rows)
     obj_path = build_objects(cfg)
     return f"{tc_path}, {obj_path}"

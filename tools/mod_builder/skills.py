@@ -90,10 +90,18 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
             rl = r.get("reqlevel", "")
             if rl in tier_reqlevel_map:
                 r["reqlevel"] = tier_reqlevel_map[rl]
-        if r.get("cost mult"):
-            r["cost mult"] = scale_int(r["cost mult"], 0.06, min_val=1)
-        if r.get("cost add"):
-            r["cost add"] = scale_int(r["cost add"], 0.06, min_val=1)
+            # Linear charge-repair cost progression by skill reqlevel (with Castalia's rep_mult=768):
+            # skReq 1 (~63g/chg, ~3.2k full) -> skReq 40 (~335g/chg, ~40k full at 120 charges).
+            req_i = int(r.get("reqlevel") or "1")
+            if r.get("cost mult"):
+                r["cost mult"] = str(max(1, 4 + int(round(req_i * 0.35))))
+            if r.get("cost add"):
+                r["cost add"] = str(max(1, 75 + int(round(req_i * 7.5))))
+        else:
+            if r.get("cost mult"):
+                r["cost mult"] = scale_int(r["cost mult"], 0.06, min_val=1)
+            if r.get("cost add"):
+                r["cost add"] = scale_int(r["cost add"], 0.06, min_val=1)
 
     d_headers, d_rows = read_excel_tsv("skilldesc.txt")
     by_desc = {r["skilldesc"]: r for r in d_rows if r.get("skilldesc")}

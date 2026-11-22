@@ -923,12 +923,18 @@ def build_cubemain(cfg: dict) -> str:
     rune_codes = [r[0] for r in RUNE_SPECS]
     tail_empty = "\t" * (num_cols - 47 - 1) + "\t0"
 
+    # Flat -5 item_levelreq perk stamped into mod 4 of each Gem+Rune Crafted recipe to
+    # soften D2R's hardcoded Crafted penalty (+10 + 3*N_affixes) without dropping high-req
+    # bases more than 5 levels below their base requirement.
+    gem_craft_levelreq_offsets = ("-5", "-5", "-5", "-5", "-5")
+
     # Precompute 2-Rune combinations per (slot_idx, gem_tier_idx)
     # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_2_5_str)]
     slot_tier_combos: List[List[List[Tuple[str, str]]]] = []
     for s_idx, (_, gem_col_idx, s_scale, _, forbidden_runes) in enumerate(slot_groups):
         tier_list: List[List[Tuple[str, str]]] = []
         for t_idx, g_mult in enumerate(GEM_TIER_MULTS):
+            req_off = gem_craft_levelreq_offsets[t_idx]
             rmods_1: List[Tuple[str, str, str, str]] = []
             rmods_2: List[Tuple[str, str, str, str]] = []
             for r_spec in RUNE_SPECS:
@@ -937,17 +943,17 @@ def build_cubemain(cfg: dict) -> str:
                 rmods_2.append(_scale_craft_mod(raw_mod, s_scale, g_mult, rune_count=2))
 
             combos: List[Tuple[str, str]] = []
-            # A) 2 identical runes: "rXX,qty=2" -> stamped into mod 2 (cols 27..31), mod 3..5 empty (cols 32..46)
+            # A) 2 identical runes: "rXX,qty=2" -> mod 2 (cols 27..31), mod 3 empty (32..36), mod 4 = levelreq (37..41), mod 5 empty (42..46)
             for i in range(33):
                 rc = rune_codes[i]
                 if rc in forbidden_runes:
                     continue
                 inp_str = f'"{rc},qty=2"\t\t'
                 m2 = rmods_2[i]
-                mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+                mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t\t\t\t\t\tlevelreq\t\t\t{req_off}\t{req_off}\t\t\t\t\t"
                 combos.append((inp_str, mod_str))
 
-            # B) 2 different runes: rXX + rYY (i < j) -> stamped into mod 2 (cols 27..31) & mod 3 (cols 32..36), mod 4..5 empty
+            # B) 2 different runes: rXX + rYY (i < j) -> mod 2 (27..31), mod 3 (32..36), mod 4 = levelreq (37..41), mod 5 empty (42..46)
             for i in range(33):
                 rc1 = rune_codes[i]
                 if rc1 in forbidden_runes:
@@ -959,7 +965,7 @@ def build_cubemain(cfg: dict) -> str:
                         continue
                     m3 = rmods_1[j]
                     inp_str = f"{rc1}\t{rc2}\t"
-                    mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\t\t\t\t\t\t\t\t\t\t"
+                    mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\tlevelreq\t\t\t{req_off}\t{req_off}\t\t\t\t\t"
                     combos.append((inp_str, mod_str))
 
             tier_list.append(combos)

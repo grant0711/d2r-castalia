@@ -1675,7 +1675,7 @@ def build_site() -> str:
         <ul style="margin-bottom:0;">
           <li><b>Playthrough-Focused (Solo or Co-op):</b> Designed to be played alone or with friends as a complete expedition from Act 1 Normal through Act 5 Hell. Need a starter character to join a friend's game? Open the <a href="#char-generator" data-tab-link="tab-chargen"><b class="d2-bright-gold">Character Generator (.d2s)</b></a> tab above.</li>
           <li><b>What You See Is How It Works:</b> Every monster prints its <span class="d2-gold">elemental vulnerability, resistance, and combat trait</span> directly beneath its health bar. Physical silhouettes tell the truth: if a monster is <b>small</b>, it is fast, numerous, and fragile; if it is <b>huge</b>, it is slow, solitary, and hits like a truck.</li>
-          <li><b>Logical World Connections:</b> Town mystics and sages stock caster gear, heavy tower shields slow your block recovery (`-15% FBR`) in exchange for raw armor, and pulling on an enclosed greathelm narrows your light radius in the dark (`-2` to `-3` Light Radius).</li>
+          <li><b>Diegetic Item Archetypes:</b> Every piece of gear behaves like what it actually is—and rolls affixes to match. Light armor and bucklers lean into agility, stamina, and casting speed; heavy plate and tower shields anchor raw defense, strength, and damage reduction at the cost of weight; blunt weapons crush with raw force while daggers and bows favor speed and precision; and caster plates, masks, and bone gear naturally attract magical properties. You can read an item's role at a glance and find meaningful upgrades directly out in the world.</li>
         </ul>
       </div>
 

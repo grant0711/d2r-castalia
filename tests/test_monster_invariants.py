@@ -170,37 +170,73 @@ class TestMonsterAndSystemInvariants(unittest.TestCase):
             }
             self.assertEqual(seen_socket_punches, expected_socket_punches)
 
-            # Verify Caster Weapons (staf, orb, wand) precede generic 'weap' and use Armor/Helm Gem boon + Weapon Runes
+            # Verify Caster Weapons (staf, orb, wand) precede generic 'weap', Sapphire boot/belt precede btbl,
+            # and all 7 non-offsettable Gem Busts stamp cleanly into mod 5 with exact header column count.
             from mod_builder.common import MOD_ROOT
             import os
             cube_path = os.path.join(MOD_ROOT, "data/global/excel/cubemain.txt")
             first_idx = {}
-            caster_gpr_samples = {}
+            samples = {}
+            wanted_samples = {
+                "Craft staf gpr", "Craft orb gpr", "Craft wand gpr",
+                "Craft weap gpb", "Craft staf gpb", "Craft shld gpb", "Craft boot gpb", "Craft belt gpb",
+                "Craft glov gpb", "Craft ring gpb", "Craft amul gpb",
+                "Craft weap gpy", "Craft ring gpy", "Craft tors gpy", "Craft staf gpy", "Craft amul gpy",
+                "Craft tors gpg", "Craft tors gpw", "Craft tors gpv", "Craft tors skz", "Craft ring skz",
+            }
             with open(cube_path, "r", encoding="utf-8", errors="replace") as cf:
                 chdr = cf.readline().rstrip("\r\n").split("\t")
                 ci = {h: i for i, h in enumerate(chdr)}
+                ncols = len(chdr)
                 for lnum, line in enumerate(cf, start=1):
                     parts = line.rstrip("\r\n").split("\t")
-                    if len(parts) <= ci["mod 2 max"]:
+                    if len(parts) <= ci["mod 5 max"]:
                         continue
                     d = parts[ci["description"]]
-                    for tag in ("Craft staf ", "Craft orb ", "Craft wand ", "Craft weap "):
+                    for tag in ("Craft staf ", "Craft orb ", "Craft wand ", "Craft weap ", "Craft boot ", "Craft belt ", "Craft btbl "):
                         if d.startswith(tag) and tag not in first_idx:
                             first_idx[tag] = lnum
-                    if d in ("Craft staf gpr", "Craft orb gpr", "Craft wand gpr") and parts[ci["input 3"]] == '"r26,qty=2"':
-                        caster_gpr_samples[d] = (
+                    if d in wanted_samples and parts[ci["input 3"]] == '"r26,qty=2"':
+                        self.assertEqual(len(parts), ncols, f"Column count mismatch on {d}")
+                        samples[d] = (
                             parts[ci["mod 1"]], parts[ci["mod 1 min"]], parts[ci["mod 1 max"]],
                             parts[ci["mod 2"]],
+                            parts[ci["mod 5"]], parts[ci["mod 5 min"]], parts[ci["mod 5 max"]],
                         )
             self.assertTrue(
                 first_idx["Craft staf "] < first_idx["Craft orb "] < first_idx["Craft wand "] < first_idx["Craft weap "],
                 f"Caster weapon crafts must precede generic weap: {first_idx}",
             )
-            self.assertEqual(caster_gpr_samples["Craft staf gpr"], ("res-fire", "22", "32", "extra-fire"))
-            self.assertEqual(caster_gpr_samples["Craft orb gpr"][0], "res-fire")
-            self.assertEqual(caster_gpr_samples["Craft orb gpr"][3], "extra-fire")
-            self.assertLess(int(caster_gpr_samples["Craft orb gpr"][2]), int(caster_gpr_samples["Craft staf gpr"][2]))
-            self.assertEqual(caster_gpr_samples["Craft wand gpr"], caster_gpr_samples["Craft orb gpr"])
+            self.assertTrue(
+                first_idx["Craft boot "] < first_idx["Craft belt "] < first_idx["Craft btbl "],
+                f"Sapphire boot/belt crafts must precede shared btbl: {first_idx}",
+            )
+            self.assertEqual(samples["Craft staf gpr"], ("res-fire", "22", "32", "extra-fire", "damageresist", "-8", "-8"))
+            self.assertEqual(samples["Craft orb gpr"][0], "res-fire")
+            self.assertEqual(samples["Craft orb gpr"][3], "extra-fire")
+            self.assertEqual(samples["Craft orb gpr"][4:], ("damageresist", "-6", "-6"))
+            self.assertEqual(samples["Craft wand gpr"], samples["Craft orb gpr"])
+            # Sapphire slot-contextual speed busts
+            self.assertEqual(samples["Craft weap gpb"][4:], ("swing1", "-12", "-12"))
+            self.assertEqual(samples["Craft staf gpb"][4:], ("cast1", "-12", "-12"))
+            self.assertEqual(samples["Craft shld gpb"][4:], ("block2", "-12", "-12"))
+            self.assertEqual(samples["Craft boot gpb"][4:], ("move1", "-7", "-7"))
+            self.assertEqual(samples["Craft belt gpb"][4:], ("balance1", "-7", "-7"))
+            self.assertEqual(samples["Craft glov gpb"][4:], ("swing1", "-7", "-7"))
+            self.assertEqual(samples["Craft ring gpb"][4:], ("swing1", "-6", "-6"))
+            self.assertEqual(samples["Craft amul gpb"][4:], ("balance1", "-6", "-6"))
+            # Topaz (-Total Defense % via total-ac% -> skill_armor_percent across ALL slots)
+            self.assertEqual(samples["Craft weap gpy"][4:], ("total-ac%", "-25", "-25"))
+            self.assertEqual(samples["Craft ring gpy"][4:], ("total-ac%", "-12", "-12"))
+            self.assertEqual(samples["Craft tors gpy"][4:], ("total-ac%", "-25", "-25"))
+            self.assertEqual(samples["Craft staf gpy"][4:], ("total-ac%", "-25", "-25"))
+            self.assertEqual(samples["Craft amul gpy"][4:], ("total-ac%", "-12", "-12"))
+            # Emerald (-hp%), Diamond (-mana%), Amethyst (-red-mag), Skull (skull-curse)
+            self.assertEqual(samples["Craft tors gpg"][4:], ("hp%", "-9", "-9"))
+            self.assertEqual(samples["Craft tors gpw"][4:], ("mana%", "-9", "-9"))
+            self.assertEqual(samples["Craft tors gpv"][4:], ("red-mag", "-15", "-15"))
+            self.assertEqual(samples["Craft tors skz"][4:], ("skull-curse", "-10", "-3"))
+            self.assertEqual(samples["Craft ring skz"][4:], ("skull-curse", "-5", "-2"))
             distill_count = 0
             for r in cube_rows:
                 self.assertFalse(r.get("numinputs") == "1" and r.get("input 1") in ("isc", "tsc"))

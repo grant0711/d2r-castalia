@@ -1102,6 +1102,15 @@ def build_site() -> str:
         ("Skull", "Attrition", 'class="d2-gold"', ["skc", "skf", "sku", "skl", "skz"]),
     ]
     gem_tier_reqs = [misc_by_code.get(c, {}).get("levelreq", "1") or "1" for c in ["gcr", "gfr", "gsr", "glr", "gpr"]]
+    gem_bust_docs = {
+        "Ruby": ("Crafting Bust (All Slots)", ["-2% Phys DR", "-3% Phys DR", "-4% Phys DR", "-6% Phys DR", "-8% Phys DR"]),
+        "Sapphire": ("Crafting Bust (-IAS / -FCR / -FBR / -FRW / -FHR by slot)", ["-3% Spd", "-5% Spd", "-7% Spd", "-10% Spd", "-12% Spd"]),
+        "Topaz": ("Crafting Bust (All Slots)", ["-6% Total Def", "-10% Total Def", "-15% Total Def", "-20% Total Def", "-25% Total Def"]),
+        "Emerald": ("Crafting Bust (All Slots)", ["-2% Max Life", "-3% Max Life", "-5% Max Life", "-7% Max Life", "-9% Max Life"]),
+        "Diamond": ("Crafting Bust (All Slots)", ["-2% Max Mana", "-3% Max Mana", "-5% Max Mana", "-7% Max Mana", "-9% Max Mana"]),
+        "Amethyst": ("Crafting Bust (All Slots)", ["+2 Elem/Mag Dmg", "+4 Elem/Mag Dmg", "+7 Elem/Mag Dmg", "+11 Elem/Mag Dmg", "+15 Elem/Mag Dmg"]),
+        "Skull": ("Crafting Bust (All Slots)", ["Drain -2 / -1 Light", "Drain -4 / -1 Light", "Drain -6 / -2 Light", "Drain -8 / -2 Light", "Drain -10 / -3 Light"]),
+    }
     gem_rows_html: List[str] = []
     for f_idx, (fam_name, fam_sub, fam_style, f_codes) in enumerate(gem_families):
         bg_attr = ' bgcolor="#120e0a"' if f_idx % 2 == 1 else ""
@@ -1129,12 +1138,18 @@ def build_site() -> str:
                     mod_txt = f"<b>{mod_txt}</b>"
                 cells.append(f'<td align="center">{mod_txt}</td>')
             first_col = (
-                f'<td rowspan="3"><b {fam_style}>{html.escape(fam_name)}</b><br>'
+                f'<td rowspan="4"><b {fam_style}>{html.escape(fam_name)}</b><br>'
                 f'<span class="d2-dim">({html.escape(fam_sub)})</span></td>'
                 if s_idx == 0
                 else ""
             )
             gem_rows_html.append(f"<tr{bg_attr}>{first_col}<td>{s_label}</td>{''.join(cells)}</tr>")
+        bust_lbl, bust_vals = gem_bust_docs[fam_name]
+        b_cells = [
+            f'<td align="center" style="color:#e06c60;">{"<b>" + html.escape(v) + "</b>" if i == 4 else html.escape(v)}</td>'
+            for i, v in enumerate(bust_vals)
+        ]
+        gem_rows_html.append(f'<tr{bg_attr}><td style="color:#e06c60;"><i>{html.escape(bust_lbl)}</i></td>{"".join(b_cells)}</tr>')
 
     # Build 33 Semantic Runes table dynamically from gems.txt, misc.txt, and item-runes.json
     rune_rows_html: List[str] = []
@@ -1745,7 +1760,7 @@ def build_site() -> str:
         <tr>
           <td><span class="d2-orange">1. Craft Any Item</span></td>
           <td><span class="d2-blue">Any Magic Item</span> + <b>1 Gem / Skull</b> + <span class="d2-orange">2 Runes</span></td>
-          <td><span class="d2-orange">Crafted Item</span> stamped with the Gem's stat + both Runes' stats <i>(scaled by Gem tier)</i> + <code>1–4</code> random affixes</td>
+          <td><span class="d2-orange">Crafted Item</span> stamped with the Gem's boon &amp; non-offsettable bust + both Runes' stats <i>(scaled by Gem tier &amp; slot)</i> + <code>1–4</code> random affixes</td>
         </tr>
         <tr bgcolor="#120e0a">
           <td><span class="d2-orange">2. Distill a Unique / Set</span></td>
@@ -1792,7 +1807,7 @@ def build_site() -> str:
         <tr>
           <td width="50%" valign="top" bgcolor="#0e0b08">
             <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles Over Flashcards <sup>(1)</sup></h3>
-            <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>385,000 crafting combinations</b> from first principles.</p>
+            <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>390,000 crafting combinations</b> from first principles.</p>
 
             <h3 class="d2-bright-gold">2. Keeping the World Intact <sup>(2)</sup></h3>
             <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>
@@ -1802,7 +1817,7 @@ def build_site() -> str:
             <ul>
               <li><span class="d2-blue">Magic (Blue):</span> 2 affixes max, but rolls <b>1.33x higher single-stat ceilings</b> and exclusive binary traits (<i>Ignore Target's Defense, Knockback, Jeweler's</i>).</li>
               <li><span class="d2-yellow">Rare (Yellow):</span> Up to 6 affixes with low-level junk tiers pruned out at higher levels.</li>
-              <li><span class="d2-orange">Crafted (Orange):</span> Stamps 1 Gem/Skull + 2 Runes onto any slot alongside 1–4 random rolls.</li>
+              <li><span class="d2-orange">Crafted (Orange):</span> Stamps 1 Gem/Skull (boon + non-offsettable bust) and 2 Runes onto any slot alongside 1–4 random rolls.</li>
               <li><span class="d2-unique">Uniques</span> &amp; <span class="d2-green">Sets:</span> Distinct cross-class skills, auras, and procs—or distillable into Crafted Jewels.</li>
               <li><b>No Free Immunity Breakers:</b> Sunder Charms and player <code>-Enemy Elemental Resistance %</code> pierce do not exist; overcoming <code>95%–99%</code> resistant monsters requires a multi-element, physical, or mercenary toolkit.</li>
             </ul>
@@ -1959,6 +1974,19 @@ def build_site() -> str:
       <div class="section-title-bar">
         <h2>GEMS, SKULLS &amp; THE 33 SEMANTIC RUNES</h2>
         <div class="section-sub">Strictly 1 property per slot, zero overlap, used for both Socketing and Horadric Cube Crafting</div>
+      </div>
+
+      <div class="quote-box" style="margin-bottom:14px;">
+        <p style="margin-top:0;"><b>The Law of the Cube — Every Virtue Carries Its Nature:</b> <i>Socketing</i> a Gem or Skull lets you borrow its boon cleanly. <i>Fusing</i> it in the Horadric Cube binds its full nature into the item—stamping both its boon and an inseparable drawback (scaled by slot) that no rival stone can erase:</p>
+        <ul style="margin-bottom:0;">
+          <li><b style="color:#ff5555;">Ruby (Scorched Flesh):</b> Bearing fire leaves the wearer blistered and raw, taking heavier physical blows (<code>-Physical DR %</code>).</li>
+          <li><b style="color:#69b4ff;">Sapphire (Stilling Frost):</b> Ice numbs the bearer's sinew, slowing attack, cast, block, recovery, or stride (<code>-IAS / -FCR / -FBR / -FHR / -FRW</code>).</li>
+          <li><b style="color:#ffe455;">Topaz (Exposed Guard):</b> Lightning demands an open grounding path, forcing an unguarded stance (<code>-Total Defense %</code> across all slots).</li>
+          <li><b style="color:#44dd55;">Emerald (The Venom's Tithe):</b> Mastering venom means carrying a drop in your own veins, permanently taxing vitality (<code>-Max Life %</code>).</li>
+          <li><b style="color:#ffffff;">Diamond (The Refracting Prism):</b> Sustaining an arcane ward continuously reserves a share of your own magical pool (<code>-Max Mana %</code>).</li>
+          <li><b style="color:#c878ff;">Amethyst (Dense &amp; Conductive):</b> Condensing matter into brute weight turns heavy gear into a spell conduit (<code>+Elemental/Magic Damage Received</code>).</li>
+          <li><b class="d2-gold">Skull (The Grave's Bargain):</b> Bone deadens mortal wounds while wrapping the bearer in darkness and draining living warmth (<code>Drain Life</code> &amp; <code>-Light Radius</code>).</li>
+        </ul>
       </div>
 
       <table width="100%" border="1" cellpadding="5" cellspacing="0" bordercolor="#5c4b32" class="arreat-table" style="margin-bottom:16px;">

@@ -559,13 +559,17 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (60017, "ModMpPotDesc3", "Restores 270 Mana over 3 Seconds (3s Cooldown)"),
         (60018, "ModMpPotDesc4", "Restores 530 Mana over 3 Seconds (3s Cooldown)"),
         (60019, "ModMpPotDesc5", "Restores 1000 Mana over 3 Seconds (3s Cooldown)"),
-        (60020, "ModMalusDesc1", "Transmute with Socketable Gear + Perfect Skull to Add 1-2 Sockets"),
+        (60020, "ModMalusDesc1", "Transmute with Gear + Perfect Skull to Add Sockets (Magic 2-3, Rare/Craft 1-2, Unique/Set 1)"),
         (60021, "ModKeyDesc1", "Unlocks Crude Wooden Lockbox"),
         (60022, "ModKeyDesc2", "Unlocks Reinforced Iron Lockbox"),
         (60023, "ModKeyDesc3", "Unlocks Ornate Gilded Lockbox"),
         (60024, "ModLockboxDesc1", "Requires Crude Lockbox Key"),
         (61991, "ModLockboxDesc2", "Requires Iron Lockbox Key"),
         (61992, "ModLockboxDesc3", "Requires Ornate Lockbox Key"),
+        (0, "ModStr2t", "Elemental/Magic Damage Received -%d"),
+        (61995, "ModStr2tNegative", "Elemental/Magic Damage Received +%d"),
+        (61996, "ModTotalDefPos", "Total Defense Increased by %d%%"),
+        (61997, "ModTotalDefNeg", "Total Defense Reduced by %d%%"),
     ]
     out_mods = update_mod_strings_json("item-modifiers.json", mod_updates)
     return out_names, out_mods

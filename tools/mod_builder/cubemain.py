@@ -17,58 +17,79 @@ from mod_builder.common import MOD_ROOT, read_excel_tsv
 from mod_builder.gems_runes import GEM_SPECS, RUNE_SPECS
 
 # 7 Gem/Skull families ordered by tier (0=Chipped, 1=Flawed, 2=Standard, 3=Flawless, 4=Perfect)
-# Curse is the opposing element/stat weakness scaled across the 5 tiers:
-#   Ruby (Fire)     -> -Cold Resist (res-cold)
-#   Sapphire (Cold) -> -Fire Resist (res-fire)
-#   Topaz (Ltng)    -> -Poison Resist (res-pois)
-#   Emerald (Pois)  -> -Lightning Resist (res-ltng)
-#   Diamond (Mag)   -> -Physical Damage Resist % (damageresist)
-#   Amethyst (Phys) -> -Magic Resist (res-mag)
-#   Skull (Bone)    -> -Flat Life (hp)
-GEM_CURSES: Dict[str, Tuple[str, str, str, str]] = {
-    # Ruby -> -Cold Res
-    "gcr": ("res-cold", "", "-8", "-6"),
-    "gfr": ("res-cold", "", "-12", "-9"),
-    "gsr": ("res-cold", "", "-16", "-12"),
-    "glr": ("res-cold", "", "-20", "-15"),
-    "gpr": ("res-cold", "", "-25", "-18"),
-    # Sapphire -> -Fire Res
-    "gcb": ("res-fire", "", "-8", "-6"),
-    "gfb": ("res-fire", "", "-12", "-9"),
-    "gsb": ("res-fire", "", "-16", "-12"),
-    "glb": ("res-fire", "", "-20", "-15"),
-    "gpb": ("res-fire", "", "-25", "-18"),
-    # Topaz -> -Poison Res
-    "gcy": ("res-pois", "", "-8", "-6"),
-    "gfy": ("res-pois", "", "-12", "-9"),
-    "gsy": ("res-pois", "", "-16", "-12"),
-    "gly": ("res-pois", "", "-20", "-15"),
-    "gpy": ("res-pois", "", "-25", "-18"),
-    # Emerald -> -Lightning Res
-    "gcg": ("res-ltng", "", "-8", "-6"),
-    "gfg": ("res-ltng", "", "-12", "-9"),
-    "gsg": ("res-ltng", "", "-16", "-12"),
-    "glg": ("res-ltng", "", "-20", "-15"),
-    "gpg": ("res-ltng", "", "-25", "-18"),
-    # Diamond -> -Physical Damage Resist %
-    "gcw": ("damageresist", "", "-4", "-3"),
-    "gfw": ("damageresist", "", "-6", "-4"),
-    "gsw": ("damageresist", "", "-8", "-5"),
-    "glw": ("damageresist", "", "-10", "-7"),
-    "gpw": ("damageresist", "", "-12", "-8"),
-    # Amethyst -> -Magic Resist
-    "gcv": ("res-mag", "", "-5", "-3"),
-    "gfv": ("res-mag", "", "-8", "-5"),
-    "gsv": ("res-mag", "", "-11", "-7"),
-    "gzv": ("res-mag", "", "-14", "-9"),
-    "gpv": ("res-mag", "", "-18", "-12"),
-    # Skull -> -Flat Life
-    "skc": ("hp", "", "-12", "-8"),
-    "skf": ("hp", "", "-20", "-14"),
-    "sku": ("hp", "", "-30", "-20"),
-    "skl": ("hp", "", "-42", "-28"),
-    "skz": ("hp", "", "-55", "-38"),
+# Non-offsettable Crafting Busts (stamped into mod 5 of every Gem+Rune craft; zero overlap with any Gem boon):
+#   Ruby (Fire)     -> -Physical DR % (damageresist, all slots)
+#   Sapphire (Cold) -> Slot Speed: -IAS (weap/glov/ring), -FCR (staf/orb/wand), -FBR (shld), -FRW (boot), -FHR (helm/tors/belt/amul)
+#   Topaz (Ltng)    -> -Total Defense % (total-ac% -> skill_armor_percent, all slots)
+#   Emerald (Pois)  -> -Max Life % (hp%, all slots)
+#   Diamond (Mag)   -> -Max Mana % (mana%, all slots)
+#   Amethyst (Phys) -> -Magic Damage Reduced (red-mag, all slots)
+#   Skull (Death)   -> skull-curse (Drain Life hpregen + -Light Radius, all slots)
+SAPPHIRE_GEMS = frozenset({"gcb", "gfb", "gsb", "glb", "gpb"})
+
+GEM_FAMILY_BY_CODE: Dict[str, str] = {
+    "gcr": "ruby", "gfr": "ruby", "gsr": "ruby", "glr": "ruby", "gpr": "ruby",
+    "gcb": "sapphire", "gfb": "sapphire", "gsb": "sapphire", "glb": "sapphire", "gpb": "sapphire",
+    "gcy": "topaz", "gfy": "topaz", "gsy": "topaz", "gly": "topaz", "gpy": "topaz",
+    "gcg": "emerald", "gfg": "emerald", "gsg": "emerald", "glg": "emerald", "gpg": "emerald",
+    "gcw": "diamond", "gfw": "diamond", "gsw": "diamond", "glw": "diamond", "gpw": "diamond",
+    "gcv": "amethyst", "gfv": "amethyst", "gsv": "amethyst", "gzv": "amethyst", "gpv": "amethyst",
+    "skc": "skull", "skf": "skull", "sku": "skull", "skl": "skull", "skz": "skull",
 }
+
+# Baseline 1.00x bust magnitudes across the 5 Gem tiers (Chipped -> Perfect)
+_BUST_TIERS = {
+    "ruby_pdr":      (2, 3, 4, 6, 8),         # -2% .. -8% Physical DR (damageresist)
+    "sapphire_spd":  (3, 5, 7, 10, 12),       # -3% .. -12% IAS / FCR / FBR / FRW / FHR
+    "topaz_def":     (6, 10, 15, 20, 25),     # -6% .. -25% Total Defense (total-ac% -> skill_armor_percent)
+    "emerald_hp":    (2, 3, 5, 7, 9),         # -2% .. -9% Max Life (hp%)
+    "diamond_mana":  (2, 3, 5, 7, 9),         # -2% .. -9% Max Mana (mana%)
+    "amethyst_mdr":  (2, 4, 7, 11, 15),       # -2 .. -15 Magic Damage Reduced (red-mag; +8.3% Hell equiv)
+    "skull_drain":   (2, 4, 6, 8, 10),        # -2 .. -10 Drain Life (hpregen)
+    "skull_light":   (1, 1, 2, 2, 3),         # -1 .. -3 Light Radius (item_lightradius)
+}
+
+
+def _get_gem_bust(slot_code: str, g_code: str, slot_scale: float) -> Tuple[str, str, str, str]:
+    """Return (mod_code, param, min_str, max_str) for the non-offsettable Gem/Skull crafting bust."""
+    fam = GEM_FAMILY_BY_CODE[g_code]
+    t_idx = GEM_TIER_INDEX[g_code]
+
+    if fam == "skull":
+        drain_v = max(1, int(round(_BUST_TIERS["skull_drain"][t_idx] * slot_scale)))
+        light_v = max(1, int(round(_BUST_TIERS["skull_light"][t_idx] * slot_scale)))
+        # func1=15 (hpregen) uses min, func2=16 (item_lightradius) uses max; keep min <= max
+        drain_v = max(drain_v, light_v)
+        return ("skull-curse", "", str(-drain_v), str(-light_v))
+
+    if fam == "ruby":
+        prop, base = "damageresist", _BUST_TIERS["ruby_pdr"][t_idx]
+    elif fam == "sapphire":
+        if slot_code in ("weap", "glov", "ring"):
+            prop = "swing1"
+        elif slot_code in ("staf", "orb", "wand"):
+            prop = "cast1"
+        elif slot_code == "shld":
+            prop = "block2"
+        elif slot_code == "boot":
+            prop = "move1"
+        else:
+            # helm, tors, belt, amul
+            prop = "balance1"
+        base = _BUST_TIERS["sapphire_spd"][t_idx]
+    elif fam == "topaz":
+        prop, base = "total-ac%", _BUST_TIERS["topaz_def"][t_idx]
+    elif fam == "emerald":
+        prop, base = "hp%", _BUST_TIERS["emerald_hp"][t_idx]
+    elif fam == "diamond":
+        prop, base = "mana%", _BUST_TIERS["diamond_mana"][t_idx]
+    elif fam == "amethyst":
+        prop, base = "red-mag", _BUST_TIERS["amethyst_mdr"][t_idx]
+    else:
+        raise ValueError(f"Unknown gem family for {g_code}")
+
+    val = max(1, int(round(base * slot_scale)))
+    return (prop, "", str(-val), str(-val))
 
 # Gem Tier output level rules (N - 1 of next Gem tier req, with Perfect = plvl 100):
 # Chipped (req 1) -> lvl=14, Flawed (req 15) -> lvl=29, Standard (req 30) -> lvl=44,
@@ -941,35 +962,25 @@ def build_cubemain(cfg: dict) -> str:
                 "lvl": "99",
             }))
 
-    # 6. 1-Step Gem + 2-Rune Slot-Specific Crafting across all 11 Slot Groups
-    # and all 35 Gems/Skulls (Chipped -> Perfect), with zero negative busts.
-    # Caster weapons (staf, orb, wand) are emitted BEFORE generic 'weap' so D2R matches them first:
-    # they inherit the Armor/Helm Gem boon (Resists / Defense / PDR — no dead melee damage!) while
-    # keeping Weapon-slot Rune mods (+% Elem/Magic Skill Dmg r26..r30, 10% FCR r18, 45% Mana Regen r21):
-    #   1) staf (Gem: 1.00x Armor/Helm | Runes: 1.00x Weapon, Eth + Non-Eth)
-    #   2) orb  (Gem: 0.75x Armor/Helm | Runes: 1.00x Weapon, Eth + Non-Eth)
-    #   3) wand (Gem: 0.75x Armor/Helm | Runes: 1.00x Weapon, Eth + Non-Eth)
-    #   4) weap (Gem: 1.00x Weapon     | Runes: 1.00x Weapon, Eth + Non-Eth)
-    #   5) glov (0.60x Weapon spec, Eth + Non-Eth; omits r31 Ignore Target's Defense)
-    #   6) ring (0.50x Weapon spec -> Rings, Non-Eth only; omits r31 Ignore Target's Defense & r32 Indestructible)
-    #   7) amul (0.50x Armor/Helm spec -> Amulets, Non-Eth only; omits r32 Indestructible)
-    #   8) btbl (0.60x Armor/Helm spec -> Boots & Belts, Eth + Non-Eth)
-    #   9) helm (0.75x Armor/Helm spec -> Helms, Circlets, Pelts, Primal Helms, Eth + Non-Eth)
-    #  10) shld (1.00x Shield spec -> Shields, Paladin Shields, Necro Heads, Grimoires, Eth + Non-Eth)
-    #  11) tors (1.00x Armor/Helm spec -> Body Armor, Eth + Non-Eth)
+    # 6. 1-Step Gem + 2-Rune Slot-Specific Crafting across all Slot Groups
+    # and all 35 Gems/Skulls (Chipped -> Perfect), stamping non-offsettable Gem Busts into mod 5.
+    # Caster weapons (staf, orb, wand) precede generic 'weap'; Sapphire-only 'boot' (-FRW) and 'belt' (-FHR)
+    # precede shared 'btbl' (other 30 gems) to keep cubemain.txt compact (~394k rows).
     slot_groups = [
-        # (slot_code, gem_col_idx, gem_scale, rune_col_idx, rune_scale, allow_eth, forbidden_runes)
-        ("staf", 1, 1.00, 0, 1.00, True, set()),
-        ("orb",  1, 0.75, 0, 1.00, True, set()),
-        ("wand", 1, 0.75, 0, 1.00, True, set()),
-        ("weap", 0, 1.00, 0, 1.00, True, set()),
-        ("glov", 0, 0.60, 0, 0.60, True, {"r31"}),
-        ("ring", 0, 0.50, 0, 0.50, False, {"r31", "r32"}),
-        ("amul", 1, 0.50, 1, 0.50, False, {"r32"}),
-        ("btbl", 1, 0.60, 1, 0.60, True, set()),
-        ("helm", 1, 0.75, 1, 0.75, True, set()),
-        ("shld", 2, 1.00, 2, 1.00, True, set()),
-        ("tors", 1, 1.00, 1, 1.00, True, set()),
+        # (slot_code, gem_col_idx, gem_scale, rune_col_idx, rune_scale, allow_eth, forbidden_runes, gem_filter)
+        ("staf", 1, 1.00, 0, 1.00, True, set(), None),
+        ("orb",  1, 0.75, 0, 1.00, True, set(), None),
+        ("wand", 1, 0.75, 0, 1.00, True, set(), None),
+        ("weap", 0, 1.00, 0, 1.00, True, set(), None),
+        ("glov", 0, 0.60, 0, 0.60, True, {"r31"}, None),
+        ("ring", 0, 0.50, 0, 0.50, False, {"r31", "r32"}, None),
+        ("amul", 1, 0.50, 1, 0.50, False, {"r32"}, None),
+        ("boot", 1, 0.60, 1, 0.60, True, set(), "sapphire_only"),
+        ("belt", 1, 0.60, 1, 0.60, True, set(), "sapphire_only"),
+        ("btbl", 1, 0.60, 1, 0.60, True, set(), "non_sapphire"),
+        ("helm", 1, 0.75, 1, 0.75, True, set(), None),
+        ("shld", 2, 1.00, 2, 1.00, True, set(), None),
+        ("tors", 1, 1.00, 1, 1.00, True, set(), None),
     ]
 
     rune_codes = [r[0] for r in RUNE_SPECS]
@@ -981,9 +992,9 @@ def build_cubemain(cfg: dict) -> str:
     gem_craft_levelreq_offsets = ("-5", "-5", "-5", "-5", "-5")
 
     # Precompute 2-Rune combinations per (slot_idx, gem_tier_idx)
-    # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_2_5_str)]
+    # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_2_4_str)]
     slot_tier_combos: List[List[List[Tuple[str, str]]]] = []
-    for s_idx, (_, _, _, rune_col_idx, r_scale, _, forbidden_runes) in enumerate(slot_groups):
+    for s_idx, (_, _, _, rune_col_idx, r_scale, _, forbidden_runes, _) in enumerate(slot_groups):
         tier_list: List[List[Tuple[str, str]]] = []
         for t_idx, g_mult in enumerate(GEM_TIER_MULTS):
             req_off = gem_craft_levelreq_offsets[t_idx]
@@ -995,17 +1006,17 @@ def build_cubemain(cfg: dict) -> str:
                 rmods_2.append(_scale_craft_mod(raw_mod, r_scale, g_mult, rune_count=2))
 
             combos: List[Tuple[str, str]] = []
-            # A) 2 identical runes: "rXX,qty=2" -> mod 2 (cols 27..31), mod 3 empty (32..36), mod 4 = levelreq (37..41), mod 5 empty (42..46)
+            # A) 2 identical runes: "rXX,qty=2" -> mod 2 (cols 27..31), mod 3 empty (32..36), mod 4 = levelreq (37..41) + tab into mod 5
             for i in range(33):
                 rc = rune_codes[i]
                 if rc in forbidden_runes:
                     continue
                 inp_str = f'"{rc},qty=2"\t\t'
                 m2 = rmods_2[i]
-                mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t\t\t\t\t\tlevelreq\t\t\t{req_off}\t{req_off}\t\t\t\t\t"
+                mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t\t\t\t\t\tlevelreq\t\t\t{req_off}\t{req_off}\t"
                 combos.append((inp_str, mod_str))
 
-            # B) 2 different runes: rXX + rYY (i < j) -> mod 2 (27..31), mod 3 (32..36), mod 4 = levelreq (37..41), mod 5 empty (42..46)
+            # B) 2 different runes: rXX + rYY (i < j) -> mod 2 (27..31), mod 3 (32..36), mod 4 = levelreq (37..41) + tab into mod 5
             for i in range(33):
                 rc1 = rune_codes[i]
                 if rc1 in forbidden_runes:
@@ -1017,7 +1028,7 @@ def build_cubemain(cfg: dict) -> str:
                         continue
                     m3 = rmods_1[j]
                     inp_str = f"{rc1}\t{rc2}\t"
-                    mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\tlevelreq\t\t\t{req_off}\t{req_off}\t\t\t\t\t"
+                    mod_str = f"{m2[0]}\t\t{m2[1]}\t{m2[2]}\t{m2[3]}\t{m3[0]}\t\t{m3[1]}\t{m3[2]}\t{m3[3]}\tlevelreq\t\t\t{req_off}\t{req_off}\t"
                     combos.append((inp_str, mod_str))
 
             tier_list.append(combos)
@@ -1031,7 +1042,7 @@ def build_cubemain(cfg: dict) -> str:
         # Write header + non-craft recipes first
         f.write(("\r\n".join(lines) + "\r\n").encode("utf-8"))
 
-        for s_idx, (slot_code, gem_col_idx, g_scale, _, _, allow_eth, _) in enumerate(slot_groups):
+        for s_idx, (slot_code, gem_col_idx, g_scale, _, _, allow_eth, _, gem_filter) in enumerate(slot_groups):
             eth_variants = (True, False) if allow_eth else (False,)
             for is_eth in eth_variants:
                 inp1_str = f'"{slot_code},mag,eth"' if is_eth else f'"{slot_code},mag"'
@@ -1040,10 +1051,16 @@ def build_cubemain(cfg: dict) -> str:
 
                 for g_spec in GEM_SPECS:
                     g_code = g_spec[0]
+                    if gem_filter == "sapphire_only" and g_code not in SAPPHIRE_GEMS:
+                        continue
+                    if gem_filter == "non_sapphire" and g_code in SAPPHIRE_GEMS:
+                        continue
                     t_idx = GEM_TIER_INDEX[g_code]
                     combos = slot_tier_combos[s_idx][t_idx]
                     raw_boon = g_spec[1 + gem_col_idx]
                     boon = _scale_gem_boon(raw_boon, g_scale)
+                    bust = _get_gem_bust(slot_code, g_code, g_scale)
+                    mod5_str = f"{bust[0]}\t\t{bust[1]}\t{bust[2]}\t{bust[3]}"
                     lvl_s, plvl_s = GEM_LEVEL_RULES[g_code]
 
                     prefix_0_12 = f"{desc_tag} {slot_code} {g_code}\t1\t\t\t\t100\t\t\t\t\t4\t{inp1_str}\t{g_code}\t"
@@ -1053,8 +1070,8 @@ def build_cubemain(cfg: dict) -> str:
                     )
 
                     chunk: List[str] = []
-                    for inp_3_5, mod_2_5 in combos:
-                        chunk.append(f"{prefix_0_12}{inp_3_5}{mid_16_26}{mod_2_5}{tail_empty}")
+                    for inp_3_5, mod_2_4 in combos:
+                        chunk.append(f"{prefix_0_12}{inp_3_5}{mid_16_26}{mod_2_4}{mod5_str}{tail_empty}")
                     f.write(("\r\n".join(chunk) + "\r\n").encode("utf-8"))
                     craft_count += len(chunk)
 

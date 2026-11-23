@@ -244,6 +244,29 @@ def build_itemstatcost(cfg: dict) -> str:
             r["Save Add"] = "10"
             r["1.09-Save Bits"] = "5"
             r["1.09-Save Add"] = "10"
+        elif st == "skill_armor_percent":
+            # Global % Defense modifier (same stat as Shout / Lightning Stance);
+            # enables universal Topaz crafting bust (-Total Defense %) on ALL slots including 0-def weapons & jewelry.
+            r["Signed"] = "1"
+            r["Send Bits"] = "16"
+            r["Save Bits"] = "9"
+            r["Save Add"] = "100"
+            r["1.09-Save Bits"] = "9"
+            r["1.09-Save Add"] = "100"
+            r["descpriority"] = "74"
+            r["descfunc"] = "29"
+            r["descstrpos"] = "ModTotalDefPos"
+            r["descstrneg"] = "ModTotalDefNeg"
+        elif st == "magic_damage_reduction":
+            # Support negative Magic Damage Reduced on Amethyst-crafted items (-2..-12)
+            # descfunc=29 passes abs(val) to sprintf so negative values display "Magic Damage Increased by 12"
+            r["Signed"] = "1"
+            r["Save Bits"] = "7"
+            r["Save Add"] = "30"
+            r["1.09-Save Bits"] = "7"
+            r["1.09-Save Add"] = "30"
+            r["descfunc"] = "29"
+            r["descstrneg"] = "ModStr2tNegative"
         elif st == "skill_channeling_tick":
             # Used by Frenzy (Id 147, aurastat3=skill_channeling_tick) so srvdofunc=9 registers
             # domeleeattack -> 36 (sWarHexOnAttack -> installs bar_stamina_reflex + Param1=3 Shiver Armor)
@@ -1547,12 +1570,51 @@ def build_affix_strings(cfg: dict) -> str:
     return update_mod_strings_json("item-nameaffixes.json", updates)
 
 
+def build_properties_txt(cfg: dict) -> str:
+    headers, rows = read_excel_tsv("properties.txt")
+    if not any(r.get("code") == "skull-curse" for r in rows):
+        max_id = max((int(r["*Id"]) for r in rows if (r.get("*Id") or "").isdigit()), default=283)
+        nr = {h: "" for h in headers}
+        nr["code"] = "skull-curse"
+        nr["*Id"] = str(max_id + 1)
+        nr["*Enabled"] = "1"
+        # func 15 applies mod min (Drain Life hpregen, e.g. -10..-2);
+        # func 16 applies mod max (-Light Radius item_lightradius, e.g. -3..-1).
+        # Since hpregen <= light_radius for all tiers, min <= max always holds cleanly.
+        nr["func1"] = "15"
+        nr["stat1"] = "hpregen"
+        nr["func2"] = "16"
+        nr["stat2"] = "item_lightradius"
+        nr["*Tooltip"] = "Drain Life & -Light Radius"
+        nr["*Min"] = "Drain Life"
+        nr["*Max"] = "Light Radius"
+        nr["*Notes"] = "Castalia Skull crafting bust compound property"
+        nr["*eol"] = "0"
+        rows.append(nr)
+    if not any(r.get("code") == "total-ac%" for r in rows):
+        max_id = max((int(r["*Id"]) for r in rows if (r.get("*Id") or "").isdigit()), default=283)
+        nr = {h: "" for h in headers}
+        nr["code"] = "total-ac%"
+        nr["*Id"] = str(max_id + 1)
+        nr["*Enabled"] = "1"
+        nr["func1"] = "1"
+        nr["stat1"] = "skill_armor_percent"
+        nr["*Tooltip"] = "Total Defense +/-#%"
+        nr["*Min"] = "Min %"
+        nr["*Max"] = "Max %"
+        nr["*Notes"] = "Castalia Topaz crafting bust (global % defense)"
+        nr["*eol"] = "0"
+        rows.append(nr)
+    return write_excel_tsv("properties.txt", headers, rows)
+
+
 def build_affixes_all(cfg: dict) -> str:
     p1 = build_itemstatcost(cfg)
+    p1b = build_properties_txt(cfg)
     p2 = build_magicprefix(cfg)
     p3 = build_magicsuffix(cfg)
     p4 = build_affix_strings(cfg)
-    return f"{p1}, {p2}, {p3}, {p4}"
+    return f"{p1}, {p1b}, {p2}, {p3}, {p4}"
 
 
 def print_affix_summary(cfg: dict) -> str:

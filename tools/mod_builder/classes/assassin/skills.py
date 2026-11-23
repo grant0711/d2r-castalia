@@ -1520,8 +1520,11 @@ def apply_assassin_skills_and_desc(
             cu["Param3"] = "22500"
             cu["auralencalc"] = "par3"
 
+    _RESTED_PCT = "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))"
     if "Tiger Strike" in by_name:
         ts = by_name["Tiger Strike"]
+        ts["mana"] = "0"
+        ts["lvlmana"] = "0"
         ts["prgstack"] = ""
         ts["prgdam"] = ""
         ts["srvprgfunc1"] = "41"
@@ -1542,7 +1545,7 @@ def apply_assassin_skills_and_desc(
         ts["Param1"] = "6"
         ts["Param2"] = "2"
         ts["calc1"] = (
-            "par1 + 2*max(0,lvl-1) + 1*max(0,lvl-8) + 2*max(0,lvl-16) + 4*max(0,lvl-22) + 2*skill('Dragon Talon'.blvl) + 1*skill('Fire Trauma'.blvl)"
+            f"((par1 + 2*max(0,lvl-1) + 1*max(0,lvl-8) + 2*max(0,lvl-16) + 4*max(0,lvl-22) + 2*skill('Dragon Talon'.blvl) + 1*skill('Fire Trauma'.blvl))*(100+{_RESTED_PCT}))/200"
         )
         ts["*calc1 desc"] = "Held Charge Damage % per Orb"
         ts["calc2"] = (
@@ -2890,7 +2893,7 @@ def apply_assassin_skills_and_desc(
         rs["*Param7 Description"] = "Damage synergy % from Shuriken"
         rs["Param8"] = "5"
         rs["*Param8 Description"] = "Damage synergy % from Dragon Claw"
-        rs["calc1"] = f"{RAMP34} + skill('Inferno Sentry'.blvl)*par7 + skill('Dragon Claw'.blvl)*par8"
+        rs["calc1"] = f"(({RAMP34} + skill('Inferno Sentry'.blvl)*par7 + skill('Dragon Claw'.blvl)*par8)*(100+{_RESTED_PCT}))/200"
         rs["*calc1 desc"] = "Damage %"
         rs["calc2"] = "2"
         rs["*calc2 desc"] = "Escalation 1 Skill Level"
@@ -2953,6 +2956,22 @@ def apply_assassin_skills_and_desc(
         rs["AttackNoMana"] = ""
         rs["SearchEnemyXY"] = ""
 
+    if "Dragon Talon" in by_name:
+        dt = by_name["Dragon Talon"]
+        dt["mana"] = "0"
+        dt["lvlmana"] = "0"
+        dt["calc1"] = f"max(1,((lvl/6+1)*(100+{_RESTED_PCT}))/200)"
+        dt["calc2"] = f"(dm34*(100+{_RESTED_PCT}))/200"
+
+    if "Weapon Block" in by_name:
+        by_name["Weapon Block"]["passivecalc1"] = f"(dm12*(100+{_RESTED_PCT}))/200"
+
+    if "Dragon Claw" in by_name:
+        dc = by_name["Dragon Claw"]
+        dc["mana"] = "0"
+        dc["lvlmana"] = "0"
+        dc["calc1"] = f"((ln12+skill('Claw Mastery'.blvl)*par7)*(100+{_RESTED_PCT}))/200"
+
     if "Dragon Tail" in by_name:
         dtl = by_name["Dragon Tail"]
         dtl["Param1"] = "40"
@@ -2962,6 +2981,7 @@ def apply_assassin_skills_and_desc(
         dfl = by_name["Dragon Flight"]
         dfl["Param1"] = "75"
         dfl["Param2"] = "20"
+        dfl["calc1"] = f"(ln12*(100+{_RESTED_PCT}))/200"
 
     if "royal strike" in by_desc:
         rs_d = by_desc["royal strike"]
@@ -3255,8 +3275,24 @@ def apply_assassin_skills_and_desc(
             _b["Param6"] = "50"
             _b["*Param6 Description"] = "Duration per level (frames)"
             _b["auralencalc"] = _short_buff_len
+            if _sk == "Quickness":
+                _b["aurastatcalc1"] = f"(dm12*(100+{_RESTED_PCT}))/200"
+                _b["aurastatcalc2"] = f"(dm34*(100+{_RESTED_PCT}))/200"
         if _sd in by_desc:
             by_desc[_sd]["desccalca1"] = _short_buff_len
+            if _sd == "quickness":
+                by_desc[_sd]["desccalca2"] = f"(dm12*(100+{_RESTED_PCT}))/200"
+                by_desc[_sd]["desccalca3"] = f"(dm34*(100+{_RESTED_PCT}))/200"
+
+    if "dragon talon" in by_desc:
+        by_desc["dragon talon"]["desccalca3"] = "clc1"
+    if "weapon block" in by_desc:
+        by_desc["weapon block"]["desccalca1"] = f"(dm12*(100+{_RESTED_PCT}))/200"
+    if "dragon claw" in by_desc:
+        by_desc["dragon claw"]["ddam calc1"] = "clc1"
+        by_desc["dragon claw"]["desccalca1"] = "clc1"
+    if "dragon flight" in by_desc:
+        by_desc["dragon flight"]["desccalca1"] = "clc1"
 
     # Step 5h: Shadow Bind (Shadow Warrior slot, Id 268, Col 2 Row 4) - Pinpoint single-target Shadow Hex that works
     #   on Super Uniques and Act Bosses (aurafilter=3, same as Decrepify). Pins the target nearly in place
@@ -3405,16 +3441,16 @@ def apply_assassin_skills_and_desc(
     ass_mana_table = [
         # (skill_name, manashift, mana, lvlmana, minmana)
         # 1. Charge-Ups
-        ("Tiger Strike", "8", "1", "0", "1"),           # 1.0 flat
+        ("Tiger Strike", "8", "0", "0", "0"),           # 0 Mana (purely physical; Stamina-scaled)
         ("Cobra Strike", "7", "3", "0", "1"),           # 1.5 flat
         ("Fists of Fire", "5", "20", "1", "2"),         # 2.5 at Lvl 1 -> 4.9 at Lvl 20
         ("Blades of Ice", "5", "24", "1", "3"),         # 3.0 at Lvl 1 -> 5.4 at Lvl 20
         ("Claws of Thunder", "5", "28", "1", "3"),      # 3.5 at Lvl 1 -> 5.9 at Lvl 20
         # 2. Finishers
-        ("Dragon Claw", "8", "4", "0", "4"),            # 4.0 flat
-        ("Dragon Talon", "8", "6", "0", "6"),           # 6.0 flat
-        ("Dragon Tail", "8", "10", "0", "10"),          # 10.0 flat
-        ("Dragon Flight", "8", "18", "0", "18"),        # 18.0 flat
+        ("Dragon Claw", "8", "0", "0", "0"),            # 0 Mana (purely physical; Stamina-scaled)
+        ("Dragon Talon", "8", "0", "0", "0"),           # 0 Mana (purely physical; Stamina-scaled)
+        ("Dragon Tail", "8", "10", "0", "10"),          # 10.0 flat (Fire explosion)
+        ("Dragon Flight", "8", "18", "0", "18"),        # 18.0 flat (Shadow teleport; physical dmg Stamina-scaled)
         ("Royal Strike", "8", "8", "0", "8"),           # 8.0 flat (Omnislash)
         # 3. Physical & Sustain Traps (considerably cheaper than Elemental Traps)
         ("Shock Field", "6", "20", "1", "5"),           # Caltrops: 5.0 at Lvl 1 -> 9.8 at Lvl 20

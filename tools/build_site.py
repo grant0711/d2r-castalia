@@ -1809,8 +1809,9 @@ def build_site() -> str:
             <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles Over Flashcards <sup>(1)</sup></h3>
             <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>390,000 crafting combinations</b> from first principles.</p>
 
-            <h3 class="d2-bright-gold">2. Keeping the World Intact <sup>(2)</sup></h3>
+            <h3 class="d2-bright-gold">2. Keeping the World Intact &amp; Martial Stamina <sup>(2)</sup></h3>
             <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>
+            <p><b>Universal Martial Stamina:</b> Purely physical skills cost <b>0 Mana</b> and scale linearly with current Stamina—halving in effectiveness at empty Stamina (<code>50% &rarr; 100%</code>) across physical strikes, <i>Vigor</i>, <i>Fanaticism</i>, and <i>Burst of Speed</i>. Heavy physical stuns (<i>Smite, Charge, Shield Slam, Leap Attack</i>) scale linearly down to <code>33%</code> Stamina and fail to stun below <code>33%</code>.</p>
           </td>
           <td width="50%" valign="top" bgcolor="#0e0b08">
             <h3 class="d2-bright-gold" style="margin-top:0;">3. Every Item Color Has Its Own Crown &amp; No Free Immunity Breakers <sup>(3)</sup></h3>

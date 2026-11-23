@@ -21,12 +21,21 @@ from mod_builder.classes.common import (
 
 def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     """Apply the Paladin Combat, Offensive Aura, and Defensive Aura overhaul to skills.txt."""
+    # Universal Castalia Stamina rules:
+    #   - Half-Power Rule: physical/speed effects scale linearly from 50% (0% Stamina) -> 100% (Full Stamina)
+    #   - Stun Exhaustion Rule: stuns scale linearly 100% -> 33% Stamina, hard cutoff (0) below 33%
+    RESTED_PCT = "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))"
+
     # -------------------------------------------------------------------------
     # 1. COMBAT SKILLS
     # -------------------------------------------------------------------------
-    # Sacrifice (Id 96): 300% + 32%/lvl (ramped) ED; self-damage 12% scaling down to 4% via blvl + Prayer/Redemption;
+    # Sacrifice (Id 96): 0 Mana; 300% + 32%/lvl (ramped) ED scaled 50%->100% by Stamina;
+    # self-damage 12% scaling down to 4% via blvl + Prayer/Redemption;
     # synergies: Prayer (12%), Redemption (12%), Fanaticism (10%); zero passive bonus
     sac = by_name["Sacrifice"]
+    sac["minmana"] = "0"
+    sac["mana"] = "0"
+    sac["lvlmana"] = "0"
     sac["passivestate"] = ""
     sac["passivestat1"] = ""
     sac["passivecalc1"] = ""
@@ -37,49 +46,60 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     sac["Param6"] = "4"    # Self Damage % min
     sac["Param7"] = "10"   # Fanaticism synergy %
     sac["Param8"] = "12"   # Prayer & Redemption synergy %
-    sac["calc1"] = f"{RAMP12}+(skill('Prayer'.blvl)+skill('Redemption'.blvl))*par8+skill('Fanaticism'.blvl)*par7"
+    sac["calc1"] = f"(({RAMP12}+(skill('Prayer'.blvl)+skill('Redemption'.blvl))*par8+skill('Fanaticism'.blvl)*par7)*(100+{RESTED_PCT}))/200"
     sac["calc2"] = "max(par6, par5 - blvl/par3 - (skill('Prayer'.blvl)+skill('Redemption'.blvl))/4)"
 
-    # Smite (Id 97): Boosted innate ED (100% + 45%/lvl ramped -> +955% ED at Lvl 20 to compensate for removing flat Smite damage from Holy Shield),
-    # 1.0s + 0.24s/lvl stun, +15%/lvl ED synergy from Charge
+    # Smite (Id 97): 0 Mana; Boosted innate ED (100% + 45%/lvl ramped -> +955% ED at Lvl 20) scaled 50%->100% by Stamina,
+    # 1.0s + 0.24s/lvl stun scaled linearly 100%->33% Stamina (0 stun below 33%), +15%/lvl ED synergy from Charge
     smite = by_name["Smite"]
+    smite["minmana"] = "0"
+    smite["mana"] = "0"
+    smite["lvlmana"] = "0"
     smite["Param1"] = "25"   # Stun Length baseline (1.0s)
     smite["Param2"] = "6"    # Stun Length per level (+0.24s)
     smite["Param3"] = "100"  # Damage % baseline (up from 60%)
     smite["Param4"] = "45"   # Damage % per level (ramped -> +955% ED at Lvl 20)
     smite["Param8"] = "15"   # Charge synergy % (+15%/lvl -> +300% ED at 20 Charge)
-    smite["calc1"] = f"{RAMP34}+skill('Charge'.blvl)*par8"
+    smite["calc1"] = f"(({RAMP34}+skill('Charge'.blvl)*par8)*(100+{RESTED_PCT}))/200"
+    smite["calc2"] = f"(({RESTED_PCT})>=33)?(min(ln12,250)*({RESTED_PCT}))/100:0"
 
-    # Charge (Id 107): 150% + 32%/lvl (ramped) ED, 12% synergy from Vigor & Might, mana 9 -> 6,
-    # AND Stuns target on impact! (EType = stun, fixed 1.4s base stun that ONLY increases via Smite at +8%/lvl)
+    # Charge (Id 107): 0 Mana; 150% + 32%/lvl (ramped) ED & Charge Speed scaled 50%->100% by Stamina,
+    # 12% synergy from Vigor & Might, AND Stuns target on impact (1.4s base + 8%/lvl Smite synergy,
+    # scaled linearly 100%->33% Stamina with hard cutoff 0 below 33%)
     chg = by_name["Charge"]
-    chg["mana"] = "6"
+    chg["minmana"] = "0"
+    chg["mana"] = "0"
+    chg["lvlmana"] = "0"
     chg["Param3"] = "150"  # Damage % baseline
     chg["Param4"] = "32"   # Damage % per level
     chg["Param6"] = "8"    # Stun duration synergy % from Smite
     chg["*Param6 Description"] = "Stun Duration synergy"
     chg["Param8"] = "12"   # Damage synergy % from Vigor & Might
-    chg["calc1"] = f"{RAMP34}+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8"
+    chg["calc1"] = f"(({RAMP34}+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8)*(100+{RESTED_PCT}))/200"
+    chg["calc2"] = f"(par1*(100+{RESTED_PCT}))/200"
     chg["calc4"] = "0"     # 0% physical converted to elemental so 100% stays Physical + Stun
     chg["EType"] = "stun"
     chg["ELen"] = "35"     # 1.4s fixed base stun (only increases with points in Smite)
     chg["ELevLen1"] = "0"
     chg["ELevLen2"] = "0"
     chg["ELevLen3"] = "0"
-    chg["ELenSymPerCalc"] = "skill('Smite'.blvl)*par6"
+    chg["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?(((100+skill('Smite'.blvl)*par6)*({RESTED_PCT}))/100-100):-100"
 
-    # Zeal (Id 106): Capped at 4 hits (2 hits Lvl 1-5, 3 hits Lvl 6-11, 4 hits Lvl 12+),
+    # Zeal (Id 106): 0 Mana; Capped at 5 hits (2 hits Lvl 1-5, 3 hits Lvl 6-11, 4 hits Lvl 12-17, 5 hits Lvl 18+),
     # vanilla 100% rollback (so 4-frame hits strictly require EIAS = 75), 20% + 11%/lvl (ramped -> +229% ED at Lvl 20),
-    # +8% Sacrifice synergy (+160% ED at Lvl 20 -> +389% total skill ED).
+    # +8% Sacrifice synergy (+160% ED at Lvl 20 -> +389% total skill ED), scaled 50%->100% by Stamina.
     zeal = by_name["Zeal"]
-    zeal["Param2"] = "100"  # % Anim frame rollback (100% = full 7 base frames per swing; 4-hit cap + melee rangeadder prevents whiffing)
+    zeal["minmana"] = "0"
+    zeal["mana"] = "0"
+    zeal["lvlmana"] = "0"
+    zeal["Param2"] = "100"  # % Anim frame rollback (100% = full 7 base frames per swing; melee rangeadder prevents whiffing)
     zeal["Param3"] = "20"   # Damage % baseline
     zeal["Param4"] = "11"   # Damage % per level (20 + 19*11 = 229% at Lvl 20)
     zeal["Param5"] = "2"    # # of hits Min
-    zeal["Param6"] = "4"    # # of hits Max
+    zeal["Param6"] = "5"    # # of hits Max (vanilla 5-hit cap; degrades 5->4->3->2 with Stamina)
     zeal["Param8"] = "8"    # Sacrifice synergy %
-    zeal["calc1"] = "min(par5+lvl/6,par6)"
-    zeal["calc2"] = f"{RAMP34}+skill('Sacrifice'.blvl)*par8"
+    zeal["calc1"] = f"max(2,(min(par5+lvl/6,par6)*(100+{RESTED_PCT}))/200)"
+    zeal["calc2"] = f"(({RAMP34}+skill('Sacrifice'.blvl)*par8)*(100+{RESTED_PCT}))/200"
     zeal["ToHit"] = "20"
     zeal["LevToHit"] = "12"
 
@@ -513,6 +533,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     fana["ToHit"] = "25"
     fana["LevToHit"] = "3"
     fana["passivecalc1"] = "ln56"
+    fana["aurastatcalc1"] = f"(dm34*(100+{RESTED_PCT}))/200"
     fana["aurastatcalc3"] = "ln56*2/3"
 
     # Conviction (Id 123):
@@ -678,7 +699,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     vig["Param4"] = "3"
     vig["calc1"] = RAMP34
     vig["aurastat1"] = "velocitypercent"
-    vig["aurastatcalc1"] = "dm56"
+    vig["aurastatcalc1"] = f"(dm56*(100+{RESTED_PCT}))/200"
     vig["aurastat2"] = "item_fastergethitrate"
     vig["aurastatcalc2"] = "clc1"
     vig["aurastat3"] = ""
@@ -769,6 +790,7 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
 
     # 2. Smite
     smite = by_desc["smite"]
+    smite["desccalca1"] = "clc2"
     smite["desccalca2"] = "clc1"
     _clear_dsc3_synergies(smite, "skillname97")
     _set_dsc_line(smite, "dsc3", 2, "76", "Damplev", "skillname107", "par8", "")
@@ -912,10 +934,11 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(hshk, "desc", 4, "75", "strEskilllighttoattack", "", "edns/256", "edxs*par5/256")
     _set_dsc_line(hshk, "dsc2", 2, "", "", "", "", "")
 
+    _pal_rested = "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))"
     fana = by_desc["fanaticism"]
     _set_dsc_line(fana, "desc", 1, "36", "StrSkill34", "", "usmc*5", "256")
     _set_dsc_line(fana, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "ln12*2", "3")
-    _set_dsc_line(fana, "desc", 3, "74", "StrSkill106", "", "dm34", "")
+    _set_dsc_line(fana, "desc", 3, "74", "StrSkill106", "", f"(dm34*(100+{_pal_rested}))/200", "")
     _set_dsc_line(fana, "desc", 4, "74", "PartDam", "", "ln56*2/3", "")
     _set_dsc_line(fana, "desc", 5, "74", "FanYDam", "", "ln56", "")
     _set_dsc_line(fana, "desc", 6, "74", "StrSkill22", "", "toht", "")
@@ -988,7 +1011,7 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     vig = by_desc["vigor"]
     _set_dsc_line(vig, "desc", 1, "36", "StrSkill34", "", "usmc*5", "256")
     _set_dsc_line(vig, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "ln12*2", "3")
-    _set_dsc_line(vig, "desc", 3, "74", "StrSkill89", "", "dm56", "")
+    _set_dsc_line(vig, "desc", 3, "74", "StrSkill89", "", f"(dm56*(100+{_pal_rested}))/200", "")
     _set_dsc_line(vig, "desc", 4, "74", "ModStr4p", "", "clc1", "")
     _set_dsc_line(vig, "desc", 5, "", "", "", "", "")
     _set_dsc_line(vig, "dsc2", 1, "", "", "", "", "")

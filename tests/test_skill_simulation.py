@@ -369,16 +369,87 @@ class TestSkillSimulation(unittest.TestCase):
                 f"Barbarian {sk_name}.{col}: Half Stamina ({v_half}) must be > Empty Stamina ({v_empty})",
             )
 
-        # Leap Attack Landing Stun (calc4) requires >= 50% Stamina
+        # Leap Attack Landing Stun (calc4) scales linearly 100% -> 33% Stamina, hard cutoff (0) below 33%
         lpat_row = skills_by_name["Leap Attack"]
-        self.assertGreater(
-            eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=half_stam, skills_by_name=skills_by_name),
-            0,
-        )
+        stam_33 = {"stamina": 33 * 256, "maxstamina": 100 * 256}
+        stam_32 = {"stamina": 32 * 256, "maxstamina": 100 * 256}
+        lpat_full = eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+        lpat_half = eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=half_stam, skills_by_name=skills_by_name)
+        lpat_33 = eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
+        lpat_32 = eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
+        self.assertGreater(lpat_full, lpat_half)
+        self.assertGreater(lpat_half, lpat_33)
+        self.assertGreater(lpat_33, 0)
+        self.assertEqual(lpat_32, 0)
         self.assertEqual(
             eval_d2_expr(lpat_row["calc4"], lpat_row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name),
             0,
         )
+
+        # Universal Half-Power Stamina Rule (50% at empty -> 100% at full) on Paladin & Assassin physical/speed skills
+        for sk_name, col, expect_zero_mana in (
+            ("Sacrifice", "calc1", True),
+            ("Smite", "calc1", True),
+            ("Charge", "calc1", True),
+            ("Charge", "calc2", True),
+            ("Zeal", "calc2", True),
+            ("Vigor", "aurastatcalc1", False),
+            ("Fanaticism", "aurastatcalc1", False),
+            ("Tiger Strike", "calc1", True),
+            ("Dragon Talon", "calc2", True),
+            ("Dragon Claw", "calc1", True),
+            ("Dragon Flight", "calc1", False),
+            ("Royal Strike", "calc1", False),
+            ("Weapon Block", "passivecalc1", True),
+            ("Increased Speed", "passivecalc1", True),
+            ("Quickness", "aurastatcalc1", False),
+            ("Quickness", "aurastatcalc2", False),
+        ):
+            row = skills_by_name[sk_name]
+            if expect_zero_mana:
+                self.assertEqual(row.get("mana", ""), "0", f"{sk_name} must be 0 mana")
+            elif sk_name == "Dragon Flight":
+                self.assertGreater(int(row.get("mana") or "0"), 0, "Dragon Flight must retain mana cost")
+            v_full = eval_d2_expr(row[col], row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+            v_empty = eval_d2_expr(row[col], row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name)
+            self.assertGreater(v_full, 0, f"{sk_name}.{col} must be positive at full stamina")
+            self.assertEqual(v_empty, v_full // 2, f"{sk_name}.{col} must halve at 0% stamina ({v_empty} vs {v_full}//2)")
+
+        # Zeal (up to 5 hits @ Lvl 18+) & Dragon Talon multi-hit counts degrade smoothly with Stamina (floor 2 / 1)
+        zeal_row = skills_by_name["Zeal"]
+        self.assertEqual(eval_d2_expr(zeal_row["calc1"], zeal_row, slvl=18, stats=full_stam, skills_by_name=skills_by_name), 5)
+        self.assertEqual(eval_d2_expr(zeal_row["calc1"], zeal_row, slvl=18, stats=half_stam, skills_by_name=skills_by_name), 3)
+        self.assertEqual(eval_d2_expr(zeal_row["calc1"], zeal_row, slvl=18, stats=empty_stam, skills_by_name=skills_by_name), 2)
+        dt_row = skills_by_name["Dragon Talon"]
+        self.assertEqual(eval_d2_expr(dt_row["calc1"], dt_row, slvl=18, stats=full_stam, skills_by_name=skills_by_name), 4)
+        self.assertEqual(eval_d2_expr(dt_row["calc1"], dt_row, slvl=18, stats=half_stam, skills_by_name=skills_by_name), 3)
+        self.assertEqual(eval_d2_expr(dt_row["calc1"], dt_row, slvl=18, stats=empty_stam, skills_by_name=skills_by_name), 2)
+
+        # Universal Stun Exhaustion Rule (100% -> 33% linear, 0 below 33%) on Paladin Smite & Charge
+        smite_row = skills_by_name["Smite"]
+        s_full = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+        s_33 = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
+        s_32 = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
+        self.assertGreater(s_full, s_33)
+        self.assertGreater(s_33, 0)
+        self.assertEqual(s_32, 0)
+
+        chg_row = skills_by_name["Charge"]
+        c_full = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+        c_33 = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
+        c_32 = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
+        self.assertGreater(c_full, c_33)
+        self.assertGreater(c_33, 0)
+        self.assertEqual(c_32, 0)
+
+        # Barbarian Shield Slam (Stun) uses the same 100% -> 33% Stun Exhaustion Rule (0 below 33%)
+        stun_row = skills_by_name["Stun"]
+        st_full = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
+        st_33 = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
+        st_32 = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
+        self.assertEqual(st_full, 150)
+        self.assertGreater(st_33, 0)
+        self.assertEqual(st_32, 0)
 
         # 2. Well-Rested Skills increase monotonically with Current Stamina %
         for sk_name, col in (

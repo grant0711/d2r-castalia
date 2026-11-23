@@ -93,8 +93,9 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     lpat["*calc3 desc"] = "Max Damage % at Full Stamina"
     lpat["calc1"] = f"((clc3+50)*({RESTED_PCT}))/100-50"
     lpat["calc2"] = f"90+((par7-90)*({RESTED_PCT}))/100"
-    lpat["calc4"] = f"(({RESTED_PCT})>=50)?par6:0"
-    lpat["*calc4 desc"] = "Landing Stun Length (Requires >= 50% Stamina)"
+    # AoE Landing Stun (calc4) scales linearly 100%->33% Stamina, hard cutoff (0) below 33% Stamina.
+    lpat["calc4"] = f"(({RESTED_PCT})>=33)?(par6*({RESTED_PCT}))/100:0"
+    lpat["*calc4 desc"] = "Landing Stun Length (100%->33% Stamina, 0 below 33%)"
     lpat["calc5"] = by_name.get("Bar Stamina Reflex", {}).get("*Id", "432")  # Dynamically updated by append_barbarian_helper_skills
     lpat["*calc5 desc"] = "Skill ID to cast when leap ends"
     lpat["calc6"] = "10"    # sLvl 10 Bar Stamina Reflex (strong single-target/pack Stamina drain on landing)
@@ -136,11 +137,10 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ww["AttackNoMana"] = ""
 
     # -------------------------------------------------------------------------
-    # 2. "WELL-RESTED" SKILLS (Bash 126, Shield Slam 139, Concentrate 144)
-    #    Scale UP continuously with current Stamina % (RESTED_PCT: 0% -> 100%)
+    # 2. DEFENSIVE / DISCIPLINED STRIKES (Strike/Bash 126, Shield Slam 139, Concentrate 144)
+    #    Follow Castalia's universal Martial Stamina Half-Power Rule (50% at 0% Stamina -> 100% at Full Stamina)
     # -------------------------------------------------------------------------
-    # Rested Bash (Id 126, Col 1 Row 1, Req Lvl 1, no prerequisites):
-    # Disciplined heavy blow that scales strongly with current Stamina %.
+    # Strike (Bash, Id 126, Col 1 Row 1, Req Lvl 1, no prerequisites):
     bash = by_name["Bash"]
     bash["reqlevel"] = "1"
     bash["reqskill1"] = ""
@@ -149,18 +149,18 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bash["minmana"] = "0"
     bash["mana"] = "0"
     bash["lvlmana"] = "0"
-    bash["Param1"] = "30"   # Base Damage % baseline (+30% at Lvl 1)
-    bash["Param2"] = "6"    # Base Damage % per level (ramped -> +144% at Lvl 20)
+    bash["Param1"] = "70"   # Peak Damage % baseline (+70% at Lvl 1, +35% at 0% Stamina)
+    bash["Param2"] = "11"   # Peak Damage % per level (ramped -> +279% at Lvl 20)
     bash["Param3"] = "2"    # Flat Damage baseline (+2 at Lvl 1)
     bash["Param4"] = "1"    # Flat Damage per level (ramped -> +21 at Lvl 20)
     bash["Param7"] = "8"    # Attack Rating synergy from Concentrate
     bash["Param8"] = "6"    # Damage % synergy from Concentrate
     bash["calc2"] = RAMP34
-    bash["calc5"] = f"{RAMP12}+skill('Concentrate'.blvl)*par8"
-    bash["*calc5 desc"] = "Base Damage % at Zero Stamina"
-    bash["calc6"] = "40+(lvl-1)*5"
-    bash["*calc6 desc"] = "Max Well-Rested Damage % Bonus at Full Stamina"
-    bash["calc1"] = f"clc5+(({RESTED_PCT})*clc6)/100"
+    bash["calc5"] = ""
+    bash["*calc5 desc"] = ""
+    bash["calc6"] = ""
+    bash["*calc6 desc"] = ""
+    bash["calc1"] = f"(({RAMP12}+skill('Concentrate'.blvl)*par8)*(100+{RESTED_PCT}))/200"
 
     # Shield Slam (Id 139, replaces Stun, Col 1 Row 5, Req Lvl 32, requires Concentrate):
     # Tactical Shield-Requiring Charge (srvstfunc=31, srvdofunc=67, cltstfunc=25, cltdofunc=37)
@@ -203,23 +203,23 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     stun["*Param1 Description"] = "Velocity %"
     stun["Param2"] = ""     # Must be empty for Charge (cltdofunc=37)
     stun["*Param2 Description"] = ""
-    stun["Param3"] = "100"  # Base Damage % baseline (+100% at Lvl 1)
+    stun["Param3"] = "200"  # Peak Damage % baseline (+200% at Lvl 1, +100% at 0% Stamina)
     stun["*Param3 Description"] = "Damage % baseline"
-    stun["Param4"] = "15"   # Base Damage % per level (ramped -> +385% at Lvl 20)
+    stun["Param4"] = "30"   # Peak Damage % per level (ramped -> +770% at Lvl 20)
     stun["*Param4 Description"] = "Damage % per level"
     stun["Param6"] = ""
     stun["*Param6 Description"] = ""
     stun["Param7"] = "12"   # Attack Rating synergy % from Concentrate (+12%/lvl)
     stun["Param8"] = "8"    # Damage % synergy from Strike and Concentrate (+8%/lvl)
-    stun["calc5"] = f"{RAMP34}+stat('toblock'.accr)*2+(skill('Bash'.blvl)+skill('Concentrate'.blvl))*par8"
-    stun["*calc5 desc"] = "Base Damage % at Zero Stamina"
-    stun["calc6"] = "100+(lvl-1)*15+stat('toblock'.accr)*2"
-    stun["*calc6 desc"] = "Max Well-Rested Damage % Bonus at Full Stamina"
-    stun["calc1"] = f"clc5+(({RESTED_PCT})*clc6)/100"
-    stun["calc2"] = "par1"
+    stun["calc5"] = ""
+    stun["*calc5 desc"] = ""
+    stun["calc6"] = ""
+    stun["*calc6 desc"] = ""
+    stun["calc1"] = f"(({RAMP34}+stat('toblock'.accr)*4+(skill('Bash'.blvl)+skill('Concentrate'.blvl))*par8)*(100+{RESTED_PCT}))/200"
+    stun["calc2"] = f"(par1*(100+{RESTED_PCT}))/200"
     stun["*calc2 desc"] = "Velocity %"
-    stun["calc3"] = "stat('toblock'.accr)*4"
-    stun["*calc3 desc"] = "Shield Block Damage % Bonus at Full Stamina"
+    stun["calc3"] = f"(stat('toblock'.accr)*4*(100+{RESTED_PCT}))/200"
+    stun["*calc3 desc"] = "Shield Block Damage % Bonus"
     stun["calc4"] = "0"
     stun["*calc4 desc"] = "% Damage Dealt as Elemental"
     stun["ToHit"] = "75"
@@ -232,7 +232,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     stun["ELevLen1"] = "5"
     stun["ELevLen2"] = "5"
     stun["ELevLen3"] = "5"
-    stun["ELenSymPerCalc"] = f"(({RESTED_PCT})*50)/100"
+    stun["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?((150*({RESTED_PCT}))/100-100):-100"
 
     # Rested Concentrate (Id 144, Col 1 Row 3, Req Lvl 16, requires Bash):
     # Uninterruptible precision strike; both Damage % and Defense % scale UP with current Stamina %.
@@ -246,17 +246,17 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     conc["lvlmana"] = "0"
     conc["EType"] = ""
     conc["calc4"] = "0"
-    conc["Param1"] = "50"   # Base Damage % baseline (+50% at Lvl 1)
-    conc["Param2"] = "8"    # Base Damage % per level (ramped -> +202% at Lvl 20)
-    conc["Param3"] = "100"  # Base Defense % baseline (+100% at Lvl 1)
-    conc["Param4"] = "10"   # Base Defense % per level (ramped -> +290% at Lvl 20, +580% at Full Stamina)
+    conc["Param1"] = "110"  # Peak Damage % baseline (+110% at Lvl 1, +55% at 0% Stamina)
+    conc["Param2"] = "18"   # Peak Damage % per level (ramped -> +452% at Lvl 20)
+    conc["Param3"] = "100"  # Base Defense % baseline (+100% at 0% Stamina -> +200% at Full Stamina)
+    conc["Param4"] = "10"   # Base Defense % per level (ramped -> +290% at 0% Stamina, +580% at Full Stamina)
     conc["Param7"] = "6"    # Damage % synergy from Shield Slam (Stun)
     conc["Param8"] = "6"    # Damage % synergy from Bash
-    conc["calc5"] = f"{RAMP12}+skill('Bash'.blvl)*par8+skill('Stun'.blvl)*par7"
-    conc["*calc5 desc"] = "Base Damage % at Zero Stamina"
-    conc["calc6"] = "60+(lvl-1)*10"
-    conc["*calc6 desc"] = "Max Well-Rested Damage % Bonus at Full Stamina"
-    conc["calc1"] = f"clc5+(({RESTED_PCT})*clc6)/100"
+    conc["calc5"] = ""
+    conc["*calc5 desc"] = ""
+    conc["calc6"] = ""
+    conc["*calc6 desc"] = ""
+    conc["calc1"] = f"(({RAMP12}+skill('Bash'.blvl)*par8+skill('Stun'.blvl)*par7)*(100+{RESTED_PCT}))/200"
     conc["aurastatcalc1"] = f"{RAMP34}+(({RESTED_PCT})*{RAMP34})/100"
 
     # -------------------------------------------------------------------------
@@ -483,10 +483,11 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     istam["Param2"] = "75"  # Faster Hit Recovery % Max (+75% ceiling)
     istam["*Param2 Description"] = "Faster Hit Recovery % Max"
 
-    # Increased Speed (Id 148, moved to Row 3 Col 1, Req Lvl 16, requires Unflinching): Passive Faster Run/Walk %.
+    # Increased Speed (Id 148, moved to Row 3 Col 1, Req Lvl 16, requires Unflinching): Passive Faster Run/Walk % (50%->100% Stamina).
     ispd = by_name["Increased Speed"]
     ispd["reqlevel"] = "16"
     ispd["reqskill1"] = "Increased Stamina"
+    ispd["passivecalc1"] = f"(dm12*(100+{RESTED_PCT}))/200"
 
     # Battle Fervor (Id 129, replaces Mace Mastery, moved to Row 5 Col 1, Req Lvl 32, requires Increased Speed):
     # Universal passive Increased Attack Speed % (item_fasterattackrate).
@@ -975,14 +976,15 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
 
 def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     """Update skilldesc.txt tooltips for the Barbarian Stamina Pendulum Overhaul."""
-    # 1. Well-Rested Skills: Rested Bash (126, Col 1 Row 1), Shield Slam (139, Col 1 Row 5), Rested Concentrate (144, Col 1 Row 3)
+    # 1. Defensive Strikes: Strike (126, Col 1 Row 1), Shield Slam (139, Col 1 Row 5), Concentrate (144, Col 1 Row 3)
+    #    Display live Stamina-scaled Damage / Defense / Stun directly (matching all other Castalia martial skills).
     bash_d = by_desc["bash"]
     bash_d["SkillColumn"] = "1"
     bash_d["SkillRow"] = "1"
-    _set_dsc_line(bash_d, "desc", 1, "74", "ModBarWellRestedBonus", "", "clc6", "")
-    _set_dsc_line(bash_d, "desc", 2, "74", "StrSkillDamagePercent", "", "clc1", "")
-    _set_dsc_line(bash_d, "desc", 3, "74", "StrSkillDamageFlat", "", "clc2", "")
-    _set_dsc_line(bash_d, "desc", 4, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(bash_d, "desc", 1, "74", "StrSkillDamagePercent", "", "clc1", "")
+    _set_dsc_line(bash_d, "desc", 2, "74", "StrSkillDamageFlat", "", "clc2", "")
+    _set_dsc_line(bash_d, "desc", 3, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(bash_d, "desc", 4, "", "", "", "", "")
     _set_dsc_line(bash_d, "dsc2", 1, "", "", "", "", "")
     _clear_dsc3_synergies(bash_d, "skillname126")
     _set_dsc_line(bash_d, "dsc3", 2, "76", "Damplev", "skillname144", "par8", "")
@@ -992,11 +994,11 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     stun_d["SkillColumn"] = "1"
     stun_d["SkillRow"] = "5"
     stun_d["descatt"] = "2"
-    _set_dsc_line(stun_d, "desc", 1, "74", "ModBarWellRestedBonus", "", "clc6", "")
-    _set_dsc_line(stun_d, "desc", 2, "74", "ModBarShieldBlockDmg", "", "clc3", "")
-    _set_dsc_line(stun_d, "desc", 3, "74", "StrSkillDamagePercent", "", "clc1", "")
-    _set_dsc_line(stun_d, "desc", 4, "36", "StrSkillStunLengthSingular", "StrSkill48", "min(250,edln)", "25")
-    _set_dsc_line(stun_d, "desc", 5, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(stun_d, "desc", 1, "74", "ModBarShieldBlockDmg", "", "clc3", "")
+    _set_dsc_line(stun_d, "desc", 2, "74", "StrSkillDamagePercent", "", "clc1", "")
+    _set_dsc_line(stun_d, "desc", 3, "36", "StrSkillStunLengthSingular", "StrSkill48", "min(250,edln)", "25")
+    _set_dsc_line(stun_d, "desc", 4, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(stun_d, "desc", 5, "", "", "", "", "")
     _set_dsc_line(stun_d, "dsc2", 1, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "25", "25")
     _set_dsc_line(stun_d, "dsc2", 2, "", "", "", "", "")
     _clear_dsc3_synergies(stun_d, "skillname139")
@@ -1007,10 +1009,10 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     conc_d = by_desc["concentrate"]
     conc_d["SkillColumn"] = "1"
     conc_d["SkillRow"] = "3"
-    _set_dsc_line(conc_d, "desc", 1, "74", "ModBarWellRestedBonus", "", "clc6", "")
-    _set_dsc_line(conc_d, "desc", 2, "74", "StrSkillDamagePercent", "", "clc1", "")
-    _set_dsc_line(conc_d, "desc", 3, "74", "StrSkill21", "", f"{RAMP34}+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))*{RAMP34})/100", "")
-    _set_dsc_line(conc_d, "desc", 4, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(conc_d, "desc", 1, "74", "StrSkillDamagePercent", "", "clc1", "")
+    _set_dsc_line(conc_d, "desc", 2, "74", "StrSkill21", "", f"{RAMP34}+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))*{RAMP34})/100", "")
+    _set_dsc_line(conc_d, "desc", 3, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(conc_d, "desc", 4, "", "", "", "", "")
     _set_dsc_line(conc_d, "dsc2", 1, "", "", "", "", "")
     _clear_dsc3_synergies(conc_d, "skillname144")
     _set_dsc_line(conc_d, "dsc3", 2, "76", "Damplev", "skillname126", "par8", "")
@@ -1136,6 +1138,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     ispd_d = by_desc["increased speed"]
     ispd_d["SkillRow"] = "3"
     ispd_d["SkillColumn"] = "1"
+    ispd_d["desccalca1"] = f"(dm12*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200"
 
     ferv_d = by_desc["mace mastery"]
     ferv_d["SkillRow"] = "5"

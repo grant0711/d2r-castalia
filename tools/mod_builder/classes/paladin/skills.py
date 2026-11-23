@@ -102,10 +102,10 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     veng["calc1"] = f"{RAMP12}+skill('Resist Fire'.blvl)*par8"
     veng["calc2"] = f"{RAMP12}+skill('Resist Cold'.blvl)*par8"
     veng["calc3"] = f"{RAMP12}+skill('Resist Lightning'.blvl)*par8"
-    veng["calc5"] = "13 + ((stat('modifierlist_level'.accr) >= 1) ? 7 : 0)"    # 156 deg -> 240 deg under Conduction
+    veng["calc5"] = "13 + ((stat('skill_enchant'.accr) >= 1) ? 7 : 0)"    # 156 deg -> 240 deg under Conduction
     veng["calc6"] = "30"
-    veng["calc7"] = "(stat('modifierlist_level'.accr) >= 1) ? 2 : 0"          # +0 -> +2 sub-tiles reach under Conduction
-    veng["ELenSymPerCalc"] = "(stat('modifierlist_level'.accr) == 3) ? 100 : 0"  # 2x Cold chill under Cold Conduction
+    veng["calc7"] = "(stat('skill_enchant'.accr) >= 1) ? 2 : 0"          # +0 -> +2 sub-tiles reach under Conduction
+    veng["ELenSymPerCalc"] = "(stat('skill_enchant'.accr) == 3) ? 100 : 0"  # 2x Cold chill under Cold Conduction
     veng["ToHit"] = "40"
     veng["LevToHit"] = "15"
 
@@ -309,8 +309,8 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hfire["mana"] = "2"
     hfire["lvlmana"] = "1"
     hfire["Param1"] = "6"
-    hfire["aurarangecalc"] = f"{elem_aura_range} + ((stat('modifierlist_level'.accr) == 1) ? 4 : 0)"
-    hfire["perdelay"] = "(stat('modifierlist_level'.accr) == 1) ? 35 : 50"
+    hfire["aurarangecalc"] = f"{elem_aura_range} + ((stat('skill_enchant'.accr) == 1) ? 4 : 0)"
+    hfire["perdelay"] = "(stat('skill_enchant'.accr) == 1) ? 35 : 50"
     hfire["Param7"] = "12"
     hfire["Param8"] = "6"
     hfire["EMin"] = "4"
@@ -407,10 +407,10 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hfrz["mana"] = "2"
     hfrz["lvlmana"] = "1"
     hfrz["Param1"] = "6"
-    hfrz["aurarangecalc"] = f"{elem_aura_range} + ((stat('modifierlist_level'.accr) == 3) ? 4 : 0)"
-    hfrz["perdelay"] = "(stat('modifierlist_level'.accr) == 3) ? 35 : 50"
-    hfrz["aurastatcalc1"] = "0 - (dm34 + ((stat('modifierlist_level'.accr) == 3) ? 15 : 0))"
-    hfrz["aurastatcalc2"] = "0 - (dm34 + ((stat('modifierlist_level'.accr) == 3) ? 15 : 0))"
+    hfrz["aurarangecalc"] = f"{elem_aura_range} + ((stat('skill_enchant'.accr) == 3) ? 4 : 0)"
+    hfrz["perdelay"] = "(stat('skill_enchant'.accr) == 3) ? 35 : 50"
+    hfrz["aurastatcalc1"] = "0 - (dm34 + ((stat('skill_enchant'.accr) == 3) ? 15 : 0))"
+    hfrz["aurastatcalc2"] = "0 - (dm34 + ((stat('skill_enchant'.accr) == 3) ? 15 : 0))"
     hfrz["Param4"] = "50"
     hfrz["Param7"] = "12"
     hfrz["Param8"] = "6"
@@ -440,8 +440,8 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hshk["mana"] = "2"
     hshk["lvlmana"] = "1"
     hshk["Param1"] = "6"
-    hshk["aurarangecalc"] = f"{elem_aura_range} + ((stat('modifierlist_level'.accr) == 2) ? 4 : 0)"
-    hshk["perdelay"] = "(stat('modifierlist_level'.accr) == 2) ? 35 : 50"
+    hshk["aurarangecalc"] = f"{elem_aura_range} + ((stat('skill_enchant'.accr) == 2) ? 4 : 0)"
+    hshk["perdelay"] = "(stat('skill_enchant'.accr) == 2) ? 35 : 50"
     hshk["Param7"] = "12"
     hshk["Param8"] = "6"
     hshk["EMin"] = "1"
@@ -873,7 +873,7 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     elem_aura_range_yds = "min(20,par1+(lvl-1)*3/4)*2"
     hfire = by_desc["holy fire"]
     _set_dsc_line(hfire, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
-    _set_dsc_line(hfire, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", elem_aura_range_yds, "3")
+    _set_dsc_line(hfire, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "(min(20,par1+(lvl-1)*3/4)+((stat('skill_enchant'.accr)==1)?4:0))*2", "3")
     _set_dsc_line(hfire, "desc", 3, "75", "StrSkill5", "", "enma", "exma*((100+par6)/100)")
     _set_dsc_line(hfire, "desc", 4, "75", "StrSkillFireDamageToYourAttack", "", "edns*par5/256", "edxs*par5/256")
     _set_dsc_line(hfire, "dsc2", 2, "", "", "", "", "")
@@ -899,15 +899,15 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
 
     hfrz = by_desc["holy freeze"]
     _set_dsc_line(hfrz, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
-    _set_dsc_line(hfrz, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", elem_aura_range_yds, "3")
-    _set_dsc_line(hfrz, "desc", 3, "74", "StrSkill77", "", "dm34", "")
+    _set_dsc_line(hfrz, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "(min(20,par1+(lvl-1)*3/4)+((stat('skill_enchant'.accr)==3)?4:0))*2", "3")
+    _set_dsc_line(hfrz, "desc", 3, "74", "StrSkill77", "", "dm34+((stat('skill_enchant'.accr)==3)?15:0)", "")
     _set_dsc_line(hfrz, "desc", 4, "75", "StrSkill6", "", "enma", "exma*((100+par6)/100)")
     _set_dsc_line(hfrz, "desc", 5, "75", "StrSkillColdDamageToYourAttack", "", "edns*par5/256", "edxs*par5/256")
     _set_dsc_line(hfrz, "dsc2", 2, "", "", "", "", "")
 
     hshk = by_desc["holy shock"]
     _set_dsc_line(hshk, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
-    _set_dsc_line(hshk, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", elem_aura_range_yds, "3")
+    _set_dsc_line(hshk, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "(min(20,par1+(lvl-1)*3/4)+((stat('skill_enchant'.accr)==2)?4:0))*2", "3")
     _set_dsc_line(hshk, "desc", 3, "75", "StrSkill7", "", "enma", "exma*((100+par6)/100)")
     _set_dsc_line(hshk, "desc", 4, "75", "strEskilllighttoattack", "", "edns/256", "edxs*par5/256")
     _set_dsc_line(hshk, "dsc2", 2, "", "", "", "", "")
@@ -1078,62 +1078,43 @@ def apply_paladin_missiles(
         fohb["MaxELev5"] = "40"
         fohb["EDmgSymPerCalc"] = "(skill('Holy Bolt'.blvl)+skill('Sanctuary'.blvl))*12"
 
-    # 3. Fist of the Heavens Lightning Conduction (modifierlist_level == 2):
-    #    In addition to radial Magic Holy Bolts (pSrvHitFunc=22 -> fistoftheheavensbolt),
-    #    fistoftheheavensdelay triggers a one-shot 16-bolt 360-degree Lightning Nova
-    #    dealing 50% of FoH's Lightning damage (synergized by Holy Shock at 18%/lvl).
-    if "fistoftheheavensdelay" in rows_by_name and "nova" in rows_by_name and rows is not None:
-        fohd = rows_by_name["fistoftheheavensdelay"]
-        fohd["pSrvDoFunc"] = "17"
-        fohd["Param1"] = "10"
-        fohd["Param2"] = "1"
-        fohd["SubMissile1"] = "foh_conduction_trigger"
-        fohd["pCltDoFunc"] = "24"
-        fohd["CltParam1"] = "10"
-        fohd["CltParam2"] = "1"
-        fohd["CltSubMissile1"] = "foh_conduction_trigger"
+    # 3. Fist of the Heavens Lightning Conduction (skill_enchant == 2):
+    #    Keep fistoftheheavensdelay 100% pristine vanilla (pSrvDoFunc=1, pSrvHitFunc=22) so dwParam
+    #    (target monster GUID) is never clobbered. Instead, attach a proven trail emitter (pSrvDoFunc=2 /
+    #    pCltDoFunc=3, SrvCalc1=5, CltCalc1=5) onto the moving fistoftheheavensbolt missiles so each
+    #    radiating Holy Bolt emits bright electric_nova arcs (foh_conduction_nova, NextDelay=12) that
+    #    damage ALL nearby monsters (including non-demons) when skill_enchant == 2, and Range=0 in solo.
+    if "fistoftheheavensbolt" in rows_by_name and "nova" in rows_by_name and rows is not None:
+        fohb = rows_by_name["fistoftheheavensbolt"]
+        fohb["pSrvDoFunc"] = "2"
+        fohb["SrvCalc1"] = "5"
+        fohb["SubMissile1"] = "foh_conduction_nova"
+        fohb["pCltDoFunc"] = "3"
+        fohb["CltCalc1"] = "5"
+        fohb["CltSubMissile1"] = "foh_conduction_nova"
 
         next_id = max(int(r.get("*ID") or 0) for r in rows) + 1
-
-        if "foh_conduction_trigger" not in rows_by_name:
-            trig = dict(fohd)
-            trig["Missile"] = "foh_conduction_trigger"
-            trig["*ID"] = str(next_id)
-            next_id += 1
-            trig["pSrvDoFunc"] = "1"
-            trig["pCltDoFunc"] = "1"
-            trig["Param1"] = ""
-            trig["Param2"] = ""
-            trig["CltParam1"] = ""
-            trig["CltParam2"] = ""
-            trig["SubMissile1"] = ""
-            trig["CltSubMissile1"] = ""
-            trig["pSrvHitFunc"] = "29"
-            trig["pCltHitFunc"] = "30"
-            trig["sHitPar1"] = "4"
-            trig["cHitPar1"] = "4"
-            trig["Range"] = "1"
-            trig["Skill"] = ""
-            trig["HitSubMissile1"] = "foh_conduction_nova"
-            trig["CltHitSubMissile1"] = "foh_conduction_nova"
-            rows.append(trig)
-            rows_by_name["foh_conduction_trigger"] = trig
 
         if "foh_conduction_nova" not in rows_by_name:
             fnova = dict(rows_by_name["nova"])
             fnova["Missile"] = "foh_conduction_nova"
             fnova["*ID"] = str(next_id)
-            fnova["Range"] = "(stat('modifierlist_level'.accr) == 2) ? 13 : 0"
+            fnova["pCltHitFunc"] = ""
+            fnova["ClientCol"] = "1"
+            fnova["ClientSend"] = "1"
+            fnova["Range"] = "(stat('skill_enchant'.accr) == 2) ? 10 : 0"
             fnova["LevRange"] = ""
-            fnova["Vel"] = "24"
-            fnova["MaxVel"] = "24"
+            fnova["Vel"] = "14"
+            fnova["MaxVel"] = "14"
+            fnova["Accel"] = ""
+            fnova["Size"] = "3"
             fnova["Skill"] = ""
             fnova["EType"] = "ltng"
             fnova["ApplyMastery"] = "1"
             fnova["HitShift"] = "8"
             fnova["HitClass"] = "64"
             fnova["NextHit"] = "1"
-            fnova["NextDelay"] = "4"
+            fnova["NextDelay"] = "12"
             fnova["EMin"] = "110"
             fnova["MinELev1"] = "18"
             fnova["MinELev2"] = "52"

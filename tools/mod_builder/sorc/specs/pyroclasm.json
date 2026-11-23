@@ -46,7 +46,7 @@
             "lvlmana": "1",
             "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : 3",
             "*calc1 desc": "Explosion Radius",
-            "calc2": "((stat('skill_handofathena'.accr) + ((stat('modifierlist_level'.accr) == 1) ? 1 : 0)) > 0) ? 32 : ((lvl >= 16) ? 32 : ((stat('conversion_level'.accr) >= 2) ? 32 : 16))",
+            "calc2": "((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? 32 : ((lvl >= 16) ? 32 : ((stat('conversion_level'.accr) >= 2) ? 32 : 16))",
             "*calc2 desc": "# missiles (exact divisor of 64 to prevent srvdofunc=154 blind spot: 16 base -> 32 in Conflagration, lvl 16+, or Arc 12+)",
             "calc3": "0",
             "*calc3 desc": "Missile Velocity Adder",

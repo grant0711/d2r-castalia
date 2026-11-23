@@ -704,10 +704,62 @@ def build_site() -> str:
         (
             "sor",
             "Sorceress",
-            "Elemental Stance Shape-Shifter, Stance Dials & Directional Blinks",
+            "Elemental Stance-Dancer, Directional Blinks & Co-Op Conduction",
             {3: "Cold Spells", 2: "Lightning Spells", 1: "Fire Spells"},
         ),
     ]
+
+    class_lore_html: Dict[str, str] = {
+        "pal": (
+            '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
+            '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE PALADIN &mdash; TEMPLAR OF LIVING AURAS &amp; TACTICAL STEEL</div>'
+            '<p style="margin:0 0 8px 0;">In Castalia, a Paladin\'s auras are no longer effortless background stat sticks &mdash; they are <b>living prayers that demand discipline</b>. '
+            'Sustaining an active aura now draws steady mana upkeep, turning Energy, mana regeneration, and <b>Meditation</b> or <b>Redemption</b> into real tactical decisions, '
+            'while investing hard points into key auras permanently embeds a subtle passive blessing into the Paladin himself. <b>Conviction</b> no longer erases enemy resistances for free; '
+            'instead, it empowers the party\'s elemental strikes based on his Resistance Auras while shattering monster defenses in battle.</p>'
+            '<p style="margin:0;">His martial arts have been reshaped around deliberate, physical combat. <b>Vengeance</b> now sweeps through enemies in a wide <b>elemental frontal cleave</b>, '
+            '<b>Blessed Hammer</b> has been reborn as a <b>bouncing Chain Hammer</b> that knocks back and stuns entire packs, and <b>Sanctuary</b> stands alongside <b>Holy Fire</b>, '
+            '<b>Holy Freeze</b>, and <b>Holy Shock</b> as a true magic pulse-and-weapon aura. Whether leading the front line as an elemental cleaver, anchoring a party with defensive prayers, '
+            'or channeling the Light through <b>Holy Bolt</b> and <b>Fist of the Heavens</b>, the Paladin rewards active aura-weaving and smart positioning over mindless hammering.</p>'
+            '</div>'
+        ),
+        "bar": (
+            '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
+            '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE BARBARIAN &mdash; MASTER OF THE STAMINA PENDULUM</div>'
+            '<p style="margin:0 0 8px 0;">The Barbarian of Castalia fights on <b>grit and breath</b>, not mana. His melee attacks cost <b>zero mana</b> and instead ride the rhythm of the '
+            '<b>Stamina Pendulum</b> &mdash; turning his Stamina bar into an active combat resource. When fresh, <b>Well-Rested</b> strikes like <b>Strike</b>, <b>Shield Slam</b>, and '
+            '<b>Concentrate</b> hit with measured force; <b>Stamina Spenders</b> like <b>Leap</b>, <b>Leap Attack</b>, and <b>Whirlwind</b> burn breath for explosive engagements and sweeping momentum; '
+            'and as fatigue sets in, <b>Exhaustion</b> skills like <b>Flurry</b>, <b>Barrage</b>, <b>Frenzy</b>, and <b>Berserk</b> surge in ferocity, rewarding warriors who fight on the edge.</p>'
+            '<p style="margin:0;">His Warcries are no longer passive chores shouted once at a waypoint. Transformed into active combat stances and battlefield roars &mdash; like <b>Second Wind</b>, '
+            '<b>Enduring Cry</b>, and <b>Bloodlust</b> &mdash; they manage his stamina, fuel his Last Stand fury, and keep him pushing forward in the thick of the brawl.</p>'
+            '</div>'
+        ),
+        "ass": (
+            '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
+            '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE ASSASSIN &mdash; ALL-WEAPON MARTIAL ARTIST &amp; ORB-FED TACTICIAN</div>'
+            '<p style="margin:0 0 8px 0;">Freed from claw-only restrictions, the Assassin of Castalia brings <b>Martial Arts</b> to any melee weapon in her hands. Her five Charge-Up disciplines &mdash; '
+            '<b>Tiger Strike</b>, <b>Flamestrike</b>, <b>Blades of Ice</b>, <b>Electrocute</b>, and <b>Cobra Strike</b> &mdash; no longer expire in seconds: held orbs persist for <b>15 minutes</b>, '
+            'continuously infusing her weapon attacks until she chooses to unleash their devastating 1-, 2-, or 3-charge finishers, or spin straight through enemy packs with <b>Omnislash</b>, '
+            'carrying every held orb bonus without consuming a single charge.</p>'
+            '<p style="margin:0;">Her Traps and Martial Arts are woven into a single seamless loop. Deploying a <b>Shrapnel</b>, <b>Fire</b>, <b>Ice</b>, <b>Lightning</b>, or <b>Soul Siphon Sentry</b> '
+            'feeds her held orbs directly into the trap, supercharging its range, duration, and special payloads &mdash; from micro-stuns and solid freeze to Flash Blind and Life Tap. '
+            'Backed by Shadow techniques like <b>Flow</b>, <b>Shadow Bind</b>, and <b>Caltrops</b>, she rewards fluid rhythm between close-quarters combos and tactical battlefield traps.</p>'
+            '</div>'
+        ),
+        "sor": (
+            '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
+            '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE SORCERESS &mdash; ELEMENTAL STANCE-DANCER &amp; CONDUIT</div>'
+            '<p style="margin:0 0 8px 0;">The Sorceress of Castalia no longer stands in place spamming a single spell &mdash; she <b>becomes</b> the element she commands. '
+            'By weaving between three mutually exclusive <b>Elemental Stances</b> &mdash; the glass-cannon fury of <b>Conflagration</b>, the lightning-fast storm of <b>Overcharge</b>, '
+            'and the armored bastion of <b>Cryostasis</b> &mdash; she reshapes her spells mid-fight while accepting steep defensive trade-offs and locking out opposing elements until she shifts her attunement. '
+            'With unrestricted Teleport removed, survival comes from sharp positioning and elemental blinks (<b>Flashfire</b>, <b>Phase Step</b>, <b>Glacier Step</b>).</p>'
+            '<p style="margin:0;">Her true breakthrough, however, is <b>Conduction</b> &mdash; a brand-new cooperative art. By projecting her active stance onto a teammate or hireling, '
+            'she does more than share elemental power: she <b>transforms how her allies\' own skills behave</b>, turning a Paladin\'s <i>Fist of the Heavens</i> into a lightning storm, '
+            'widening his <i>Vengeance</i> and elemental auras, and letting an Assassin deploy fully charged sentries and amplified finishers without pause. '
+            'Solo, she is a high-wire elemental duelist; in co-op, she is the catalyst that elevates every elemental fighter beside her.</p>'
+            '</div>'
+        ),
+    }
 
     # Pixel coordinates on the 448x584 (half-size of 897x1169) stone tree image
     col_x_half = {1: (109 + 29) // 2, 2: (371 + 29) // 2, 3: (631 + 29) // 2}
@@ -932,6 +984,7 @@ def build_site() -> str:
             f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; INTERACTIVE BUILD CALCULATOR</h2>'
             f'<div class="section-sub">{html.escape(cls_subtitle)} — Hover any icon for live stats; Left-Click to allocate (+1 pt), Right-Click to remove (-1 pt), Shift+Click for 5 pts</div>'
             f'</div>'
+            f'{class_lore_html.get(cls_code, "")}'
             f'<div class="calc-hud-bar" id="calc-hud-{cls_code}">'
             f'  <div class="calc-hud-left">'
             f'    <span class="calc-stat-box">Required Character Level: <b class="d2-bright-gold" id="calc-clvl-{cls_code}">1</b></span>'

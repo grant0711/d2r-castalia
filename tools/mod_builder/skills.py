@@ -75,7 +75,7 @@ def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]], rows: l
     apply_paladin_missiles(rows_by_name, rows)
     apply_env_and_boss_missiles(rows_by_name)
     apply_barbarian_missiles(rows_by_name)
-    apply_assassin_missiles(rows_by_name)
+    apply_assassin_missiles(rows_by_name, rows)
 
 
 def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
@@ -157,23 +157,32 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         qa_row = {h: "" for h in s_headers}
         qa_row["skill"] = "QA Conduction"
         qa_row["*Id"] = str(qa_id)
+        qa_row["skilldesc"] = "lightning mastery"
         qa_row["srvdofunc"] = "65"
         qa_row["cltdofunc"] = ""
+        qa_row["range"] = "none"
         qa_row["aura"] = "1"
+        qa_row["InGame"] = "1"
         qa_row["InTown"] = "1"
         qa_row["immediate"] = "1"
-        qa_row["aurafilter"] = "3"
+        qa_row["HitShift"] = "8"
+        qa_row["aurafilter"] = "73731"
         qa_row["aurastate"] = "sorc_conduction"
+        qa_row["auratargetstate"] = "sorc_conduction"
         qa_row["aurarangecalc"] = "2"
         qa_row["perdelay"] = "10"
-        qa_row["aurastat1"] = "modifierlist_level"
+        qa_row["aurastat1"] = "skill_enchant"
         qa_row["aurastatcalc1"] = "lvl"
         qa_row["aurastat2"] = "passive_fire_mastery"
-        qa_row["aurastatcalc2"] = "(lvl == 1) ? 60 : 0"
+        qa_row["aurastatcalc2"] = "(lvl == 1) ? 30 : 0"
         qa_row["aurastat3"] = "passive_ltng_mastery"
-        qa_row["aurastatcalc3"] = "(lvl == 2) ? 60 : 0"
+        qa_row["aurastatcalc3"] = "(lvl == 2) ? 30 : 0"
         qa_row["aurastat4"] = "passive_cold_mastery"
-        qa_row["aurastatcalc4"] = "(lvl == 3) ? 60 : 0"
+        qa_row["aurastatcalc4"] = "(lvl == 3) ? 30 : 0"
+        qa_row["aurastat5"] = "damageresist"
+        qa_row["aurastatcalc5"] = "(lvl == 1) ? (0 - 13) : ((lvl == 3) ? 25 : 0)"
+        qa_row["aurastat6"] = "item_armor_percent"
+        qa_row["aurastatcalc6"] = "(lvl == 2) ? (0 - 50) : ((lvl == 3) ? 200 : 0)"
         qa_row["*eol"] = "0"
         s_rows.append(qa_row)
         by_name["QA Conduction"] = qa_row
@@ -250,7 +259,7 @@ def build_skills_all(cfg: dict) -> str:
     p14 = _build_animdata()
     p15 = update_mod_hd_missiles_json(
         list(ASSASSIN_HD_MISSILE_PAIRS)
-        + [("foh_conduction_nova", "nova")]
+        + [("foh_conduction_nova", "electric_nova")]
         + sorc_engine.hd_missile_pairs()
     )
     p16 = _build_chargeboltsentry_hd()

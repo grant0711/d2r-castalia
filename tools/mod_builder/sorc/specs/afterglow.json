@@ -73,7 +73,7 @@
             "*calc3 desc": "Active Stance Effective Level",
             "calc4": "max(1, (5 + (clc3 - 1) * 25 / 19) * clc1 / 100)",
             "*calc4 desc": "Transferred Elemental Skill Damage %",
-            "aurastat1": "modifierlist_level",
+            "aurastat1": "skill_enchant",
             "aurastatcalc1": "(stat('skill_handofathena'.accr) > 0) ? 1 : ((stat('skill_decrepify'.accr) > 0) ? 2 : ((stat('skill_frenzy'.accr) > 0) ? 3 : 0))",
             "aurastat2": "passive_fire_mastery",
             "aurastatcalc2": "(stat('skill_handofathena'.accr) > 0) ? clc4 : 1",

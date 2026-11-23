@@ -21,7 +21,10 @@ from mod_builder.classes.common import (
 )
 
 
-def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
+def apply_assassin_missiles(
+    rows_by_name: Dict[str, Dict[str, str]],
+    rows: list = None,
+) -> None:
     """Apply Assassin Charge-Up Finisher, Sentry Trap, Caltrops, and Shuriken missile updates."""
     # Assassin Trap Charge Consumption Timer (bladefury1 -> bladefury2 after 8 frames)
     if "bladefury1" in rows_by_name:
@@ -262,8 +265,55 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         ffe["MaxELev4"] = "28"
         ffe["MaxELev5"] = "48"
         ffe["EDmgSymPerCalc"] = fof_syn_expr
+
+    # Charge 3 Finisher Release: fof_pyroclasm_ball (Radial exploding Fireball burst via srvprgfunc3=41/cltprgfunc3=15)
+    # Solo: 8 exploding Fireballs (Range=12); Fire Conduction (skill_enchant==1): 16 exploding Fireballs (Range=18).
+    if "fireball" in rows_by_name and rows is not None and "fof_pyroclasm_ball" not in rows_by_name:
+        next_id = max(int(r.get("*ID") or 0) for r in rows) + 1
+        fball = dict(rows_by_name["fireball"])
+        fball["Missile"] = "fof_pyroclasm_ball"
+        fball["*ID"] = str(next_id)
+        fball["pSrvHitFunc"] = "1"
+        fball["pCltHitFunc"] = "1"
+        fball["sHitPar1"] = "4"
+        fball["cHitPar1"] = "4"
+        fball["Range"] = "12 + ((stat('skill_enchant'.accr) == 1) ? 6 : 0)"
+        fball["LevRange"] = ""
+        fball["Vel"] = "18"
+        fball["MaxVel"] = "18"
+        fball["Accel"] = ""
+        fball["Size"] = "2"
+        fball["Skill"] = ""
+        fball["CollideType"] = "3"
+        fball["CollideKill"] = "1"
+        fball["LastCollide"] = "1"
+        fball["HitShift"] = "8"
+        fball["ApplyMastery"] = "1"
+        fball["EType"] = "fire"
+        fball["HitClass"] = "32"
+        fball["NextHit"] = "1"
+        fball["NextDelay"] = "4"
+        fball["EMin"] = "24"
+        fball["MinELev1"] = "6"
+        fball["MinELev2"] = "9"
+        fball["MinELev3"] = "15"
+        fball["MinELev4"] = "42"
+        fball["MinELev5"] = "72"
+        fball["EMax"] = "48"
+        fball["MaxELev1"] = "12"
+        fball["MaxELev2"] = "18"
+        fball["MaxELev3"] = "30"
+        fball["MaxELev4"] = "84"
+        fball["MaxELev5"] = "144"
+        fball["EDmgSymPerCalc"] = fof_syn_expr
+        fball["ClientCol"] = "1"
+        fball["ClientSend"] = "1"
+        rows.append(fball)
+        rows_by_name["fof_pyroclasm_ball"] = fball
     if "fistsoffirefirewall" in rows_by_name:
         ffw = rows_by_name["fistsoffirefirewall"]
+        ffw["pCltDoFunc"] = "1"
+        ffw["SubLoop"] = ""
         ffw["Range"] = "85"
         ffw["Size"] = "3"
         ffw["EMin"] = "5"
@@ -285,9 +335,19 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         rsmc["CltParam1"] = "29"
         rsmc["CltParam2"] = "50"
         rsmc["CltParam3"] = "30"
+        # Prevent pCltHitFunc=18 from spawning 15-minute client flames from Fists of Fire's auralencalc=22500
+        rsmc["cHitPar2"] = "0"
+        rsmc["cHitPar3"] = "0"
+        rsmc["CltHitSubMissile3"] = ""
+        rsmc["CltHitSubMissile4"] = ""
     if "royalstrikemeteor" in rows_by_name:
         rsm = rows_by_name["royalstrikemeteor"]
+        # Use pSrvHitFunc=1 (AoE fireball impact) instead of 14 (Meteor), because pSrvHitFunc=14
+        # overrides HitSubMissile1 duration with Fists of Fire's auralencalc (22500 frames = 15 min!).
+        rsm["pSrvHitFunc"] = "1"
         rsm["sHitPar1"] = "9"
+        rsm["sHitPar2"] = ""
+        rsm["HitSubMissile1"] = ""
         rsm["EMin"] = "24"
         rsm["MinELev1"] = "6"
         rsm["MinELev2"] = "9"
@@ -303,6 +363,9 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         rsm["EDmgSymPerCalc"] = fof_syn_expr
     if "royalstrikemeteorfire" in rows_by_name:
         rsmf = rows_by_name["royalstrikemeteorfire"]
+        rsmf["pCltDoFunc"] = "1"
+        rsmf["SubLoop"] = ""
+        rsmf["ClientSend"] = "1"
         rsmf["Range"] = "75"
         rsmf["Size"] = "3"
         rsmf["EMin"] = "3"
@@ -828,7 +891,7 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         rsci["cHitPar2"] = "1"
         rsci["Vel"] = "14"
         rsci["MaxVel"] = "14"
-        rsci["Range"] = "18 + ((stat('modifierlist_level'.accr) == 3) ? 8 : 0)"
+        rsci["Range"] = "18 + ((stat('skill_enchant'.accr) == 3) ? 8 : 0)"
         rsci["InitSteps"] = "1"
         rsci["CollideType"] = "3"
         rsci["CollideKill"] = "1"
@@ -885,7 +948,7 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         ccbo["*client hit param1 desc"] = "Density of CltHitSubMissile1 (Higher value means less Missiles created)"
         ccbo["Vel"] = "10"
         ccbo["MaxVel"] = "10"
-        ccbo["Range"] = "30"
+        ccbo["Range"] = "30 + ((stat('skill_enchant'.accr) == 3) ? 18 : 0)"
         ccbo["Light"] = "6"
         ccbo["Red"] = "81"
         ccbo["Green"] = "81"
@@ -933,7 +996,7 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
             fcb["sHitPar1"] = ""
             fcb["Vel"] = "24" if is_nova else "18"
             fcb["MaxVel"] = "24" if is_nova else "18"
-            fcb["Range"] = "25 + ((stat('modifierlist_level'.accr) == 3) ? 8 : 0)"
+            fcb["Range"] = "25 + ((stat('skill_enchant'.accr) == 3) ? 8 : 0)"
             fcb["Light"] = "4"
             fcb["Red"] = "81"
             fcb["Green"] = "81"
@@ -1155,13 +1218,15 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         cotn["MaxELev4"] = "110"
         cotn["MaxELev5"] = "168"
         cotn["EDmgSymPerCalc"] = cot_syn_expr
-        cotn["Range"] = "13 + ((stat('modifierlist_level'.accr) == 2) ? 5 : 0)"
+        cotn["Range"] = "13 + ((stat('skill_enchant'.accr) == 2) ? 9 : 0)"
 
     if "royalstrikechainlightning" in rows_by_name:
         rscl = rows_by_name["royalstrikechainlightning"]
         rscl["pCltDoFunc"] = "8"
         rscl["pCltHitFunc"] = "16"
-        rscl["pSrvDoFunc"] = "1"
+        rscl["pSrvDoFunc"] = "2"
+        rscl["SrvCalc1"] = "6"
+        rscl["SubMissile1"] = "cot_conduction_spark"
         rscl["pSrvHitFunc"] = "12"
         rscl["sHitPar1"] = "12"
         rscl["cHitPar1"] = "12"
@@ -1183,6 +1248,45 @@ def apply_assassin_missiles(rows_by_name: Dict[str, Dict[str, str]]) -> None:
         rscl["MaxELev4"] = "165"
         rscl["MaxELev5"] = "252"
         rscl["EDmgSymPerCalc"] = cot_syn_expr
+
+    # Lightning Conduction (skill_enchant == 2): Electrocute Charge 3 (Chain Lightning)
+    # trails crackling electric_nova sparks along its bouncing path (Range=0 in solo).
+    if "nova" in rows_by_name and rows is not None and "cot_conduction_spark" not in rows_by_name:
+        next_id = max(int(r.get("*ID") or 0) for r in rows) + 1
+        spark = dict(rows_by_name["nova"])
+        spark["Missile"] = "cot_conduction_spark"
+        spark["*ID"] = str(next_id)
+        spark["pCltHitFunc"] = ""
+        spark["ClientCol"] = "1"
+        spark["ClientSend"] = "1"
+        spark["Range"] = "(stat('skill_enchant'.accr) == 2) ? 6 : 0"
+        spark["LevRange"] = ""
+        spark["Vel"] = "10"
+        spark["MaxVel"] = "10"
+        spark["Accel"] = ""
+        spark["Size"] = "2"
+        spark["Skill"] = ""
+        spark["HitShift"] = "8"
+        spark["ApplyMastery"] = "1"
+        spark["EType"] = "ltng"
+        spark["HitClass"] = "64"
+        spark["NextHit"] = "1"
+        spark["NextDelay"] = "8"
+        spark["EMin"] = "1"
+        spark["MinELev1"] = "0"
+        spark["MinELev2"] = "0"
+        spark["MinELev3"] = "0"
+        spark["MinELev4"] = "0"
+        spark["MinELev5"] = "0"
+        spark["EMax"] = "60"
+        spark["MaxELev1"] = "15"
+        spark["MaxELev2"] = "22"
+        spark["MaxELev3"] = "35"
+        spark["MaxELev4"] = "82"
+        spark["MaxELev5"] = "126"
+        spark["EDmgSymPerCalc"] = cot_syn_expr
+        rows.append(spark)
+        rows_by_name["cot_conduction_spark"] = spark
 
     if "sentrylightningbolt" in rows_by_name:
         slb = rows_by_name["sentrylightningbolt"]
@@ -1679,21 +1783,21 @@ def apply_assassin_skills_and_desc(
         fof["prgdam"] = ""
         fof["srvprgfunc1"] = "39"
         fof["cltprgfunc1"] = "9"
-        fof["prgcalc1"] = "6 + ((stat('modifierlist_level'.accr) == 1) ? 3 : 0)"
+        fof["prgcalc1"] = "6 + ((stat('skill_enchant'.accr) == 1) ? 3 : 0)"
         fof["srvprgfunc2"] = "39"
         fof["cltprgfunc2"] = "9"
-        fof["prgcalc2"] = "9 + ((stat('modifierlist_level'.accr) == 1) ? 4 : 0)"
-        fof["srvprgfunc3"] = "40"
-        fof["cltprgfunc3"] = "14"
-        fof["prgcalc3"] = "9 + ((stat('modifierlist_level'.accr) == 1) ? 4 : 0)"
+        fof["prgcalc2"] = "9 + ((stat('skill_enchant'.accr) == 1) ? 4 : 0)"
+        fof["srvprgfunc3"] = "41"
+        fof["cltprgfunc3"] = "15"
+        fof["prgcalc3"] = "8 + ((stat('skill_enchant'.accr) == 1) ? 8 : 0)"
         fof["srvmissilea"] = "fistsoffireexplode"
         fof["cltmissilea"] = "fistsoffireexplode"
         fof["srvmissileb"] = "fistsoffirefirewall"
         fof["cltmissileb"] = "fistsoffirefirewall"
-        fof["srvmissilec"] = "royalstrikemeteorcenter"
-        fof["cltmissilec"] = "royalstrikemeteorcenter"
-        fof["calc1"] = "9 + ((stat('modifierlist_level'.accr) == 1) ? 4 : 0)"
-        fof["*calc1 desc"] = "Meteor Explosion Radius"
+        fof["srvmissilec"] = "fof_pyroclasm_ball"
+        fof["cltmissilec"] = "fof_pyroclasm_ball"
+        fof["calc1"] = "8 + ((stat('skill_enchant'.accr) == 1) ? 8 : 0)"
+        fof["*calc1 desc"] = "Pyroclasm Burst Fireball Count"
         fof["calc2"] = "1"
         fof["*calc2 desc"] = "Min Fire Damage per Orb"
         fof["calc3"] = (
@@ -1732,7 +1836,7 @@ def apply_assassin_skills_and_desc(
 
     # Step 1: Fists of Fire / Flamestrike (progressive_fire) <-> Wake of Fire Sentry / Fire Sentry (Id 262)
     snap_fof_solo = "max(stat('progressive_fire'.accr), stat('item_kickdamage'.accr))"
-    snap_fof = f"max({snap_fof_solo}, (stat('modifierlist_level'.accr) == 1) ? 3 : 0)"
+    snap_fof = f"max({snap_fof_solo}, (stat('skill_enchant'.accr) == 1) ? 3 : 0)"
     fof_m = "skill('Fists of Fire'.blvl)"
     wof_c = "skill('Ass Trap Charge Consume'.blvl)"
     wof_trap_syn = "(skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl))"
@@ -1743,13 +1847,13 @@ def apply_assassin_skills_and_desc(
         wof["pettype"] = "firetrap"
         wof["petmax"] = f"1 + (({wof_trap_syn} >= 10) ? 1 : 0) + (({wof_trap_syn} >= 25) ? 1 : 0)"
         wof["aurastate"] = "progressive_fire"
-        wof["auralencalc"] = "(stat('modifierlist_level'.accr) == 1) ? ((stat('progressive_fire'.accr) > 0) ? 22500 : 12) : 12"
+        wof["auralencalc"] = "12"
         wof["aurastat1"] = "item_kickdamage"
-        wof["aurastatcalc1"] = f"(stat('modifierlist_level'.accr) == 1) ? 0 : {snap_fof_solo}"
-        wof["aurastat2"] = "progressive_fire"
-        wof["aurastatcalc2"] = "(stat('modifierlist_level'.accr) == 1) ? stat('progressive_fire'.accr) : 0"
-        wof["aurastat3"] = "item_slash_damage"
-        wof["aurastatcalc3"] = "(stat('modifierlist_level'.accr) == 1) ? stat('item_slash_damage'.accr) : 0"
+        wof["aurastatcalc1"] = snap_fof_solo
+        wof["aurastat2"] = ""
+        wof["aurastatcalc2"] = ""
+        wof["aurastat3"] = ""
+        wof["aurastatcalc3"] = ""
         wof["passivestat1"] = ""
         wof["passivecalc1"] = ""
         wof["passivestat2"] = ""
@@ -1801,7 +1905,7 @@ def apply_assassin_skills_and_desc(
         fof_d["p3dmmax"] = ""
         fof_d["descmissile1"] = "fistsoffireexplode"
         fof_d["descmissile2"] = "fistsoffirefirewall"
-        fof_d["descmissile3"] = "royalstrikemeteor"
+        fof_d["descmissile3"] = "fof_pyroclasm_ball"
         fof_d["descline1"] = "75"
         fof_d["desctexta1"] = "ModFistsOfFireOrb3"
         fof_d["desccalca1"] = "m3en"
@@ -2146,7 +2250,7 @@ def apply_assassin_skills_and_desc(
         cot["prgdam"] = ""
         cot["srvprgfunc1"] = "37"
         cot["cltprgfunc1"] = "11"
-        cot["prgcalc1"] = "max(2, max(4, 8 - lvl / 5) - ((stat('modifierlist_level'.accr) == 2) ? 2 : 0))"
+        cot["prgcalc1"] = "max(2, max(4, 8 - lvl / 5) - ((stat('skill_enchant'.accr) == 2) ? 2 : 0))"
         cot["srvprgfunc2"] = "36"
         cot["cltprgfunc2"] = "10"
         cot["prgcalc2"] = ""
@@ -2159,8 +2263,8 @@ def apply_assassin_skills_and_desc(
         cot["cltmissileb"] = "clawsofthundernova"
         cot["srvmissilec"] = "royalstrikechainlightning"
         cot["cltmissilec"] = "royalstrikechainlightning"
-        cot["aurarangecalc"] = "5 + lvl / 4 + ((stat('modifierlist_level'.accr) == 2) ? 4 : 0)"
-        cot["calc1"] = "max(2, max(4, 8 - lvl / 5) - ((stat('modifierlist_level'.accr) == 2) ? 2 : 0))"
+        cot["aurarangecalc"] = "5 + lvl / 4 + ((stat('skill_enchant'.accr) == 2) ? 4 : 0)"
+        cot["calc1"] = "max(2, max(4, 8 - lvl / 5) - ((stat('skill_enchant'.accr) == 2) ? 2 : 0))"
         cot["*calc1 desc"] = "Charged Bolt Spread Step (64 / clc1 bolts)"
         cot["calc2"] = "64 / clc1"
         cot["*calc2 desc"] = "Charge 1 Finisher Charged Bolt Count"
@@ -2250,7 +2354,7 @@ def apply_assassin_skills_and_desc(
         cot_d["dsc3calca4"] = "6"
 
     snap_cot_solo = "max(stat('progressive_lightning'.accr), stat('item_kickdamage'.accr))"
-    snap_cot = f"max({snap_cot_solo}, (stat('modifierlist_level'.accr) == 2) ? 3 : 0)"
+    snap_cot = f"max({snap_cot_solo}, (stat('skill_enchant'.accr) == 2) ? 3 : 0)"
     cot_m = "skill('Claws of Thunder'.blvl)"
     ls_c = "skill('Ass Trap Charge Consume'.blvl)"
     ls_trap_syn = "(skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl))"
@@ -2262,13 +2366,13 @@ def apply_assassin_skills_and_desc(
         ls["pettype"] = "ltngtrap"
         ls["petmax"] = f"1 + (({ls_trap_syn} >= 10) ? 1 : 0) + (({ls_trap_syn} >= 25) ? 1 : 0)"
         ls["aurastate"] = "progressive_lightning"
-        ls["auralencalc"] = "(stat('modifierlist_level'.accr) == 2) ? ((stat('progressive_lightning'.accr) > 0) ? 22500 : 12) : 12"
+        ls["auralencalc"] = "12"
         ls["aurastat1"] = "item_kickdamage"
-        ls["aurastatcalc1"] = f"(stat('modifierlist_level'.accr) == 2) ? 0 : {snap_cot_solo}"
-        ls["aurastat2"] = "progressive_lightning"
-        ls["aurastatcalc2"] = "(stat('modifierlist_level'.accr) == 2) ? stat('progressive_lightning'.accr) : 0"
-        ls["aurastat3"] = "item_thrust_damage_percent"
-        ls["aurastatcalc3"] = "(stat('modifierlist_level'.accr) == 2) ? stat('item_thrust_damage_percent'.accr) : 0"
+        ls["aurastatcalc1"] = snap_cot_solo
+        ls["aurastat2"] = ""
+        ls["aurastatcalc2"] = ""
+        ls["aurastat3"] = ""
+        ls["aurastatcalc3"] = ""
         ls["passivestat1"] = ""
         ls["passivecalc1"] = ""
         ls["passivestat2"] = ""
@@ -2399,10 +2503,10 @@ def apply_assassin_skills_and_desc(
         boi["prgdam"] = ""
         boi["srvprgfunc1"] = "39"
         boi["cltprgfunc1"] = "9"
-        boi["prgcalc1"] = "6 + ((stat('modifierlist_level'.accr) == 3) ? 4 : 0)"
+        boi["prgcalc1"] = "6 + ((stat('skill_enchant'.accr) == 3) ? 4 : 0)"
         boi["srvprgfunc2"] = "41"
         boi["cltprgfunc2"] = "15"
-        boi["prgcalc2"] = "12 + ((stat('modifierlist_level'.accr) == 3) ? 6 : 0)"
+        boi["prgcalc2"] = "12 + ((stat('skill_enchant'.accr) == 3) ? 6 : 0)"
         boi["srvprgfunc3"] = "40"
         boi["cltprgfunc3"] = "14"
         boi["prgcalc3"] = "9"
@@ -2442,7 +2546,7 @@ def apply_assassin_skills_and_desc(
         boi["ELevLen1"] = ""
         boi["ELevLen2"] = ""
         boi["ELevLen3"] = ""
-        boi["ELenSymPerCalc"] = "(stat('modifierlist_level'.accr) == 3) ? 100 : 0"
+        boi["ELenSymPerCalc"] = "(stat('skill_enchant'.accr) == 3) ? 100 : 0"
         boi["aurastat2"] = "item_crush_damage"
         boi["aurastatcalc2"] = "clc3"
         boi["aurastat3"] = ""
@@ -2453,7 +2557,7 @@ def apply_assassin_skills_and_desc(
         boi["passivestat1"] = "item_absorb_crush"
         boi["passivecalc1"] = "1"
         boi["passivestat2"] = "coldlength"
-        boi["passivecalc2"] = "75 + ((stat('modifierlist_level'.accr) == 3) ? 75 : 0)"
+        boi["passivecalc2"] = "75 + ((stat('skill_enchant'.accr) == 3) ? 75 : 0)"
 
     if "blades of ice" in by_desc:
         boi_d = by_desc["blades of ice"]
@@ -2507,7 +2611,7 @@ def apply_assassin_skills_and_desc(
         boi_d["dsc3calca4"] = "6"
 
     snap_boi_solo = "max(stat('progressive_cold'.accr), stat('item_kickdamage'.accr))"
-    snap_boi = f"max({snap_boi_solo}, (stat('modifierlist_level'.accr) == 3) ? 3 : 0)"
+    snap_boi = f"max({snap_boi_solo}, (stat('skill_enchant'.accr) == 3) ? 3 : 0)"
     boi_m = "skill('Blades of Ice'.blvl)"
     ds_c = "skill('Ass Trap Charge Consume'.blvl)"
     ds_trap_syn = "(skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl))"
@@ -2519,13 +2623,13 @@ def apply_assassin_skills_and_desc(
         ds["pettype"] = "deathtrap"
         ds["petmax"] = f"1 + (({ds_trap_syn} >= 10) ? 1 : 0) + (({ds_trap_syn} >= 25) ? 1 : 0)"
         ds["aurastate"] = "progressive_cold"
-        ds["auralencalc"] = "(stat('modifierlist_level'.accr) == 3) ? ((stat('progressive_cold'.accr) > 0) ? 22500 : 12) : 12"
+        ds["auralencalc"] = "12"
         ds["aurastat1"] = "item_kickdamage"
-        ds["aurastatcalc1"] = f"(stat('modifierlist_level'.accr) == 3) ? 0 : {snap_boi_solo}"
-        ds["aurastat2"] = "progressive_cold"
-        ds["aurastatcalc2"] = "(stat('modifierlist_level'.accr) == 3) ? stat('progressive_cold'.accr) : 0"
-        ds["aurastat3"] = "item_crush_damage"
-        ds["aurastatcalc3"] = "(stat('modifierlist_level'.accr) == 3) ? stat('item_crush_damage'.accr) : 0"
+        ds["aurastatcalc1"] = snap_boi_solo
+        ds["aurastat2"] = ""
+        ds["aurastatcalc2"] = ""
+        ds["aurastat3"] = ""
+        ds["aurastatcalc3"] = ""
         ds["passivestat1"] = ""
         ds["passivecalc1"] = ""
         ds["passivestat2"] = ""
@@ -3386,7 +3490,7 @@ ASSASSIN_STRING_UPDATES: List[Tuple[int, str, str]] = [
         ),
         (61060, "ModFistsOfFireOrb1", "Charge 1 Finisher - Fire Explosion: %d-%d"),
         (61061, "ModFistsOfFireOrb2", "Charge 2 Finisher - Burning Ground: %d-%d per second"),
-        (61062, "ModFistsOfFireOrb3", "Charge 3 Finisher - Crashing Meteor: %d-%d"),
+        (61062, "ModFistsOfFireOrb3", "Charge 3 Finisher - Pyroclasm Burst: %d-%d"),
         (61063, "ModFistsOfFireHoldBuff", "Held Charge Bonus: +%d-%d Fire Damage per Orb"),
         (0, "Skillname262", "Soul Siphon Sentry"),
         (0, "Skillan262", "Soul Siphon Sentry"),
@@ -3514,4 +3618,6 @@ ASSASSIN_HD_MISSILE_PAIRS: List[Tuple[str, str]] = [
     ("catapult cold explosion", "ice_bolt"),
     ("frozenhorror_arcticblast_2", "null"),
     ("sentrylightningbolt_2", "null"),
+    ("fof_pyroclasm_ball", "fireball"),
+    ("cot_conduction_spark", "electric_nova"),
 ]

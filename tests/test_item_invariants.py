@@ -306,6 +306,26 @@ class TestItemInvariants(unittest.TestCase):
                     self.assertNotIn((sb, par), seen_added_auras_by_slot)
                     seen_added_auras_by_slot[(sb, par)] = u_idx
 
+    def test_locked_tables_match_vanilla_schema(self):
+        """Every table in tools/mod_builder/locked_tables/ must match the exact column headers of vanilla-reference/."""
+        import os
+        from mod_builder.common import REPO_ROOT
+        from tests.fixture import read_vanilla_tsv
+
+        locked_dir = os.path.join(REPO_ROOT, "tools/mod_builder/locked_tables")
+        self.assertTrue(os.path.isdir(locked_dir), f"Missing locked_tables dir: {locked_dir}")
+        for fn in sorted(os.listdir(locked_dir)):
+            if not fn.endswith(".txt"):
+                continue
+            with open(os.path.join(locked_dir, fn), "r", encoding="utf-8", errors="replace") as f:
+                lock_headers = f.readline().rstrip("\r\n").split("\t")
+            van_headers, _ = read_vanilla_tsv(fn)
+            self.assertEqual(
+                lock_headers,
+                van_headers,
+                f"locked_tables/{fn} column schema drifted from vanilla-reference/data/global/excel/{fn}",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

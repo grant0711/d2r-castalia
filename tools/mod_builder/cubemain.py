@@ -876,6 +876,18 @@ def build_cubemain(cfg: dict) -> str:
 
     # QA Conduction Solo-Test Rings (only when qa_conduction_test is enabled in mod_config.json)
     if cfg.get("economy", {}).get("qa_conduction_test", False):
+        qa_skill_id = "435"
+        skills_mod_path = os.path.join(MOD_ROOT, "data/global/excel/skills.txt")
+        if os.path.isfile(skills_mod_path):
+            with open(skills_mod_path, "r", encoding="utf-8", errors="replace") as sf:
+                shdr = sf.readline().rstrip("\r\n").split("\t")
+                if "skill" in shdr and "*Id" in shdr:
+                    si, ii = shdr.index("skill"), shdr.index("*Id")
+                    for sline in sf:
+                        parts = sline.rstrip("\r\n").split("\t")
+                        if len(parts) > max(si, ii) and parts[si] == "QA Conduction":
+                            qa_skill_id = parts[ii]
+                            break
         for pot_code, elem_label, aura_lvl in [
             ("hpot", "Fire", "1"),
             ("mpot", "Lightning", "2"),
@@ -888,7 +900,7 @@ def build_cubemain(cfg: dict) -> str:
                 "output": '"rin,mag"',
                 "ilvl": "1",
                 "mod 1": "aura",
-                "mod 1 param": "QA Conduction",
+                "mod 1 param": qa_skill_id,
                 "mod 1 min": aura_lvl,
                 "mod 1 max": aura_lvl,
             }))

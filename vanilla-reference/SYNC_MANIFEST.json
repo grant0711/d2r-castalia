@@ -1,0 +1,19 @@
+{
+  "history": [
+    {
+      "timestamp_utc": "2026-11-22T22:45:01Z",
+      "from_build": "93847",
+      "to_build": "95032",
+      "decisions": {
+        "data/global/dataversionbuild.txt": "accepted",
+        "excel/propertygroups.txt": "kept",
+        "excel/runes.txt": "kept",
+        "excel/setitems.txt": "kept",
+        "excel/sets.txt": "kept",
+        "excel/uniqueitems.txt": "kept",
+        "strings/*.json": "accepted"
+      }
+    }
+  ],
+  "current_build": "95032"
+}

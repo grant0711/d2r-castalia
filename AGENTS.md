@@ -45,3 +45,10 @@ If the user does not specify a character name (e.g., *"Create a lvl 55 paladin a
   - `/home/grant/games/d2r/bin/d2r-sorc build`
   - `/home/grant/games/d2r/bin/d2r-sorc test [slug]`
   - `python3 /home/grant/games/d2r/bin/d2r-build-mod.py [step...]`
+
+---
+
+## 3. Hard Castalia Design Boundaries (Never Violate)
+- **Runewords are BANNED / DISABLED:** All Runewords in `runes.txt` are explicitly disabled (`complete = ""` in `tools/mod_builder/unique_sets.py`). Runes exist exclusively for direct socketing and Gem+Rune Horadric Cube crafting. **Never** suggest, analyze, or design around Runewords (`Enigma`, `Infinity`, `Dream`, `Dragon`, `Eternity`, `Spirit`, etc.) as playable items in Castalia.
+- **Zero Player Elemental / Sunder Pierce:** Player skills and summons must never grant `passive_*_pierce` or `item_pierce_*_immunity`.
+- **Controlled Vanilla Sync (`bin/d2r-vanilla-sync`):** After any Blizzard D2R patch, never blindly overwrite `vanilla-reference/` with `d2r-extract-txt`. Always run `bin/d2r-vanilla-sync stage` → `audit` → selective `apply` (`schema-only` / `accept` / `keep`).

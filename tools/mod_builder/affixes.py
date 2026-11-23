@@ -321,9 +321,9 @@ def build_magicprefix(cfg: dict) -> str:
             if r.get(f"itype{_idx}", "").strip() == "staff":
                 r[f"itype{_idx}"] = "staf"
         grp = r.get("group", "")
-        # Strip vs-Demon and vs-Undead melee prefixes from Staves & Orbs
-        if grp in ("123", "142"):
-            _add_etypes(r, ["staf", "orb"])
+        # Strip vs-Demon, vs-Undead, and flat melee weapon elemental damage prefixes from Staves, Orbs & Wands
+        if grp in ("123", "142", "137", "138", "139", "140"):
+            _add_etypes(r, ["staf", "orb", "wand"])
         # Allow All Resistances (grp 116: Shimmering -> Chromatic) on 2H Staves
         if grp == "116" and r.get("mod1code") == "res-all":
             _add_itypes(r, ["staf"])
@@ -473,18 +473,28 @@ def build_magicprefix(cfg: dict) -> str:
         nr["itype1"] = "bowq"
         nr["itype2"] = "xboq"
         nr["itype3"] = "weap"
+        nr["etype1"] = "staf"
+        nr["etype2"] = "orb"
+        nr["etype3"] = "wand"
         nr["multiply"] = "0"
         nr["add"] = "0"
         rows.append(nr)
 
-    # 7b. Narrowly extend 2H Staff-only caster prefixes (Skills & Mana ceilings above 1H Orbs)
+    # 7b. Narrowly extend 2H Staff-only caster prefixes (Skills, Mana & +% Elemental Skill Damage above 1H Orbs)
     staff_extra_prefixes = [
         # (Name, rare, level, levelreq, freq, grp, mcode, mparam, mmin, mmax)
-        ("Seraph's",    "",  "72", "65", "1", "125", "sor",      "",  "3",   "3"),
-        ("Hellfire",    "",  "76", "68", "1", "125", "skilltab", "3", "4",   "4"),
-        ("Tempest",     "",  "76", "68", "1", "125", "skilltab", "4", "4",   "4"),
-        ("Frostbound",  "",  "76", "68", "1", "125", "skilltab", "5", "4",   "4"),
-        ("Leviathan's", "1", "65", "55", "2", "115", "mana",     "",  "121", "180"),
+        ("Seraph's",    "",  "72", "65", "1", "125", "sor",        "",  "3",   "3"),
+        ("Hellfire",    "",  "76", "68", "1", "125", "skilltab",   "3", "4",   "4"),
+        ("Tempest",     "",  "76", "68", "1", "125", "skilltab",   "4", "4",   "4"),
+        ("Frostbound",  "",  "76", "68", "1", "125", "skilltab",   "5", "4",   "4"),
+        ("Leviathan's", "1", "65", "55", "2", "115", "mana",       "",  "121", "180"),
+        # Staff-only +% Elemental Skill Damage (grp 147, unlocks lvl 32; Rare 8-15%, Magic-only apex 16-25%)
+        ("Burning",     "1", "32", "32", "2", "147", "extra-fire", "",  "8",   "15"),
+        ("Volcanic",    "",  "55", "48", "1", "147", "extra-fire", "",  "16",  "25"),
+        ("Sparking",    "1", "32", "32", "2", "147", "extra-ltng", "",  "8",   "15"),
+        ("Powered",     "",  "55", "48", "1", "147", "extra-ltng", "",  "16",  "25"),
+        ("Chilling",    "1", "32", "32", "2", "147", "extra-cold", "",  "8",   "15"),
+        ("Glacial",     "",  "55", "48", "1", "147", "extra-cold", "",  "16",  "25"),
     ]
     for pname, prare, plvl, plreq, pfreq, pgrp, pmcode, pmparam, pmin, pmax in staff_extra_prefixes:
         sp = {h: "" for h in headers}
@@ -836,12 +846,19 @@ def build_magicsuffix(cfg: dict) -> str:
         if r.get("spawnable") != "1" or r.get("version") == "0":
             continue
         grp = r.get("group", "")
-        # Strip IAS (grp 7), Life Stolen per Hit (grp 27), and Mana Stolen per Hit (grp 28) from Staves & Orbs
-        if grp in ("7", "27", "28"):
-            _add_etypes(r, ["staf", "orb"])
+        # Strip dead melee suffixes (Ignore Target AC, IAS, flat melee elem/pois dmg, Knockback, Light+AR, LL, ML)
+        # from Staves, Orbs & Wands so blue/rare caster sticks roll clean caster affixes.
+        if grp in ("4", "7", "10", "12", "13", "16", "24", "25", "27", "28"):
+            _add_etypes(r, ["staf", "orb", "wand"])
         it1 = r.get("itype1", "")
         itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}
         is_charm_or_jewel = it1 in ("lcha", "mcha", "scha", "jewl") or "jewl" in itypes_all
+        # Allow +Life (grp 26, hp — tors progression up to of the Whale) and Faster Hit Recovery
+        # (grp 18, balance1..3 — 10/17/24% FHR) on 2H Staves (compensating for no Shield)
+        if not is_charm_or_jewel and grp == "26" and r.get("mod1code") == "hp" and ("tors" in itypes_all):
+            _add_itypes(r, ["staf"])
+        if not is_charm_or_jewel and grp == "18" and r.get("mod1code", "").startswith("balance") and ("armo" in itypes_all or "tors" in itypes_all):
+            _add_itypes(r, ["staf"])
 
         # Ensure all Jewel (jewl) prefixes have level >= 2 so lvl=1 Crafted Jewels ("jew,crf")
         # produced by Unique/Set Distillation roll zero random magic affixes.

@@ -138,29 +138,26 @@ class TestSkillIds(unittest.TestCase):
 
     def test_sorc_staff_and_orb_automagic_coherence_and_affix_exclusions(self):
         _, auto_rows = read_mod_tsv("automagic.txt")
-        tree_blocks = {"extra-fire": (36, 45), "extra-ltng": (46, 55), "extra-cold": (56, 65)}
         for r in auto_rows:
             grp = r.get("group", "")
             if grp not in ("303", "310"):
                 continue
+            mods = [r.get(f"mod{i}code", "") for i in (1, 2, 3) if r.get(f"mod{i}code", "")]
+            self.assertTrue(mods, f"group {grp} row has no mods")
+            # Staves (310) and Orbs (303) automagic must be pure 'skill-rand' ONLY (no hp/mana/cast1/extra-* noise)
+            self.assertTrue(
+                all(m == "skill-rand" for m in mods),
+                f"group {grp} must only contain skill-rand automagic, got {mods}",
+            )
             ranges = [(int(r[f"mod{i}min"]), int(r[f"mod{i}max"])) for i in (1, 2, 3) if r.get(f"mod{i}code") == "skill-rand"]
-            self.assertTrue(ranges, f"group {grp} row missing skill-rand")
             # All skill-rand ranges on a Staff (310) or Orb (303) row must lie inside ONE Sorc tree block
             trees_hit = set()
             for lo, hi in ranges:
                 for sid in range(lo, hi + 1):
                     trees_hit.add((sid - 36) // 10)
             self.assertEqual(len(trees_hit), 1, f"group {grp} spans multiple Sorc trees: {ranges}")
-            # If elemental skill damage is present, must unlock >= 32, cap <= 20%, and match the tree!
-            m1 = r.get("mod1code", "")
-            if m1 in tree_blocks:
-                self.assertGreaterEqual(int(r.get("level", "0")), 32, f"elem dmg automagic unlocked below lvl 32: {r}")
-                self.assertLessEqual(int(r.get("mod1max", "0")), 20, f"elem dmg automagic exceeds 20% cap: {r}")
-                tlo, thi = tree_blocks[m1]
-                for lo, hi in ranges:
-                    self.assertTrue(tlo <= lo <= hi <= thi, f"{m1} row has mismatched skill-rand {(lo, hi)}")
 
-        # Verify blocked melee affixes (dmg-demon/undead, IAS, LL, ML, OW, DS, CB) cannot spawn on staf or orb
+        # Verify blocked melee affixes cannot spawn on staf, orb, or wand
         _, it_rows = read_mod_tsv("itemtypes.txt")
         parents = {r["Code"]: [p for p in (r.get("Equiv1", ""), r.get("Equiv2", "")) if p] for r in it_rows if r.get("Code")}
         def anc(code):
@@ -171,8 +168,11 @@ class TestSkillIds(unittest.TestCase):
                     if p not in s:
                         s.add(p); st.append(p)
             return s
-        staf_a, orb_a = anc("staf"), anc("orb")
-        for fname, blocked_grps in (("magicprefix.txt", {"123", "142"}), ("magicsuffix.txt", {"7", "27", "28", "60", "61", "62", "63", "64"})):
+        staf_a, orb_a, wand_a = anc("staf"), anc("orb"), anc("wand")
+        for fname, blocked_grps in (
+            ("magicprefix.txt", {"123", "137", "138", "139", "140", "142", "145"}),
+            ("magicsuffix.txt", {"4", "7", "10", "12", "13", "16", "24", "25", "27", "28", "60", "61", "62", "63", "64"}),
+        ):
             _, arows = read_mod_tsv(fname)
             for r in arows:
                 if r.get("spawnable") != "1" or r.get("version") == "0" or r.get("group") not in blocked_grps:
@@ -181,6 +181,34 @@ class TestSkillIds(unittest.TestCase):
                 ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
                 self.assertFalse(bool(its & staf_a) and not bool(ets & staf_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on staf")
                 self.assertFalse(bool(its & orb_a) and not bool(ets & orb_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on orb")
+                self.assertFalse(bool(its & wand_a) and not bool(ets & wand_a), f"{fname} {r['Name']} (grp {r['group']}) still spawns on wand")
+
+        # Verify Staff-only +% Elemental Skill Damage prefixes (grp 147) spawn on staf and NOT on orb
+        _, mp_rows = read_mod_tsv("magicprefix.txt")
+        elem_staf = [r for r in mp_rows if r.get("group") == "147" and r.get("spawnable") == "1"]
+        self.assertEqual(len(elem_staf), 6, "Expected 6 Staff-only +% Elemental Skill Damage prefix rows (grp 147)")
+        for r in elem_staf:
+            self.assertEqual(r.get("itype1"), "staf")
+            self.assertGreaterEqual(int(r.get("level") or "0"), 32)
+            self.assertLessEqual(int(r.get("mod1max") or "0"), 25)
+
+        # Verify Staff-only +Life (grp 26) and FHR (grp 18) suffixes spawn on staf and NOT on orb/wand
+        _, ms_rows = read_mod_tsv("magicsuffix.txt")
+        for s_grp, label in (("26", "+Life"), ("18", "FHR")):
+            staf_hits = [
+                r for r in ms_rows
+                if r.get("spawnable") == "1" and r.get("version") != "0" and r.get("group") == s_grp
+                and ({r.get(f"itype{i}", "").strip() for i in range(1, 8)} & staf_a)
+                and not ({r.get(f"etype{i}", "").strip() for i in range(1, 6)} & staf_a)
+            ]
+            orb_hits = [
+                r for r in ms_rows
+                if r.get("spawnable") == "1" and r.get("version") != "0" and r.get("group") == s_grp
+                and ({r.get(f"itype{i}", "").strip() for i in range(1, 8)} & orb_a)
+                and not ({r.get(f"etype{i}", "").strip() for i in range(1, 6)} & orb_a)
+            ]
+            self.assertGreaterEqual(len(staf_hits), 3, f"Expected {label} (grp {s_grp}) suffix rows on staf")
+            self.assertEqual(len(orb_hits), 0, f"{label} (grp {s_grp}) should not spawn on orb")
 
     def test_weapon_and_armor_archetype_affix_invariants(self):
         _, it_rows = read_mod_tsv("itemtypes.txt")

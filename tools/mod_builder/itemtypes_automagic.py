@@ -508,10 +508,10 @@ def build_automagic(cfg: dict) -> str:
     # Everything appended so far is a small fixed group; the class staffmod groups below are large.
     head_count = len(rows)
 
-    # 3. Rebuild group 303 (Sorceress Orbs: innate +Life or +Mana in mod1 + 1-2 SAME-TREE skill-rand in mod2/mod3)
-    # Sorceress final IDs are ordered by (Tree, Tier): Fire 36..45, Lightning 46..55, Cold 56..65.
+    # 3. Rebuild group 303 (Sorceress Orbs) and group 310 (2H Staves):
+    #    Pure same-tree 'skill-rand' staffmods ONLY (no innate hp/mana/fcr/elem clutter so blue items stay crisp).
+    #    Sorceress final IDs are ordered by (Tree, Tier): Fire 36..45, Lightning 46..55, Cold 56..65.
     sor_tree_tiers = _skill_order.final_sorc_tree_tier_ranges()
-    TREE_ELEM_STAT = {"fire": "extra-fire", "lightning": "extra-ltng", "cold": "extra-cold"}
 
     def _emit_sorc_tree_bundle(
         grp: str,
@@ -520,7 +520,6 @@ def build_automagic(cfg: dict) -> str:
         max_lvl: str,
         lreq: str,
         tree: str,
-        stat_mod: tuple,
         itype1: str,
         itype2: str,
     ) -> None:
@@ -531,7 +530,7 @@ def build_automagic(cfg: dict) -> str:
             rows.append(
                 _make_auto_row(
                     headers, grp, min_lvl, max_lvl, lreq, freq,
-                    [stat_mod, ("skill-rand", slvl, tree_lo, tk_hi)],
+                    [("skill-rand", slvl, tree_lo, tk_hi)],
                     itype1=itype1, itype2=itype2,
                 )
             )
@@ -541,7 +540,7 @@ def build_automagic(cfg: dict) -> str:
                 rows.append(
                     _make_auto_row(
                         headers, grp, min_lvl, max_lvl, lreq, freq,
-                        [stat_mod, ("skill-rand", s1, tk_lo, tk_hi), ("skill-rand", s2, tree_lo, prev_hi)],
+                        [("skill-rand", s1, tk_lo, tk_hi), ("skill-rand", s2, tree_lo, prev_hi)],
                         itype1=itype1, itype2=itype2,
                     )
                 )
@@ -549,60 +548,24 @@ def build_automagic(cfg: dict) -> str:
             rows.append(
                 _make_auto_row(
                     headers, grp, min_lvl, max_lvl, lreq, "2",
-                    [stat_mod, ("skill-rand", "2", tk_lo, tk_lo), ("skill-rand", "1", tk_hi, tk_hi)],
+                    [("skill-rand", "2", tk_lo, tk_lo), ("skill-rand", "1", tk_hi, tk_hi)],
                     itype1=itype1, itype2=itype2,
                 )
             )
 
-    orb_stat_tiers = [
-        # (k, min_lvl, max_lvl, lreq, hp_min, hp_max, mana_min, mana_max)
-        (1, "1", "7", "1", "5", "12", "5", "12"),
-        (2, "8", "13", "6", "10", "20", "10", "20"),
-        (3, "14", "20", "12", "18", "30", "18", "30"),
-        (4, "21", "28", "18", "28", "45", "28", "45"),
-        (5, "29", "36", "24", "40", "60", "40", "60"),
-        (6, "37", "", "30", "55", "80", "55", "80"),
+    sorc_auto_tiers = [
+        # (k, min_lvl, max_lvl, lreq)
+        (1, "1", "7", "1"),
+        (2, "8", "13", "6"),
+        (3, "14", "20", "12"),
+        (4, "21", "28", "18"),
+        (5, "29", "36", "24"),
+        (6, "37", "", "30"),
     ]
-    for k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi in orb_stat_tiers:
+    for k, min_lvl, max_lvl, lreq in sorc_auto_tiers:
         for tree in _skill_order.SORC_TREE_ORDER:
-            for base_stat, st_lo, st_hi in (("hp", hp_lo, hp_hi), ("mana", mp_lo, mp_hi)):
-                _emit_sorc_tree_bundle(
-                    "303", k, min_lvl, max_lvl, lreq, tree,
-                    (base_stat, "", st_lo, st_hi),
-                    itype1="orb", itype2="",
-                )
-
-    # 3b. Build group 310 (2H Staves: Life / Mana / FCR / Element-Matched +% Elem Dmg [lvl 32+, cap 20%] + 1-2 SAME-TREE skills)
-    staff_stat_tiers = [
-        # (k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi, fcr_lo, fcr_hi, elem_lo, elem_hi)
-        (1, "1", "7", "1",   "10", "20",  "10", "20",  "10", "10", "",   ""),
-        (2, "8", "13", "6",  "20", "35",  "20", "35",  "10", "10", "",   ""),
-        (3, "14", "20", "12","35", "55",  "35", "55",  "15", "15", "",   ""),
-        (4, "21", "28", "18","55", "80",  "55", "80",  "15", "15", "",   ""),
-        (5, "29", "36", "24","80", "110", "80", "110", "20", "20", "6",  "12"),
-        (6, "37", "",   "30","110","150", "110","150", "25", "25", "10", "20"),
-    ]
-    for k, min_lvl, max_lvl, lreq, hp_lo, hp_hi, mp_lo, mp_hi, fcr_lo, fcr_hi, el_lo, el_hi in staff_stat_tiers:
-        for tree in _skill_order.SORC_TREE_ORDER:
-            for base_stat, st_lo, st_hi in (
-                ("hp", hp_lo, hp_hi),
-                ("mana", mp_lo, mp_hi),
-                ("cast1", fcr_lo, fcr_hi),
-            ):
-                _emit_sorc_tree_bundle(
-                    "310", k, min_lvl, max_lvl, lreq, tree,
-                    (base_stat, "", st_lo, st_hi),
-                    itype1="staf", itype2="",
-                )
-            if el_lo:
-                # Elemental Skill Damage automagic unlocks strictly at level 32 (capped at +20%)
-                el_min_lvl = "32" if k == 5 else min_lvl
-                el_lreq = "32" if k == 5 else "35"
-                _emit_sorc_tree_bundle(
-                    "310", k, el_min_lvl, max_lvl, el_lreq, tree,
-                    (TREE_ELEM_STAT[tree], "", el_lo, el_hi),
-                    itype1="staf", itype2="",
-                )
+            _emit_sorc_tree_bundle("303", k, min_lvl, max_lvl, lreq, tree, itype1="orb", itype2="")
+            _emit_sorc_tree_bundle("310", k, min_lvl, max_lvl, lreq, tree, itype1="staf", itype2="")
 
     # 4. Rebuild group 305 (Necromancer Shrunken Heads: innate dmg-pois in mod1 + 1-2 Necromancer skill-rand in mod2/mod3)
     nec_tiers = CLASS_SKILL_TIERS["nec"]

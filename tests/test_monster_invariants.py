@@ -158,6 +158,49 @@ class TestMonsterAndSystemInvariants(unittest.TestCase):
         if not cfg.get("qa_cube_starter_kit", False):
             from mod_builder.cubemain import BINARY_OR_SKILL_PROPS, DISTILL_AFFIX_CAPS, PER_LEVEL_PROPS
             _, cube_rows = read_mod_tsv("cubemain.txt", max_rows=3000)
+            expected_socket_punches = {
+                (f'"{it},{qt},nos"', mn, mx)
+                for it in ("weap", "armo")
+                for qt, mn, mx in (("mag", "2", "3"), ("rar", "1", "2"), ("crf", "1", "2"), ("uni", "1", "1"), ("set", "1", "1"))
+            }
+            seen_socket_punches = {
+                (r.get("input 1", ""), r.get("mod 1 min", ""), r.get("mod 1 max", ""))
+                for r in cube_rows
+                if r.get("input 2") == "bml" and r.get("input 3") == "skz" and r.get("mod 1") == "sock"
+            }
+            self.assertEqual(seen_socket_punches, expected_socket_punches)
+
+            # Verify Caster Weapons (staf, orb, wand) precede generic 'weap' and use Armor/Helm Gem boon + Weapon Runes
+            from mod_builder.common import MOD_ROOT
+            import os
+            cube_path = os.path.join(MOD_ROOT, "data/global/excel/cubemain.txt")
+            first_idx = {}
+            caster_gpr_samples = {}
+            with open(cube_path, "r", encoding="utf-8", errors="replace") as cf:
+                chdr = cf.readline().rstrip("\r\n").split("\t")
+                ci = {h: i for i, h in enumerate(chdr)}
+                for lnum, line in enumerate(cf, start=1):
+                    parts = line.rstrip("\r\n").split("\t")
+                    if len(parts) <= ci["mod 2 max"]:
+                        continue
+                    d = parts[ci["description"]]
+                    for tag in ("Craft staf ", "Craft orb ", "Craft wand ", "Craft weap "):
+                        if d.startswith(tag) and tag not in first_idx:
+                            first_idx[tag] = lnum
+                    if d in ("Craft staf gpr", "Craft orb gpr", "Craft wand gpr") and parts[ci["input 3"]] == '"r26,qty=2"':
+                        caster_gpr_samples[d] = (
+                            parts[ci["mod 1"]], parts[ci["mod 1 min"]], parts[ci["mod 1 max"]],
+                            parts[ci["mod 2"]],
+                        )
+            self.assertTrue(
+                first_idx["Craft staf "] < first_idx["Craft orb "] < first_idx["Craft wand "] < first_idx["Craft weap "],
+                f"Caster weapon crafts must precede generic weap: {first_idx}",
+            )
+            self.assertEqual(caster_gpr_samples["Craft staf gpr"], ("res-fire", "22", "32", "extra-fire"))
+            self.assertEqual(caster_gpr_samples["Craft orb gpr"][0], "res-fire")
+            self.assertEqual(caster_gpr_samples["Craft orb gpr"][3], "extra-fire")
+            self.assertLess(int(caster_gpr_samples["Craft orb gpr"][2]), int(caster_gpr_samples["Craft staf gpr"][2]))
+            self.assertEqual(caster_gpr_samples["Craft wand gpr"], caster_gpr_samples["Craft orb gpr"])
             distill_count = 0
             for r in cube_rows:
                 self.assertFalse(r.get("numinputs") == "1" and r.get("input 1") in ("isc", "tsc"))

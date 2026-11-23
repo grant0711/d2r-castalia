@@ -192,8 +192,20 @@ class TestSkillIds(unittest.TestCase):
             self.assertGreaterEqual(int(r.get("level") or "0"), 32)
             self.assertLessEqual(int(r.get("mod1max") or "0"), 25)
 
-        # Verify Staff-only +Life (grp 26) and FHR (grp 18) suffixes spawn on staf and NOT on orb/wand
+        # Verify no att-skill / hit-skill melee procs spawn on staf, orb, or wand
         _, ms_rows = read_mod_tsv("magicsuffix.txt")
+        for r in ms_rows:
+            if r.get("spawnable") != "1" or r.get("version") == "0":
+                continue
+            if r.get("mod1code") not in ("att-skill", "hit-skill"):
+                continue
+            its = {r.get(f"itype{i}", "").strip() for i in range(1, 8) if r.get(f"itype{i}", "").strip()}
+            ets = {r.get(f"etype{i}", "").strip() for i in range(1, 6) if r.get(f"etype{i}", "").strip()}
+            self.assertFalse(bool(its & staf_a) and not bool(ets & staf_a), f"{r['Name']} ({r['mod1code']}) still spawns on staf")
+            self.assertFalse(bool(its & orb_a) and not bool(ets & orb_a), f"{r['Name']} ({r['mod1code']}) still spawns on orb")
+            self.assertFalse(bool(its & wand_a) and not bool(ets & wand_a), f"{r['Name']} ({r['mod1code']}) still spawns on wand")
+
+        # Verify Staff-only +Life (grp 26) and FHR (grp 18) suffixes spawn on staf and NOT on orb/wand
         for s_grp, label in (("26", "+Life"), ("18", "FHR")):
             staf_hits = [
                 r for r in ms_rows

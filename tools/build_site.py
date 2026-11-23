@@ -1106,8 +1106,8 @@ def build_site() -> str:
     for f_idx, (fam_name, fam_sub, fam_style, f_codes) in enumerate(gem_families):
         bg_attr = ' bgcolor="#120e0a"' if f_idx % 2 == 1 else ""
         slot_defs = [
-            ("weapon", "Weapon / Gloves (0.6x) / Ring (0.5x)"),
-            ("helm", "Armor / Helm (0.75x) / Boots-Belt (0.6x) / Amulet (0.5x)"),
+            ("weapon", "Martial Weapon / Gloves (0.6x) / Ring (0.5x)"),
+            ("helm", "Armor & Staff (1.0x) / Helm, Orb & Wand (0.75x) / Boots-Belt (0.6x) / Amulet (0.5x)"),
             ("shield", "Shield / Off-Hand (1.0x)"),
         ]
         for s_idx, (s_prefix, s_label) in enumerate(slot_defs):
@@ -1755,7 +1755,7 @@ def build_site() -> str:
         <tr>
           <td><span class="d2-bright-gold">3. Punch Sockets</span></td>
           <td><b>Unsocketed Weapon / Armor</b> + <span class="d2-blue">Blacksmith's Malus</span> + <b>Perfect Skull</b></td>
-          <td>Punches <b>1 to 2 Sockets</b> into the item <i>(works on Magic, Rare, Crafted, Set, or Unique)</i></td>
+          <td>Punches sockets by quality: <span class="d2-blue">Magic</span> <b>2&ndash;3</b>, <span class="d2-yellow">Rare</span> / <span class="d2-orange">Crafted</span> <b>1&ndash;2</b>, <span class="d2-unique">Unique</span> / <span class="d2-green">Set</span> <b>1</b> <i>(capped by base item max)</i></td>
         </tr>
         <tr bgcolor="#120e0a">
           <td><span class="d2-bright-gold">4. Clear Sockets</span></td>
@@ -1792,7 +1792,7 @@ def build_site() -> str:
         <tr>
           <td width="50%" valign="top" bgcolor="#0e0b08">
             <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles Over Flashcards <sup>(1)</sup></h3>
-            <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>270,000 crafting combinations</b> from first principles.</p>
+            <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>385,000 crafting combinations</b> from first principles.</p>
 
             <h3 class="d2-bright-gold">2. Keeping the World Intact <sup>(2)</sup></h3>
             <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>

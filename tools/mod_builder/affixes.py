@@ -847,8 +847,11 @@ def build_magicsuffix(cfg: dict) -> str:
             continue
         grp = r.get("group", "")
         # Strip dead melee suffixes (Ignore Target AC, IAS, flat melee elem/pois dmg, Knockback, Light+AR, LL, ML)
-        # from Staves, Orbs & Wands so blue/rare caster sticks roll clean caster affixes.
-        if grp in ("4", "7", "10", "12", "13", "16", "24", "25", "27", "28"):
+        # and melee-triggered Chance-to-Cast on Attack / Striking procs (att-skill, hit-skill) plus melee-only
+        # charged skills (Sacrifice/Zeal) from Staves, Orbs & Wands so caster sticks roll clean caster affixes.
+        if grp in ("4", "7", "10", "12", "13", "16", "24", "25", "27", "28") or m1c in ("att-skill", "hit-skill"):
+            _add_etypes(r, ["staf", "orb", "wand"])
+        if m1c == "charged" and r.get("itype1") == "mele":
             _add_etypes(r, ["staf", "orb", "wand"])
         it1 = r.get("itype1", "")
         itypes_all = {r.get(f"itype{i}", "").strip() for i in range(1, 8)}

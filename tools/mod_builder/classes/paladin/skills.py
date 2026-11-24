@@ -533,7 +533,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     fana["ToHit"] = "25"
     fana["LevToHit"] = "3"
     fana["passivecalc1"] = "ln56"
-    fana["aurastatcalc1"] = f"(dm34*(100+{RESTED_PCT}))/200"
+    fana["aurastatcalc1"] = "dm34"
     fana["aurastatcalc3"] = "ln56*2/3"
 
     # Conviction (Id 123):
@@ -544,9 +544,9 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     # Because Levels 1..5 sit on the flat bottom toe of the S-curve, a 1-point Conviction (even with +3..4 All Skills)
     # grants very little (+3% at Lvl 1 -> +15% at Lvl 5 w/ 20 Resist); the Paladin must invest hard points into BOTH
     # Conviction (to climb Levels 6..15) AND the corresponding Resist aura:
-    #   - aurastat1 = passive_fire_mastery: (skill('Resist Fire'.blvl)*(3+clc1*3))/20  (+3% at Lvl 1 -> +15% at Lvl 5 -> +60% at Lvl 10 -> +105% at Lvl 15 -> +120% at Lvl 20 w/ 20 Resist Fire)
-    #   - aurastat2 = passive_cold_mastery: (skill('Resist Cold'.blvl)*(3+clc1*3))/20
-    #   - aurastat3 = passive_ltng_mastery: (skill('Resist Lightning'.blvl)*(3+clc1*3))/20
+    #   - aurastat1 = passive_fire_mastery: min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)  (+2% Lvl 1 -> +6% Lvl 5 -> +24% Lvl 10 -> +42% Lvl 15 -> +48% Lvl 20, hard-capped at +50%)
+    #   - aurastat2 = passive_cold_mastery: min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)
+    #   - aurastat3 = passive_ltng_mastery: min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)
     #   - aurastat4 = item_damagetargetac:  -clc2, where clc2 = 60+clc1*18 (-60 at Lvl 1 -> -132 at Lvl 5 -> -402 at Lvl 10 -> -672 at Lvl 15 -> -762 at Lvl 20)
     #   - aurastat5 = item_slow:            clc3,  where clc3 = 4+(clc1*4)/5 (4% at Lvl 1 -> 7% at Lvl 5 -> 19% at Lvl 10 -> 31% at Lvl 15 -> 35% at Lvl 20)
     # - perdelay = 10 (0.4s tick) with active mana upkeep (manashift=4, mana=4, lvlmana=1 -> 1.2/sec at Lvl 1, 7.1/sec at Lvl 20).
@@ -568,11 +568,11 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     convic["calc3"] = "4+(clc1*4)/5"
     convic["*calc3 desc"] = "Slows Target %"
     convic["aurastat1"] = "passive_fire_mastery"
-    convic["aurastatcalc1"] = "(skill('Resist Fire'.blvl)*(3+clc1*3))/20"
+    convic["aurastatcalc1"] = "(min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)*2)/3"
     convic["aurastat2"] = "passive_cold_mastery"
-    convic["aurastatcalc2"] = "(skill('Resist Cold'.blvl)*(3+clc1*3))/20"
+    convic["aurastatcalc2"] = "(min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)*2)/3"
     convic["aurastat3"] = "passive_ltng_mastery"
-    convic["aurastatcalc3"] = "(skill('Resist Lightning'.blvl)*(3+clc1*3))/20"
+    convic["aurastatcalc3"] = "(min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)*2)/3"
     convic["aurastat4"] = "item_damagetargetac"
     convic["aurastatcalc4"] = "-clc2"
     convic["aurastat5"] = "item_slow"
@@ -580,10 +580,12 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     convic["aurastat6"] = ""
     convic["aurastatcalc6"] = ""
     convic["passivestate"] = ""
-    convic["passivestat1"] = ""
-    convic["passivecalc1"] = ""
-    convic["passivestat2"] = ""
-    convic["passivecalc2"] = ""
+    convic["passivestat1"] = "passive_fire_mastery"
+    convic["passivecalc1"] = "min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)"
+    convic["passivestat2"] = "passive_cold_mastery"
+    convic["passivecalc2"] = "min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)"
+    convic["passivestat3"] = "passive_ltng_mastery"
+    convic["passivecalc3"] = "min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)"
     convic["passivestat3"] = ""
     convic["passivecalc3"] = ""
 
@@ -699,7 +701,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     vig["Param4"] = "3"
     vig["calc1"] = RAMP34
     vig["aurastat1"] = "velocitypercent"
-    vig["aurastatcalc1"] = f"(dm56*(100+{RESTED_PCT}))/200"
+    vig["aurastatcalc1"] = "dm56"
     vig["aurastat2"] = "item_fastergethitrate"
     vig["aurastatcalc2"] = "clc1"
     vig["aurastat3"] = ""
@@ -773,6 +775,45 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     salv["passivecalc3"] = ""
     salv["passivestat4"] = ""
     salv["passivecalc4"] = ""
+
+    # -------------------------------------------------------------------------
+    # 4. UNIVERSAL PALADIN AURA MANA DEVOTION CURVE (all 17 Mana-Upkeep Auras)
+    #    Excludes the 3 zero-mana Recovery Stances (Prayer, Meditation, Redemption).
+    #    Smooth plateau curve stored in calc5 (Mana %) & calc6 (Devotion % 0..100):
+    #      - 50%..100% Mana -> 100% full aura power
+    #      - 25%..50%  Mana -> 75%..100%
+    #      - 10%..25%  Mana -> 50%..75%
+    #      -  0%..10%  Mana ->  0%..50% (extinguished at 0% Mana!)
+    # -------------------------------------------------------------------------
+    _MANA_PCT = "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))"
+    _DEVOTION_PCT = "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))"
+    for sk_row in by_name.values():
+        if sk_row.get("charclass") != "pal" or sk_row.get("aura") != "1":
+            continue
+        if int(sk_row.get("mana") or "0") <= 0:
+            continue
+        sk_row["calc5"] = _MANA_PCT
+        sk_row["*calc5 desc"] = "Current Mana %"
+        sk_row["calc6"] = _DEVOTION_PCT
+        sk_row["*calc6 desc"] = "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)"
+        for ai in range(1, 7):
+            ac = sk_row.get(f"aurastatcalc{ai}", "").strip()
+            if sk_row.get(f"aurastat{ai}", "").strip() and ac:
+                sk_row[f"aurastatcalc{ai}"] = f"(({ac})*clc6)/100"
+        if sk_row.get("skill") in ("Fanaticism", "Conviction"):
+            for pi in range(1, 4):
+                pc = sk_row.get(f"passivecalc{pi}", "").strip()
+                if sk_row.get(f"passivestat{pi}", "").strip() and pc:
+                    sk_row[f"passivecalc{pi}"] = f"(({pc})*clc6)/100"
+        ar = sk_row.get("aurarangecalc", "").strip()
+        if ar:
+            sk_row["aurarangecalc"] = f"(({ar})*clc6)/100"
+        if sk_row.get("skill") in ("Holy Fire", "Holy Freeze", "Holy Shock", "Sanctuary"):
+            ed = sk_row.get("EDmgSymPerCalc", "").strip()
+            if ed:
+                sk_row["EDmgSymPerCalc"] = f"((100+({ed}))*clc6)/100-100"
+            else:
+                sk_row["EDmgSymPerCalc"] = "clc6-100"
 
 
 
@@ -934,14 +975,13 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(hshk, "desc", 4, "75", "strEskilllighttoattack", "", "edns/256", "edxs*par5/256")
     _set_dsc_line(hshk, "dsc2", 2, "", "", "", "", "")
 
-    _pal_rested = "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))"
     fana = by_desc["fanaticism"]
     _set_dsc_line(fana, "desc", 1, "36", "StrSkill34", "", "usmc*5", "256")
     _set_dsc_line(fana, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "ln12*2", "3")
-    _set_dsc_line(fana, "desc", 3, "74", "StrSkill106", "", f"(dm34*(100+{_pal_rested}))/200", "")
-    _set_dsc_line(fana, "desc", 4, "74", "PartDam", "", "ln56*2/3", "")
-    _set_dsc_line(fana, "desc", 5, "74", "FanYDam", "", "ln56", "")
-    _set_dsc_line(fana, "desc", 6, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(fana, "desc", 3, "74", "StrSkill106", "", "(dm34*clc6)/100", "")
+    _set_dsc_line(fana, "desc", 4, "74", "PartDam", "", "((ln56*2/3)*clc6)/100", "")
+    _set_dsc_line(fana, "desc", 5, "74", "FanYDam", "", "(ln56*clc6)/100", "")
+    _set_dsc_line(fana, "desc", 6, "74", "StrSkill22", "", "(toht*clc6)/100", "")
     _set_dsc_line(fana, "dsc2", 1, "", "", "", "", "")
 
     convic = by_desc["conviction"]
@@ -951,13 +991,13 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(convic, "desc", 4, "74", "Cgslow", "", "clc3", "")
     _set_dsc_line(convic, "desc", 5, "", "", "", "", "")
     _set_dsc_line(convic, "desc", 6, "", "", "", "", "")
-    _set_dsc_line(convic, "dsc2", 1, "74", "ModConvicFireDmg", "", "(skill('Resist Fire'.blvl)*(3+clc1*3))/20", "")
-    _set_dsc_line(convic, "dsc2", 2, "74", "ModConvicColdDmg", "", "(skill('Resist Cold'.blvl)*(3+clc1*3))/20", "")
-    _set_dsc_line(convic, "dsc2", 3, "74", "ModConvicLtngDmg", "", "(skill('Resist Lightning'.blvl)*(3+clc1*3))/20", "")
+    _set_dsc_line(convic, "dsc2", 1, "74", "ModConvicFireDmg", "", "min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)", "")
+    _set_dsc_line(convic, "dsc2", 2, "74", "ModConvicColdDmg", "", "min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)", "")
+    _set_dsc_line(convic, "dsc2", 3, "74", "ModConvicLtngDmg", "", "min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)", "")
     _clear_dsc3_synergies(convic, "skillname123")
-    _set_dsc_line(convic, "dsc3", 2, "76", "Firedplev", "skillname100", "(3+clc1*3)/20", "")
-    _set_dsc_line(convic, "dsc3", 3, "76", "Colddplev", "skillname105", "(3+clc1*3)/20", "")
-    _set_dsc_line(convic, "dsc3", 4, "76", "Ltngdplev", "skillname110", "(3+clc1*3)/20", "")
+    _set_dsc_line(convic, "dsc3", 2, "76", "Firedplev", "skillname100", "min(50,2+clc1*6/5)/20", "")
+    _set_dsc_line(convic, "dsc3", 3, "76", "Colddplev", "skillname105", "min(50,2+clc1*6/5)/20", "")
+    _set_dsc_line(convic, "dsc3", 4, "76", "Ltngdplev", "skillname110", "min(50,2+clc1*6/5)/20", "")
 
     pray = by_desc["prayer"]
     _set_dsc_line(pray, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
@@ -1011,8 +1051,8 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     vig = by_desc["vigor"]
     _set_dsc_line(vig, "desc", 1, "36", "StrSkill34", "", "usmc*5", "256")
     _set_dsc_line(vig, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "ln12*2", "3")
-    _set_dsc_line(vig, "desc", 3, "74", "StrSkill89", "", f"(dm56*(100+{_pal_rested}))/200", "")
-    _set_dsc_line(vig, "desc", 4, "74", "ModStr4p", "", "clc1", "")
+    _set_dsc_line(vig, "desc", 3, "74", "StrSkill89", "", "(dm56*clc6)/100", "")
+    _set_dsc_line(vig, "desc", 4, "74", "ModStr4p", "", "(clc1*clc6)/100", "")
     _set_dsc_line(vig, "desc", 5, "", "", "", "", "")
     _set_dsc_line(vig, "dsc2", 1, "", "", "", "", "")
     _set_dsc_line(vig, "dsc2", 2, "", "", "", "", "")
@@ -1038,6 +1078,36 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(salv, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "ln12*2", "3")
     _set_dsc_line(salv, "desc", 3, "74", "StrSkill54", "", "clc1", "")
     _set_dsc_line(salv, "dsc2", 1, "", "", "", "", "")
+
+    # Scale active upkeep-aura tooltip lines by clc6 (Aura Mana Devotion %) so tooltips update live with Mana
+    # (Passive-only lines and Vigor/Fanaticism, already scaled above, are left intact.)
+    _aura_tooltip_scales = {
+        "might": ("desccalca2", "desccalca3"),
+        "resist fire": ("desccalca2", "desccalca4", "desccalca5"),
+        "resist cold": ("desccalca2", "desccalca4", "desccalca5"),
+        "resist lightning": ("desccalca2", "desccalca4", "desccalca5"),
+        "holy fire": ("desccalca2",),
+        "holy shock": ("desccalca2",),
+        "sanctuary": ("desccalca2",),
+        "thorns": ("desccalca2", "desccalca3", "desccalca4", "desccalca5"),
+        "defiance": ("desccalca2", "desccalca3", "desccalca4"),
+        "blessed aim": ("desccalca2", "desccalca4"),
+        "cleansing": ("desccalca2", "desccalca3"),
+        "concentration": ("desccalca2", "desccalca3", "dsc2calca1"),
+        "holy freeze": ("desccalca2", "desccalca3"),
+        "vigor": ("desccalca2",),
+        "fanaticism": ("desccalca2",),
+        "conviction": ("desccalca2", "desccalca3", "desccalca4", "dsc2calca1", "dsc2calca2", "dsc2calca3"),
+        "salvation": ("desccalca2", "desccalca3"),
+    }
+    for sd_key, cols in _aura_tooltip_scales.items():
+        sd_row = by_desc.get(sd_key)
+        if not sd_row:
+            continue
+        for col in cols:
+            cur = sd_row.get(col, "").strip()
+            if cur and "clc6" not in cur:
+                sd_row[col] = f"(({cur})*clc6)/100"
 
 
 

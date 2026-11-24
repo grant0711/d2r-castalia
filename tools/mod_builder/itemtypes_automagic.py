@@ -667,6 +667,16 @@ def build_automagic(cfg: dict) -> str:
             itype1="helm", itype2="",
         )
     )
+    fixed_rows.append(
+        _make_auto_row(
+            headers, "324", "1", "", "1", "1",
+            [
+                ("stamina-fatigue", "Stamina Fatigue", "100", "1"),
+                ("stamina-fatigue-r", "Stamina Fatigue", "100", "1"),
+            ],
+            itype1="armo", itype2="",
+        )
+    )
 
     rows = rows[:head_count] + fixed_rows + rows[head_count:]
     rows = _merge_duplicate_rows(rows)

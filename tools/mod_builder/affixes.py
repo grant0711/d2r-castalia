@@ -258,8 +258,8 @@ def build_itemstatcost(cfg: dict) -> str:
             r["descstrpos"] = "ModTotalDefPos"
             r["descstrneg"] = "ModTotalDefNeg"
         elif st == "magic_damage_reduction":
-            # Support negative Magic Damage Reduced on Amethyst-crafted items (-2..-12)
-            # descfunc=29 passes abs(val) to sprintf so negative values display "Magic Damage Increased by 12"
+            # Support negative Magic Damage Reduced on Amethyst-crafted items (-2..-15)
+            # descfunc=29 passes abs(val) to sprintf so negative values display "Elemental/Magic Damage Received +15"
             r["Signed"] = "1"
             r["Save Bits"] = "7"
             r["Save Add"] = "30"
@@ -267,6 +267,14 @@ def build_itemstatcost(cfg: dict) -> str:
             r["1.09-Save Add"] = "30"
             r["descfunc"] = "29"
             r["descstrneg"] = "ModStr2tNegative"
+        elif st == "item_maxhp_percent":
+            # descfunc=29 passes abs(val) to sprintf so Emerald crafting bust displays "Decrease Maximum Life 9%"
+            r["descfunc"] = "29"
+            r["descstrneg"] = "ModStr2gNegative"
+        elif st == "item_maxmana_percent":
+            # descfunc=29 passes abs(val) to sprintf so Diamond crafting bust displays "Decrease Maximum Mana 9%"
+            r["descfunc"] = "29"
+            r["descstrneg"] = "ModStr2hNegative"
         elif st == "skill_channeling_tick":
             # Used by Frenzy (Id 147, aurastat3=skill_channeling_tick) so srvdofunc=9 registers
             # domeleeattack -> 36 (sWarHexOnAttack -> installs bar_stamina_reflex + Param1=3 Shiver Armor)
@@ -286,6 +294,51 @@ def build_itemstatcost(cfg: dict) -> str:
             r["itemeventfunc1"] = "36"
             r["itemevent2"] = "domeleeattack"
             r["itemeventfunc2"] = "1"
+        elif st == "skill_conviction":
+            # Unused vanilla stat (ID 167): hidden Stamina Fatigue melee combat trigger
+            # itemevent1=attackedinmelee (func 21) + itemevent2=domeleeattack (func 20), zero tooltip
+            r["Signed"] = "1"
+            r["Send Bits"] = "7"
+            r["Send Param Bits"] = "16"
+            r["fCallback"] = "1"
+            r["Encode"] = "2"
+            r["Add"] = "0"
+            r["Multiply"] = "0"
+            r["1.09-Save Bits"] = "21"
+            r["1.09-Save Add"] = "0"
+            r["Save Bits"] = "7"
+            r["Save Add"] = "0"
+            r["Save Param Bits"] = "16"
+            r["itemevent1"] = "attackedinmelee"
+            r["itemeventfunc1"] = "21"
+            r["itemevent2"] = "domeleeattack"
+            r["itemeventfunc2"] = "20"
+            r["descfunc"] = ""
+            r["descstrpos"] = ""
+            r["descstrneg"] = ""
+        elif st == "skill_bypass_beasts":
+            # Unused vanilla stat (ID 106): hidden Stamina Fatigue missile combat trigger
+            # itemevent1=hitbymissile (func 21) + itemevent2=domissileattack (func 20), zero tooltip
+            r["Signed"] = "1"
+            r["Send Bits"] = "7"
+            r["Send Param Bits"] = "16"
+            r["fCallback"] = "1"
+            r["Encode"] = "2"
+            r["Add"] = "0"
+            r["Multiply"] = "0"
+            r["1.09-Save Bits"] = "21"
+            r["1.09-Save Add"] = "0"
+            r["Save Bits"] = "7"
+            r["Save Add"] = "0"
+            r["Save Param Bits"] = "16"
+            r["damagerelated"] = "1"
+            r["itemevent1"] = "damagedbymissile"
+            r["itemeventfunc1"] = "21"
+            r["itemevent2"] = "domissileattack"
+            r["itemeventfunc2"] = "20"
+            r["descfunc"] = ""
+            r["descstrpos"] = ""
+            r["descstrneg"] = ""
         if st in cost_tuning:
             mult_val, add_val = cost_tuning[st]
             r["Multiply"] = mult_val
@@ -1603,6 +1656,38 @@ def build_properties_txt(cfg: dict) -> str:
         nr["*Min"] = "Min %"
         nr["*Max"] = "Max %"
         nr["*Notes"] = "Castalia Topaz crafting bust (global % defense)"
+        nr["*eol"] = "0"
+        rows.append(nr)
+    if not any(r.get("code") == "stamina-fatigue" for r in rows):
+        max_id = max((int(r["*Id"]) for r in rows if (r.get("*Id") or "").isdigit()), default=283)
+        nr = {h: "" for h in headers}
+        nr["code"] = "stamina-fatigue"
+        nr["*Id"] = str(max_id + 1)
+        nr["*Enabled"] = "1"
+        nr["func1"] = "11"
+        nr["stat1"] = "skill_conviction"
+        nr["uiRangeType"] = "7"
+        nr["*Tooltip"] = "Hidden Stamina Exhaustion melee proc"
+        nr["*Parameter"] = "Skill"
+        nr["*Min"] = "% Chance"
+        nr["*Max"] = "Skill Level"
+        nr["*Notes"] = "Castalia hidden melee stamina exhaustion stat"
+        nr["*eol"] = "0"
+        rows.append(nr)
+    if not any(r.get("code") == "stamina-fatigue-r" for r in rows):
+        max_id = max((int(r["*Id"]) for r in rows if (r.get("*Id") or "").isdigit()), default=283)
+        nr = {h: "" for h in headers}
+        nr["code"] = "stamina-fatigue-r"
+        nr["*Id"] = str(max_id + 1)
+        nr["*Enabled"] = "1"
+        nr["func1"] = "11"
+        nr["stat1"] = "skill_bypass_beasts"
+        nr["uiRangeType"] = "7"
+        nr["*Tooltip"] = "Hidden Stamina Exhaustion missile proc"
+        nr["*Parameter"] = "Skill"
+        nr["*Min"] = "% Chance"
+        nr["*Max"] = "Skill Level"
+        nr["*Notes"] = "Castalia hidden ranged/missile stamina exhaustion stat"
         nr["*eol"] = "0"
         rows.append(nr)
     return write_excel_tsv("properties.txt", headers, rows)

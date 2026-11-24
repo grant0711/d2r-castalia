@@ -211,10 +211,10 @@ class TestMonsterAndSystemInvariants(unittest.TestCase):
                 first_idx["Craft boot "] < first_idx["Craft belt "] < first_idx["Craft btbl "],
                 f"Sapphire boot/belt crafts must precede shared btbl: {first_idx}",
             )
-            self.assertEqual(samples["Craft staf gpr"], ("res-fire", "22", "32", "extra-fire", "damageresist", "-8", "-8"))
+            self.assertEqual(samples["Craft staf gpr"], ("res-fire", "22", "32", "extra-fire", "red-dmg%", "-8", "-8"))
             self.assertEqual(samples["Craft orb gpr"][0], "res-fire")
             self.assertEqual(samples["Craft orb gpr"][3], "extra-fire")
-            self.assertEqual(samples["Craft orb gpr"][4:], ("damageresist", "-6", "-6"))
+            self.assertEqual(samples["Craft orb gpr"][4:], ("red-dmg%", "-6", "-6"))
             self.assertEqual(samples["Craft wand gpr"], samples["Craft orb gpr"])
             # Sapphire slot-contextual speed busts
             self.assertEqual(samples["Craft weap gpb"][4:], ("swing1", "-12", "-12"))

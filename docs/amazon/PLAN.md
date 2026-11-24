@@ -32,7 +32,7 @@ Instead of adding a second resource bar on top of Stamina, the Amazon plays as C
 
 ### C. Universal Martial Stamina + **Crossbow Exemption**
 - **Bow & Spear Physical Skills (`0` Mana):** `Multiple Shot`, `Guided Arrow`, `Strafe`, `Jab`, `Impale`, `Fend` follow Castalia's **Half-Power Rule (`50% → 100%` with Stamina)**.
-- **`Dodge`, `Avoid`, `Evade` (Live Passives):** Scale `50% → 100%` with current Stamina % (and `Dodge` pairs directly with `attackedinmelee` → `Riposte`!).
+- **`Dodge`, `Avoid`, `Evade` (Live Passives):** Keep as clean flat passives (D2R caches `passivestat1` until gear/skill refresh, so dynamic Stamina formulas on passives don't track mid-sprint); `Dodge` pairs directly with `attackedinmelee` → `Riposte`!
 - **Stun Exhaustion Rule (`100% → 33%`, `0` below `33%`):** Applies to heavy spear stuns (`Impale`, `Riposte`).
 - **Crossbow (`xbow`) Mechanical Exemption:** Dedicated Crossbow-only skills (`itypea1 = xbow`) **bypass Stamina degradation** because the mechanical winch/prod holds the draw — creating a **Heavy Arbalest / Siege Amazon** archetype that can wear Heavy Armor behind `Valkyrie` + `Decoy`!
 

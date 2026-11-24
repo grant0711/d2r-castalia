@@ -570,6 +570,8 @@ def build_misc_strings(cfg: dict) -> Tuple[str, str]:
         (61995, "ModStr2tNegative", "Elemental/Magic Damage Received +%d"),
         (61996, "ModTotalDefPos", "Total Defense Increased by %d%%"),
         (61997, "ModTotalDefNeg", "Total Defense Reduced by %d%%"),
+        (61998, "ModStr2gNegative", "Decrease Maximum Life %d%%"),
+        (61999, "ModStr2hNegative", "Decrease Maximum Mana %d%%"),
     ]
     out_mods = update_mod_strings_json("item-modifiers.json", mod_updates)
     return out_names, out_mods

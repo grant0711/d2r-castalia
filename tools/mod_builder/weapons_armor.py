@@ -931,6 +931,10 @@ def build_armor(cfg: dict) -> str:
             row["maxdam"] = str(bt_maxdm)
             row["type2"] = "lbot" if bt_spd == "0" else ("mbot" if bt_spd in ("2", "3") else "hbot")
 
+        # Attach hidden Stamina Fatigue combat trigger (automagic group 324) to Boots, Body Armor, Gloves, and Belts
+        if atype in ("boot", "tors", "glov", "belt"):
+            row["auto prefix"] = "324"
+
         # Attach automagic 'skill-rand' staffmod groups:
         # 313=open Barb Helms, 322=enclosed Barb Helms (ba4/ba5 lines: -2 Light Radius),
         # 314=open Druid Pelts, 323=enclosed Druid Pelts (dr4/dr5 lines: -2 Light Radius)

@@ -218,6 +218,57 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
                 _r[_scol] = ""
                 _r[_ccol] = ""
 
+    # Append hidden global Stamina Fatigue proc skill (cast via combat events on Boots/Armor/Gloves/Belts):
+    # Inverse severity-vs-duration curve for Stamina % (clc1):
+    #   >=65%: 0% (1 frame -> clears prior fatigue)
+    #   50%:  -5% for 29.7s | 25%: -16% for 8.9s | 10%: -33% for 3.1s | 0-5%: -45% for 2.0-2.3s
+    # Exempt: Barbarian Bloodlust (stat('skill_chillingarmor'.accr) > 0) and Mercenaries/Monsters (maxstamina < 256).
+    if not any(r.get("skill") == "Stamina Fatigue" for r in s_rows):
+        max_sid = max((int(r["*Id"]) for r in s_rows if (r.get("*Id") or "").isdigit()), default=428)
+        sf = {h: "" for h in s_headers}
+        sf["skill"] = "Stamina Fatigue"
+        sf["*Id"] = str(max_sid + 1)
+        sf["srvdofunc"] = "18"
+        sf["aurastate"] = "stamina_fatigue"
+        sf["auralencalc"] = "(stat('skill_chillingarmor'.accr)>0)?1:((clc1<65)?min(750,50+(clc1*clc1*5)/18):1)"
+        sf["calc1"] = "(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))"
+        sf["*calc1 desc"] = "Current Stamina %"
+        sf["calc2"] = "((clc1<65)?min(45,max(0,1000/(clc1+13)-10)):0)*((stat('skill_chillingarmor'.accr)>0)?0:1)*((stat('maxstamina'.accr)<256)?0:1)"
+        sf["*calc2 desc"] = "Base stamina exhaustion scalar P (0..45, Bloodlust & Merc exempt)"
+        # Normalized per-stat D2R frame weights so FRW/IAS/FCR/FHR/FBR suffer uniform real-frame slowdown:
+        # FRW 0.89x (-40% max, avoids moonwalk), IAS 0.75x (-33% max), FCR 0.80x (-36% max), FHR/FBR 0.40x (-18% max, base speed 50)
+        sf["aurastat1"] = "item_fastermovevelocity"
+        sf["aurastatcalc1"] = "0-(clc2*8)/9"
+        sf["aurastat2"] = "item_fasterattackrate"
+        sf["aurastatcalc2"] = "0-(clc2*3)/4"
+        sf["aurastat3"] = "item_fastercastrate"
+        sf["aurastatcalc3"] = "0-(clc2*4)/5"
+        sf["aurastat4"] = "item_fastergethitrate"
+        sf["aurastatcalc4"] = "0-(clc2*2)/5"
+        sf["aurastat5"] = "item_fasterblockrate"
+        sf["aurastatcalc5"] = "0-(clc2*2)/5"
+        # Non-zero inert marker stat ensures srvdofunc=18 always overwrites & wipes any prior fatigue state
+        # in 1 frame (0.04s) when Bloodlust is active or Stamina recovers >= 65%
+        sf["aurastat6"] = "create_season"
+        sf["aurastatcalc6"] = "1"
+        sf["enhanceable"] = "1"
+        sf["attackrank"] = "0"
+        sf["range"] = "none"
+        sf["anim"] = "SC"
+        sf["seqtrans"] = "SC"
+        sf["monanim"] = "SC"
+        sf["ItemEffect"] = "1"
+        sf["maxlvl"] = "20"
+        sf["minmana"] = "0"
+        sf["manashift"] = "8"
+        sf["mana"] = "0"
+        sf["lvlmana"] = "0"
+        sf["InTown"] = "1"
+        sf["InGame"] = "1"
+        sf["HitShift"] = "8"
+        sf["*eol"] = "0"
+        s_rows.append(sf)
+
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
     return p_skills, p_desc

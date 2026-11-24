@@ -90,6 +90,10 @@ PALADIN_PASSIVE_STATES = [
     "hp_cooldown",
 ]
 
+GLOBAL_STATES = [
+    ("stamina_fatigue", {}),
+]
+
 BARBARIAN_STATES = [
     ("bar_second_wind", {"castoverlay": "shoutstart", "overlay1": "innersight"}),
     ("bar_battle_trance", {"group": "11", "aura": "1", "overlay1": "battlecommand", "castoverlay": "battlecommandcast"}),
@@ -166,6 +170,7 @@ def build_states(cfg: dict) -> str:
 
     all_new_states = (
         [(st_name, {}) for st_name in PALADIN_PASSIVE_STATES]
+        + list(GLOBAL_STATES)
         + list(BARBARIAN_STATES)
         + list(ASSASSIN_STATES)
     )

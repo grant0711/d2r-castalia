@@ -319,7 +319,7 @@ def _eval_skill_expr(sk: dict, sd: dict, miss_map: dict, expr: str, lvl: int, de
 
     def repl_st(m):
         st = m.group(1).lower()
-        if st in ("stamina", "maxstamina"):
+        if st in ("stamina", "maxstamina", "mana", "maxmana"):
             return "256"
         return "0"
 
@@ -340,8 +340,10 @@ def _eval_skill_expr(sk: dict, sd: dict, miss_map: dict, expr: str, lvl: int, de
     raw_emax = _tiered_val(sk, "EMax", "EMaxLev", lvl)
     raw_pmin = _tiered_val(sk, "MinDam", "MinLevDam", lvl)
     raw_pmax = _tiered_val(sk, "MaxDam", "MaxLevDam", lvl)
-    esym = _eval_skill_expr(sk, sd, miss_map, sk.get("EDmgSymPerCalc", ""), lvl, depth + 1) if sk.get("EDmgSymPerCalc") and depth < 4 else 0
-    psym = _eval_skill_expr(sk, sd, miss_map, sk.get("DmgSymPerCalc", ""), lvl, depth + 1) if sk.get("DmgSymPerCalc") and depth < 4 else 0
+    need_esym = any(tok in e for tok in ("enma", "exma", "enms", "exms", "m1en", "m1ex", "m1na", "m1xa", "m2en", "m2ex", "m2na", "m2xa", "m3en", "m3ex", "m3na", "m3xa"))
+    need_psym = any(tok in e for tok in ("pnma", "pxma", "m1na", "m1xa", "m2na", "m2xa", "m3na", "m3xa"))
+    esym = _eval_skill_expr(sk, sd, miss_map, sk.get("EDmgSymPerCalc", ""), lvl, depth + 1) if need_esym and sk.get("EDmgSymPerCalc") and depth < 4 else 0
+    psym = _eval_skill_expr(sk, sd, miss_map, sk.get("DmgSymPerCalc", ""), lvl, depth + 1) if need_psym and sk.get("DmgSymPerCalc") and depth < 4 else 0
     enms = int((raw_emin << hs) * (100 + esym) / 100)
     exms = int((raw_emax << hs) * (100 + esym) / 100)
     enma = enms >> 8
@@ -412,7 +414,7 @@ def _eval_skill_expr(sk: dict, sd: dict, miss_map: dict, expr: str, lvl: int, de
 
     for ci in range(1, 7):
         ck = f"clc{ci}"
-        if ck in e and depth < 5:
+        if ck in e and depth < 8:
             env[ck] = _eval_skill_expr(sk, sd, miss_map, sk.get(f"calc{ci}", ""), lvl, depth + 1)
 
     e_py = e.replace("/", "//")
@@ -1811,7 +1813,7 @@ def build_site() -> str:
 
             <h3 class="d2-bright-gold">2. Keeping the World Intact &amp; Martial Stamina <sup>(2)</sup></h3>
             <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>
-            <p><b>Universal Martial Stamina:</b> Purely physical skills cost <b>0 Mana</b> and scale linearly with current Stamina—halving in effectiveness at empty Stamina (<code>50% &rarr; 100%</code>) across physical strikes, <i>Vigor</i>, <i>Fanaticism</i>, and <i>Burst of Speed</i>. Heavy physical stuns (<i>Smite, Charge, Shield Slam, Leap Attack</i>) scale linearly down to <code>33%</code> Stamina and fail to stun below <code>33%</code>.</p>
+            <p><b>Universal Martial Stamina &amp; Aura Mana:</b> Purely physical skills cost <b>0 Mana</b> and halve in effectiveness at empty Stamina (<code>50% &rarr; 100%</code>), while heavy physical stuns (<i>Smite, Charge, Shield Slam, Leap Attack</i>) scale down to <code>33%</code> Stamina and cut off below <code>33%</code>. Paladin upkeep auras hold <code>100%</code> power above <code>50%</code> Mana, fade smoothly through <code>75%</code> (at <code>25%</code> Mana) and <code>50%</code> (at <code>10%</code> Mana), and extinguish at <code>0%</code> Mana.</p>
           </td>
           <td width="50%" valign="top" bgcolor="#0e0b08">
             <h3 class="d2-bright-gold" style="margin-top:0;">3. Every Item Color Has Its Own Crown &amp; No Free Immunity Breakers <sup>(3)</sup></h3>

@@ -347,8 +347,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     fren["passivestate"] = ""
     fren["Param1"] = "70"   # Base Damage % baseline (+70% at Lvl 1)
     fren["Param2"] = "10"   # Base Damage % per level (ramped -> +260% at Lvl 20)
-    fren["Param3"] = "20"   # Velocity % Min
-    fren["Param4"] = "180"  # Velocity % Max
+    fren["Param3"] = "10"   # Velocity % Min (+16% at Lvl 1 -> +43% at Lvl 20, caps at +50%)
+    fren["Param4"] = "50"   # Velocity % Max (nerfed from 180% to +50% cap for controllable movement)
     fren["Param5"] = "10"   # Attack Speed % Min
     fren["Param6"] = "50"   # Attack Speed % Max
     fren["Param7"] = "150"  # Duration (6.0 seconds)
@@ -483,11 +483,10 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     istam["Param2"] = "75"  # Faster Hit Recovery % Max (+75% ceiling)
     istam["*Param2 Description"] = "Faster Hit Recovery % Max"
 
-    # Increased Speed (Id 148, moved to Row 3 Col 1, Req Lvl 16, requires Unflinching): Passive Faster Run/Walk % (50%->100% Stamina).
+    # Increased Speed (Id 148, moved to Row 3 Col 1, Req Lvl 16, requires Unflinching): Passive Faster Run/Walk %.
     ispd = by_name["Increased Speed"]
     ispd["reqlevel"] = "16"
     ispd["reqskill1"] = "Increased Stamina"
-    ispd["passivecalc1"] = f"(dm12*(100+{RESTED_PCT}))/200"
 
     # Battle Fervor (Id 129, replaces Mace Mastery, moved to Row 5 Col 1, Req Lvl 32, requires Increased Speed):
     # Universal passive Increased Attack Speed % (item_fasterattackrate).
@@ -1138,7 +1137,6 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     ispd_d = by_desc["increased speed"]
     ispd_d["SkillRow"] = "3"
     ispd_d["SkillColumn"] = "1"
-    ispd_d["desccalca1"] = f"(dm12*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200"
 
     ferv_d = by_desc["mace mastery"]
     ferv_d["SkillRow"] = "5"

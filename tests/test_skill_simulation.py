@@ -393,15 +393,11 @@ class TestSkillSimulation(unittest.TestCase):
             ("Charge", "calc1", True),
             ("Charge", "calc2", True),
             ("Zeal", "calc2", True),
-            ("Vigor", "aurastatcalc1", False),
-            ("Fanaticism", "aurastatcalc1", False),
             ("Tiger Strike", "calc1", True),
             ("Dragon Talon", "calc2", True),
             ("Dragon Claw", "calc1", True),
             ("Dragon Flight", "calc1", False),
             ("Royal Strike", "calc1", False),
-            ("Weapon Block", "passivecalc1", True),
-            ("Increased Speed", "passivecalc1", True),
             ("Quickness", "aurastatcalc1", False),
             ("Quickness", "aurastatcalc2", False),
         ):
@@ -414,6 +410,77 @@ class TestSkillSimulation(unittest.TestCase):
             v_empty = eval_d2_expr(row[col], row, slvl=10, stats=empty_stam, skills_by_name=skills_by_name)
             self.assertGreater(v_full, 0, f"{sk_name}.{col} must be positive at full stamina")
             self.assertEqual(v_empty, v_full // 2, f"{sk_name}.{col} must halve at 0% stamina ({v_empty} vs {v_full}//2)")
+
+        # Global Stamina Fatigue normalized inverse severity-vs-duration curve + Bloodlust & Merc exemptions
+        sf_row = skills_by_name["Stamina Fatigue"]
+        for pct, exp_frw, exp_ias, exp_fcr, exp_fhr, exp_len in (
+            (100, 0, 0, 0, 0, 1),
+            (65, 0, 0, 0, 0, 1),
+            (50, -4, -3, -4, -2, 744),
+            (25, -14, -12, -12, -6, 223),
+            (10, -29, -24, -26, -13, 77),
+            (0, -40, -33, -36, -18, 50),
+        ):
+            st = {"stamina": pct * 256, "maxstamina": 100 * 256}
+            frw = eval_d2_expr(sf_row["aurastatcalc1"], sf_row, slvl=1, stats=st, skills_by_name=skills_by_name)
+            ias = eval_d2_expr(sf_row["aurastatcalc2"], sf_row, slvl=1, stats=st, skills_by_name=skills_by_name)
+            fcr = eval_d2_expr(sf_row["aurastatcalc3"], sf_row, slvl=1, stats=st, skills_by_name=skills_by_name)
+            fhr = eval_d2_expr(sf_row["aurastatcalc4"], sf_row, slvl=1, stats=st, skills_by_name=skills_by_name)
+            fbr = eval_d2_expr(sf_row["aurastatcalc5"], sf_row, slvl=1, stats=st, skills_by_name=skills_by_name)
+            dur = eval_d2_expr(sf_row["auralencalc"], sf_row, slvl=1, stats=st, skills_by_name=skills_by_name)
+            self.assertEqual((frw, ias, fcr, fhr, fbr), (exp_frw, exp_ias, exp_fcr, exp_fhr, exp_fhr), f"Stamina Fatigue at {pct}%")
+            self.assertEqual(dur, exp_len, f"Stamina Fatigue duration at {pct}%: expected {exp_len}, got {dur}")
+        # Barbarian Bloodlust (skill_chillingarmor > 0) and Mercenary (maxstamina = 0) are exempt
+        # and Bloodlust also collapses auralencalc to 1 frame so any prior fatigue is wiped on first swing/hit
+        self.assertEqual(
+            eval_d2_expr(sf_row["auralencalc"], sf_row, slvl=1, stats={"stamina": 0, "maxstamina": 100 * 256, "skill_chillingarmor": 1}, skills_by_name=skills_by_name),
+            1,
+        )
+        for col in ("aurastatcalc1", "aurastatcalc2", "aurastatcalc3", "aurastatcalc4", "aurastatcalc5"):
+            self.assertEqual(
+                eval_d2_expr(sf_row[col], sf_row, slvl=1, stats={"stamina": 0, "maxstamina": 100 * 256, "skill_chillingarmor": 1}, skills_by_name=skills_by_name),
+                0,
+            )
+            self.assertEqual(
+                eval_d2_expr(sf_row[col], sf_row, slvl=1, stats={"stamina": 0, "maxstamina": 0}, skills_by_name=skills_by_name),
+                0,
+            )
+
+        # Paladin Aura Mana Devotion Curve (50-100%:100%, 25%:75%, 10%:50%, 5%:25%, 0%:0%)
+        for aura_name, col in (
+            ("Fanaticism", "aurastatcalc1"),
+            ("Fanaticism", "passivecalc1"),
+            ("Vigor", "aurastatcalc1"),
+            ("Might", "aurastatcalc1"),
+            ("Salvation", "aurastatcalc1"),
+        ):
+            arow = skills_by_name[aura_name]
+            m100 = {"mana": 100 * 256, "maxmana": 100 * 256}
+            m50 = {"mana": 50 * 256, "maxmana": 100 * 256}
+            m25 = {"mana": 25 * 256, "maxmana": 100 * 256}
+            m10 = {"mana": 10 * 256, "maxmana": 100 * 256}
+            m05 = {"mana": 5 * 256, "maxmana": 100 * 256}
+            m00 = {"mana": 0, "maxmana": 100 * 256}
+            v100 = eval_d2_expr(arow[col], arow, slvl=10, stats=m100, skills_by_name=skills_by_name)
+            v50 = eval_d2_expr(arow[col], arow, slvl=10, stats=m50, skills_by_name=skills_by_name)
+            v25 = eval_d2_expr(arow[col], arow, slvl=10, stats=m25, skills_by_name=skills_by_name)
+            v10 = eval_d2_expr(arow[col], arow, slvl=10, stats=m10, skills_by_name=skills_by_name)
+            v05 = eval_d2_expr(arow[col], arow, slvl=10, stats=m05, skills_by_name=skills_by_name)
+            v00 = eval_d2_expr(arow[col], arow, slvl=10, stats=m00, skills_by_name=skills_by_name)
+            self.assertGreater(v100, 0)
+            self.assertEqual(v50, v100, f"{aura_name}.{col} must hold 100% at 50% mana")
+            self.assertEqual(v25, (v100 * 75) // 100, f"{aura_name}.{col} must be 75% at 25% mana")
+            self.assertEqual(v10, (v100 * 50) // 100, f"{aura_name}.{col} must be 50% at 10% mana")
+            self.assertEqual(v05, (v100 * 25) // 100, f"{aura_name}.{col} must be 25% at 5% mana")
+            self.assertEqual(v00, 0, f"{aura_name}.{col} must extinguish (0) at 0% mana")
+
+        # All Mana-Upkeep Paladin auras shrink aurarangecalc smoothly to 0 at 0% Mana (unmistakable co-op cue)
+        for pulse_aura in ("Holy Fire", "Holy Freeze", "Holy Shock", "Sanctuary", "Fanaticism", "Vigor", "Concentration", "Salvation"):
+            prow = skills_by_name[pulse_aura]
+            ar_full = eval_d2_expr(prow["aurarangecalc"], prow, slvl=10, stats={"mana": 100 * 256, "maxmana": 100 * 256, "skill_enchant": 0}, skills_by_name=skills_by_name)
+            ar_empty = eval_d2_expr(prow["aurarangecalc"], prow, slvl=10, stats={"mana": 0, "maxmana": 100 * 256, "skill_enchant": 0}, skills_by_name=skills_by_name)
+            self.assertGreater(ar_full, 0)
+            self.assertEqual(ar_empty, 0)
 
         # Zeal (up to 5 hits @ Lvl 18+) & Dragon Talon multi-hit counts degrade smoothly with Stamina (floor 2 / 1)
         zeal_row = skills_by_name["Zeal"]
@@ -501,10 +568,10 @@ class TestSkillSimulation(unittest.TestCase):
         skills_by_name = idx["skills_by_name"]
         missiles_by_name = idx["missiles_by_name"]
 
-        solo = {"skill_enchant": 0}
-        cond_fire = {"skill_enchant": 1}
-        cond_ltng = {"skill_enchant": 2}
-        cond_cold = {"skill_enchant": 3}
+        solo = {"skill_enchant": 0, "mana": 100 * 256, "maxmana": 100 * 256}
+        cond_fire = {"skill_enchant": 1, "mana": 100 * 256, "maxmana": 100 * 256}
+        cond_ltng = {"skill_enchant": 2, "mana": 100 * 256, "maxmana": 100 * 256}
+        cond_cold = {"skill_enchant": 3, "mana": 100 * 256, "maxmana": 100 * 256}
 
         # 1. Assassin 3 Elemental Sentries: instant 3-charge deployment + orb preservation under matching Conduction
         sentry_specs = [

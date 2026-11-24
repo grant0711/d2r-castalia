@@ -2963,9 +2963,6 @@ def apply_assassin_skills_and_desc(
         dt["calc1"] = f"max(1,((lvl/6+1)*(100+{_RESTED_PCT}))/200)"
         dt["calc2"] = f"(dm34*(100+{_RESTED_PCT}))/200"
 
-    if "Weapon Block" in by_name:
-        by_name["Weapon Block"]["passivecalc1"] = f"(dm12*(100+{_RESTED_PCT}))/200"
-
     if "Dragon Claw" in by_name:
         dc = by_name["Dragon Claw"]
         dc["mana"] = "0"
@@ -3286,8 +3283,6 @@ def apply_assassin_skills_and_desc(
 
     if "dragon talon" in by_desc:
         by_desc["dragon talon"]["desccalca3"] = "clc1"
-    if "weapon block" in by_desc:
-        by_desc["weapon block"]["desccalca1"] = f"(dm12*(100+{_RESTED_PCT}))/200"
     if "dragon claw" in by_desc:
         by_desc["dragon claw"]["ddam calc1"] = "clc1"
         by_desc["dragon claw"]["desccalca1"] = "clc1"

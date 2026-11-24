@@ -63,7 +63,7 @@ def _get_gem_bust(slot_code: str, g_code: str, slot_scale: float) -> Tuple[str, 
         return ("skull-curse", "", str(-drain_v), str(-light_v))
 
     if fam == "ruby":
-        prop, base = "damageresist", _BUST_TIERS["ruby_pdr"][t_idx]
+        prop, base = "red-dmg%", _BUST_TIERS["ruby_pdr"][t_idx]
     elif fam == "sapphire":
         if slot_code in ("weap", "glov", "ring"):
             prop = "swing1"

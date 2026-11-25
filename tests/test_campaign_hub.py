@@ -189,6 +189,26 @@ class TestCampaignHub(unittest.TestCase):
         self.assertEqual(ch[0]["death_count"], 9)
         self.assertEqual(len(ch[0]["party_roster"]), 1)
 
+    def test_playit_host_port_parsing_and_d2rloader_toml_port_sync(self):
+        self.assertEqual(CastaliaHub.parse_host_port("147.185.221.21:14322"), ("147.185.221.21", 14322))
+        self.assertEqual(CastaliaHub.parse_host_port("my-tunnel.gl.at.ply.gg:25565"), ("my-tunnel.gl.at.ply.gg", 25565))
+        self.assertEqual(CastaliaHub.parse_host_port("99.184.66.94"), ("99.184.66.94", 4000))
+
+        toml_dir = os.path.join(self.game_dir, "d2rloader", "config")
+        os.makedirs(toml_dir, exist_ok=True)
+        toml_path = os.path.join(toml_dir, "d2rloader.toml")
+        with open(toml_path, "w", encoding="utf-8") as f:
+            f.write("[d2rloader.advanced]\ngame_port = 4000\nautomatic_port_mapping = false\n")
+
+        prev = self.hub.set_d2rloader_game_port(14322)
+        self.assertEqual(prev, 4000)
+        with open(toml_path, "r", encoding="utf-8") as f:
+            self.assertIn("game_port = 14322", f.read())
+
+        self.hub.set_d2rloader_game_port(prev)
+        with open(toml_path, "r", encoding="utf-8") as f:
+            self.assertIn("game_port = 4000", f.read())
+
     def test_cli_json_smoke(self):
         cli = os.path.join(REPO_ROOT, "bin", "d2r-campaign")
         res = subprocess.run(

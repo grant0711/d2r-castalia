@@ -103,7 +103,7 @@ class CastaliaHub:
         return dict(self.config)
 
     def update_config(self, updates: Dict[str, Any]) -> Dict[str, Any]:
-        for k in ("api_url", "display_name", "d2r_game_dir", "d2r_save_dir"):
+        for k in ("api_url", "display_name", "d2r_game_dir", "d2r_save_dir", "host_connect_address"):
             if k in updates and updates[k] is not None:
                 self.config[k] = str(updates[k]).strip()
         self._save_json(self.config_path, self.config)
@@ -623,6 +623,33 @@ class CastaliaHub:
                     pass
             stop_event.wait(1.5)
 
+    @staticmethod
+    def parse_host_port(addr: str) -> Tuple[str, int]:
+        s = (addr or "").strip()
+        if ":" in s and s.count(":") == 1:
+            host, port_str = s.rsplit(":", 1)
+            if port_str.isdigit():
+                return host.strip(), int(port_str)
+        return s, 4000
+
+    def set_d2rloader_game_port(self, port: int) -> Optional[int]:
+        """Update game_port in d2rloader.toml and return the previous port (for clean restore)."""
+        toml_path = os.path.join(self.config["d2r_game_dir"], "d2rloader", "config", "d2rloader.toml")
+        if not os.path.isfile(toml_path):
+            return None
+        with open(toml_path, "r", encoding="utf-8") as f:
+            raw = f.read()
+        m = re.search(r"^(\s*game_port\s*=\s*)(\d+)(\s*)$", raw, flags=re.M)
+        if not m:
+            return None
+        prev_port = int(m.group(2))
+        if prev_port == port:
+            return prev_port
+        updated = raw[: m.start(2)] + str(port) + raw[m.end(2) :]
+        with open(toml_path, "w", encoding="utf-8") as f:
+            f.write(updated)
+        return prev_port
+
     def write_launch_intent(self, campaign: Optional[Dict[str, Any]], is_host: bool) -> Optional[str]:
         """Write or clear mods/castalia/d2rloader/config/castalia_launch_intent.json for castalia-autohost.dll."""
         intent_dir = os.path.join(self.config["d2r_game_dir"], "mods", "castalia", "d2rloader", "config")
@@ -636,6 +663,7 @@ class CastaliaHub:
         diff_idx = 1 if wp.endswith("nm") else (2 if wp.endswith("h") else 0)
         clean_title = re.sub(r"[^A-Za-z0-9]", "", str(campaign.get("title", "Castalia")))
         game_name = f"Cas-{clean_title}"[:15]
+        join_host, join_port = self.parse_host_port(str(campaign.get("live_join_info") or ""))
         payload = {
             "mode": "host" if is_host else "join",
             "campaign_id": str(campaign.get("id", "")),
@@ -647,7 +675,8 @@ class CastaliaHub:
             "lan_only": False,
             "max_players": int(campaign.get("max_seats", 5)),
             "level_diff_enabled": False,
-            "game_id": str(campaign.get("live_join_info") or ""),
+            "game_id": join_host,
+            "game_port": join_port,
         }
         os.makedirs(intent_dir, exist_ok=True)
         self._save_json(intent_path, payload)
@@ -656,22 +685,27 @@ class CastaliaHub:
     def launch_session(self, target: str, dry_run: bool = False) -> Dict[str, Any]:
         """
         Full launch lifecycle:
-          1. If campaign: fetch snapshot, sync pinned mod version, write castalia_launch_intent.json, copy Game ID
+          1. If campaign: fetch snapshot, sync pinned mod version, write castalia_launch_intent.json,
+             auto-configure d2rloader.toml game_port for custom playit.gg ports, copy host/Game ID to clipboard
           2. Swap isolated save profile into live mods/castalia/
           3. Launch D2RLoader (via bin/d2r-mod --coop on Linux or D2RLoader.exe on Windows)
-          4. On exit: clear intent, sync saves back, parse .d2s telemetry, update RSVP & auto-roll Host progress
+          4. On exit: restore game_port, clear intent, sync saves back, parse .d2s telemetry & auto-roll Host
         """
         campaign = None
         is_host = False
         copied_game_id = None
+        prev_game_port = None
 
         if target != "solo":
             campaign = self.get_campaign(target)
             is_host = bool(campaign.get("is_host"))
             ver_status = self.ensure_version_installed(campaign["castalia_version"])
-            if campaign.get("live_join_info"):
-                copied_game_id = campaign["live_join_info"]
-                self.copy_to_clipboard(copied_game_id)
+            if campaign.get("live_join_info") and not is_host:
+                join_host, join_port = self.parse_host_port(str(campaign["live_join_info"]))
+                copied_game_id = join_host
+                self.copy_to_clipboard(join_host)
+                if join_port != 4000 and not dry_run:
+                    prev_game_port = self.set_d2rloader_game_port(join_port)
         else:
             ver_status = "solo_current"
 
@@ -713,6 +747,8 @@ class CastaliaHub:
             stop_evt.set()
             if tail_thread:
                 tail_thread.join(timeout=2)
+            if prev_game_port is not None:
+                self.set_d2rloader_game_port(prev_game_port)
             self.write_launch_intent(None, False)
             self.sync_back_active_profile()
 

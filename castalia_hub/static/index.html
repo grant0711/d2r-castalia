@@ -436,6 +436,7 @@ async function renderSettings() {
     <div class="card">
       <label>Display Name</label><input id="s-name" style="width:100%" value="${c.display_name || ''}">
       <label>Campaign Hub API URL</label><input id="s-api" style="width:100%" value="${c.api_url || ''}">
+      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label><input id="s-hostaddr" style="width:100%" placeholder="147.185.221.21:14322 (optional)" value="${c.host_connect_address || ''}">
       <label>Diablo II: Resurrected Install Dir</label><input id="s-gdir" style="width:100%" value="${c.d2r_game_dir || ''}">
       <label>D2R Castalia Save Dir</label><input id="s-sdir" style="width:100%" value="${c.d2r_save_dir || ''}">
       <div style="margin-top:10px;"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
@@ -568,7 +569,7 @@ async function promptEndSession(cid, lvl, wp) { const nl = prompt("New Campaign 
 async function promptUpgrade(cid) { const v = prompt("Upgrade pinned Castalia version to (e.g. 0.4.2):"); if (v) { await api("/local/upgrade", { method: "POST", body: { campaign_id: cid, version: v } }); toast("Upgraded pinned version!"); openCampaign(cid); } }
 async function promptComplete(cid) { const s = prompt("Hall of Heroes summary:"); const d = prompt("Total party deaths:", "0"); if (s) { await api("/local/complete", { method: "POST", body: { campaign_id: cid, summary: s, death_count: Number(d || 0) } }); toast("Archived to Hall of Heroes!"); showTab("hoh"); } }
 async function saveSettings() {
-  await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });
+  await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });
   await refreshState(); toast("Settings saved!");
 }
 async function exportTokens() { const r = await api("/local/tokens/export"); await copyText(r.tokens_json); }

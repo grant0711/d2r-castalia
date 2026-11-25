@@ -41,6 +41,7 @@ struct LaunchIntent {
 	int         maxPlayers       = 5;
 	bool        levelDiffEnabled = false;
 	std::string gameId;
+	int         gamePort         = 4000;
 };
 
 static const D2RL::PluginContext*   gCtx       = nullptr;
@@ -140,6 +141,7 @@ static auto LoadLaunchIntent() -> LaunchIntent {
 	intent.maxPlayers       = ExtractJsonInt(raw, "max_players", 5);
 	intent.levelDiffEnabled = ExtractJsonBool(raw, "level_diff_enabled", false);
 	intent.gameId           = ExtractJsonString(raw, "game_id");
+	intent.gamePort         = ExtractJsonInt(raw, "game_port", 4000);
 	return intent;
 }
 
@@ -163,10 +165,15 @@ static auto BuildGuidePanelJson(const LaunchIntent& intent) -> std::string {
 			"(Press ESC to dismiss this guide)";
 	} else {
 		heading = "CASTALIA JOIN GUIDE";
+		const std::string addr = intent.gameId.empty() ? "(check Launcher)" : intent.gameId;
+		const std::string portNote = (intent.gamePort > 0 && intent.gamePort != 4000)
+			? ("   (Port " + std::to_string(intent.gamePort) + " auto-configured!)\n")
+			: "\n";
 		body =
-			"1. Click 'Direct Join' / 'Join by Game ID'\n"
-			"2. Press Ctrl+V to paste Game ID:  " + (intent.gameId.empty() ? "(check Launcher)" : intent.gameId) + "\n"
-			"3. Click Join Game\n"
+			"1. Click the 'Direct Join' tab at the top of Multiplayer\n"
+			"2. Click the IP / Host Address box -> Press Ctrl+V:\n"
+			"   " + addr + portNote +
+			"3. Leave Password blank (unless Host set one) -> Click Join Game\n"
 			"(Press ESC to dismiss this guide)";
 	}
 

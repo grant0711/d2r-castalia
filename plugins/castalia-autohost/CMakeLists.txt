@@ -12,7 +12,7 @@ set(D2RLPLUGIN_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
   D2RLPluginSDK
   GIT_REPOSITORY https://github.com/D2RLoader/PluginSDK.git
-  GIT_TAG        main
+  GIT_TAG        master
   GIT_SHALLOW    TRUE
 )
 FetchContent_MakeAvailable(D2RLPluginSDK)

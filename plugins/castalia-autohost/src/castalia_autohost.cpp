@@ -55,8 +55,9 @@ static D2RL::Resources::RegistrationHandle gGuideResource = D2RL::Resources::Inv
 static std::string                         gGuideJson;
 
 static LaunchIntent      gIntent {};
-static std::atomic<bool> gRunning { false };
-static std::atomic<bool> gApplied { false };
+static std::atomic<bool> gRunning    { false };
+static std::atomic<bool> gApplied    { false };
+static std::atomic<bool> gGuideShown { false };
 static std::thread       gWatcher;
 
 static auto EscapeJson(const std::string& s) -> std::string {
@@ -181,29 +182,38 @@ static auto BuildGuidePanelJson(const LaunchIntent& intent) -> std::string {
 	ss << R"json({
 	"type": "Panel", "name": "castalia-autohost/HostGuidePanel",
 	"fields": {
-		"anchor": { "x": 0.5, "y": 0.02 },
+		"anchor": { "x": 1.0, "y": 0.5 },
 		"priority": 999999
 	},
 	"children": [
 		{
 			"type": "ImageWidget", "name": "Frame",
 			"fields": {
-				"rect": { "x": -627, "y": 0 },
+				"rect": { "x": -1160, "y": -260 },
 				"filename": "Panel\\Modals\\Modal_No_Title_BG"
 			},
 			"children": [
 				{
 					"type": "TextBoxWidget", "name": "Heading",
 					"fields": {
-						"rect": { "x": 60, "y": 32, "width": 1000, "height": 54 },
+						"rect": { "x": 65, "y": 42, "width": 920, "height": 54 },
 						"text": ")json" << EscapeJson(heading) << R"json(",
 						"style": "$StyleSettingsTitle"
 					}
 				},
 				{
+					"type": "ButtonWidget", "name": "CloseBtn",
+					"fields": {
+						"rect": { "x": 1030, "y": 28 },
+						"filename": "PANEL\\closebtn_4x",
+						"hoveredFrame": 3,
+						"onClickMessage": "PanelManager:ClosePanel:castalia-autohost/HostGuidePanel"
+					}
+				},
+				{
 					"type": "TextBoxWidget", "name": "Steps",
 					"fields": {
-						"rect": { "x": 60, "y": 96, "width": 1000, "height": 220 },
+						"rect": { "x": 65, "y": 110, "width": 1020, "height": 340 },
 						"text": ")json" << EscapeJson(body) << R"json(",
 						"style": "$StyleModalDialogDescription"
 					}
@@ -257,19 +267,30 @@ static void TrySetDropdown(const D2RL::PluginContext* ctx, D2RL::Widgets::Widget
 }
 
 static void ApplyIntentOnUiThread(const D2RL::PluginContext* ctx, void*) noexcept {
-	if (ctx == nullptr || gWidgets == nullptr || !gIntent.loaded || gApplied.load()) return;
+	if (ctx == nullptr || gWidgets == nullptr || !gIntent.loaded) return;
 
 	D2RL::Widgets::WidgetHandle mpPanel = D2RL::Widgets::InvalidHandle;
-	if (gWidgets->findPanel(ctx, "D2RLoaderMultiplayerPanel", &mpPanel) != D2RL::Widgets::Result::Success || mpPanel == D2RL::Widgets::InvalidHandle) {
+	bool mpVisible = false;
+	if (gWidgets->findPanel(ctx, "D2RLoaderMultiplayerPanel", &mpPanel) == D2RL::Widgets::Result::Success && mpPanel != D2RL::Widgets::InvalidHandle) {
+		mpVisible = true;
+		if (D2RL::HasWidgetServiceField(gWidgets, D2RL::WidgetServiceGetWidgetStateFieldEnd)) {
+			D2RL::Widgets::State st {};
+			if (gWidgets->getWidgetState(ctx, mpPanel, &st) == D2RL::Widgets::Result::Success) {
+				mpVisible = st.visible;
+			}
+		}
+	}
+
+	// Auto-close the guide panel as soon as Multiplayer closes or player enters game
+	if (!mpVisible) {
+		if (gGuideShown.load() && gPanels != nullptr && gGuidePanel != D2RL::Panels::InvalidHandle) {
+			gPanels->closePanel(ctx, gGuidePanel);
+			gGuideShown.store(false);
+		}
 		return;
 	}
 
-	if (D2RL::HasWidgetServiceField(gWidgets, D2RL::WidgetServiceGetWidgetStateFieldEnd)) {
-		D2RL::Widgets::State st {};
-		if (gWidgets->getWidgetState(ctx, mpPanel, &st) == D2RL::Widgets::Result::Success && !st.visible) {
-			return;
-		}
-	}
+	if (gApplied.load()) return;
 
 	const bool canAutoFill = D2RL::HasWidgetServiceField(gWidgets, D2RL::WidgetServiceSetInputTextFieldEnd);
 	D2RL::LogInfoF(ctx, "[castalia-autohost] D2RLoaderMultiplayerPanel open! mode='%s' canAutoFill=%d serviceSize=%u",
@@ -290,6 +311,7 @@ static void ApplyIntentOnUiThread(const D2RL::PluginContext* ctx, void*) noexcep
 		}
 	} else if (gPanels != nullptr && gGuidePanel != D2RL::Panels::InvalidHandle) {
 		const auto r = gPanels->openPanel(ctx, gGuidePanel);
+		if (r == D2RL::Panels::Result::Success) gGuideShown.store(true);
 		D2RL::LogInfoF(ctx, "[castalia-autohost] Opened in-game Host/Join Guide panel -> %u", static_cast<unsigned>(r));
 	}
 
@@ -306,9 +328,9 @@ static auto CmdToggleGuide(D2R::Game::Client*, const D2RL::ConsoleCommandContext
 }
 
 static void WatcherLoop() {
-	while (gRunning.load() && !gApplied.load()) {
+	while (gRunning.load()) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(400));
-		if (gRunning.load() && !gApplied.load() && gCtx != nullptr && gThreads != nullptr && gIntent.loaded) {
+		if (gRunning.load() && gCtx != nullptr && gThreads != nullptr && gIntent.loaded && (!gApplied.load() || gGuideShown.load())) {
 			gThreads->runOnUiThread(gCtx, ApplyIntentOnUiThread, nullptr);
 		}
 	}

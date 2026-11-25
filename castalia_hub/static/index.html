@@ -169,10 +169,10 @@
   </div>
 </div>
 
-<!-- DROP-IN STARTER-KIT MODAL -->
+<!-- CREATE / DROP-IN CHARACTER MODAL -->
 <div class="modal-backdrop" id="modal-dropin">
   <div class="modal">
-    <div class="space-between"><h3>Generate Drop-In Starter-Kit Character</h3><button class="btn ghost" onclick="closeModal('modal-dropin')">X</button></div>
+    <div class="space-between"><h3 id="di-title">Create Campaign Character</h3><button class="btn ghost" onclick="closeModal('modal-dropin')">X</button></div>
     <div id="di-banner" class="card" style="margin-top:10px; font-size:12px;"></div>
     <label>Character Name (max 15 letters/numbers)</label>
     <input id="di-name" style="width:100%" maxlength="15" placeholder="Lyra">
@@ -188,7 +188,8 @@
     </select>
     <div class="row" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn ghost" onclick="closeModal('modal-dropin')">Cancel</button>
-      <button class="btn primary" onclick="submitDropIn()">Create .d2s &amp; RSVP</button>
+      <button class="btn" id="di-save-btn" onclick="submitDropIn(false)">Create Character</button>
+      <button class="btn launch" id="di-launch-btn" onclick="submitDropIn(true)">Create &amp; Launch D2RLoader</button>
     </div>
   </div>
 </div>
@@ -363,7 +364,7 @@ async function openCampaign(cid) {
       <div class="space-between" style="margin-bottom:6px;">
         <h3>Your Character (Isolated Campaign Profile)</h3>
         <div class="row">
-          <button class="btn primary" onclick="openDropInModal()">+ Generate Drop-In Starter-Kit (Lvl ${c.current_level}, ${c.current_wp})</button>
+          <button class="btn primary" onclick="openDropInModal(false, false)">+ ${c.current_level === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${c.current_level}, ${c.current_wp})`}</button>
           ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp('${c.id}')">Cancel RSVP</button>` : ""}
         </div>
       </div>
@@ -385,7 +386,10 @@ async function renderSolo() {
   main.innerHTML = `
     <div class="space-between" style="margin-bottom:12px;">
       <h2>Solo Play (Isolated Profile)</h2>
-      <button class="btn launch" onclick="launchTarget('solo')">&#9654; LAUNCH SOLO (D2RLOADER)</button>
+      <div class="row">
+        <button class="btn primary" onclick="openDropInModal(false, true)">+ New Level 1 Character</button>
+        <button class="btn launch" onclick="launchTarget('solo')">&#9654; LAUNCH SOLO (D2RLOADER)</button>
+      </div>
     </div>
     <div class="card">
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Characters in <code>profiles/solo/</code> are completely isolated from your co-op campaigns.</div>
@@ -457,28 +461,69 @@ async function submitCreateCampaign() {
   openCampaign(res.campaign.id);
 }
 
-function openDropInModal() {
-  const c = STATE.activeCampaign;
-  document.getElementById("di-banner").innerHTML = `Locked to Campaign Snapshot: <b>Level ${c.current_level} &middot; ${c.current_wp} &middot; Castalia v${c.castalia_version}</b>`;
+let DROPIN_CTX = { solo: false };
+
+function openDropInModal(autoPrompt = false, soloMode = false) {
+  DROPIN_CTX = { solo: soloMode };
+  if (soloMode) {
+    document.getElementById("di-title").textContent = "Create Fresh Level 1 Solo Character";
+    document.getElementById("di-banner").innerHTML =
+      `Creates a fresh <b>Level 1</b> character in <code>profiles/solo/</code> (Normal Act 1, 4x Minor Healing Potions) so you can launch straight into play.`;
+    document.getElementById("di-save-btn").textContent = "Create Character";
+  } else {
+    const c = STATE.activeCampaign;
+    const isFresh = Number(c.current_level) <= 1;
+    document.getElementById("di-title").textContent = isFresh
+      ? "Create Fresh Level 1 Campaign Character"
+      : "Generate Drop-In Starter-Kit Character";
+    const note = autoPrompt ? `<div class="warn" style="margin-bottom:4px;">No character in this campaign profile yet — create one first so you can jump straight into Multiplayer!</div>` : "";
+    const kit = isFresh
+      ? "Fresh Level 1 start (4x Minor Healing Potions) — ready immediately on Character Select for Multiplayer."
+      : `Locked to Campaign Snapshot: <b>Level ${c.current_level} &middot; ${c.current_wp}</b> (tier-matched Starter Kit).`;
+    document.getElementById("di-banner").innerHTML = `${note}${kit} &middot; Castalia <b>v${c.castalia_version}</b>`;
+    document.getElementById("di-save-btn").textContent = "Create .d2s & RSVP";
+  }
   document.getElementById("di-name").value = "";
   openModal("modal-dropin");
 }
 
-async function submitDropIn() {
-  const c = STATE.activeCampaign;
+async function submitDropIn(andLaunch = false) {
   const name = document.getElementById("di-name").value.trim();
   const cls = document.getElementById("di-class").value;
   if (!name) return toast("Enter a character name.");
+
+  if (DROPIN_CTX.solo) {
+    const telem = await api("/local/dropin", {
+      method: "POST",
+      body: { target: "solo", char_name: name, char_class: cls, level: 1, wp_code: "a1n" },
+    });
+    closeModal("modal-dropin");
+    toast(`Created Level 1 ${telem.char_name}.d2s!`);
+    if (andLaunch) await doLaunch("solo");
+    renderSolo();
+    return;
+  }
+
+  const c = STATE.activeCampaign;
   const telem = await api("/local/dropin", {
     method: "POST",
     body: { target: c.id, char_name: name, char_class: cls, level: c.current_level, wp_code: c.current_wp },
   });
   await api("/local/rsvp", {
     method: "POST",
-    body: { campaign_id: c.id, char_name: telem.char_name, char_class: telem.char_class, join_mode: "drop_in", char_level: telem.char_level, char_wp: telem.char_wp, build_summary: telem.build_summary },
+    body: {
+      campaign_id: c.id,
+      char_name: telem.char_name,
+      char_class: telem.char_class,
+      join_mode: Number(c.current_level) <= 1 ? "returning" : "drop_in",
+      char_level: telem.char_level,
+      char_wp: telem.char_wp,
+      build_summary: telem.build_summary,
+    },
   });
   closeModal("modal-dropin");
   toast(`Created ${telem.char_name}.d2s & RSVPed!`);
+  if (andLaunch) await doLaunch(c.id);
   openCampaign(c.id);
 }
 
@@ -489,7 +534,15 @@ async function rsvpExisting(cid, name, cls, lvl, wp, bs) {
 }
 async function cancelRsvp(cid) { await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid } }); toast("RSVP cancelled."); openCampaign(cid); }
 async function copyText(t) { await api("/local/clipboard", { method: "POST", body: { text: t } }); toast("Copied to clipboard!"); }
-async function launchTarget(t) { await api("/local/launch", { method: "POST", body: { target: t } }); toast("Synced profile & launched D2RLoader!"); }
+async function doLaunch(t) { await api("/local/launch", { method: "POST", body: { target: t } }); toast("Synced profile & launched D2RLoader!"); }
+async function launchTarget(t) {
+  const chars = await api(`/local/chars/${t}`);
+  if (!chars.length) {
+    openDropInModal(true, t === "solo");
+    return;
+  }
+  await doLaunch(t);
+}
 async function promptGoLive(cid) { const g = prompt("Enter D2RLoader Game ID (or leave blank to auto-detect on launch):"); if (g !== null) { await api("/local/live", { method: "POST", body: { campaign_id: cid, game_id: g } }); toast("Campaign is LIVE!"); openCampaign(cid); } }
 async function promptEndSession(cid, lvl, wp) { const nl = prompt("New Campaign Level:", String(lvl)); const nw = prompt("New Act/WP (e.g. a3nm):", wp); if (nl && nw) { await api("/local/end-session", { method: "POST", body: { campaign_id: cid, current_level: Number(nl), current_wp: nw } }); toast("Session ended & rolled forward!"); openCampaign(cid); } }
 async function promptUpgrade(cid) { const v = prompt("Upgrade pinned Castalia version to (e.g. 0.4.2):"); if (v) { await api("/local/upgrade", { method: "POST", body: { campaign_id: cid, version: v } }); toast("Upgraded pinned version!"); openCampaign(cid); } }

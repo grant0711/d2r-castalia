@@ -33,6 +33,7 @@ DEFAULT_API_URL = os.environ.get("CASTALIA_API_URL", "http://127.0.0.1:8787")
 # Save extensions swapped per campaign profile (Settings.json stays global & untouched!)
 SAVE_EXTS = (".d2s", ".d2i", ".key", ".ctl", ".map", ".ma0", ".ma1", ".ma2", ".ma3", ".ma4")
 GAME_ID_LOG_RE = re.compile(r"(?:Game\s*ID|game_id|advertised_id)\s*[:=]\s*([A-Za-z0-9_-]{4,24})", re.I)
+LISTENER_READY_RE = re.compile(r"Listener ready:\s*bound_port=(\d+)", re.I)
 
 
 def _is_save_file(filename: str) -> bool:
@@ -580,11 +581,23 @@ class CastaliaHub:
                     continue
         return False
 
+    @staticmethod
+    def _detect_public_ipv4() -> Optional[str]:
+        try:
+            with urllib.request.urlopen("https://api.ipify.org", timeout=4) as r:
+                ip = r.read().decode("utf-8").strip()
+                if re.match(r"^\d{1,3}(\.\d{1,3}){3}$", ip):
+                    return ip
+        except Exception:
+            pass
+        return None
+
     def _tail_d2rloader_log_for_game_id(self, campaign_id: str, stop_event: threading.Event) -> None:
         log_path = os.path.join(self.config["d2r_game_dir"], "d2rloader", "logs", "d2rloader.log")
         offset = os.path.getsize(log_path) if os.path.isfile(log_path) else 0
-        published = False
-        while not stop_event.is_set() and not published:
+        published_id = False
+        published_fallback = False
+        while not stop_event.is_set() and not published_id:
             if os.path.isfile(log_path):
                 try:
                     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -596,7 +609,14 @@ class CastaliaHub:
                         gid = m.group(1)
                         try:
                             self.go_live(campaign_id, gid)
-                            published = True
+                            published_id = True
+                        except Exception:
+                            pass
+                    elif not published_fallback and LISTENER_READY_RE.search(chunk):
+                        addr = self.config.get("host_connect_address") or self._detect_public_ipv4() or "127.0.0.1"
+                        try:
+                            self.go_live(campaign_id, addr)
+                            published_fallback = True
                         except Exception:
                             pass
                 except Exception:

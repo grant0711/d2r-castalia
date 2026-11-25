@@ -9,12 +9,24 @@ Paladin 30-Skill Overhaul:
 from typing import Dict, List, Tuple
 
 from mod_builder.classes.common import (
+    COND_ARC,
+    COND_COLD_MULT,
+    COND_EXP,
+    COND_STANCE,
     RAMP12,
     RAMP34,
     RAMP56,
     _clear_dsc3_synergies,
     _curve_lev_brackets,
     _set_dsc_line,
+    cond_cold_dur,
+    cond_elem_arc,
+    cond_elem_exp,
+    cond_elem_sta,
+    cond_fire_add,
+    cond_fire_radius,
+    cond_ltng_chain,
+    cond_ltng_strike,
     parse_int,
     scale_int,
 )
@@ -61,7 +73,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     smite["Param4"] = "45"   # Damage % per level (ramped -> +955% ED at Lvl 20)
     smite["Param8"] = "15"   # Charge synergy % (+15%/lvl -> +300% ED at 20 Charge)
     smite["calc1"] = f"(({RAMP34}+skill('Charge'.blvl)*par8)*(100+{RESTED_PCT}))/200"
-    smite["calc2"] = f"(({RESTED_PCT})>=33)?(min(ln12,250)*({RESTED_PCT}))/100:0"
+    smite["calc2"] = f"(({RESTED_PCT})>=33)?min(250,((min(ln12,250)*({RESTED_PCT}))/100*{COND_COLD_MULT})/100):0"
 
     # Charge (Id 107): 0 Mana; 150% + 32%/lvl (ramped) ED & Charge Speed scaled 50%->100% by Stamina,
     # 12% synergy from Vigor & Might, AND Stuns target on impact (1.4s base + 8%/lvl Smite synergy,
@@ -83,7 +95,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     chg["ELevLen1"] = "0"
     chg["ELevLen2"] = "0"
     chg["ELevLen3"] = "0"
-    chg["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?(((100+skill('Smite'.blvl)*par6)*({RESTED_PCT}))/100-100):-100"
+    chg["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?((((100+skill('Smite'.blvl)*par6)*({RESTED_PCT}))/100*{COND_COLD_MULT})/100-100):-100"
 
     # Zeal (Id 106): 0 Mana; Capped at 5 hits (2 hits Lvl 1-5, 3 hits Lvl 6-11, 4 hits Lvl 12-17, 5 hits Lvl 18+),
     # vanilla 100% rollback (so 4-frame hits strictly require EIAS = 75), 20% + 11%/lvl (ramped -> +229% ED at Lvl 20),
@@ -98,7 +110,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     zeal["Param5"] = "2"    # # of hits Min
     zeal["Param6"] = "5"    # # of hits Max (vanilla 5-hit cap; degrades 5->4->3->2 with Stamina)
     zeal["Param8"] = "8"    # Sacrifice synergy %
-    zeal["calc1"] = f"max(2,(min(par5+lvl/6,par6)*(100+{RESTED_PCT}))/200)"
+    zeal["calc1"] = cond_ltng_strike(f"max(2,(min(par5+lvl/6,par6)*(100+{RESTED_PCT}))/200)")
     zeal["calc2"] = f"(({RAMP34}+skill('Sacrifice'.blvl)*par8)*(100+{RESTED_PCT}))/200"
     zeal["ToHit"] = "20"
     zeal["LevToHit"] = "12"
@@ -122,10 +134,10 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     veng["calc1"] = f"{RAMP12}+skill('Resist Fire'.blvl)*par8"
     veng["calc2"] = f"{RAMP12}+skill('Resist Cold'.blvl)*par8"
     veng["calc3"] = f"{RAMP12}+skill('Resist Lightning'.blvl)*par8"
-    veng["calc5"] = "13 + ((stat('skill_enchant'.accr) >= 1) ? 7 : 0)"    # 156 deg -> 240 deg under Conduction
+    veng["calc5"] = f"13 + (({COND_STANCE} >= 1) ? (({COND_EXP} * 7) / 50) : 0)"    # 156 deg -> 240 deg scaled by Expansion
     veng["calc6"] = "30"
-    veng["calc7"] = "(stat('skill_enchant'.accr) >= 1) ? 2 : 0"          # +0 -> +2 sub-tiles reach under Conduction
-    veng["ELenSymPerCalc"] = "(stat('skill_enchant'.accr) == 3) ? 100 : 0"  # 2x Cold chill under Cold Conduction
+    veng["calc7"] = f"({COND_STANCE} >= 1) ? (({COND_EXP} * 2) / 50) : 0"          # +0 -> +2 sub-tiles reach scaled by Expansion
+    veng["ELenSymPerCalc"] = cond_elem_sta(3, 100)                                  # up to 2x Cold chill under Cold Conduction (Stasis)
     veng["ToHit"] = "40"
     veng["LevToHit"] = "15"
 
@@ -144,7 +156,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bham["cltmissilea"] = "blessedhammer"
     bham["cltmissileb"] = "blessedhammer"
     bham["cltmissilec"] = "blessedhammer"
-    bham["aurarangecalc"] = "par1"
+    bham["aurarangecalc"] = cond_fire_add("par1", 4)
     bham["localdelay"] = "25"      # 1.0s casting delay
     bham["manashift"] = "8"
     bham["mana"] = "15"            # 15 Mana at sLvl 1 -> 34 Mana at sLvl 20
@@ -163,9 +175,9 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bham["*Param6 Description"] = "Stun Duration synergy"
     bham["Param8"] = "12"          # +12% Magic Damage per Sanctuary blvl
     bham["*Param8 Description"] = "Damage synergy"
-    bham["calc1"] = "ln34/par5"
+    bham["calc1"] = cond_ltng_chain("ln34/par5")
     bham["*calc1 desc"] = "# of target jump hits"
-    bham["calc4"] = "min(250,par2*(100+skill('Smite'.blvl)*par6)/100)"
+    bham["calc4"] = "min(250," + cond_cold_dur("par2*(100+skill('Smite'.blvl)*par6)/100") + ")"
     bham["*calc4 desc"] = "Stun Length"
     bham["EMin"] = "48"
     bham["EMinLev1"] = "8"
@@ -190,7 +202,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     conv["lvlmana"] = "1"
     conv["Param1"] = "300"  # 12s baseline (300 frames)
     conv["Param2"] = "12"   # +0.5s per level (exact via auralencalc)
-    conv["auralencalc"] = "300+(lvl-1)*25/2"
+    conv["auralencalc"] = cond_cold_dur("300+(lvl-1)*25/2")
     conv["ToHit"] = "50"
     conv["LevToHit"] = "15"
     conv["SrcDam"] = "64"
@@ -207,6 +219,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hshd["lvlmana"] = "2"
     hshd["Param1"] = "625"  # 25s baseline duration (bumped from 15s)
     hshd["Param2"] = "75"   # +3s per level (bumped from +2s/lvl -> 82s at Lvl 20)
+    hshd["auralencalc"] = cond_cold_dur("ln12")
     hshd["Param3"] = "0"    # 0% base Defense
     hshd["Param4"] = "0"    # 0% Defense per level
     hshd["Param5"] = "10"   # Vanilla Block % Min (restored to 10)
@@ -267,7 +280,7 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     foh["aurarangecalc"] = "10"    # 6.6-yard bolt target search radius (down from 20 = 13.3 yards)
     foh["Param1"] = "3"            # # of Holy Bolt Missiles created baseline (down from 6)
     foh["Param2"] = "1"            # +1 bolt per 4 levels via calc4
-    foh["calc4"] = "par1+(lvl-1)/4"
+    foh["calc4"] = f"par1+(lvl-1)/4+(({COND_STANCE}==2)?(({COND_ARC}>=55)?2:(({COND_ARC}>=25)?1:0)):0)"
     foh["Param8"] = "18"           # 18% Lightning synergy from Holy Shock (up from 12%)
     foh["EMin"] = "220"
     foh["EMinLev1"] = "36"
@@ -329,8 +342,8 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hfire["mana"] = "2"
     hfire["lvlmana"] = "1"
     hfire["Param1"] = "6"
-    hfire["aurarangecalc"] = f"{elem_aura_range} + ((stat('skill_enchant'.accr) == 1) ? 4 : 0)"
-    hfire["perdelay"] = "(stat('skill_enchant'.accr) == 1) ? 35 : 50"
+    hfire["aurarangecalc"] = f"{elem_aura_range} + {cond_elem_exp(1, 4)}"
+    hfire["perdelay"] = f"50 - {cond_elem_arc(1, 15)}"
     hfire["Param7"] = "12"
     hfire["Param8"] = "6"
     hfire["EMin"] = "4"
@@ -427,10 +440,10 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hfrz["mana"] = "2"
     hfrz["lvlmana"] = "1"
     hfrz["Param1"] = "6"
-    hfrz["aurarangecalc"] = f"{elem_aura_range} + ((stat('skill_enchant'.accr) == 3) ? 4 : 0)"
-    hfrz["perdelay"] = "(stat('skill_enchant'.accr) == 3) ? 35 : 50"
-    hfrz["aurastatcalc1"] = "0 - (dm34 + ((stat('skill_enchant'.accr) == 3) ? 15 : 0))"
-    hfrz["aurastatcalc2"] = "0 - (dm34 + ((stat('skill_enchant'.accr) == 3) ? 15 : 0))"
+    hfrz["aurarangecalc"] = f"{elem_aura_range} + {cond_elem_exp(3, 4)}"
+    hfrz["perdelay"] = f"50 - {cond_elem_arc(3, 15)}"
+    hfrz["aurastatcalc1"] = f"0 - (dm34 + {cond_elem_sta(3, 15)})"
+    hfrz["aurastatcalc2"] = f"0 - (dm34 + {cond_elem_sta(3, 15)})"
     hfrz["Param4"] = "50"
     hfrz["Param7"] = "12"
     hfrz["Param8"] = "6"
@@ -460,8 +473,8 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     hshk["mana"] = "2"
     hshk["lvlmana"] = "1"
     hshk["Param1"] = "6"
-    hshk["aurarangecalc"] = f"{elem_aura_range} + ((stat('skill_enchant'.accr) == 2) ? 4 : 0)"
-    hshk["perdelay"] = "(stat('skill_enchant'.accr) == 2) ? 35 : 50"
+    hshk["aurarangecalc"] = f"{elem_aura_range} + {cond_elem_exp(2, 4)}"
+    hshk["perdelay"] = f"50 - {cond_elem_arc(2, 15)}"
     hshk["Param7"] = "12"
     hshk["Param8"] = "6"
     hshk["EMin"] = "1"
@@ -586,8 +599,6 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     convic["passivecalc2"] = "min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)"
     convic["passivestat3"] = "passive_ltng_mastery"
     convic["passivecalc3"] = "min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)"
-    convic["passivestat3"] = ""
-    convic["passivecalc3"] = ""
 
     # -------------------------------------------------------------------------
     # 3. DEFENSIVE AURAS
@@ -785,6 +796,21 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     #      - 10%..25%  Mana -> 50%..75%
     #      -  0%..10%  Mana ->  0%..50% (extinguished at 0% Mana!)
     # -------------------------------------------------------------------------
+    # Fire Conduction (Expansion): +33% radius on all non-elemental Paladin auras (+4 sub-tiles on Sanctuary)
+    _ELEM_PAL_AURAS = {"Holy Fire", "Holy Freeze", "Holy Shock"}
+    for sk_row in by_name.values():
+        if sk_row.get("charclass") != "pal" or sk_row.get("aura") != "1":
+            continue
+        sk_name = sk_row.get("skill", "")
+        if sk_name in _ELEM_PAL_AURAS:
+            continue
+        ar = sk_row.get("aurarangecalc", "").strip()
+        if ar:
+            if sk_name == "Sanctuary":
+                sk_row["aurarangecalc"] = cond_fire_add(ar, 4)
+            else:
+                sk_row["aurarangecalc"] = cond_fire_radius(ar)
+
     _MANA_PCT = "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))"
     _DEVOTION_PCT = "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))"
     for sk_row in by_name.values():
@@ -936,7 +962,7 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     elem_aura_range_yds = "min(20,par1+(lvl-1)*3/4)*2"
     hfire = by_desc["holy fire"]
     _set_dsc_line(hfire, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
-    _set_dsc_line(hfire, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "(min(20,par1+(lvl-1)*3/4)+((stat('skill_enchant'.accr)==1)?4:0))*2", "3")
+    _set_dsc_line(hfire, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", f"(min(20,par1+(lvl-1)*3/4)+{cond_elem_exp(1, 4)})*2", "3")
     _set_dsc_line(hfire, "desc", 3, "75", "StrSkill5", "", "enma", "exma*((100+par6)/100)")
     _set_dsc_line(hfire, "desc", 4, "75", "StrSkillFireDamageToYourAttack", "", "edns*par5/256", "edxs*par5/256")
     _set_dsc_line(hfire, "dsc2", 2, "", "", "", "", "")
@@ -962,15 +988,15 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
 
     hfrz = by_desc["holy freeze"]
     _set_dsc_line(hfrz, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
-    _set_dsc_line(hfrz, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "(min(20,par1+(lvl-1)*3/4)+((stat('skill_enchant'.accr)==3)?4:0))*2", "3")
-    _set_dsc_line(hfrz, "desc", 3, "74", "StrSkill77", "", "dm34+((stat('skill_enchant'.accr)==3)?15:0)", "")
+    _set_dsc_line(hfrz, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", f"(min(20,par1+(lvl-1)*3/4)+{cond_elem_exp(3, 4)})*2", "3")
+    _set_dsc_line(hfrz, "desc", 3, "74", "StrSkill77", "", f"dm34+{cond_elem_sta(3, 15)}", "")
     _set_dsc_line(hfrz, "desc", 4, "75", "StrSkill6", "", "enma", "exma*((100+par6)/100)")
     _set_dsc_line(hfrz, "desc", 5, "75", "StrSkillColdDamageToYourAttack", "", "edns*par5/256", "edxs*par5/256")
     _set_dsc_line(hfrz, "dsc2", 2, "", "", "", "", "")
 
     hshk = by_desc["holy shock"]
     _set_dsc_line(hshk, "desc", 1, "36", "StrSkill34", "", "usmc", "512")
-    _set_dsc_line(hshk, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", "(min(20,par1+(lvl-1)*3/4)+((stat('skill_enchant'.accr)==2)?4:0))*2", "3")
+    _set_dsc_line(hshk, "desc", 2, "36", "StrSkillRadiusSingular", "StrSkill18", f"(min(20,par1+(lvl-1)*3/4)+{cond_elem_exp(2, 4)})*2", "3")
     _set_dsc_line(hshk, "desc", 3, "75", "StrSkill7", "", "enma", "exma*((100+par6)/100)")
     _set_dsc_line(hshk, "desc", 4, "75", "strEskilllighttoattack", "", "edns/256", "edxs*par5/256")
     _set_dsc_line(hshk, "dsc2", 2, "", "", "", "", "")
@@ -991,9 +1017,9 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(convic, "desc", 4, "74", "Cgslow", "", "clc3", "")
     _set_dsc_line(convic, "desc", 5, "", "", "", "", "")
     _set_dsc_line(convic, "desc", 6, "", "", "", "", "")
-    _set_dsc_line(convic, "dsc2", 1, "74", "ModConvicFireDmg", "", "min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)", "")
-    _set_dsc_line(convic, "dsc2", 2, "74", "ModConvicColdDmg", "", "min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)", "")
-    _set_dsc_line(convic, "dsc2", 3, "74", "ModConvicLtngDmg", "", "min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)", "")
+    _set_dsc_line(convic, "dsc2", 1, "75", "ModConvicFireDmg", "", "min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)", "(min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)*2)/3")
+    _set_dsc_line(convic, "dsc2", 2, "75", "ModConvicColdDmg", "", "min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)", "(min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)*2)/3")
+    _set_dsc_line(convic, "dsc2", 3, "75", "ModConvicLtngDmg", "", "min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)", "(min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)*2)/3")
     _clear_dsc3_synergies(convic, "skillname123")
     _set_dsc_line(convic, "dsc3", 2, "76", "Firedplev", "skillname100", "min(50,2+clc1*6/5)/20", "")
     _set_dsc_line(convic, "dsc3", 3, "76", "Colddplev", "skillname105", "min(50,2+clc1*6/5)/20", "")
@@ -1097,7 +1123,11 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
         "holy freeze": ("desccalca2", "desccalca3"),
         "vigor": ("desccalca2",),
         "fanaticism": ("desccalca2",),
-        "conviction": ("desccalca2", "desccalca3", "desccalca4", "dsc2calca1", "dsc2calca2", "dsc2calca3"),
+        "conviction": (
+            "desccalca2", "desccalca3", "desccalca4",
+            "dsc2calca1", "dsc2calca2", "dsc2calca3",
+            "dsc2calcb1", "dsc2calcb2", "dsc2calcb3",
+        ),
         "salvation": ("desccalca2", "desccalca3"),
     }
     for sd_key, cols in _aura_tooltip_scales.items():
@@ -1195,7 +1225,7 @@ def apply_paladin_missiles(
             fnova["pCltHitFunc"] = ""
             fnova["ClientCol"] = "1"
             fnova["ClientSend"] = "1"
-            fnova["Range"] = "(stat('skill_enchant'.accr) == 2) ? 10 : 0"
+            fnova["Range"] = f"({COND_STANCE} == 2) ? max(3, ({COND_EXP} * 10) / 50) : 0"
             fnova["LevRange"] = ""
             fnova["Vel"] = "14"
             fnova["MaxVel"] = "14"
@@ -1255,9 +1285,9 @@ PALADIN_STRING_UPDATES: List[Tuple[int, str, str]] = [
         (61025, "ModActivePctPDR", "Physical Damage Reduced by %d%%"),
         (61026, "StrSkillMagicDamageToYourAttack", "Magic Damage To Your Attack: %d-%d"),
         (61027, "ModActiveFlatMDR", "Magic Damage Reduced by %d"),
-        (61028, "ModConvicFireDmg", "Fire Skill Damage: +%d%%"),
-        (61029, "ModConvicColdDmg", "Cold Skill Damage: +%d%%"),
-        (61100, "ModConvicLtngDmg", "Lightning Skill Damage: +%d%%"),
+        (61028, "ModConvicFireDmg", "Your / Party Fire Damage: +%d%% / +%d%%"),
+        (61029, "ModConvicColdDmg", "Your / Party Cold Damage: +%d%% / +%d%%"),
+        (61100, "ModConvicLtngDmg", "Your / Party Lightning Damage: +%d%% / +%d%%"),
         (61101, "ModConvicDefPerHit", "-%d to Monster Defense Per Hit"),
         (0, "skillsd124", "aura - restores life and mana after each kill"),
         (0, "skillld124", "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"),

@@ -41,7 +41,7 @@
             "MaxVel": "40",
             "VelLev": "4",
             "Accel": "1500",
-            "Range": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((15 + (((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? 15 : 0)) * (100 + stat('lifetap_level'.accr)) * 3 / 400)",
+            "Range": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((15 + (((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 15 : 0)) * (100 + stat('lifetap_level'.accr)) * 3 / 400)",
             "ExplosionMissile": "fireexplode",
             "HitSubMissile1": "",
             "CltHitSubMissile1": "cinder_lance_crater"
@@ -49,7 +49,7 @@
           "cinder_lance_crater": {
             "_clone": "erruption center",
             "CelFile": "null",
-            "Range": "((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? 6 : 0",
+            "Range": "((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 6 : 0",
             "Skill": "Fire Bolt",
             "SubMissile1": "cinder_lance_blast",
             "CltSubMissile1": "cinder_lance_blast",
@@ -58,7 +58,7 @@
           "cinder_lance_blast": {
             "_clone": "explodingarrowexp",
             "InitSteps": "1",
-            "Range": "((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? 16 : 0",
+            "Range": "((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 16 : 0",
             "CollideType": "0"
           }
         },
@@ -67,12 +67,12 @@
             "manashift": "7",
             "mana": "6",
             "lvlmana": "1",
-            "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : (((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? (4 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600) : 1)",
+            "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : (((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? (4 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600) : 1)",
             "*calc1 desc": "Explosion Radius (1 single-target base, 4 in Conflagration)",
-            "calc2": "((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? 1 : 99",
+            "calc2": "((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 1 : 99",
             "*calc2 desc": "Crater explosion spawn rate in frames",
-            "cltcalc1": "((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? (3 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600) : 0",
-            "cltcalc2": "((stat('skill_handofathena'.accr) + ((stat('skill_enchant'.accr) == 1) ? 1 : 0)) > 0) ? 1 : 99",
+            "cltcalc1": "((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? (3 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600) : 0",
+            "cltcalc2": "((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 1 : 99",
             "HitShift": "8",
             "EType": "fire",
             "EMin": "6",

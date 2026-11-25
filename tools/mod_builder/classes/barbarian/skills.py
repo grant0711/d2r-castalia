@@ -11,12 +11,15 @@ Barbarian 30-Skill Overhaul ("The Stamina Pendulum"):
 from typing import Dict, List, Tuple
 
 from mod_builder.classes.common import (
+    COND_COLD_MULT,
     RAMP12,
     RAMP34,
     RAMP56,
     _clear_dsc3_synergies,
     _curve_lev_brackets,
     _set_dsc_line,
+    cond_cold_dur,
+    cond_fire_radius,
     parse_int,
     scale_int,
 )
@@ -58,7 +61,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     leap["minmana"] = "0"
     leap["mana"] = "0"
     leap["lvlmana"] = "0"
-    leap["calc1"] = f"2+((ln34-2)*({RESTED_PCT}))/100"
+    leap["calc1"] = cond_fire_radius(f"2+((ln34-2)*({RESTED_PCT}))/100")
     leap["calc2"] = f"90+((par7-90)*({RESTED_PCT}))/100"
     leap["calc3"] = f"6+((dm12-6)*({RESTED_PCT}))/100"
     leap["*calc3 desc"] = "Stamina-scaled Leap Range"
@@ -94,11 +97,11 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     lpat["calc1"] = f"((clc3+50)*({RESTED_PCT}))/100-50"
     lpat["calc2"] = f"90+((par7-90)*({RESTED_PCT}))/100"
     # AoE Landing Stun (calc4) scales linearly 100%->33% Stamina, hard cutoff (0) below 33% Stamina.
-    lpat["calc4"] = f"(({RESTED_PCT})>=33)?(par6*({RESTED_PCT}))/100:0"
+    lpat["calc4"] = f"(({RESTED_PCT})>=33)?min(250,((par6*({RESTED_PCT}))/100*{COND_COLD_MULT})/100):0"
     lpat["*calc4 desc"] = "Landing Stun Length (100%->33% Stamina, 0 below 33%)"
     lpat["calc5"] = by_name.get("Bar Stamina Reflex", {}).get("*Id", "432")  # Dynamically updated by append_barbarian_helper_skills
     lpat["*calc5 desc"] = "Skill ID to cast when leap ends"
-    lpat["calc6"] = "10"    # sLvl 10 Bar Stamina Reflex (strong single-target/pack Stamina drain on landing)
+    lpat["calc6"] = "12"    # sLvl 12 Bar Stamina Reflex (EMin=16, radius=5: dialed down from sLvl 10/radius 9)
     lpat["*calc6 desc"] = "Level of cast skill ID"
     lpat["DmgSymPerCalc"] = f"((75+skill('Leap'.blvl)*par8)*({RESTED_PCT}))/100-75"
 
@@ -119,7 +122,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ww["Param8"] = "8"    # +8%/lvl Damage synergy from Leap and Leap Attack
     ww["*Param8 Description"] = "Damage % synergy from Leap and Leap Attack"
     ww["calc1"] = f"(({RAMP12}+(skill('Leap'.blvl)+skill('Leap Attack'.blvl))*par8+50)*({RESTED_PCT}))/100-50"
-    ww["calc2"] = "2"     # sLvl 2 Bar Stamina Reflex (2.67x stronger Stamina drain than sLvl 1 @ EMin=6)
+    ww["calc2"] = "5"     # sLvl 5 Bar Stamina Reflex (EMin=28, radius=5: dialed up from sLvl 2/radius 4)
     ww["*calc2 desc"] = "Escalation 1 Skill Level"
     ww["calc3"] = "100"
     ww["*calc3 desc"] = "Chance to Cast Escalation 1 Skill"
@@ -232,7 +235,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     stun["ELevLen1"] = "5"
     stun["ELevLen2"] = "5"
     stun["ELevLen3"] = "5"
-    stun["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?((150*({RESTED_PCT}))/100-100):-100"
+    stun["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?(((150*({RESTED_PCT}))/100*{COND_COLD_MULT})/100-100):-100"
 
     # Rested Concentrate (Id 144, Col 1 Row 3, Req Lvl 16, requires Bash):
     # Uninterruptible precision strike; both Damage % and Defense % scale UP with current Stamina %.
@@ -343,7 +346,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     fren["aurafilter"] = ""
     fren["auratargetstate"] = ""
     fren["aurarangecalc"] = ""
-    fren["auralencalc"] = "par7"
+    fren["auralencalc"] = cond_cold_dur("par7")
     fren["passivestate"] = ""
     fren["Param1"] = "70"   # Base Damage % baseline (+70% at Lvl 1)
     fren["Param2"] = "10"   # Base Damage % per level (ramped -> +260% at Lvl 20)
@@ -566,7 +569,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     shout["manashift"] = "7"
     shout["mana"] = "10"
     shout["lvlmana"] = "1"
-    shout["auralencalc"] = "ln34"
+    shout["auralencalc"] = cond_cold_dur("ln34")
     shout["Param1"] = "3"    # Flat Physical Damage Reduced baseline (3 at Lvl 1)
     shout["*Param1 Description"] = "Physical Damage Reduced baseline"
     shout["Param2"] = "2"    # Flat Physical Damage Reduced per level (ramped -> 41 at Lvl 20)
@@ -644,7 +647,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bo["manashift"] = "7"
     bo["mana"] = "28"
     bo["lvlmana"] = "1"
-    bo["auralencalc"] = "ln12"
+    bo["auralencalc"] = cond_cold_dur("ln12")
     bo["Param1"] = "500"  # Duration baseline (20 seconds)
     bo["Param2"] = "13"   # Duration per level (+0.52 seconds/lvl -> 29.88s at Lvl 20)
     bo["Param8"] = ""
@@ -682,6 +685,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     howl["manashift"] = "7"
     howl["mana"] = "14"
     howl["lvlmana"] = "1"
+    howl["calc1"] = cond_fire_radius("ln12")
+    howl["calc2"] = cond_cold_dur("ln34")
 
     bcry = by_name["Battle Cry"]
     bcry["reqlevel"] = "24"
@@ -697,6 +702,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bcry["lvlmana"] = "1"
     bcry["Param1"] = "300"  # Duration baseline (12 seconds)
     bcry["Param2"] = "23"   # Duration per level (+0.92 seconds/lvl -> 29.48s at Lvl 20)
+    bcry["auralencalc"] = cond_cold_dur("ln12")
 
     # War Cry (Id 154, Col 2 Row 6, Req Lvl 40, requires Battle Orders + Battle Cry + Bloodlust):
     # Capstone "Shattering Roar" for Tactical, Hybrid, and Berserker Barbarians alike!
@@ -713,7 +719,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     wcry["globaldelay"] = "75"
     wcry["aurafilter"] = "98304"
     wcry["auratargetstate"] = "bar_warcry_debuff"
-    wcry["auralencalc"] = "par3+(lvl-1)*par4"
+    wcry["auralencalc"] = cond_cold_dur("par3+(lvl-1)*par4")
     wcry["aurastat1"] = "damageresist"
     wcry["aurastatcalc1"] = "-clc1"
     wcry["aurastat2"] = "magicresist"
@@ -740,7 +746,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     wcry["*Param8 Description"] = ""
     wcry["calc1"] = "ln56+skill('Battle Cry'.blvl)*par7"
     wcry["*calc1 desc"] = "Enemy Physical & Magic Resistance Reduced %"
-    wcry["calc4"] = "min(250,ln12)"
+    wcry["calc4"] = f"min(250,{cond_cold_dur('ln12')})"
     wcry["*calc4 desc"] = "Stun Length"
     wcry["MinDam"] = "1"
     wcry["MinLevDam1"] = ""
@@ -818,7 +824,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ecry["aurafilter"] = ""
     ecry["aurastate"] = "bar_battle_trance"
     ecry["auratargetstate"] = "bar_battle_trance"
-    ecry["auralencalc"] = "ln34"
+    ecry["auralencalc"] = cond_cold_dur("ln34")
     ecry["aurarangecalc"] = ""
     ecry["aurastat1"] = "maxstamina"
     ecry["aurastatcalc1"] = "clc1*256"
@@ -898,7 +904,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     blust["aurafilter"] = ""
     blust["aurastate"] = "bar_totem_debuff"
     blust["auratargetstate"] = ""
-    blust["auralencalc"] = "par7+(lvl-1)*par8"
+    blust["auralencalc"] = cond_cold_dur("par7+(lvl-1)*par8")
     blust["aurarangecalc"] = ""
     blust["aurastat1"] = "hpregen"
     blust["aurastatcalc1"] = "-(clc5*256)/25"
@@ -1359,7 +1365,7 @@ def append_barbarian_helper_skills(s_headers: List[str], s_rows: List[Dict[str, 
         sk_reflex["aurafilter"] = "3"
         sk_reflex["auratargetstate"] = "bar_stamina_reflex"
         sk_reflex["auralencalc"] = "2"
-        sk_reflex["aurarangecalc"] = "(lvl==10)?9:((lvl==1)?6:4)"
+        sk_reflex["aurarangecalc"] = "(lvl==1)?6:5"
         sk_reflex["aurastat1"] = ""
         sk_reflex["aurastatcalc1"] = ""
         sk_reflex["aurastat2"] = ""

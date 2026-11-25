@@ -36,6 +36,52 @@ RAMP12 = "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2
 RAMP34 = "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)"
 RAMP56 = "(par5+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par6/20)"
 
+# Universal Cross-Class Conduction Helpers (3 independent Sorceress passives transferred via Conduction):
+#   - target0  = stance * 1000 + Expansion (0..50%, from ironmaiden_level * Conduction)
+#   - target1  = 1 + Stasis (0..100%, from conversion_maxhp * Conduction)
+#   - goldlost = 1 + Arc (0..75%, from lifetap_level * Conduction)
+COND_STANCE = "(stat('target0'.accr)/1000)"
+COND_EXP = "(stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)"
+COND_STA = "max(0,stat('target1'.accr)-1)"
+COND_ARC = "max(0,stat('goldlost'.accr)-1)"
+
+COND_FIRE_MULT = f"(100+({COND_EXP}*2)/3)"
+COND_COLD_MULT = f"(100+{COND_STA}/2)"
+COND_LTNG_CHAIN2 = f"(({COND_ARC}>=55)?2:(({COND_ARC}>=25)?1:0))"
+COND_LTNG_STRIKE1 = f"(({COND_ARC}>=40)?1:0)"
+
+
+def cond_fire_radius(expr: str) -> str:
+    return f"(({expr})*{COND_FIRE_MULT})/100"
+
+
+def cond_fire_add(expr: str, max_add: int = 4) -> str:
+    return f"(({expr})+({COND_EXP}*{max_add})/50)"
+
+
+def cond_cold_dur(expr: str) -> str:
+    return f"(({expr})*{COND_COLD_MULT})/100"
+
+
+def cond_ltng_chain(expr: str) -> str:
+    return f"(({expr})+{COND_LTNG_CHAIN2})"
+
+
+def cond_ltng_strike(expr: str) -> str:
+    return f"(({expr})+{COND_LTNG_STRIKE1})"
+
+
+def cond_elem_exp(stance_id: int, max_add: int) -> str:
+    return f"(({COND_STANCE}=={stance_id})?(({COND_EXP}*{max_add})/50):0)"
+
+
+def cond_elem_arc(stance_id: int, max_val: int) -> str:
+    return f"(({COND_STANCE}=={stance_id})?(({COND_ARC}*{max_val})/75):0)"
+
+
+def cond_elem_sta(stance_id: int, max_val: int) -> str:
+    return f"(({COND_STANCE}=={stance_id})?(({COND_STA}*{max_val})/100):0)"
+
 
 def _curve_lev_brackets(
     row: Dict[str, str],

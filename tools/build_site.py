@@ -494,6 +494,8 @@ def _render_skilldesc_line(sk: dict, sd: dict, miss_map: dict, s_map: dict, fn: 
         b1 = _eval_skill_expr(sk, sd, miss_map, cb, 1)
         a20 = _eval_skill_expr(sk, sd, miss_map, ca, 20)
         b20 = _eval_skill_expr(sk, sd, miss_map, cb, 20)
+        if a1 == 0 and b1 == 0 and a20 == 0 and b20 == 0:
+            return ""
         tmpl = s_a.replace("%%", "%")
         m_range = re.search(r"([+-]?)(%\+?d)-(%\+?d)(%?)", tmpl)
         if m_range:
@@ -715,37 +717,39 @@ def build_site() -> str:
         "pal": (
             '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
             '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE PALADIN &mdash; TEMPLAR OF LIVING AURAS &amp; TACTICAL STEEL</div>'
-            '<p style="margin:0 0 8px 0;">In Castalia, a Paladin\'s auras are no longer effortless background stat sticks &mdash; they are <b>living prayers that demand discipline</b>. '
-            'Sustaining an active aura now draws steady mana upkeep, turning Energy, mana regeneration, and <b>Meditation</b> or <b>Redemption</b> into real tactical decisions, '
-            'while investing hard points into key auras permanently embeds a subtle passive blessing into the Paladin himself. <b>Conviction</b> no longer erases enemy resistances for free; '
-            'instead, it empowers the party\'s elemental strikes based on his Resistance Auras while shattering monster defenses in battle.</p>'
-            '<p style="margin:0;">His martial arts have been reshaped around deliberate, physical combat. <b>Vengeance</b> now sweeps through enemies in a wide <b>elemental frontal cleave</b>, '
-            '<b>Blessed Hammer</b> has been reborn as a <b>bouncing Chain Hammer</b> that knocks back and stuns entire packs, and <b>Sanctuary</b> stands alongside <b>Holy Fire</b>, '
-            '<b>Holy Freeze</b>, and <b>Holy Shock</b> as a true magic pulse-and-weapon aura. Whether leading the front line as an elemental cleaver, anchoring a party with defensive prayers, '
-            'or channeling the Light through <b>Holy Bolt</b> and <b>Fist of the Heavens</b>, the Paladin rewards active aura-weaving and smart positioning over mindless hammering.</p>'
+            '<p style="margin:0 0 8px 0;">In Castalia, a Paladin\'s auras are no longer effortless background stat sticks &mdash; they are <b>living prayers governed by Aura Mana Devotion</b>. '
+            'All 17 Mana-upkeep auras draw steady Mana and hold <b>100% power and radius from 50%&ndash;100% Mana</b>, then smoothly degrade in <b>both effectiveness and radius</b> as Mana falls '
+            '(<b>75%</b> at 25% Mana, <b>50%</b> at 10% Mana, extinguishing to <b>0% power and 0-yard radius at 0% Mana</b> &mdash; visibly dropping off teammates when a Paladin runs dry), '
+            'turning Energy, Mana regen, and the 0-Mana recovery stances (<b>Prayer</b>, <b>Meditation</b>, <b>Redemption</b>) into core tactical decisions. '
+            '<b>Conviction</b> empowers Elemental Skill Damage (capped at <b>+50% self / +33% party</b>) while shattering monster defenses.</p>'
+            '<p style="margin:0;">His physical martial arts (<b>Sacrifice</b>, <b>Smite</b>, <b>Charge</b>, and 5-hit <b>Zeal</b>) cost <b>zero Mana</b> and ride Castalia\'s <b>Martial Stamina</b> rules '
+            '(50% &rarr; 100% power with Stamina; stuns cut off below 33% Stamina). <b>Vengeance</b> sweeps in a wide <b>elemental frontal cleave</b>, '
+            '<b>Blessed Hammer</b> is reborn as a <b>bouncing Chain Hammer</b> that knocks back and stuns entire packs, and <b>Sanctuary</b> stands alongside <b>Holy Fire</b>, '
+            '<b>Holy Freeze</b>, and <b>Holy Shock</b> as a true magic pulse-and-weapon aura.</p>'
             '</div>'
         ),
         "bar": (
             '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
             '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE BARBARIAN &mdash; MASTER OF THE STAMINA PENDULUM</div>'
-            '<p style="margin:0 0 8px 0;">The Barbarian of Castalia fights on <b>grit and breath</b>, not mana. His melee attacks cost <b>zero mana</b> and instead ride the rhythm of the '
-            '<b>Stamina Pendulum</b> &mdash; turning his Stamina bar into an active combat resource. When fresh, <b>Well-Rested</b> strikes like <b>Strike</b>, <b>Shield Slam</b>, and '
-            '<b>Concentrate</b> hit with measured force; <b>Stamina Spenders</b> like <b>Leap</b>, <b>Leap Attack</b>, and <b>Whirlwind</b> burn breath for explosive engagements and sweeping momentum; '
-            'and as fatigue sets in, <b>Exhaustion</b> skills like <b>Flurry</b>, <b>Barrage</b>, <b>Frenzy</b>, and <b>Berserk</b> surge in ferocity, rewarding warriors who fight on the edge.</p>'
-            '<p style="margin:0;">His Warcries are no longer passive chores shouted once at a waypoint. Transformed into active combat stances and battlefield roars &mdash; like <b>Second Wind</b>, '
-            '<b>Enduring Cry</b>, and <b>Bloodlust</b> &mdash; they manage his stamina, fuel his Last Stand fury, and keep him pushing forward in the thick of the brawl.</p>'
+            '<p style="margin:0 0 8px 0;">Every martial warrior in Castalia fights on Stamina and pays the price for exhaustion &mdash; but <b>only the Barbarian weaponizes both ends of the bar</b> through the '
+            '<b>Stamina Pendulum</b>. When fresh, <b>Well-Rested</b> strikes (<b>Strike</b>, <b>Shield Slam</b>, <b>Concentrate</b>) hit with maximum precision and force; '
+            '<b>Stamina Spenders</b> (<b>Leap</b>, <b>Leap Attack</b>, <b>Whirlwind</b>) deliberately burn breath for explosive engagements and sweeping momentum; '
+            'and where other fighters falter in fatigue, the Barbarian\'s <b>Exhaustion</b> skills (<b>Flurry</b>, <b>Barrage</b>, <b>Frenzy</b>, <b>Berserk</b>) surge in ferocity, '
+            'while active <b>Bloodlust</b> grants full immunity to global <b>Stamina Fatigue</b> (instantly shaking off prior exhaustion on your next swing).</p>'
+            '<p style="margin:0;">His Warcries are active battlefield roars on a shared 3-second cadence &mdash; <b>Battle Command</b> (party HP burst heal), <b>Second Wind</b> (party Stamina refill), '
+            '<b>Enduring Cry</b> (party Max Stamina), <b>War Cry</b> (AoE stun &amp; -75% Phys/Magic resistance shred), and self-only <b>Bloodlust</b>.</p>'
             '</div>'
         ),
         "ass": (
             '<div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.55;font-size:13px;color:#d8cbb8;">'
             '<div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">THE ASSASSIN &mdash; ALL-WEAPON MARTIAL ARTIST &amp; ORB-FED TACTICIAN</div>'
-            '<p style="margin:0 0 8px 0;">Freed from claw-only restrictions, the Assassin of Castalia brings <b>Martial Arts</b> to any melee weapon in her hands. Her five Charge-Up disciplines &mdash; '
-            '<b>Tiger Strike</b>, <b>Flamestrike</b>, <b>Blades of Ice</b>, <b>Electrocute</b>, and <b>Cobra Strike</b> &mdash; no longer expire in seconds: held orbs persist for <b>15 minutes</b>, '
-            'continuously infusing her weapon attacks until she chooses to unleash their devastating 1-, 2-, or 3-charge finishers, or spin straight through enemy packs with <b>Omnislash</b>, '
-            'carrying every held orb bonus without consuming a single charge.</p>'
-            '<p style="margin:0;">Her Traps and Martial Arts are woven into a single seamless loop. Deploying a <b>Shrapnel</b>, <b>Fire</b>, <b>Ice</b>, <b>Lightning</b>, or <b>Soul Siphon Sentry</b> '
-            'feeds her held orbs directly into the trap, supercharging its range, duration, and special payloads &mdash; from micro-stuns and solid freeze to Flash Blind and Life Tap. '
-            'Backed by Shadow techniques like <b>Flow</b>, <b>Shadow Bind</b>, and <b>Caltrops</b>, she rewards fluid rhythm between close-quarters combos and tactical battlefield traps.</p>'
+            '<p style="margin:0 0 8px 0;">Freed from claw-only restrictions, the Assassin brings <b>Martial Arts</b> to any melee weapon in her hands. Her five Charge-Up disciplines &mdash; '
+            '<b>Tiger Strike</b>, <b>Flamestrike</b>, <b>Blades of Ice</b>, <b>Electrocute</b>, and <b>Cobra Strike</b> &mdash; build orbiting charges that last <b>15 minutes</b> and drive a constant, '
+            'on-the-fly tactical choice: <b>(1) Hold your orbs</b> to continuously imbue every attack with that element\'s nature for sustained damage (even spinning through packs with <b>Omnislash</b> without spending a charge), '
+            '<b>(2) Release them immediately</b> via a finisher for a quick, explosive AoE burst right at the Assassin\'s feet (scaling from tight melee bursts at Level 1 to ~1/3 screen at Level 20), or '
+            '<b>(3) Spend them into Sentries</b> (<b>Shrapnel</b>, <b>Fire</b>, <b>Ice</b>, <b>Lightning</b>, or <b>Soul Siphon</b>) to lay supercharged, empowered traps that control the screen with expanded range, duration, and payloads like micro-stuns, solid freeze, Flash Blind, and Life Tap.</p>'
+            '<p style="margin:0;">Backed by zero-Mana Martial Stamina strikes (<b>Tiger Strike</b>, <b>Dragon Talon</b>, <b>Dragon Claw</b>) and Shadow techniques like <b>Flow</b>, <b>Shadow Bind</b>, and <b>Caltrops</b>, '
+            'she rewards fluid, split-second rhythm between holding elemental momentum, detonating at point-blank range, and locking down the battlefield.</p>'
             '</div>'
         ),
         "sor": (
@@ -755,10 +759,9 @@ def build_site() -> str:
             'By weaving between three mutually exclusive <b>Elemental Stances</b> &mdash; the glass-cannon fury of <b>Conflagration</b>, the lightning-fast storm of <b>Overcharge</b>, '
             'and the armored bastion of <b>Cryostasis</b> &mdash; she reshapes her spells mid-fight while accepting steep defensive trade-offs and locking out opposing elements until she shifts her attunement. '
             'With unrestricted Teleport removed, survival comes from sharp positioning and elemental blinks (<b>Flashfire</b>, <b>Phase Step</b>, <b>Glacier Step</b>).</p>'
-            '<p style="margin:0;">Her true breakthrough, however, is <b>Conduction</b> &mdash; a brand-new cooperative art. By projecting her active stance onto a teammate or hireling, '
-            'she does more than share elemental power: she <b>transforms how her allies\' own skills behave</b>, turning a Paladin\'s <i>Fist of the Heavens</i> into a lightning storm, '
-            'widening his <i>Vengeance</i> and elemental auras, and letting an Assassin deploy fully charged sentries and amplified finishers without pause. '
-            'Solo, she is a high-wire elemental duelist; in co-op, she is the catalyst that elevates every elemental fighter beside her.</p>'
+            '<p style="margin:0;">Her true breakthrough is <b>Conduction</b> &mdash; a cooperative art that transfers her matching Elemental Skill Damage (up to <b>+30%</b>) '
+            'alongside her three independent cross-tree passives (<b>Expansion</b> radius, <b>Stasis</b> duration/stun, and <b>Arc</b> chains/strikes/pulse tempo) to any teammate or hireling, '
+            'transforming how Paladin, Barbarian, and Assassin skills behave across the entire battlefield.</p>'
             '</div>'
         ),
     }
@@ -978,31 +981,55 @@ def build_site() -> str:
                 f'</table>'
             )
 
+        wp_options_html = (
+            '<optgroup label="Normal Difficulty">'
+            '<option value="a1n" selected>Normal — Act 1 (+0 quest pts)</option>'
+            '<option value="a2n">Normal — Act 2 (+1 quest pt)</option>'
+            '<option value="a3n">Normal — Act 3 (+2 quest pts)</option>'
+            '<option value="a4n">Normal — Act 4 (+2 quest pts)</option>'
+            '<option value="a5n">Normal — Act 5 (+4 quest pts)</option>'
+            '</optgroup>'
+            '<optgroup label="Nightmare Difficulty">'
+            '<option value="a1nm">Nightmare — Act 1 (+4 quest pts)</option>'
+            '<option value="a2nm">Nightmare — Act 2 (+5 quest pts)</option>'
+            '<option value="a3nm">Nightmare — Act 3 (+6 quest pts)</option>'
+            '<option value="a4nm">Nightmare — Act 4 (+6 quest pts)</option>'
+            '<option value="a5nm">Nightmare — Act 5 (+8 quest pts)</option>'
+            '</optgroup>'
+            '<optgroup label="Hell Difficulty">'
+            '<option value="a1h">Hell — Act 1 (+8 quest pts)</option>'
+            '<option value="a2h">Hell — Act 2 (+9 quest pts)</option>'
+            '<option value="a3h">Hell — Act 3 (+10 quest pts)</option>'
+            '<option value="a4h">Hell — Act 4 (+10 quest pts)</option>'
+            '<option value="a5h">Hell — Act 5 (+12 quest pts)</option>'
+            '<option value="all">Hell — All Quests &amp; WPs (+12 quest pts)</option>'
+            '</optgroup>'
+        )
+
         class_sections_html.append(
             f'<div class="tab-panel" id="tab-class-{cls_code}">'
             f'<a name="class-{cls_code}"></a>'
             f'<div class="section-block">'
             f'<div class="section-title-bar">'
-            f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; INTERACTIVE BUILD CALCULATOR</h2>'
-            f'<div class="section-sub">{html.escape(cls_subtitle)} — Hover any icon for live stats; Left-Click to allocate (+1 pt), Right-Click to remove (-1 pt), Shift+Click for 5 pts</div>'
+            f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; CHARACTER BUILDER</h2>'
+            f'<div class="section-sub">{html.escape(cls_subtitle)} — Set Level &amp; Difficulty/Act, allocate skills (Left-Click +1, Right-Click -1, Shift ±5), and Download your ready-to-play .d2s save</div>'
             f'</div>'
             f'{class_lore_html.get(cls_code, "")}'
             f'<div class="calc-hud-bar" id="calc-hud-{cls_code}">'
-            f'  <div class="calc-hud-left">'
-            f'    <span class="calc-stat-box">Required Character Level: <b class="d2-bright-gold" id="calc-clvl-{cls_code}">1</b></span>'
-            f'    <span class="calc-stat-box">Points Spent: <b class="d2-gold" id="calc-pts-{cls_code}">0</b> <span class="d2-dim">(+2 pts / level)</span></span>'
-            f'    <span class="calc-gates" id="calc-gates-{cls_code}">'
-            f'      <span class="gate-pill unlocked" data-gate="1">Lvl 1</span>'
-            f'      <span class="gate-pill" data-gate="8">Lvl 8</span>'
-            f'      <span class="gate-pill" data-gate="16">Lvl 16</span>'
-            f'      <span class="gate-pill" data-gate="24">Lvl 24</span>'
-            f'      <span class="gate-pill" data-gate="32">Lvl 32</span>'
-            f'      <span class="gate-pill" data-gate="40">Lvl 40</span>'
-            f'    </span>'
+            f'  <div class="calc-hud-row">'
+            f'    <label class="calc-stat-box" for="calc-name-{cls_code}">Name: <input type="text" class="calc-name-input" id="calc-name-{cls_code}" data-name-cls="{cls_code}" maxlength="15" value="" required placeholder="Unique name..." /></label>'
+            f'    <label class="calc-stat-box" for="calc-clvl-{cls_code}">Level: <input type="number" class="calc-clvl-input" id="calc-clvl-{cls_code}" data-clvl-cls="{cls_code}" min="1" max="99" value="1" /></label>'
+            f'    <label class="calc-stat-box" for="calc-wp-{cls_code}">Difficulty / Act: <select class="calc-wp-select" id="calc-wp-{cls_code}" data-wp-cls="{cls_code}">{wp_options_html}</select></label>'
+            f'    <span class="calc-stat-box">Points Available: <b class="d2-bright-gold" id="calc-rem-{cls_code}">0</b> <span class="d2-dim">/ <span id="calc-maxpts-{cls_code}">0</span> <span id="calc-pts-breakdown-{cls_code}">(0 lvl + 0 quest)</span></span></span>'
+            f'    <span class="calc-stat-box">Spent: <b class="d2-gold" id="calc-pts-{cls_code}">0</b></span>'
             f'  </div>'
-            f'  <div class="calc-hud-right">'
-            f'    <span class="calc-msg" id="calc-msg-{cls_code}">Click any unlocked Lvl 1 skill to begin</span>'
-            f'    <button type="button" class="calc-reset-btn" data-reset-cls="{cls_code}">&#8634; Reset Skills</button>'
+            f'  <div class="calc-hud-row calc-hud-actions">'
+            f'    <span class="calc-msg" id="calc-msg-{cls_code}">Set Character Level &amp; Difficulty/Act to unlock skill points, then download your .d2s save</span>'
+            f'    <div class="calc-hud-right">'
+            f'      <button type="button" class="calc-download-btn" data-dl-cls="{cls_code}">&#11015; Download Character (.d2s)</button>'
+            f'      <button type="button" class="calc-reset-btn calc-copy-path-btn" title="Copy %USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\castalia">&#128203; Save Path</button>'
+            f'      <button type="button" class="calc-reset-btn" data-reset-cls="{cls_code}">&#8634; Reset Skills</button>'
+            f'    </div>'
             f'  </div>'
             f'</div>'
             f'<table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">'
@@ -1462,20 +1489,29 @@ def build_site() -> str:
   /* Character Build Calculator HUD Bar */
   .calc-hud-bar {{
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 8px;
     background: linear-gradient(180deg, #1f170f 0%, #100c08 100%);
     border: 2px ridge #6e5838;
-    padding: 7px 12px;
+    padding: 8px 12px;
     margin-bottom: 8px;
+  }}
+  .calc-hud-row {{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     gap: 8px;
+  }}
+  .calc-hud-actions {{
+    justify-content: space-between;
+    border-top: 1px solid #352919;
+    padding-top: 7px;
   }}
   .calc-hud-left, .calc-hud-right {{
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }}
   .calc-stat-box {{
     background-color: #0b0907;
@@ -1483,6 +1519,60 @@ def build_site() -> str:
     padding: 3px 9px;
     font-size: 12px;
     color: #d4c8b0;
+  }}
+  .calc-name-input {{
+    background-color: #16110b;
+    border: 1px solid #8c734b;
+    color: #f0d890;
+    font-weight: bold;
+    font-size: 12px;
+    width: 105px;
+    padding: 1px 6px;
+    margin-left: 4px;
+  }}
+  .calc-clvl-input {{
+    background-color: #16110b;
+    border: 1px solid #8c734b;
+    color: #f0d890;
+    font-weight: bold;
+    font-size: 12px;
+    width: 48px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    text-align: center;
+  }}
+  .calc-wp-select {{
+    background-color: #16110b;
+    border: 1px solid #8c734b;
+    color: #f0d890;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px 5px;
+    margin-left: 4px;
+  }}
+  .calc-name-input:focus, .calc-clvl-input:focus, .calc-wp-select:focus {{
+    outline: none;
+    border-color: #f0d890;
+    box-shadow: 0 0 4px rgba(240, 216, 144, 0.4);
+  }}
+  .calc-download-btn {{
+    background: linear-gradient(180deg, #4b3419 0%, #261a0c 100%);
+    border: 2px ridge #c7b377;
+    color: #f0d890;
+    font-family: "Exocet", "Cinzel", "Palatino Linotype", Georgia, serif;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }}
+  .calc-download-btn:hover {{
+    background: linear-gradient(180deg, #634420 0%, #332210 100%);
+    color: #ffffff;
+  }}
+  .calc-over-budget {{
+    color: #ff6b6b !important;
   }}
   .calc-gates {{
     display: inline-flex;
@@ -1496,6 +1586,11 @@ def build_site() -> str:
     font-size: 10px;
     font-weight: bold;
     padding: 2px 6px;
+    cursor: pointer;
+  }}
+  .gate-pill:hover {{
+    border-color: #b89860;
+    color: #f0d890;
   }}
   .gate-pill.unlocked {{
     background-color: #291e10;
@@ -1679,13 +1774,13 @@ def build_site() -> str:
 <!-- TOP ARREAT SUMMIT NAVIGATION TABS -->
 <div class="top-tab-bar" id="top-tab-bar">
   <a href="#overview" class="top-tab-btn active" data-tab="tab-overview">&#9876; Overview &amp; Cube</a>
-  <a href="#char-generator" class="top-tab-btn" data-tab="tab-chargen">&#11015; Character Generator (.d2s)</a>
   <a href="#class-pal" class="top-tab-btn" data-tab="tab-class-pal">Paladin</a>
   <a href="#class-bar" class="top-tab-btn" data-tab="tab-class-bar">Barbarian</a>
   <a href="#class-ass" class="top-tab-btn" data-tab="tab-class-ass">Assassin</a>
   <a href="#class-sor" class="top-tab-btn" data-tab="tab-class-sor">Sorceress</a>
   <a href="#gems-skulls" class="top-tab-btn" data-tab="tab-items">&#9874; Gems &amp; 33 Runes</a>
   <a href="#monsters" class="top-tab-btn" data-tab="tab-world">Monsters &amp; Mercs</a>
+  <a href="#coop" class="top-tab-btn" data-tab="tab-coop">&#9876; Co-Op Design</a>
 </div>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -1696,13 +1791,12 @@ def build_site() -> str:
       <div class="nav-box-hdr">Getting Started</div>
       <ul class="nav-list">
         <li><a href="#overview" data-tab-link="tab-overview">Overview &amp; 7 Cube Recipes</a></li>
-        <li><a href="#char-generator" data-tab-link="tab-chargen"><b class="d2-bright-gold">Join Campaign (.d2s)</b></a></li>
         <li><a href="#philosophy" data-tab-link="tab-overview">Design Philosophy</a></li>
       </ul>
     </div>
 
     <div class="nav-box">
-      <div class="nav-box-hdr">Class Calculators</div>
+      <div class="nav-box-hdr">Class Calculators &amp; .d2s</div>
       <ul class="nav-list">
         <li><a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-gold">Paladin</b> (30 Skills)</a></li>
         <li><a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-gold">Barbarian</b> (30 Skills)</a></li>
@@ -1718,6 +1812,7 @@ def build_site() -> str:
         <li><a href="#runes-33" data-tab-link="tab-items">The 33 Semantic Runes</a></li>
         <li><a href="#monsters" data-tab-link="tab-world">4 Monster Archetypes</a></li>
         <li><a href="#mercenaries" data-tab-link="tab-world">10-Slot Mercenaries</a></li>
+        <li><a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design &amp; Roadmap</b></a></li>
       </ul>
     </div>
 
@@ -1736,17 +1831,11 @@ def build_site() -> str:
     <a name="quickstart"></a>
     <div class="section-block">
       <div class="section-title-bar">
-        <h2>QUICK START: WHAT TO EXPECT IN SANCTUARY</h2>
-        <div class="section-sub">A grounded, tactical overhaul built for solo purists and co-op expeditions</div>
+        <h2>WELCOME TO CASTALIA</h2>
       </div>
 
       <div class="quote-box">
-        <p style="margin-top:0;"><b>Castalia</b> is built for <b>veteran Diablo II players</b> who want to experiment with a reimagined skill and resource economy—experiencing a more grounded, tactical version of <i>Diablo II</i> rather than an overpowered power-fantasy.</p>
-        <ul style="margin-bottom:0;">
-          <li><b>Playthrough-Focused (Solo or Co-op):</b> Designed to be played alone or with friends as a complete expedition from Act 1 Normal through Act 5 Hell. Need a starter character to join a friend's game? Open the <a href="#char-generator" data-tab-link="tab-chargen"><b class="d2-bright-gold">Character Generator (.d2s)</b></a> tab above.</li>
-          <li><b>What You See Is How It Works:</b> Every monster prints its <span class="d2-gold">elemental vulnerability, resistance, and combat trait</span> directly beneath its health bar. Physical silhouettes tell the truth: if a monster is <b>small</b>, it is fast, numerous, and fragile; if it is <b>huge</b>, it is slow, solitary, and hits like a truck.</li>
-          <li><b>Diegetic Item Archetypes:</b> Every piece of gear behaves like what it actually is—and rolls affixes to match. Light armor and bucklers lean into agility, stamina, and casting speed; heavy plate and tower shields anchor raw defense, strength, and damage reduction at the cost of weight; blunt weapons crush with raw force while daggers and bows favor speed and precision; and caster plates, masks, and bone gear naturally attract magical properties. You can read an item's role at a glance and find meaningful upgrades directly out in the world.</li>
-        </ul>
+        <p style="margin:0;"><b>Castalia</b> is a grounded, tactical overhaul of <i>Diablo II: Resurrected</i> built for veteran players who want meaningful resource management, readable combat, and creative crafting rather than a solved power-fantasy. Designed as a cohesive journey from Act 1 Normal through Act 5 Hell &mdash; solo or co-op &mdash; you can plan a build and download a ready-to-play <code>.d2s</code> save directly from any class tab (<a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-bright-gold">Paladin</b></a>, <a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-bright-gold">Barbarian</b></a>, <a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-bright-gold">Assassin</b></a>, or <a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-bright-gold">Sorceress</b></a>), or explore party synergies on the <a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design</b></a> tab.</p>
       </div>
 
       <a name="cube-recipes"></a>
@@ -1801,32 +1890,34 @@ def build_site() -> str:
     <a name="philosophy"></a>
     <div class="section-block">
       <div class="section-title-bar">
-        <h2>CORE DESIGN PRINCIPLES &amp; WORLD RULES</h2>
-        <div class="section-sub">First-principles itemization, an unbroken dungeon frame, and a real Gold standard</div>
+        <h2>THE VISION OF CASTALIA: CORE PILLARS &amp; WORLD RULES</h2>
+        <div class="section-sub">What sets Castalia apart from vanilla Diablo II &mdash; a tighter, more deliberate Sanctuary</div>
       </div>
 
-      <table width="100%" border="1" cellpadding="8" cellspacing="0" bordercolor="#4a3c28" class="arreat-table">
+      <table width="100%" border="1" cellpadding="10" cellspacing="0" bordercolor="#4a3c28" class="arreat-table">
         <tr>
           <td width="50%" valign="top" bgcolor="#0e0b08">
-            <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles Over Flashcards <sup>(1)</sup></h3>
-            <p>Traditional Runewords reward flashcard memorization—looking up arbitrary rune sequences whose individual pieces have little connection to the final result. By stripping away Runewords and giving every Gem, Skull, and Rune a single, consistent rule, Castalia lets you engineer over <b>390,000 crafting combinations</b> from first principles.</p>
+            <h3 class="d2-bright-gold" style="margin-top:0;">1. First Principles &amp; Diegetic Gear <sup>(1)</sup></h3>
+            <p>Runewords are gone. Instead of memorizing wiki flashcards, every Gem, Skull, and Rune follows one consistent, slot-bound rule &mdash; letting you engineer over <b>390,000 crafting combinations</b> from first principles. Every item behaves like what it looks like: light armor favors agility, heavy plate favors protection, blunt weapons deliver raw force, and caster gear channels magic.</p>
 
-            <h3 class="d2-bright-gold">2. Keeping the World Intact &amp; Martial Stamina <sup>(2)</sup></h3>
-            <p>Town Portals, Rejuvenation Potions, and universal <code>Teleport</code> do not exist. Health and Mana potions restore over <b>3.0 seconds</b> on a <b>3.0-second cooldown</b>, and <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> (<i>Thawing, Antidote, Stamina</i>) last <b>5 minutes</b>. In the dungeon, you fight to control <b>Wells</b> (100% refill every 10s) and <b>Recovery Shrines</b> (60s recharge).</p>
-            <p><b>Universal Martial Stamina &amp; Aura Mana:</b> Purely physical skills cost <b>0 Mana</b> and halve in effectiveness at empty Stamina (<code>50% &rarr; 100%</code>), while heavy physical stuns (<i>Smite, Charge, Shield Slam, Leap Attack</i>) scale down to <code>33%</code> Stamina and cut off below <code>33%</code>. Paladin upkeep auras hold <code>100%</code> power above <code>50%</code> Mana, fade smoothly through <code>75%</code> (at <code>25%</code> Mana) and <code>50%</code> (at <code>10%</code> Mana), and extinguish at <code>0%</code> Mana.</p>
+            <h3 class="d2-bright-gold">2. High Signal-to-Noise &amp; Readable Combat <sup>(4)</sup></h3>
+            <p>White junk items are eliminated and overall drop volume is sharply curtailed so that nearly every item hitting the ground is worth inspecting, equipping, or crafting. Every monster displays its <span class="d2-gold">elemental vulnerability, resistance, and combat trait</span> directly beneath its health bar, and silhouettes tell the truth &mdash; stripping away screen clutter and bloat to leave a tighter, simpler, more cohesive world.</p>
+
+            <h3 class="d2-bright-gold">3. An Unbroken Dungeon &amp; Living Resources <sup>(2)(6)</sup></h3>
+            <p>Town Portals, Rejuvenation Potions, and universal <i>Teleport</i> do not exist. Potions heal steadily over time on a short cooldown, <img src="img/items/elixir.png" width="18" height="18" align="absmiddle"> <b>Preparation Elixirs</b> sustain long expeditions, and dungeon <b>Wells</b> and <b>Shrines</b> become vital footholds. Physical martial combat runs on <b>Stamina</b> &mdash; fighting while exhausted dulls your strikes and slows your tempo &mdash; while spells and sustained prayers demand active <b>Mana</b> discipline.</p>
           </td>
           <td width="50%" valign="top" bgcolor="#0e0b08">
-            <h3 class="d2-bright-gold" style="margin-top:0;">3. Every Item Color Has Its Own Crown &amp; No Free Immunity Breakers <sup>(3)</sup></h3>
+            <h3 class="d2-bright-gold" style="margin-top:0;">4. No Dominant Meta &mdash; Real Tradeoffs Everywhere <sup>(3)(5)</sup></h3>
+            <p style="margin-top:0;">Castalia is engineered around <b>non-dominated choices</b> so no single item, element, or playstyle erases the rest:</p>
             <ul>
-              <li><span class="d2-blue">Magic (Blue):</span> 2 affixes max, but rolls <b>1.33x higher single-stat ceilings</b> and exclusive binary traits (<i>Ignore Target's Defense, Knockback, Jeweler's</i>).</li>
-              <li><span class="d2-yellow">Rare (Yellow):</span> Up to 6 affixes with low-level junk tiers pruned out at higher levels.</li>
-              <li><span class="d2-orange">Crafted (Orange):</span> Stamps 1 Gem/Skull (boon + non-offsettable bust) and 2 Runes onto any slot alongside 1–4 random rolls.</li>
-              <li><span class="d2-unique">Uniques</span> &amp; <span class="d2-green">Sets:</span> Distinct cross-class skills, auras, and procs—or distillable into Crafted Jewels.</li>
-              <li><b>No Free Immunity Breakers:</b> Sunder Charms and player <code>-Enemy Elemental Resistance %</code> pierce do not exist; overcoming <code>95%–99%</code> resistant monsters requires a multi-element, physical, or mercenary toolkit.</li>
+              <li><b>Item Rarities:</b> <span class="d2-blue">Magic</span> (highest single-stat ceilings &amp; exclusive traits), <span class="d2-yellow">Rare</span> (broad multi-stat workhorses), <span class="d2-orange">Crafted</span> (deterministic Gem boons with non-offsettable busts + 2 Runes), and <span class="d2-unique">Uniques</span>/<span class="d2-green">Sets</span> (distinct cross-class powers or distillable Jewels) each hold their own crown.</li>
+              <li><b>Gear &amp; Weapon Archetypes:</b> Light, medium, and heavy armor trade agility and stamina for defense and protection; two-handed weapons and staves compete meaningfully against one-handed weapon-and-shield setups.</li>
+              <li><b>Mutually Exclusive Stances &amp; Auras:</b> Classes commit to active, competing stances, warcries, and prayers with real trade-offs rather than stacking every buff passively at once.</li>
+              <li><b>No Free Immunity Breakers:</b> Zero Sunder Charms and zero personal elemental pierce ensure no single-element build solves every encounter &mdash; rewarding hybrid toolkits, mercenaries, and co-op teamwork.</li>
             </ul>
 
-            <h3 class="d2-bright-gold" id="gold-economy">4. The Combat Gold Standard <sup>(4)(5)(6)(7)</sup></h3>
-            <p>Vendors cap sell-back prices at <code>500g / 1,500g / 3,500g</code> so you never haul scrap metal back to town. Gold comes from killing monsters, popping Super Chests, and stacking <b>Gold Find</b>—and is spent on <b>75%-cost Equipment Repairs</b>, <b>Blacksmith's Maluses</b> (scaling with character level at the Gamble screen), <b>Lockbox Keys</b> (<code>5k / 25k / 50k</code>), <b>Charsi's Untempered Malus</b> (<code>100k</code>), and <b>Act-Partitioned Magic Vendors</b>.</p>
+            <h3 class="d2-bright-gold" id="gold-economy">5. The Combat Gold Standard <sup>(7)</sup></h3>
+            <p style="margin-bottom:0;">Low vendor sell caps eliminate hauling scrap back to town. Gold is earned directly from combat, Super Chests, and <b>Gold Find</b> &mdash; and spent on equipment repairs, socketing materials, Lockbox Keys, and Act-partitioned Magic vendors.</p>
           </td>
         </tr>
       </table>
@@ -1837,7 +1928,7 @@ def build_site() -> str:
           <ol style="margin:4px 0 4px 18px; padding:0;">
             <li><b>Combinatorial Grammar:</b> Inspired by Hermann Hesse's <i>Das Glasperlenspiel</i> (<i>The Glass Bead Game</i>, 1943), where a small, transparent alphabet of symbols yields near-infinite combinations without arbitrary exceptions.</li>
             <li><b>The Magic Circle &amp; Diegetic Space:</b> Draws on Johan Huizinga's <i>Homo Ludens</i> (1938) and the concept of the <i>Magic Circle</i>—the fragile boundary that gives play-worlds their emotional gravity so long as instant escape hatches do not break the frame.</li>
-            <li><b>Pareto Frontiers &amp; Non-Dominated Strategies:</b> Rooted in multi-objective game theory and Pareto optimality, ensuring that Magic, Rare, Crafted, and Unique/Set items occupy distinct strengths rather than collapsing into a single dominant meta.</li>
+            <li><b>Pareto Frontiers &amp; Non-Dominated Strategies:</b> Rooted in multi-objective game theory and Pareto optimality, ensuring that item rarities, armor weights, two-handed vs. shield loadouts, mutually exclusive class stances/warcries, and elemental vs. hybrid builds occupy distinct strengths rather than collapsing into a single dominant meta.</li>
             <li><b>Bounded Rationality &amp; Signal-to-Noise:</b> Informed by Herbert Simon's <i>Bounded Rationality</i>, Daniel Kahneman's <i>System 1 / System 2</i> attention model, and Barry Schwartz's <i>The Paradox of Choice</i>.</li>
             <li><b>Loss Aversion &amp; Asymmetric Tradeoffs:</b> Draws on Daniel Kahneman and Amos Tversky's <i>Prospect Theory</i> (1979), using voluntary vulnerabilities (Kiss-Curse items and Elemental Stances) to make build-defining power feel earned.</li>
             <li><b>Homeostatic Flow:</b> Based on Mihaly Csikszentmihalyi's <i>Flow</i> (1990), coupling skill effectiveness to oscillating resource pendulums (Stamina, Aura Mana Upkeep, Held Combo Orbs, and Stance Dials).</li>
@@ -1848,129 +1939,7 @@ def build_site() -> str:
     </div>
     </div>
 
-    <!-- TAB 2: CO-OP CAMPAIGN & CHARACTER SAVE (.D2S) GENERATOR -->
-    <div class="tab-panel" id="tab-chargen">
-    <a name="char-generator"></a>
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>CO-OP CAMPAIGN &amp; STARTER CHARACTER SAVE (<code>.d2s</code>) GENERATOR</h2>
-        <div class="section-sub">Generate a ready-to-play character with a unique party name, tier starter kit, and unlocked waypoints</div>
-      </div>
-
-      <table width="100%" border="1" cellpadding="8" cellspacing="0" bordercolor="#7a633e" class="arreat-table" style="margin-bottom:14px;">
-        <tr bgcolor="#2b1f12">
-          <th colspan="2" align="left" class="table-banner">&#9876; JOIN A CO-OP CAMPAIGN OR GENERATE A STARTER CHARACTER SAVE (<code>.d2s</code>)</th>
-        </tr>
-        <tr>
-          <td width="56%" valign="top" bgcolor="#0e0b08">
-            <div style="margin-bottom:8px; color:#d8ccb8;">
-              Generate a ready-to-play <b>Castalia</b> character save (<code>.d2s</code>) seeded with your unique character name (required so two players never collide in TCP/IP multiplayer), authentic <code>charstats.txt</code> Life/Mana/Stamina pools, unspent Skill &amp; Stat points, completed quest rewards, Personal Stash Gold, and the tier-matched <b>Horadric Cube + Gems/Skulls + Runes</b> starter kit.
-            </div>
-
-            <table width="100%" border="0" cellpadding="4" cellspacing="0" style="font-size:12px;">
-              <tr>
-                <td width="34%"><b class="d2-bright-gold">1. Your Character Name:</b></td>
-                <td>
-                  <input type="text" id="cg-name" maxlength="15" placeholder="Enter unique name (e.g. Alex)"
-                         style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:210px; font-size:12px;">
-                  <span class="d2-dim">(2–15 letters, unique in party)</span>
-                </td>
-              </tr>
-              <tr>
-                <td><b class="d2-bright-gold">2. Character Class:</b></td>
-                <td>
-                  <select id="cg-class" style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:210px; font-size:12px;">
-                    <option value="pal">Paladin (Overhauled — 30 Skills)</option>
-                    <option value="bar">Barbarian (Overhauled — 30 Skills)</option>
-                    <option value="ass">Assassin (Overhauled — 30 Skills)</option>
-                    <option value="sor">Sorceress (Overhauled — 30 Skills)</option>
-                    <option value="ama">Amazon</option>
-                    <option value="nec">Necromancer</option>
-                    <option value="dru">Druid</option>
-                  </select>
-                </td>
-              </tr>
-              <tr>
-                <td><b class="d2-bright-gold">3. Character Level:</b></td>
-                <td>
-                  <input type="number" id="cg-level" min="1" max="99" value="30"
-                         style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:80px; font-size:12px;">
-                  <span class="d2-dim" id="cg-tier-preview">Tier 3 (Normal): Cube, Tome of ID, Normal Gems/Skulls, Lvl 28-38 Runes + 315,000g</span>
-                </td>
-              </tr>
-              <tr>
-                <td><b class="d2-bright-gold">4. Starting Act &amp; Difficulty:</b></td>
-                <td>
-                  <select id="cg-wp" style="background:#1a130b; border:1px solid #8c734b; color:#f0d890; font-weight:bold; padding:4px 8px; width:260px; font-size:12px;">
-                    <optgroup label="Normal Difficulty">
-                      <option value="a1n">Normal — Act 1 (Rogue Encampment)</option>
-                      <option value="a2n">Normal — Act 2 (Lut Gholein)</option>
-                      <option value="a3n">Normal — Act 3 (Kurast Docks)</option>
-                      <option value="a4n">Normal — Act 4 (Pandemonium Fortress)</option>
-                      <option value="a5n" selected>Normal — Act 5 (Harrogath)</option>
-                    </optgroup>
-                    <optgroup label="Nightmare Difficulty">
-                      <option value="a1nm">Nightmare — Act 1 (Rogue Encampment)</option>
-                      <option value="a2nm">Nightmare — Act 2 (Lut Gholein)</option>
-                      <option value="a3nm">Nightmare — Act 3 (Kurast Docks)</option>
-                      <option value="a4nm">Nightmare — Act 4 (Pandemonium Fortress)</option>
-                      <option value="a5nm">Nightmare — Act 5 (Harrogath)</option>
-                    </optgroup>
-                    <optgroup label="Hell Difficulty">
-                      <option value="a1h">Hell — Act 1 (Rogue Encampment)</option>
-                      <option value="a2h">Hell — Act 2 (Lut Gholein)</option>
-                      <option value="a3h">Hell — Act 3 (Kurast Docks)</option>
-                      <option value="a4h">Hell — Act 4 (Pandemonium Fortress)</option>
-                      <option value="a5h">Hell — Act 5 (Harrogath)</option>
-                      <option value="all">Hell — All 39 Waypoints &amp; Quests Completed</option>
-                    </optgroup>
-                  </select>
-                </td>
-              </tr>
-            </table>
-
-            <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <button type="button" id="cg-download-btn"
-                      style="background:linear-gradient(180deg, #4b3419 0%, #261a0c 100%); border:2px ridge #c7b377; color:#f0d890; font-weight:bold; font-size:13px; padding:6px 14px; cursor:pointer;">
-                &#11015; Generate &amp; Save .d2s Character File
-              </button>
-              <button type="button" id="cg-copy-link-btn" class="calc-reset-btn" style="padding:6px 10px;">
-                &#128279; Copy Pre-Filled Invite Link
-              </button>
-              <span id="cg-status-msg" class="d2-gold" style="font-size:11px;"></span>
-            </div>
-            <div style="margin-top:6px;" class="d2-dim">
-              Shareable Pre-Filled URL: <code id="cg-share-url" style="color:#a3957b;">?name=Alex&amp;class=pal&amp;level=30&amp;wp=a5n#char-generator</code>
-            </div>
-          </td>
-
-          <td width="44%" valign="top" bgcolor="#120e0a">
-            <div style="color:#f0d890; font-weight:bold; margin-bottom:6px;">&#128193; WHERE TO SAVE YOUR <code>.d2s</code> FILE (2-SECOND SHORTCUT)</div>
-            <p style="margin-top:0; margin-bottom:6px; font-size:11px; color:#d8ccb8;">
-              Click <b>Copy Windows Save Path</b> below, then when the <b>Save As</b> window opens (or in File Explorer), press <code>Ctrl+L</code>, paste (<code>Ctrl+V</code>), and hit <code>Enter</code> to jump directly into your Castalia save folder:
-            </p>
-            <div style="background:#080604; border:1px solid #5c4b32; padding:6px 8px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px;">
-              <code id="cg-win-path" style="color:#00e600; font-size:11px; word-break:break-all;">%USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\castalia</code>
-              <button type="button" id="cg-copy-win-btn" class="calc-reset-btn" style="white-space:nowrap;">&#128203; Copy Windows Save Path</button>
-            </div>
-            <div style="font-size:11px; color:#a8987e; line-height:1.45;">
-              <b>Automatic Level-Tier Starter Loadout Included:</b>
-              <ul style="margin:4px 0 0 18px; padding:0;">
-                <li><b>Lvl 1–9:</b> 4x Belt Minor Healing Potions (bare fresh start)</li>
-                <li><b>Lvl 10–14 (Chipped):</b> Cube, Tome of ID, 8 Chipped Gems/Skulls, 6 Runes + <code>60,000g</code></li>
-                <li><b>Lvl 15–29 (Flawed):</b> Cube, Tome of ID, 8 Flawed Gems/Skulls, 6 Runes + <code>240,000g</code></li>
-                <li><b>Lvl 30–44 (Normal):</b> Cube, Tome of ID, 8 Normal Gems/Skulls, 6 Runes + <code>315k–535kg</code></li>
-                <li><b>Lvl 45–59 (Flawless):</b> Cube, Tome of ID, 8 Flawless Gems/Skulls, 6 Runes + <code>535k–825kg</code></li>
-                <li><b>Lvl 60+ (Perfect):</b> Cube, Tome of ID, 8 Perfect Gems/Skulls, 6 Runes + <code>1.24M–1.45Mg</code></li>
-              </ul>
-            </div>
-          </td>
-        </tr>
-      </table>
-    </div>
-    </div>
-
-    <!-- TAB 3: GEMS, SKULLS & 33 RUNES -->
+    <!-- TAB 2: GEMS, SKULLS & 33 RUNES -->
     <div class="tab-panel" id="tab-items">
     <a name="gems-skulls"></a>
     <div class="section-block">
@@ -2011,7 +1980,7 @@ def build_site() -> str:
       <a name="runes-33"></a>
       <table width="100%" border="1" cellpadding="4" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">
         <tr bgcolor="#261e14">
-          <th colspan="5" align="left" class="table-banner">THE 33 SEMANTIC RUNES (r01 – r33 &nbsp;|&nbsp; Built Automatically from gems.txt &amp; misc.txt)</th>
+          <th colspan="5" align="left" class="table-banner">THE 33 SEMANTIC RUNES</th>
         </tr>
         <tr bgcolor="#1a140e" class="table-subhdr">
           <th width="8%">Rune</th>
@@ -2099,6 +2068,129 @@ def build_site() -> str:
         </tr>
       </table>
     </div>
+    </div>
+
+    <!-- TAB 5: CO-OP DESIGN & ROADMAP -->
+    <div class="tab-panel" id="tab-coop">
+    <a name="coop"></a>
+    <a name="coop-conduction"></a>
+    <a name="coop-trinity"></a>
+    <a name="coop-roadmap"></a>
+    <a name="coop-expedition"></a>
+
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>CO-OP DESIGN &mdash; TRUE PARTY INTERDEPENDENCE</h2>
+        <div class="section-sub">Moving beyond &ldquo;four solo builds racing down a hallway&rdquo; into reactive, role-driven Diablo II co-op</div>
+      </div>
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">WHY CASTALIA CO-OP FEELS DIFFERENT</div>
+        <p style="margin:0 0 8px 0;">In vanilla <i>Diablo II</i>, co-op quickly collapses into a single Runeword carry teleporting ahead and deleting screens while teammates trail behind for XP. Castalia removes Runewords, Town Portals, and personal elemental/sunder pierce while enforcing real <b>Mana</b> and <b>Stamina</b> economies &mdash; giving fights the breathing room for true party roles, resource sharing, and cross-class combos.</p>
+        <p style="margin:0;"><b class="d2-bright-gold">Core Guardrail:</b> We <b>never</b> silently downgrade a player's skills when friends join. Your character stays 100% consistent and honest in solo or co-op &mdash; instead, co-op shines through <b>active cross-class synergies</b>, <b>distinct support roles</b>, and <b>escalating monster tactics &amp; rewards</b>.</p>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>LIVE NOW &mdash; CONDUCTION &amp; CROSS-CLASS SYNERGIES</h2>
+        <div class="section-sub">A Sorceress's active stance and three independent cross-tree passives reshape how her teammates' skills behave</div>
+      </div>
+      <p style="margin:8px 0;font-size:13px;color:#d8cbb8;">When a Sorceress casts <b class="d2-gold">Conduction</b> on an ally or mercenary, she transfers her matching <b>Elemental Skill Damage</b> (up to <b class="d2-blue">+30%</b>) along with her three independent cross-tree passives &mdash; <b class="d2-gold">Expansion</b> (Radius), <b class="d2-gold">Stasis</b> (Duration &amp; Stun), and <b class="d2-gold">Arc</b> (Chains, Strikes &amp; Pulse Tempo). Even a Fire Sorceress who invests in Stasis passes full duration bonuses to her Barbarian or Paladin partner.</p>
+      <table class="data-tbl" width="100%" cellspacing="1" cellpadding="6">
+        <tr class="tbl-hdr">
+          <th width="14%">Class</th>
+          <th width="28%">Expansion (Radius / AoE)</th>
+          <th width="29%">Stasis (Duration / Stun)</th>
+          <th width="29%">Arc (Chains / Strikes / Tempo)</th>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><b class="d2-gold">Paladin</b></td>
+          <td>Up to <b class="d2-blue">+33%</b> radius on all non-elemental auras; <b class="d2-blue">+4</b> sub-tiles on <i>Blessed Hammer</i>, <i>Sanctuary</i> &amp; matching elemental auras; wider <i>Vengeance</i> cleave &amp; <i>FoH</i> nova.</td>
+          <td>Up to <b class="d2-blue">+50%</b> duration on <i>Holy Shield</i>, <i>Conversion</i>, and <i>Smite / Charge / Blessed Hammer</i> stuns; stronger <i>Holy Freeze</i> slow &amp; <i>Vengeance</i> chill.</td>
+          <td><b class="d2-blue">+1 to +2</b> <i>Blessed Hammer</i> jumps &amp; <i>FoH</i> radial bolts; <b class="d2-blue">+1</b> max <i>Zeal</i> strike; faster elemental aura pulses (<b class="d2-blue">50 &rarr; 35</b> frames).</td>
+        </tr>
+        <tr bgcolor="#18130e">
+          <td><b class="d2-gold">Barbarian</b></td>
+          <td>Up to <b class="d2-blue">+33%</b> knockback &amp; fear radius on <i>Leap</i> and <i>Howl</i>.</td>
+          <td>Up to <b class="d2-blue">+50%</b> duration on <i>Shout</i>, <i>Battle Orders</i>, <i>Enduring Cry</i>, <i>Bloodlust</i>, <i>Battle Cry</i>, <i>War Cry</i> (debuff &amp; stun), <i>Howl</i>, <i>Frenzy</i>, <i>Leap Attack</i> &amp; <i>Shield Slam</i> stuns.</td>
+          <td><span class="d2-dim">Barbarian combat warcries &amp; swings focus on Stasis &amp; Expansion windows.</span></td>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><b class="d2-gold">Assassin</b></td>
+          <td>Up to <b class="d2-blue">+33%</b> radius on <i>Cloak of Shadows</i>, <i>Mind Blast</i>, <i>Dragon Flight</i>, <i>Dragon Tail</i>; wider <i>Blade Shield</i>, <i>Shadow Bind</i>, <i>Shuriken</i> &amp; all 5 Charge-Up releases.</td>
+          <td>Up to <b class="d2-blue">+50%</b> duration on <i>Burst of Speed</i>, <i>Fade</i>, <i>Venom</i>, <i>Blade Shield</i>, <i>Cloak of Shadows</i>, <i>Shadow Bind</i>, <i>Mind Blast</i> stun &amp; charge holds; longer <i>Blades of Ice</i> chill.</td>
+          <td><b class="d2-blue">+1 to +2</b> <i>Shuriken</i> bounces, <i>Shock Web</i> spikes &amp; <i>Soul Siphon</i> shots; <b class="d2-blue">+1</b> <i>Dragon Talon</i> kick; faster <i>Claws of Thunder</i> discharges &amp; extra <i>Fists of Fire</i> fireballs.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>THE 3-CLASS SUPPORT &amp; RESOURCE TRINITY</h2>
+        <div class="section-sub">Three mechanically distinct healers and resource anchors &mdash; no single mandatory support class</div>
+      </div>
+      <table class="data-tbl" width="100%" cellspacing="1" cellpadding="6" style="margin-top:8px;">
+        <tr class="tbl-hdr">
+          <th width="16%">Class</th>
+          <th width="22%">Support Identity</th>
+          <th width="21%">Health Restore</th>
+          <th width="21%">Stamina Restore</th>
+          <th width="20%">Mana Restore</th>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><b class="d2-gold">Paladin</b><br><span class="d2-green">Live</span></td>
+          <td>Sustained Aura &amp; Targeted Cleric <span class="d2-dim">(Aura Mana Devotion visibly shrinks aura radius as Mana drains)</span></td>
+          <td><b>Prayer</b> (steady aura) &amp; <b>Holy Bolt</b> (targeted burst)</td>
+          <td><b>Vigor</b> <span class="d2-dim">(planned tempered +11% &rarr; +75% Stamina Recovery)</span></td>
+          <td><b>Meditation</b> (0-Mana active party recovery stance)</td>
+        </tr>
+        <tr bgcolor="#18130e">
+          <td><b class="d2-gold">Barbarian</b><br><span class="d2-green">Live</span></td>
+          <td>Tactical Burst Warcry Medic <span class="d2-dim">(3.0s shared Warcry CD; War Cry shreds -75% Phys/Magic Res)</span></td>
+          <td><b>Battle Command</b> (instant party HP burst heal)</td>
+          <td><b>Second Wind</b> (instant party Stamina refill countering Stamina Fatigue) &amp; <b>Enduring Cry</b> (+Max Stamina)</td>
+          <td><span class="d2-dim">&mdash;</span></td>
+        </tr>
+        <tr bgcolor="#120e0a">
+          <td><b class="d2-gold">Druid</b><br><span class="d2-blue">Planned</span></td>
+          <td>Stationary, Targetable Resource Totems <span class="d2-dim">(high Mana, long CD, scaling HP/Res/Duration to plant &amp; defend)</span></td>
+          <td><b>Life Totem</b> (party <i>Life After Each Kill</i> aura)</td>
+          <td><span class="d2-dim">&mdash; (remains Paladin / Barbarian domain)</span></td>
+          <td><b>Mana Totem</b> (party <i>Mana After Each Kill</i> aura)</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>CO-OP ROADMAP &mdash; DYNAMIC ENCOUNTERS &amp; LOOT SCALING</h2>
+        <div class="section-sub">Making 2&ndash;8 player games tactically distinct and genuinely more rewarding</div>
+      </div>
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:6px;"><b class="d2-gold">Tactical Monster Skill Scaling (Bypassing Static /players N):</b> Vanilla D2R only scales monster HP (+50%/player) and NM/Hell physical damage (+6.25%/player), leaving monster speed, elemental spells, and attack patterns frozen at P1. By fixing <code>minHP = maxHP</code> on monsters, Act Bosses, Super Uniques, and iconic Hell monster families can read their own <code>maxhp</code> and <code>hitpoints</code> to unlock <b>new secondary sub-missiles, faster speed/attack tempo, extended range/AoE, co-op elemental spell scaling, and &lt;50% HP boss enrage phases</b> as player count grows.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Co-Op Magic Find &amp; Gold Find Bounty (<code>coop_bounty</code>):</b> Broadly applied by Act Bosses, Super Uniques, and normal monsters when <code>maxhp</code> crosses co-op thresholds (P2+ / P4+). Nearby players actively fighting together receive a short-duration <b>+Magic Find &amp; +Gold Find</b> bounty &mdash; rewarding real combat gear over pure MF gear while preventing AFK town leeching.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Scaling Gems, Runes &amp; Boss Drops (<code>Picks + NoDrop</code>):</b> Because Magic Find does not affect Gems or Runes, Champions, Uniques, Chests, and Act Bosses will be re-tuned with higher <code>Picks</code> and calibrated <code>NoDrop</code> &mdash; preserving the <b>exact same solo P1 average</b> while scaling co-op drops up to <b>~2.7&times;</b> in 4-player games.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Clean Co-Op Summon Readability:</b> Upcoming Druid and Necromancer reworks will favor leaner, tougher summon rosters (few Druid beasts + stationary Totems; slightly tighter Necromancer armies) with co-op survivability tuning so group arenas stay readable without body-blocking melee teammates.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>CO-OP ROADMAP &mdash; PURE &ldquo;EXPEDITION MODE&rdquo;</h2>
+        <div class="section-sub">Zero Field Waypoints + Zero Town Portals &mdash; every Act becomes a true party dungeon crawl</div>
+      </div>
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <p style="margin:0 0 8px 0;">Alongside Castalia's existing <b>no-Town-Portal</b> design, an optional <b>Expedition Mode</b> removes all <b>34 field Waypoints</b> (retaining only the <b>5 Town Waypoints</b> for Act-to-Act travel). Stepping out of Town commits your party to a continuous expedition from Town to Act Boss:</p>
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Live Off the Land:</b> Increased monster potion drop weights and <b>Superchest windfalls</b> (pots/barrels are removed in Castalia), paired with on-the-go Horadric Cube crafting from found bases, Gems, and Runes.</li>
+          <li style="margin-bottom:5px;"><b class="d2-gold">Diegetic Survival Constraints:</b> Weapon durability is already doubled with <b>no</b> Cube repair recipes (broken gear forces a real haul-vs.-swap decision), quiver stacks remain at <b>255</b>, Identify scrolls stay intentionally scarce (identify vs. blind-craft tension), and Shrines/Wells keep standard density with tuned refresh timers.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Expedition-Leg Resistance Cohesion:</b> Monster resistances/vulnerabilities along each continuous Act leg (e.g., Rocky Waste &rarr; Claw Viper Temple) will be audited for cohesion so builds can feasibly push a full expedition leg without hitting back-to-back contradictory immunity walls.</li>
+        </ul>
+      </div>
+    </div>
+
     </div>
 
     <!-- TABS 5-8: INTERACTIVE CLASS SKILL TREES & COMPENDIUM -->
@@ -2263,7 +2355,7 @@ var D2_CALC_DATA = {calc_payload_json};
   }}
 
   function evalSkillExpr(sk, expr, lvl, depth) {{
-    if (!expr || (depth || 0) > 8) return 0;
+    if (!expr || (depth || 0) > 10) return 0;
     var d = depth || 0;
     var e = String(expr).trim();
     if (!e) return 0;
@@ -2285,7 +2377,7 @@ var D2_CALC_DATA = {calc_payload_json};
 
     e = e.replace(/stat\\('([^']+)'\\.[A-Za-z0-9_]+\\)/g, function(_, st) {{
       var s = st.toLowerCase();
-      return (s === "stamina" || s === "maxstamina") ? "256" : "0";
+      return (s === "stamina" || s === "maxstamina" || s === "mana" || s === "maxmana") ? "256" : "0";
     }});
 
     var P = sk.Params;
@@ -2300,8 +2392,10 @@ var D2_CALC_DATA = {calc_payload_json};
     var rawEmax = tieredVal(sk.EMax, lvl);
     var rawPmin = tieredVal(sk.MinDam, lvl);
     var rawPmax = tieredVal(sk.MaxDam, lvl);
-    var esym = (sk.EDmgSymPerCalc && d < 4) ? evalSkillExpr(sk, sk.EDmgSymPerCalc, lvl, d + 1) : 0;
-    var psym = (sk.DmgSymPerCalc && d < 4) ? evalSkillExpr(sk, sk.DmgSymPerCalc, lvl, d + 1) : 0;
+    var needEsym = (e.indexOf("enma") !== -1 || e.indexOf("exma") !== -1 || e.indexOf("enms") !== -1 || e.indexOf("exms") !== -1 || e.indexOf("m1") !== -1 || e.indexOf("m2") !== -1 || e.indexOf("m3") !== -1);
+    var needPsym = (e.indexOf("pnma") !== -1 || e.indexOf("pxma") !== -1 || e.indexOf("m1na") !== -1 || e.indexOf("m1xa") !== -1 || e.indexOf("m2na") !== -1 || e.indexOf("m2xa") !== -1 || e.indexOf("m3na") !== -1 || e.indexOf("m3xa") !== -1);
+    var esym = (needEsym && sk.EDmgSymPerCalc && d < 6) ? evalSkillExpr(sk, sk.EDmgSymPerCalc, lvl, d + 1) : 0;
+    var psym = (needPsym && sk.DmgSymPerCalc && d < 6) ? evalSkillExpr(sk, sk.DmgSymPerCalc, lvl, d + 1) : 0;
     var enms = Math.trunc((rawEmin << hs) * (100 + esym) / 100);
     var exms = Math.trunc((rawEmax << hs) * (100 + esym) / 100);
     var enma = enms >> 8;
@@ -2349,7 +2443,7 @@ var D2_CALC_DATA = {calc_payload_json};
 
     for (var ci = 1; ci <= 6; ci++) {{
       var ck = "clc" + ci;
-      if (e.indexOf(ck) !== -1 && d < 5) {{
+      if (e.indexOf(ck) !== -1 && d < 8) {{
         env[ck] = evalSkillExpr(sk, sk.Calcs[ci - 1] || "", lvl, d + 1);
       }}
     }}
@@ -2410,6 +2504,7 @@ var D2_CALC_DATA = {calc_payload_json};
     if (fn === "75") {{
       var a = evalSkillExpr(sk, ca, lvl);
       var b = evalSkillExpr(sk, cb, lvl);
+      if (a === 0 && b === 0) return "";
       var tmpl75 = ta.replace(/%%/g, "%");
       var mr = tmpl75.match(/([+-]?)(%\\+?d)-(%\\+?d)(%?)/);
       if (mr) {{
@@ -2474,17 +2569,67 @@ var D2_CALC_DATA = {calc_payload_json};
       .replace(/Defense:/i, "Def:");
   }}
 
+  var charLevels = {{ pal: 1, bar: 1, ass: 1, sor: 1 }};
+  var charWps = {{ pal: "a1n", bar: "a1n", ass: "a1n", sor: "a1n" }};
+
+  function questSkillPointsForWp(wpCode) {{
+    var wp = parseWpCode(wpCode);
+    var qSk = 0;
+    for (var d = 0; d <= wp.diff; d++) {{
+      var compUpto = (d < wp.diff) ? 5 : (wp.full ? wp.act : (wp.act - 1));
+      if (compUpto >= 1) qSk += 1; // Den of Evil
+      if (compUpto >= 2) qSk += 1; // Radament
+      if (compUpto >= 4) qSk += 2; // Izual
+    }}
+    return qSk;
+  }}
+
+  function maxSkillRankForCharLevel(sk, clvl) {{
+    if (clvl < sk.reqlevel) return 0;
+    return Math.min(sk.maxlvl, clvl - sk.reqlevel + 1);
+  }}
+
   function getClassTotals(cls) {{
     var list = skillsByCls[cls] || [];
+    var clvl = charLevels[cls] || 1;
+    var wpCode = charWps[cls] || "a1n";
     var total = 0;
     var byPage = {{ 1: 0, 2: 0, 3: 0 }};
+    var highestReq = 1;
+    var minReqClvl = 1;
+    var overCapSkills = [];
     for (var i = 0; i < list.length; i++) {{
-      var pts = alloc[list[i].rawName] || 0;
+      var sk = list[i];
+      var pts = alloc[sk.rawName] || 0;
       total += pts;
-      byPage[list[i].page] = (byPage[list[i].page] || 0) + pts;
+      byPage[sk.page] = (byPage[sk.page] || 0) + pts;
+      if (pts > 0) {{
+        if (sk.reqlevel > highestReq) highestReq = sk.reqlevel;
+        var neededClvl = sk.reqlevel + pts - 1;
+        if (neededClvl > minReqClvl) minReqClvl = neededClvl;
+        var cap = maxSkillRankForCharLevel(sk, clvl);
+        if (pts > cap) {{
+          overCapSkills.push({{ name: sk.name, pts: pts, cap: cap, neededClvl: neededClvl }});
+        }}
+      }}
     }}
-    var clvl = 1 + Math.floor(total / 2);
-    return {{ total: total, clvl: clvl, byPage: byPage }};
+    var lvlPts = (clvl - 1) * 2;
+    var questPts = questSkillPointsForWp(wpCode);
+    var maxPts = Math.min(255, lvlPts + questPts);
+    var rem = maxPts - total;
+    return {{
+      total: total,
+      clvl: clvl,
+      wpCode: wpCode,
+      lvlPts: lvlPts,
+      questPts: questPts,
+      maxPts: maxPts,
+      rem: rem,
+      highestReq: highestReq,
+      minReqClvl: minReqClvl,
+      overCapSkills: overCapSkills,
+      byPage: byPage
+    }};
   }}
 
   function checkCanAdd(sk) {{
@@ -2493,6 +2638,20 @@ var D2_CALC_DATA = {calc_payload_json};
       return {{ ok: false, reason: sk.name + " is already at Maximum Level (" + sk.maxlvl + ")." }};
     }}
     var tots = getClassTotals(sk.cls);
+    if (tots.clvl < sk.reqlevel) {{
+      return {{
+        ok: false,
+        reason: "Requires Character Level " + sk.reqlevel + " (raise Character Level above)."
+      }};
+    }}
+    var lvlCap = maxSkillRankForCharLevel(sk, tots.clvl);
+    if (pts >= lvlCap) {{
+      var nextClvl = sk.reqlevel + pts;
+      return {{
+        ok: false,
+        reason: sk.name + " is capped at Level " + lvlCap + " for Character Level " + tots.clvl + " (requires Character Level " + nextClvl + " for Level " + (pts + 1) + ")."
+      }};
+    }}
     var missingReqs = [];
     for (var i = 0; i < sk.reqskills.length; i++) {{
       var rq = sk.reqskills[i];
@@ -2503,11 +2662,10 @@ var D2_CALC_DATA = {calc_payload_json};
     if (missingReqs.length > 0) {{
       return {{ ok: false, reason: "Requires Prerequisite: " + missingReqs.join(", ") }};
     }}
-    if (tots.clvl < sk.reqlevel) {{
-      var neededPts = (sk.reqlevel - 1) * 2 - tots.total;
+    if (tots.rem <= 0) {{
       return {{
         ok: false,
-        reason: "Requires Character Level " + sk.reqlevel + " (spend " + neededPts + " more skill point" + (neededPts === 1 ? "" : "s") + " first)."
+        reason: "No unspent skill points remaining (raise Character Level or remove points)."
       }};
     }}
     return {{ ok: true, reason: "" }};
@@ -2525,20 +2683,6 @@ var D2_CALC_DATA = {calc_payload_json};
         }}
       }}
     }}
-    // Check that reducing total points by 1 does not drop clvl below any remaining allocated skill's reqlevel
-    var tots = getClassTotals(sk.cls);
-    var newTotal = tots.total - 1;
-    var newClvl = 1 + Math.floor(newTotal / 2);
-    for (var j = 0; j < list.length; j++) {{
-      var o = list[j];
-      var remPts = (o.rawName === sk.rawName) ? (pts - 1) : (alloc[o.rawName] || 0);
-      if (remPts > 0 && newClvl < o.reqlevel) {{
-        return {{
-          ok: false,
-          reason: "Cannot lower Character Level below Level " + o.reqlevel + " while " + o.name + " is allocated."
-        }};
-      }}
-    }}
     return {{ ok: true, reason: "" }};
   }}
 
@@ -2552,9 +2696,21 @@ var D2_CALC_DATA = {calc_payload_json};
   function updateClassUI(cls) {{
     var tots = getClassTotals(cls);
     var clvlEl = document.getElementById("calc-clvl-" + cls);
+    var wpEl = document.getElementById("calc-wp-" + cls);
     var ptsEl = document.getElementById("calc-pts-" + cls);
-    if (clvlEl) clvlEl.textContent = String(tots.clvl);
+    var remEl = document.getElementById("calc-rem-" + cls);
+    var maxPtsEl = document.getElementById("calc-maxpts-" + cls);
+    var breakdownEl = document.getElementById("calc-pts-breakdown-" + cls);
+    if (clvlEl && document.activeElement !== clvlEl) clvlEl.value = String(tots.clvl);
+    if (wpEl && wpEl.value !== tots.wpCode) wpEl.value = tots.wpCode;
     if (ptsEl) ptsEl.textContent = String(tots.total);
+    if (maxPtsEl) maxPtsEl.textContent = String(tots.maxPts);
+    if (breakdownEl) breakdownEl.textContent = "(" + tots.lvlPts + " lvl + " + tots.questPts + " quest)";
+    if (remEl) {{
+      remEl.textContent = String(tots.rem);
+      if (tots.rem < 0) remEl.classList.add("calc-over-budget");
+      else remEl.classList.remove("calc-over-budget");
+    }}
 
     for (var pg = 1; pg <= 3; pg++) {{
       var tpEl = document.getElementById("tree-pts-" + cls + "-" + pg);
@@ -2719,7 +2875,7 @@ var D2_CALC_DATA = {calc_payload_json};
       }}
       if (added > 0) {{
         var tots = getClassTotals(sk.cls);
-        setClassMessage(sk.cls, sk.name + " -> Level " + alloc[rawName] + " (Required Character Level: " + tots.clvl + ")", false);
+        setClassMessage(sk.cls, sk.name + " -> Level " + alloc[rawName] + " (" + tots.rem + " pts remaining)", false);
         updateClassUI(sk.cls);
         renderTooltipForSlot(this);
       }} else if (lastCheck.reason) {{
@@ -2743,7 +2899,7 @@ var D2_CALC_DATA = {calc_payload_json};
       }}
       if (removed > 0) {{
         var tots = getClassTotals(sk.cls);
-        setClassMessage(sk.cls, "Removed point from " + sk.name + " (Required Character Level: " + tots.clvl + ")", false);
+        setClassMessage(sk.cls, "Removed point from " + sk.name + " (" + tots.rem + " pts remaining)", false);
         updateClassUI(sk.cls);
         renderTooltipForSlot(this);
       }} else if (lastCheck.reason) {{
@@ -2753,7 +2909,59 @@ var D2_CALC_DATA = {calc_payload_json};
     }});
   }}
 
-  var resetBtns = document.querySelectorAll('.calc-reset-btn');
+  function refreshCalcStatusMessage(cls) {{
+    var tots = getClassTotals(cls);
+    if (tots.rem < 0) {{
+      setClassMessage(cls, "Over budget by " + (-tots.rem) + " pts at Level " + tots.clvl + " (raise level/act or remove points).", true);
+    }} else if (tots.overCapSkills.length > 0) {{
+      var bad = tots.overCapSkills[0];
+      setClassMessage(cls, bad.name + " (Lvl " + bad.pts + ") requires Character Level " + bad.neededClvl + " (max Lvl " + bad.cap + " at Char Level " + tots.clvl + ").", true);
+    }} else {{
+      setClassMessage(cls, "Lvl " + tots.clvl + " (" + tots.wpCode + "): " + tots.rem + " / " + tots.maxPts + " pts available (" + tots.lvlPts + " lvl + " + tots.questPts + " quest) — " + tierLabelForLevel(tots.clvl), false);
+    }}
+  }}
+
+  function applyCharLevel(cls, rawVal) {{
+    var v = parseInt(rawVal, 10);
+    if (isNaN(v)) return;
+    if (v < 1) v = 1;
+    if (v > 99) v = 99;
+    charLevels[cls] = v;
+    updateClassUI(cls);
+    refreshCalcStatusMessage(cls);
+  }}
+
+  function applyCharWp(cls, wpVal) {{
+    charWps[cls] = wpVal || "a1n";
+    updateClassUI(cls);
+    refreshCalcStatusMessage(cls);
+  }}
+
+  var clvlInputs = document.querySelectorAll('.calc-clvl-input');
+  for (var li = 0; li < clvlInputs.length; li++) {{
+    clvlInputs[li].addEventListener('input', function() {{
+      var cls = this.getAttribute('data-clvl-cls') || '';
+      applyCharLevel(cls, this.value);
+    }});
+    clvlInputs[li].addEventListener('blur', function() {{
+      var cls = this.getAttribute('data-clvl-cls') || '';
+      var v = parseInt(this.value, 10);
+      if (isNaN(v) || v < 1) v = 1;
+      if (v > 99) v = 99;
+      this.value = String(v);
+      applyCharLevel(cls, v);
+    }});
+  }}
+
+  var wpSelects = document.querySelectorAll('.calc-wp-select');
+  for (var wi = 0; wi < wpSelects.length; wi++) {{
+    wpSelects[wi].addEventListener('change', function() {{
+      var cls = this.getAttribute('data-wp-cls') || '';
+      applyCharWp(cls, this.value);
+    }});
+  }}
+
+  var resetBtns = document.querySelectorAll('.calc-reset-btn[data-reset-cls]');
   for (var r = 0; r < resetBtns.length; r++) {{
     resetBtns[r].addEventListener('click', function() {{
       var cls = this.getAttribute('data-reset-cls') || '';
@@ -2762,9 +2970,99 @@ var D2_CALC_DATA = {calc_payload_json};
         alloc[list[k].rawName] = 0;
       }}
       updateClassUI(cls);
-      setClassMessage(cls, "All skills reset — Required Character Level reverted to 1.", false);
+      var tots = getClassTotals(cls);
+      setClassMessage(cls, "All skills reset — " + tots.maxPts + " skill points available (" + tots.lvlPts + " lvl + " + tots.questPts + " quest).", false);
     }});
   }}
+
+  var copyPathBtns = document.querySelectorAll('.calc-copy-path-btn');
+  for (var cp = 0; cp < copyPathBtns.length; cp++) {{
+    copyPathBtns[cp].addEventListener('click', function() {{
+      var btn = this;
+      var winPath = "%USERPROFILE%\\\\Saved Games\\\\Diablo II Resurrected\\\\mods\\\\castalia";
+      if (navigator.clipboard && navigator.clipboard.writeText) {{
+        navigator.clipboard.writeText(winPath);
+      }}
+      btn.textContent = "✓ Copied Save Path!";
+      setTimeout(function() {{ btn.innerHTML = "&#128203; Save Path"; }}, 3000);
+    }});
+  }}
+
+  var BLOCKED_UI_NAMES = {{
+    pal: 1, pally: 1, pala: 1, paladin: 1,
+    bar: 1, barb: 1, barbarian: 1,
+    ass: 1, assa: 1, assin: 1, sin: 1, assassin: 1,
+    sor: 1, sorc: 1, sorceress: 1,
+    ama: 1, zon: 1, amazon: 1,
+    nec: 1, necro: 1, necromancer: 1,
+    dru: 1, druid: 1, warlock: 1,
+    castalia: 1, test: 1, hero: 1, player: 1, char: 1, character: 1, name: 1
+  }};
+
+  var dlBtns = document.querySelectorAll('.calc-download-btn[data-dl-cls]');
+  for (var db = 0; db < dlBtns.length; db++) {{
+    dlBtns[db].addEventListener('click', async function() {{
+      var cls = this.getAttribute('data-dl-cls') || 'pal';
+      var nameEl = document.getElementById('calc-name-' + cls);
+      var cleanName = sanitizeCharName(nameEl ? nameEl.value : '');
+      if (cleanName.length < 2) {{
+        setClassMessage(cls, "Please enter a unique character name (2–15 letters) before downloading.", true);
+        if (nameEl) nameEl.focus();
+        return;
+      }}
+      var normName = cleanName.toLowerCase().replace(/[_-]/g, '');
+      if (BLOCKED_UI_NAMES[normName]) {{
+        setClassMessage(cls, "Please choose a unique character name — generic names like '" + cleanName + "' can collide with another player in co-op.", true);
+        if (nameEl) {{ nameEl.focus(); nameEl.select(); }}
+        return;
+      }}
+      var tots = getClassTotals(cls);
+      if (tots.rem < 0) {{
+        setClassMessage(cls, "Cannot download: over skill point budget by " + (-tots.rem) + " pts (raise Level/Act or remove points).", true);
+        return;
+      }}
+      if (tots.overCapSkills.length > 0) {{
+        var bad = tots.overCapSkills[0];
+        setClassMessage(cls, "Cannot download: " + bad.name + " (Lvl " + bad.pts + ") requires Character Level " + bad.neededClvl + " (currently Level " + tots.clvl + ").", true);
+        return;
+      }}
+      try {{
+        var bytes = generateD2sClientSide(cleanName, cls, tots.clvl, tots.wpCode, alloc);
+        var saved = await saveD2sBytes(bytes, cleanName + ".d2s");
+        if (saved) {{
+          setClassMessage(cls, "✓ Saved " + cleanName + ".d2s (Lvl " + tots.clvl + ", " + tots.wpCode + ", " + tots.total + " pts spent, " + tots.rem + " unspent) — drop in Saved Games\\\\Diablo II Resurrected\\\\mods\\\\castalia", false);
+        }}
+      }} catch (err) {{
+        setClassMessage(cls, "Error generating .d2s: " + (err.message || String(err)), true);
+      }}
+    }});
+  }}
+
+  // Pre-fill calculator from URL query parameters (e.g. ?name=Alex&class=bar&level=55&wp=a3nm)
+  (function applyUrlParamsToCalc() {{
+    if (!window.location.search) return;
+    var sp = new URLSearchParams(window.location.search);
+    var cls = (sp.get("class") || "pal").toLowerCase();
+    if (!charLevels.hasOwnProperty(cls)) cls = "pal";
+    var changed = false;
+    if (sp.get("name")) {{
+      var ne = document.getElementById("calc-name-" + cls);
+      if (ne) {{ ne.value = sanitizeCharName(sp.get("name")); changed = true; }}
+    }}
+    if (sp.get("level")) {{
+      var lv = Math.max(1, Math.min(99, parseInt(sp.get("level"), 10) || 1));
+      charLevels[cls] = lv;
+      changed = true;
+    }}
+    if (sp.get("wp")) {{
+      charWps[cls] = sp.get("wp").toLowerCase();
+      changed = true;
+    }}
+    if (changed) {{
+      updateClassUI(cls);
+      refreshCalcStatusMessage(cls);
+    }}
+  }})();
 
   // Initialize all 4 classes
   updateClassUI("pal");
@@ -2773,20 +3071,9 @@ var D2_CALC_DATA = {calc_payload_json};
   updateClassUI("sor");
 
   // =========================================================================
-  // CO-OP CAMPAIGN & CHARACTER SAVE (.D2S) GENERATOR (100% STATIC GITHUB PAGES)
+  // EMBEDDED CHARACTER SAVE (.D2S) GENERATOR (100% STATIC GITHUB PAGES)
   // =========================================================================
   var CHAR_GEN_DATA = {char_gen_payload_json};
-
-  var cgNameEl = document.getElementById("cg-name");
-  var cgClassEl = document.getElementById("cg-class");
-  var cgLevelEl = document.getElementById("cg-level");
-  var cgWpEl = document.getElementById("cg-wp");
-  var cgTierPrev = document.getElementById("cg-tier-preview");
-  var cgShareUrlEl = document.getElementById("cg-share-url");
-  var cgStatusEl = document.getElementById("cg-status-msg");
-  var cgDownloadBtn = document.getElementById("cg-download-btn");
-  var cgCopyLinkBtn = document.getElementById("cg-copy-link-btn");
-  var cgCopyWinBtn = document.getElementById("cg-copy-win-btn");
 
   function defaultGoldForLevel(lvl) {{
     if (lvl < 10) return 0;
@@ -2810,51 +3097,17 @@ var D2_CALC_DATA = {calc_payload_json};
 
   function tierLabelForLevel(lvl) {{
     var g = defaultGoldForLevel(lvl).toLocaleString();
-    if (lvl < 10) return "Bare Lvl 1-9: 4x Belt Minor Healing Potions (0g)";
-    if (lvl < 15) return "Tier 1 (Chipped): Cube, Tome of ID, Chipped Gems/Skulls, Lvl 4-12 Runes + " + g + "g";
-    if (lvl < 30) return "Tier 2 (Flawed): Cube, Tome of ID, Flawed Gems/Skulls, Lvl 12-26 Runes + " + g + "g";
-    if (lvl < 45) return "Tier 3 (Normal): Cube, Tome of ID, Normal Gems/Skulls, Lvl 28-38 Runes + " + g + "g";
-    if (lvl < 60) return "Tier 4 (Flawless): Cube, Tome of ID, Flawless Gems/Skulls, Lvl 38-52 Runes + " + g + "g";
-    return "Tier 5 (Perfect): Cube, Tome of ID, Perfect Gems/Skulls, Lvl 48-68 Runes + " + g + "g";
+    if (lvl < 10) return "Starter: 4x Minor Healing Potions";
+    if (lvl < 15) return "Starter: Cube, ID Tome, Chipped Gems/Skulls, Runes + " + g + "g";
+    if (lvl < 30) return "Starter: Cube, ID Tome, Flawed Gems/Skulls, Runes + " + g + "g";
+    if (lvl < 45) return "Starter: Cube, ID Tome, Normal Gems/Skulls, Runes + " + g + "g";
+    if (lvl < 60) return "Starter: Cube, ID Tome, Flawless Gems/Skulls, Runes + " + g + "g";
+    return "Starter: Cube, ID Tome, Perfect Gems/Skulls, Runes + " + g + "g";
   }}
 
   function sanitizeCharName(raw) {{
     return (raw || "").replace(/[^A-Za-z_-]/g, "").slice(0, 15);
   }}
-
-  function buildShareableInviteUrl(fullAbsolute) {{
-    var nm = sanitizeCharName(cgNameEl ? cgNameEl.value : "") || "Alex";
-    var cls = cgClassEl ? cgClassEl.value : "pal";
-    var lvl = Math.max(1, Math.min(99, parseInt(cgLevelEl ? cgLevelEl.value : "30", 10) || 30));
-    var wp = cgWpEl ? cgWpEl.value : "a5n";
-    var qs = "?name=" + encodeURIComponent(nm) + "&class=" + encodeURIComponent(cls) + "&level=" + lvl + "&wp=" + encodeURIComponent(wp) + "#char-generator";
-    if (fullAbsolute && window.location) {{
-      var base = window.location.origin + window.location.pathname;
-      return base + qs;
-    }}
-    return qs;
-  }}
-
-  function updateCharGenUI() {{
-    var lvl = Math.max(1, Math.min(99, parseInt(cgLevelEl ? cgLevelEl.value : "30", 10) || 30));
-    if (cgTierPrev) cgTierPrev.textContent = tierLabelForLevel(lvl);
-    if (cgShareUrlEl) cgShareUrlEl.textContent = buildShareableInviteUrl(false);
-  }}
-
-  // Pre-fill form fields from URL query parameters (e.g. ?name=Alex&class=bar&level=55&wp=a3nm#char-generator)
-  (function applyUrlParams() {{
-    if (!window.location.search) return;
-    var sp = new URLSearchParams(window.location.search);
-    var hasParam = false;
-    if (sp.get("name") && cgNameEl) {{ cgNameEl.value = sanitizeCharName(sp.get("name")); hasParam = true; }}
-    if (sp.get("class") && cgClassEl) {{ cgClassEl.value = sp.get("class").toLowerCase(); hasParam = true; }}
-    if (sp.get("level") && cgLevelEl) {{ cgLevelEl.value = sp.get("level"); hasParam = true; }}
-    if (sp.get("wp") && cgWpEl) {{ cgWpEl.value = sp.get("wp").toLowerCase(); hasParam = true; }}
-    if (hasParam && cgStatusEl) {{
-      cgStatusEl.className = "d2-bright-gold";
-      cgStatusEl.textContent = "Pre-filled from invite link! Click 'Generate & Save .d2s Character File' to download.";
-    }}
-  }})();
 
   // Client-side D2R v105 .d2s binary generator (static fallback when /api/char.d2s is offline)
   var ACT_COMPLETED_QUEST_WORDS = {{
@@ -2929,7 +3182,7 @@ var D2_CALC_DATA = {calc_payload_json};
     return out;
   }}
 
-  function generateD2sClientSide(cleanName, clsCode, level, wpCode) {{
+  function generateD2sClientSide(cleanName, clsCode, level, wpCode, allocMap) {{
     var tKey = tierKeyForLevel(level);
     var b64 = CHAR_GEN_DATA.templates[tKey] || CHAR_GEN_DATA.templates["default"];
     var raw = b64ToUint8Array(b64);
@@ -3016,7 +3269,7 @@ var D2_CALC_DATA = {calc_payload_json};
       dv.setUint32(seedOff, Math.floor(Math.random() * 0x7FFFFFFD) + 1, true);
     }}
 
-    // 6. Build gf stats & 30 zeroed skill points, preserving raw[jm:] bit-for-bit
+    // 6. Build gf stats & 30 allocated skill bytes, preserving raw[jm:] bit-for-bit
     var gf = findMarker(raw, "gf", ws !== -1 ? ws : 0);
     var ifPos = findMarker(raw, "if", gf);
     var jm = findMarker(raw, "JM", ifPos);
@@ -3024,7 +3277,21 @@ var D2_CALC_DATA = {calc_payload_json};
     var mana = cs.int + (level - 1) * (cs.ManaPerLevel / 4.0);
     var stam = cs.stamina + (level - 1) * (cs.StaminaPerLevel / 4.0);
     var statPts = (level - 1) * cs.StatPerLevel + qSt;
-    var skPts = Math.min(255, (level - 1) * cs.SkillsPerLevel + qSk);
+    var totalSkPts = Math.min(255, (level - 1) * cs.SkillsPerLevel + qSk);
+    var clsSkills = (skillsByCls[clsCode] || []).slice().sort(function(a, b) {{
+      return (parseInt(a.id, 10) || 0) - (parseInt(b.id, 10) || 0);
+    }});
+    var skillBytes = new Uint8Array(30);
+    var spentSkPts = 0;
+    for (var si = 0; si < clsSkills.length && si < 30; si++) {{
+      var skObj = clsSkills[si];
+      var rawSv = Math.max(0, (allocMap && allocMap[skObj.rawName]) || 0);
+      var maxLegal = maxSkillRankForCharLevel(skObj, level);
+      var sv = Math.min(rawSv, maxLegal, Math.max(0, totalSkPts - spentSkPts));
+      skillBytes[si] = sv;
+      spentSkPts += sv;
+    }}
+    var unspentSkPts = Math.max(0, totalSkPts - spentSkPts);
     var sGold = defaultGoldForLevel(level);
     var statsObj = {{
       0: cs.str,
@@ -3041,7 +3308,7 @@ var D2_CALC_DATA = {calc_payload_json};
       13: CHAR_GEN_DATA.exp[level] || 0
     }};
     if (statPts > 0) statsObj[4] = statPts;
-    if (skPts > 0) statsObj[5] = skPts;
+    if (unspentSkPts > 0) statsObj[5] = unspentSkPts;
     if (sGold > 0) statsObj[15] = sGold;
 
     var gfBytes = encodeGfSection(statsObj);
@@ -3053,7 +3320,7 @@ var D2_CALC_DATA = {calc_payload_json};
     rebuilt.set(gfBytes, gf + 2);
     var newIf = gf + 2 + gfBytes.length;
     rebuilt[newIf] = 0x69; rebuilt[newIf + 1] = 0x66; // 'if'
-    // 30 zero bytes for unallocated skills follow automatically
+    rebuilt.set(skillBytes, newIf + 2);
     rebuilt.set(raw.subarray(jm), newIf + 2 + 30);
 
     // 7. Recompute file length (offset 8) and 32-bit rotate-left checksum (offset 12)
@@ -3095,66 +3362,6 @@ var D2_CALC_DATA = {calc_payload_json};
     return true;
   }}
 
-  if (cgNameEl) cgNameEl.addEventListener("input", updateCharGenUI);
-  if (cgClassEl) cgClassEl.addEventListener("change", updateCharGenUI);
-  if (cgLevelEl) cgLevelEl.addEventListener("input", updateCharGenUI);
-  if (cgWpEl) cgWpEl.addEventListener("change", updateCharGenUI);
-
-  if (cgCopyLinkBtn) {{
-    cgCopyLinkBtn.addEventListener("click", function() {{
-      var fullUrl = buildShareableInviteUrl(true);
-      if (navigator.clipboard && navigator.clipboard.writeText) {{
-        navigator.clipboard.writeText(fullUrl);
-      }}
-      cgCopyLinkBtn.textContent = "✓ Copied Invite Link!";
-      setTimeout(function() {{ cgCopyLinkBtn.innerHTML = "&#128279; Copy Pre-Filled Invite Link"; }}, 3000);
-    }});
-  }}
-
-  if (cgCopyWinBtn) {{
-    cgCopyWinBtn.addEventListener("click", function() {{
-      var winPath = "%USERPROFILE%\\\\Saved Games\\\\Diablo II Resurrected\\\\mods\\\\castalia";
-      if (navigator.clipboard && navigator.clipboard.writeText) {{
-        navigator.clipboard.writeText(winPath);
-      }}
-      cgCopyWinBtn.textContent = "✓ Copied! Paste (Ctrl+L, Ctrl+V) in Save As";
-      setTimeout(function() {{ cgCopyWinBtn.innerHTML = "&#128203; Copy Windows Save Path"; }}, 3500);
-    }});
-  }}
-
-  if (cgDownloadBtn) {{
-    cgDownloadBtn.addEventListener("click", async function() {{
-      var cleanName = sanitizeCharName(cgNameEl ? cgNameEl.value : "");
-      if (cleanName.length < 2) {{
-        if (cgStatusEl) {{
-          cgStatusEl.className = "d2-red";
-          cgStatusEl.textContent = "Please enter a unique character name (2–15 letters) first!";
-        }}
-        if (cgNameEl) cgNameEl.focus();
-        return;
-      }}
-      var clsCode = cgClassEl ? cgClassEl.value : "pal";
-      var lvl = Math.max(1, Math.min(99, parseInt(cgLevelEl ? cgLevelEl.value : "30", 10) || 30));
-      var wpCode = cgWpEl ? cgWpEl.value : "a5n";
-
-      try {{
-        var bytes = generateD2sClientSide(cleanName, clsCode, lvl, wpCode);
-        var saved = await saveD2sBytes(bytes, cleanName + ".d2s");
-        if (saved && cgStatusEl) {{
-          cgStatusEl.className = "d2-green";
-          cgStatusEl.textContent = "✓ Saved " + cleanName + ".d2s (" + bytes.length + " bytes)! Place in Saved Games\\\\Diablo II Resurrected\\\\mods\\\\castalia";
-        }}
-      }} catch (err) {{
-        if (cgStatusEl) {{
-          cgStatusEl.className = "d2-red";
-          cgStatusEl.textContent = "Error: " + (err.message || String(err));
-        }}
-      }}
-    }});
-  }}
-
-  updateCharGenUI();
-
   // =========================================================================
   // TOP ARREAT SUMMIT TAB ROUTER (REDUCES PAGE DENSITY TO 1 FOCUSED PANEL)
   // =========================================================================
@@ -3169,7 +3376,7 @@ var D2_CALC_DATA = {calc_payload_json};
     "#philosophy": "tab-overview",
     "#gold-economy": "tab-overview",
     "#notes": "tab-overview",
-    "#char-generator": "tab-chargen",
+    "#char-generator": "tab-class-pal",
     "#class-pal": "tab-class-pal",
     "#class-bar": "tab-class-bar",
     "#class-ass": "tab-class-ass",
@@ -3178,7 +3385,12 @@ var D2_CALC_DATA = {calc_payload_json};
     "#runes-33": "tab-items",
     "#monsters": "tab-world",
     "#dungeons": "tab-world",
-    "#mercenaries": "tab-world"
+    "#mercenaries": "tab-world",
+    "#coop": "tab-coop",
+    "#coop-conduction": "tab-coop",
+    "#coop-trinity": "tab-coop",
+    "#coop-roadmap": "tab-coop",
+    "#coop-expedition": "tab-coop"
   }};
 
   function activateTab(tabId, skipScroll) {{
@@ -3220,7 +3432,9 @@ var D2_CALC_DATA = {calc_payload_json};
     if (h.indexOf("#sk-ass-") === 0) {{ activateTab("tab-class-ass", true); return; }}
     if (h.indexOf("#sk-sor-") === 0) {{ activateTab("tab-class-sor", true); return; }}
     if (sp.get("name") || sp.get("class") || sp.get("level") || sp.get("wp")) {{
-      activateTab("tab-chargen", true);
+      var qCls = (sp.get("class") || "pal").toLowerCase();
+      var targetTab = (qCls === "bar" || qCls === "ass" || qCls === "sor") ? ("tab-class-" + qCls) : "tab-class-pal";
+      activateTab(targetTab, true);
       return;
     }}
   }}

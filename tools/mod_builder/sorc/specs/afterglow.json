@@ -5,16 +5,18 @@
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
     },
     "final1": {
-      "description": "final1 (Conduction): Targeted ally/pet stance-transfer buff (srvdofunc=25, TargetAlly=1, TargetPet=1). Transfers the Sorceress's active stance element mastery (40% -> 100% at lvl 20) and primary defensive boon/bust (100% -> 50% drawback at lvl 20) onto an ally or mercenary via a single shared aurastate (sorc_conduction). Inactive slots write 1 (non-zero) so srvdofunc=25 overwrites all 6 slots cleanly on stance swap.",
+      "description": "final1 (Conduction): Streamlined targeted ally/pet elemental conduction buff (srvdofunc=25, TargetAlly=1, TargetPet=1). Transfers the Sorceress's active stance elemental skill damage (25% -> 100% of stance mastery, hard-capped at +30%) and unlocks matching cross-class skill enhancements via skill_enchant (1=Fire, 2=Ltng, 3=Cold) on sorc_conduction. Inactive mastery slots write 1 (non-zero) so srvdofunc=25 overwrites cleanly on stance swap.",
       "no_label": true,
       "strings": {
         "name": "Conduction",
-        "short": "transfer your active elemental stance to an ally",
-        "long": "conducts your active elemental stance onto a targeted ally or hireling\ntransfers matching elemental mastery and stance properties\nempowers matching elemental skills of allies with additional effects\nrequires an active stance"
+        "short": "conduct your active stance element onto an ally",
+        "long": "conducts your active elemental stance onto a targeted ally or hireling\ntransfers matching elemental skill damage (up to +30%)\nempowers matching elemental skills of allies with additional effects\nrequires an active stance"
       },
       "strings_extra": {
-        "ModSorc_CondBoon": "Stance Boons Transferred: %d%%",
-        "ModSorc_CondBust": "Stance Drawbacks Transferred: %d%%"
+        "ModSorc_CondBoon": "Elemental Damage Transferred: %d%%",
+        "ModSorc_CondFire": "Fire Skill Damage Transferred: +%d%%",
+        "ModSorc_CondLtng": "Lightning Skill Damage Transferred: +%d%%",
+        "ModSorc_CondCold": "Cold Skill Damage Transferred: +%d%%"
       },
       "tables": {
         "states.txt": {
@@ -65,26 +67,26 @@
             "aurastate": "sorc_conduction",
             "auratargetstate": "",
             "auralencalc": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr) + stat('skill_frenzy'.accr)) > 0) ? ((1500 + (lvl * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300) : 1",
-            "calc1": "min(100, 40 + (lvl - 1) * 60 / 19)",
-            "*calc1 desc": "Stance Boon Transfer % (40 -> 100 at lvl 20)",
-            "calc2": "max(40, 100 - (lvl - 1) * 50 / 19)",
-            "*calc2 desc": "Stance Bust Transfer % (100 -> 50 at lvl 20, cap 40)",
+            "calc1": "min(100, 25 + (lvl - 1) * 75 / 19)",
+            "*calc1 desc": "Elemental Damage Transfer % (25 -> 100 at lvl 20)",
+            "calc2": "",
+            "*calc2 desc": "",
             "calc3": "(stat('skill_handofathena'.accr) > 0) ? skill('Enchant'.lvl) : ((stat('skill_decrepify'.accr) > 0) ? skill('Energy Shield'.lvl) : ((stat('skill_frenzy'.accr) > 0) ? skill('Frozen Armor'.lvl) : 0))",
             "*calc3 desc": "Active Stance Effective Level",
-            "calc4": "max(1, (5 + (clc3 - 1) * 25 / 19) * clc1 / 100)",
-            "*calc4 desc": "Transferred Elemental Skill Damage %",
-            "aurastat1": "skill_enchant",
-            "aurastatcalc1": "(stat('skill_handofathena'.accr) > 0) ? 1 : ((stat('skill_decrepify'.accr) > 0) ? 2 : ((stat('skill_frenzy'.accr) > 0) ? 3 : 0))",
+            "calc4": "min(30, max(1, (5 + (clc3 - 1) * 25 / 19) * clc1 / 100))",
+            "*calc4 desc": "Transferred Elemental Skill Damage % (capped at +30%)",
+            "aurastat1": "target0",
+            "aurastatcalc1": "((stat('skill_handofathena'.accr) > 0) ? 1000 : ((stat('skill_decrepify'.accr) > 0) ? 2000 : ((stat('skill_frenzy'.accr) > 0) ? 3000 : 0))) + (stat('ironmaiden_level'.accr) * clc1 / 100)",
             "aurastat2": "passive_fire_mastery",
             "aurastatcalc2": "(stat('skill_handofathena'.accr) > 0) ? clc4 : 1",
             "aurastat3": "passive_ltng_mastery",
             "aurastatcalc3": "(stat('skill_decrepify'.accr) > 0) ? clc4 : 1",
             "aurastat4": "passive_cold_mastery",
             "aurastatcalc4": "(stat('skill_frenzy'.accr) > 0) ? clc4 : 1",
-            "aurastat5": "damageresist",
-            "aurastatcalc5": "(stat('skill_handofathena'.accr) > 0) ? (0 - max(1, min(40, 3 + (clc3 - 1) * 22 / 19) * clc2 / 100)) : ((stat('skill_frenzy'.accr) > 0) ? max(1, min(50, 3 + (clc3 - 1) * 22 / 19) * clc1 / 100) : 1)",
-            "aurastat6": "item_armor_percent",
-            "aurastatcalc6": "(stat('skill_decrepify'.accr) > 0) ? (0 - max(1, min(100, 10 + (clc3 - 1) * 5) * clc2 / 100)) : ((stat('skill_frenzy'.accr) > 0) ? max(1, (10 + (clc3 - 1) * 10) * clc1 / 100) : 1)"
+            "aurastat5": "target1",
+            "aurastatcalc5": "1 + (stat('conversion_maxhp'.accr) * clc1 / 100)",
+            "aurastat6": "goldlost",
+            "aurastatcalc6": "1 + (stat('lifetap_level'.accr) * clc1 / 100)"
           }
         },
         "skilldesc.txt": {
@@ -95,15 +97,30 @@
             "desccalca1": "clc1",
             "desccalcb1": "",
             "descline2": "74",
-            "desctexta2": "ModSorc_CondBust",
+            "desctexta2": "ModSorc_CondFire",
             "desctextb2": "",
-            "desccalca2": "clc2",
+            "desccalca2": "(skill('Enchant'.lvl) > 0) ? min(30, max(1, (5 + (skill('Enchant'.lvl) - 1) * 25 / 19) * clc1 / 100)) : 0",
             "desccalcb2": "",
-            "descline3": "36",
-            "desctexta3": "StrSkillDurationSingular",
-            "desctextb3": "StrSkill20",
-            "desccalca3": "(1500 + (lvl * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300",
-            "desccalcb3": "25"
+            "descline3": "74",
+            "desctexta3": "ModSorc_CondLtng",
+            "desctextb3": "",
+            "desccalca3": "(skill('Energy Shield'.lvl) > 0) ? min(30, max(1, (5 + (skill('Energy Shield'.lvl) - 1) * 25 / 19) * clc1 / 100)) : 0",
+            "desccalcb3": "",
+            "descline4": "74",
+            "desctexta4": "ModSorc_CondCold",
+            "desctextb4": "",
+            "desccalca4": "(skill('Frozen Armor'.lvl) > 0) ? min(30, max(1, (5 + (skill('Frozen Armor'.lvl) - 1) * 25 / 19) * clc1 / 100)) : 0",
+            "desccalcb4": "",
+            "descline5": "36",
+            "desctexta5": "StrSkillDurationSingular",
+            "desctextb5": "StrSkill20",
+            "desccalca5": "(1500 + (lvl * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300",
+            "desccalcb5": "25",
+            "descline6": "",
+            "desctexta6": "",
+            "desctextb6": "",
+            "desccalca6": "",
+            "desccalcb6": ""
           }
         }
       }

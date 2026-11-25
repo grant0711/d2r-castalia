@@ -19,7 +19,7 @@ import zlib
 from typing import Dict, List, Tuple
 
 from mod_builder.char_manager import TEMPLATE_DIR, TIER_TEMPLATE_SLOTS
-from mod_builder.common import MOD_ROOT, MOD_STRINGS, VANILLA_ROOT
+from mod_builder.common import MOD_ROOT, MOD_STRINGS, VANILLA_ROOT, load_config
 from mod_builder.verify import _read_mod_tsv
 
 SITE_DIR = "/home/grant/games/d2r/docs/site"
@@ -655,6 +655,7 @@ def _format_gem_or_rune_mod(code: str, param: str, mn_s: str, mx_s: str, prop_ma
 
 def build_site() -> str:
     icon_map = _extract_skill_icons_and_trees()
+    mod_version = str(load_config().get("version", "0.0.0"))
 
     _, sk_rows = _read_mod_tsv("skills.txt")
     _, sd_rows = _read_mod_tsv("skilldesc.txt")
@@ -1768,7 +1769,7 @@ def build_site() -> str:
 <!-- TOP ARREAT SUMMIT BANNER -->
 <div class="top-banner">
   <h1>&#9876; THE CASTALIA COMPENDIUM &#9876;</h1>
-  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b></div>
+  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b> &middot; <span style="color:#f0d890;font-weight:bold;">v{mod_version}</span> &middot; <a href="https://github.com/grant0711/d2r-castalia/releases/latest" target="_blank" rel="noopener" style="color:#8cd0ff;text-decoration:underline;">Download Latest Release</a></div>
 </div>
 
 <!-- TOP ARREAT SUMMIT NAVIGATION TABS -->

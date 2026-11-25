@@ -1,0 +1,112 @@
+name: Release PR Gate
+
+on:
+  pull_request:
+    branches: ["release"]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  release-pr-gate:
+    name: release-pr-gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version bump, QA flags, CHANGELOG & staged Draft Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess, sys
+
+          def parse_semver(v):
+              m = re.match(r"^(\d+)\.(\d+)\.(\d+)$", str(v).strip().lstrip("v"))
+              if not m:
+                  sys.exit(f"ERROR: Invalid SemVer '{v}'")
+              return tuple(int(x) for x in m.groups())
+
+          with open("tools/mod_builder/mod_config.json", "r", encoding="utf-8") as f:
+              cfg = json.load(f)
+
+          version = cfg.get("version")
+          if not version:
+              sys.exit("ERROR: tools/mod_builder/mod_config.json missing 'version'")
+          head_sv = parse_semver(version)
+          tag = f"v{version}"
+          print(f"[gate] PR head version: {tag}")
+
+          # 1. Check version strictly increased vs release branch
+          base_ref = f"origin/{os.environ['BASE_REF']}"
+          base_raw = subprocess.run(
+              ["git", "show", f"{base_ref}:tools/mod_builder/mod_config.json"],
+              text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+          )
+          if base_raw.returncode == 0:
+              base_v = json.loads(base_raw.stdout).get("version")
+              if base_v:
+                  base_sv = parse_semver(base_v)
+                  print(f"[gate] Base ({base_ref}) version: v{base_v}")
+                  if head_sv <= base_sv:
+                      sys.exit(f"ERROR: Version v{version} must be strictly greater than base v{base_v}")
+
+          # 2. Verify all qa_* flags are false
+          econ = cfg.get("economy", {})
+          bad_qa = [k for k, v in econ.items() if k.startswith("qa_") and v]
+          if bad_qa:
+              sys.exit(f"ERROR: QA flags enabled in mod_config.json: {', '.join(bad_qa)}")
+          print("[gate] QA flags check: PASS (all false)")
+
+          # 3. Verify CHANGELOG.md has an entry for this version
+          if not os.path.isfile("CHANGELOG.md"):
+              sys.exit("ERROR: CHANGELOG.md missing")
+          with open("CHANGELOG.md", "r", encoding="utf-8") as f:
+              cl = f.read()
+          if f"## [{tag}]" not in cl:
+              sys.exit(f"ERROR: CHANGELOG.md missing heading '## [{tag}]'")
+          print(f"[gate] CHANGELOG.md entry for {tag}: PASS")
+
+          # 4. Verify docs/site/latest.json matches version and has sha256
+          latest_path = "docs/site/latest.json"
+          if not os.path.isfile(latest_path):
+              sys.exit("ERROR: docs/site/latest.json missing (run bin/d2r-release prepare)")
+          with open(latest_path, "r", encoding="utf-8") as f:
+              latest = json.load(f)
+          if latest.get("version") != version:
+              sys.exit(f"ERROR: latest.json version '{latest.get('version')}' != '{version}'")
+          sha = latest.get("sha256", "")
+          if not re.match(r"^[0-9a-f]{64}$", sha):
+              sys.exit(f"ERROR: latest.json sha256 invalid: '{sha}'")
+          print(f"[gate] docs/site/latest.json: PASS (sha256={sha[:12]}...)")
+
+          # 5. Verify staged Draft GitHub Release exists with matching assets
+          rel_res = subprocess.run(
+              ["gh", "release", "view", tag, "--json", "isDraft,assets"],
+              text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+          )
+          if rel_res.returncode != 0:
+              sys.exit(f"ERROR: Staged GitHub Release '{tag}' not found:\n{rel_res.stderr}")
+          rel = json.loads(rel_res.stdout)
+          if not rel.get("isDraft"):
+              sys.exit(f"ERROR: GitHub Release '{tag}' is already published (expected Draft)")
+          asset_names = {a["name"] for a in rel.get("assets", [])}
+          expected_zip = f"castalia-{tag}.zip"
+          expected_sha = f"castalia-{tag}.sha256"
+          missing = [x for x in (expected_zip, expected_sha) if x not in asset_names]
+          if missing:
+              sys.exit(f"ERROR: Draft Release '{tag}' missing assets: {', '.join(missing)}")
+
+          # Download .sha256 asset and compare with docs/site/latest.json
+          subprocess.run(["gh", "release", "download", tag, "-p", expected_sha, "--clobber"], check=True)
+          with open(expected_sha, "r", encoding="utf-8") as f:
+              staged_sha = f.read().strip().split()[0]
+          if staged_sha != sha:
+              sys.exit(f"ERROR: Draft Release sha256 ({staged_sha}) != latest.json sha256 ({sha})")
+          print(f"[gate] Staged Draft Release {tag} assets & checksum: PASS")
+          PY

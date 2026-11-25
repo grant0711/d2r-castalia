@@ -1,0 +1,127 @@
+name: Publish Release & Cascade
+
+on:
+  push:
+    branches: ["release"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "release-publish"
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release branch
+        uses: actions/checkout@v4
+
+      - name: Read version & check Draft Release status
+        id: meta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+
+          with open("tools/mod_builder/mod_config.json", "r", encoding="utf-8") as f:
+              cfg = json.load(f)
+          version = cfg["version"]
+          tag = f"v{version}"
+
+          res = subprocess.run(
+              ["gh", "release", "view", tag, "--json", "isDraft,url,body"],
+              text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+          )
+          out = {}
+          out["version"] = version
+          out["tag"] = tag
+          out["compat"] = cfg.get("save_compat", "compatible")
+          if res.returncode != 0:
+              print(f"[publish] No GitHub Release found for {tag}; skipping cascade (initial branch bootstrap).")
+              out["should_publish"] = "false"
+          else:
+              data = json.loads(res.stdout)
+              if data.get("isDraft"):
+                  print(f"[publish] Found Draft Release {tag}; ready to promote and cascade.")
+                  out["should_publish"] = "true"
+              else:
+                  print(f"[publish] Release {tag} is already published; nothing to do.")
+                  out["should_publish"] = "false"
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as gf:
+              for k, v in out.items():
+                  gf.write(f"{k}={v}\n")
+          PY
+
+      - name: Promote Draft GitHub Release to Published
+        if: steps.meta.outputs.should_publish == 'true'
+        id: promote
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          gh release edit "$TAG" --draft=false --latest --target release
+          URL=$(gh release view "$TAG" --json url -q .url)
+          echo "release_url=$URL" >> "$GITHUB_OUTPUT"
+          gh release view "$TAG" --json body -q .body > release_notes.md
+          gh release download "$TAG" -p "castalia-${TAG}.zip" --clobber
+
+      - name: Upload to Nexus Mods (v3 API)
+        if: steps.meta.outputs.should_publish == 'true' && vars.NEXUSMODS_ENABLED == 'true'
+        uses: Nexus-Mods/upload-action@v1
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          mod_id: ${{ vars.NEXUSMODS_MOD_ID }}
+          file_id: ${{ vars.NEXUSMODS_FILE_ID }}
+          filename: castalia-${{ steps.meta.outputs.tag }}.zip
+          version: ${{ steps.meta.outputs.version }}
+          changelog: "Release ${{ steps.meta.outputs.tag }} — see https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}"
+          update_mod_version: "true"
+
+      - name: Post announcement to Discord Webhook
+        if: steps.meta.outputs.should_publish == 'true' && secrets.DISCORD_WEBHOOK_URL != ''
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          RELEASE_URL: ${{ steps.promote.outputs.release_url }}
+          NEXUS_MOD_ID: ${{ vars.NEXUSMODS_MOD_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          with open("release_notes.md", "r", encoding="utf-8") as f:
+              body = f.read().strip()
+
+          fields = [
+              {"name": "Download (GitHub)", "value": os.environ["RELEASE_URL"], "inline": False},
+              {"name": "Compendium & Skill Calc", "value": "https://grant0711.github.io/d2r-castalia/", "inline": True},
+          ]
+          nexus_id = os.environ.get("NEXUS_MOD_ID", "").strip()
+          if nexus_id:
+              fields.append({
+                  "name": "Nexus Mods",
+                  "value": f"https://www.nexusmods.com/diablo2resurrected/mods/{nexus_id}",
+                  "inline": True,
+              })
+
+          payload = {
+              "embeds": [{
+                  "title": f"Castalia {os.environ['TAG']} Released",
+                  "url": os.environ["RELEASE_URL"],
+                  "description": body[:3800],
+                  "color": 0xC89B3C,
+                  "fields": fields,
+              }]
+          }
+          req = urllib.request.Request(
+              os.environ["WEBHOOK_URL"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json", "User-Agent": "CastaliaReleaseBot/1.0"},
+          )
+          urllib.request.urlopen(req)
+          print("[publish] Posted release embed to Discord.")
+          PY

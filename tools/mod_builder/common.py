@@ -30,12 +30,25 @@ MOD_STRINGS = os.path.join(MOD_ROOT, "data/local/lng/strings")
 
 
 def ensure_modinfo_json() -> str:
-    """Ensure modinfo.json inside MOD_ROOT has name and savepath matching MOD_NAME."""
+    """Ensure modinfo.json and castalia_version.json inside MOD_ROOT match mod_config.json."""
     os.makedirs(MOD_ROOT, exist_ok=True)
     modinfo_path = os.path.join(MOD_ROOT, "modinfo.json")
     payload = {"name": MOD_NAME, "savepath": f"{MOD_NAME}/"}
     with open(modinfo_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
+        f.write("\n")
+
+    cfg = load_config()
+    version_path = os.path.join(MOD_ROOT, "castalia_version.json")
+    version_payload = {
+        "mod_name": MOD_NAME,
+        "version": cfg.get("version", "0.0.0"),
+        "save_schema": cfg.get("save_schema", 1),
+        "save_compat": cfg.get("save_compat", "compatible"),
+        "d2r_patch": cfg.get("d2r_patch", ""),
+    }
+    with open(version_path, "w", encoding="utf-8") as f:
+        json.dump(version_payload, f, indent=2)
         f.write("\n")
     return modinfo_path
 

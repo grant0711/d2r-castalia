@@ -1,0 +1,407 @@
+#!/usr/bin/env python3
+"""
+bin/d2r-release — Castalia Gated Release Staging & PR Tool
+
+Workflow (see docs/systems/RELEASE_MANAGEMENT.md):
+  1. ./bin/d2r-release prepare <patch|minor|major|X.Y.Z> [--compat compatible|respec|breaking] [--notes "..."]
+     - Verifies clean master branch & all qa_* flags false
+     - Bumps version in tools/mod_builder/mod_config.json and prepends CHANGELOG.md entry
+     - Runs ./bin/d2r-build-mod.py + python3 -m unittest -v
+     - Packages dist/castalia-vX.Y.Z.zip + dist/castalia-vX.Y.Z.sha256 + docs/site/latest.json
+     - Uploads archive to a hidden Draft GitHub Release (vX.Y.Z, targeting release)
+     - Commits & pushes master, then opens a PR: master -> release
+  2. Run an isolated subagent review on the PR (gh pr review) and iterate if needed.
+     After fixes on master, run `./bin/d2r-release prepare --refresh` to rebuild the zip
+     and overwrite the Draft Release assets in-place.
+  3. Merge the PR into `release` on GitHub -> triggers automatic cascade
+     (Draft Release promotion, GitHub Pages Compendium, Nexus Mods v3 API, Discord webhook).
+"""
+import argparse
+import datetime
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+MOD_CONFIG_PATH = os.path.join(REPO_ROOT, "tools", "mod_builder", "mod_config.json")
+CHANGELOG_PATH = os.path.join(REPO_ROOT, "CHANGELOG.md")
+CASTALIA_DIR = os.path.join(REPO_ROOT, "castalia")
+DIST_DIR = os.path.join(REPO_ROOT, "dist")
+SITE_LATEST_JSON = os.path.join(REPO_ROOT, "docs", "site", "latest.json")
+REPO_SLUG = "grant0711/d2r-castalia"
+
+SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+
+COMPAT_BADGES = {
+    "compatible": "🟢 Save-Compatible (drop-in safe mid-campaign)",
+    "respec": "🟡 Save-Compatible (Respec Recommended)",
+    "breaking": "🔴 New Campaign Required (save schema changed)",
+}
+
+INSTALL_README = """Castalia {tag} — Installation Guide
+===================================
+
+Solo / Offline Install:
+1. Extract this archive directly into your `Diablo II Resurrected/` folder
+   so that `mods/castalia/castalia.mpq/modinfo.json` exists.
+2. Launch D2R with command-line arguments:
+     -mod castalia -txt
+
+Co-Op (TCP/IP) Install via D2RLoader:
+1. Extract this archive into your `Diablo II Resurrected/` folder as above.
+2. Ensure D2RLoader (https://d2rloader.net) is installed and select `castalia`
+   in the in-game Mod Selector (or set `default_mod = "castalia"` in
+   `d2rloader/config/d2rloader.toml`).
+3. Verify all players are on `{tag}` before joining the TCP/IP lobby.
+
+Strategy Guide, Skill Calculator & .d2s Builder:
+  https://grant0711.github.io/d2r-castalia/
+"""
+
+
+def run(cmd, check=True, capture=False, cwd=REPO_ROOT):
+    if capture:
+        res = subprocess.run(cmd, cwd=cwd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if check and res.returncode != 0:
+            print(f"[d2r-release] Command failed: {' '.join(cmd)}", file=sys.stderr)
+            if res.stderr:
+                print(res.stderr.strip(), file=sys.stderr)
+            sys.exit(res.returncode)
+        return res
+    res = subprocess.run(cmd, cwd=cwd)
+    if check and res.returncode != 0:
+        print(f"[d2r-release] Command failed: {' '.join(cmd)}", file=sys.stderr)
+        sys.exit(res.returncode)
+    return res
+
+
+def load_mod_config():
+    with open(MOD_CONFIG_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_mod_config(cfg):
+    with open(MOD_CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2)
+        f.write("\n")
+
+
+def parse_semver(v: str):
+    m = SEMVER_RE.match(v.strip().lstrip("v"))
+    if not m:
+        raise ValueError(f"Invalid SemVer '{v}' (expected MAJOR.MINOR.PATCH)")
+    return tuple(int(x) for x in m.groups())
+
+
+def bump_version(current: str, target: str) -> str:
+    maj, min_, pat = parse_semver(current)
+    if target == "patch":
+        return f"{maj}.{min_}.{pat + 1}"
+    if target == "minor":
+        return f"{maj}.{min_ + 1}.0"
+    if target == "major":
+        return f"{maj + 1}.0.0"
+    parse_semver(target)
+    return target.lstrip("v")
+
+
+def check_qa_flags(cfg):
+    econ = cfg.get("economy", {})
+    bad = [k for k, v in econ.items() if k.startswith("qa_") and v]
+    if bad:
+        print(f"[d2r-release] ERROR: QA flags enabled in mod_config.json: {', '.join(bad)}", file=sys.stderr)
+        sys.exit(1)
+
+
+def get_release_branch_version():
+    res = run(["git", "show", "origin/release:tools/mod_builder/mod_config.json"], check=False, capture=True)
+    if res.returncode != 0:
+        res = run(["git", "show", "release:tools/mod_builder/mod_config.json"], check=False, capture=True)
+    if res.returncode != 0:
+        return None
+    try:
+        return json.loads(res.stdout).get("version")
+    except Exception:
+        return None
+
+
+def collect_commits_since_release():
+    ref = "origin/release"
+    if run(["git", "rev-parse", "--verify", ref], check=False, capture=True).returncode != 0:
+        ref = "release"
+    if run(["git", "rev-parse", "--verify", ref], check=False, capture=True).returncode != 0:
+        return []
+    res = run(["git", "log", f"{ref}..HEAD", "--pretty=format:- %s (%h)"], check=False, capture=True)
+    return [line for line in res.stdout.splitlines() if line.strip()]
+
+
+def prepend_changelog(version: str, compat: str, notes: str):
+    today = datetime.date.today().isoformat()
+    tag = f"v{version}"
+    badge = COMPAT_BADGES[compat]
+    with open(CHANGELOG_PATH, "r", encoding="utf-8") as f:
+        existing = f.read()
+
+    header_marker = f"## [{tag}]"
+    if header_marker in existing:
+        print(f"[d2r-release] CHANGELOG.md already has {header_marker}; leaving intact.")
+        return
+
+    commits = collect_commits_since_release()
+    body_lines = []
+    if notes:
+        body_lines.append(notes.strip())
+    elif commits:
+        body_lines.append("### Changes")
+        body_lines.extend(commits)
+    else:
+        body_lines.append("### Changes\n- Release update.")
+
+    entry = f"## [{tag}] - {today}\n\n**Save Compatibility:** {badge}\n\n" + "\n".join(body_lines) + "\n\n"
+    sep = "\n---\n\n"
+    if sep in existing:
+        head, tail = existing.split(sep, 1)
+        updated = head + sep + entry + tail
+    else:
+        updated = entry + existing
+
+    with open(CHANGELOG_PATH, "w", encoding="utf-8") as f:
+        f.write(updated)
+
+
+def extract_changelog_section(version: str) -> str:
+    tag = f"v{version}"
+    with open(CHANGELOG_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+    m = re.search(rf"(## \[{re.escape(tag)}\].*?)(?=\n## \[|\Z)", text, flags=re.S)
+    return m.group(1).strip() if m else f"## [{tag}]\n\nRelease {tag}."
+
+
+def package_release_zip(version: str):
+    tag = f"v{version}"
+    os.makedirs(DIST_DIR, exist_ok=True)
+    zip_path = os.path.join(DIST_DIR, f"castalia-{tag}.zip")
+    sha_path = os.path.join(DIST_DIR, f"castalia-{tag}.sha256")
+
+    real_castalia = os.path.realpath(CASTALIA_DIR)
+    if not os.path.isdir(os.path.join(real_castalia, "data")):
+        print(f"[d2r-release] ERROR: Built mod directory missing at {real_castalia}/data", file=sys.stderr)
+        sys.exit(1)
+
+    prefix = "mods/castalia/castalia.mpq"
+    print(f"[d2r-release] Packaging {zip_path} ...")
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
+        for meta_file in ("modinfo.json", "castalia_version.json"):
+            p = os.path.join(real_castalia, meta_file)
+            if os.path.isfile(p):
+                zf.write(p, f"{prefix}/{meta_file}")
+
+        data_root = os.path.join(real_castalia, "data")
+        for root, _, files in os.walk(data_root):
+            for fn in sorted(files):
+                full = os.path.join(root, fn)
+                rel = os.path.relpath(full, real_castalia)
+                zf.write(full, f"{prefix}/{rel}")
+
+        zf.writestr("README-INSTALL.txt", INSTALL_README.format(tag=tag))
+        if os.path.isfile(CHANGELOG_PATH):
+            zf.write(CHANGELOG_PATH, "CHANGELOG.md")
+
+    h = hashlib.sha256()
+    with open(zip_path, "rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    digest = h.hexdigest()
+    with open(sha_path, "w", encoding="utf-8") as f:
+        f.write(f"{digest}  castalia-{tag}.zip\n")
+
+    size_mb = os.path.getsize(zip_path) / (1024 * 1024)
+    print(f"[d2r-release] Built {zip_path} ({size_mb:.1f} MB, sha256={digest[:12]}...)")
+    return zip_path, sha_path, digest
+
+
+def write_latest_json(cfg, digest: str):
+    version = cfg["version"]
+    tag = f"v{version}"
+    payload = {
+        "version": version,
+        "tag": tag,
+        "released_at": datetime.date.today().isoformat(),
+        "save_schema": cfg.get("save_schema", 1),
+        "save_compat": cfg.get("save_compat", "compatible"),
+        "d2r_patch": cfg.get("d2r_patch", ""),
+        "download_url": f"https://github.com/{REPO_SLUG}/releases/download/{tag}/castalia-{tag}.zip",
+        "sha256": digest,
+    }
+    os.makedirs(os.path.dirname(SITE_LATEST_JSON), exist_ok=True)
+    with open(SITE_LATEST_JSON, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2)
+        f.write("\n")
+
+
+def cmd_status(_args):
+    cfg = load_mod_config()
+    rel_v = get_release_branch_version()
+    branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture=True).stdout.strip()
+    dirty = bool(run(["git", "status", "--porcelain"], capture=True).stdout.strip())
+    print(f"Current branch : {branch} ({'DIRTY' if dirty else 'clean'})")
+    print(f"master version : v{cfg.get('version', '0.0.0')} (save_schema={cfg.get('save_schema', 1)}, compat={cfg.get('save_compat', 'compatible')})")
+    print(f"release version: {'v' + rel_v if rel_v else '(not found)'}")
+    prs = run(["gh", "pr", "list", "--base", "release", "--state", "open", "--json", "number,title,url"], check=False, capture=True)
+    if prs.returncode == 0 and prs.stdout.strip():
+        items = json.loads(prs.stdout)
+        print(f"Open release PRs: {len(items)}")
+        for pr in items:
+            print(f"  #{pr['number']} {pr['title']} — {pr['url']}")
+    rels = run(["gh", "release", "list", "--limit", "5"], check=False, capture=True)
+    if rels.returncode == 0 and rels.stdout.strip():
+        print("Recent GitHub Releases:")
+        for line in rels.stdout.strip().splitlines():
+            print(f"  {line}")
+
+
+def cmd_prepare(args):
+    branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"], capture=True).stdout.strip()
+    if branch != "master":
+        print(f"[d2r-release] ERROR: Must run on 'master' (currently on '{branch}').", file=sys.stderr)
+        sys.exit(1)
+
+    if not args.refresh and run(["git", "status", "--porcelain"], capture=True).stdout.strip():
+        print("[d2r-release] ERROR: Working tree is dirty. Commit or stash changes first.", file=sys.stderr)
+        sys.exit(1)
+
+    cfg = load_mod_config()
+    check_qa_flags(cfg)
+
+    if args.refresh:
+        new_version = cfg["version"]
+        compat = args.compat or cfg.get("save_compat", "compatible")
+        print(f"[d2r-release] Refreshing staged release v{new_version} ...")
+    else:
+        if not args.bump:
+            print("[d2r-release] ERROR: Specify <patch|minor|major|X.Y.Z> or --refresh.", file=sys.stderr)
+            sys.exit(1)
+        new_version = bump_version(cfg["version"], args.bump)
+        rel_v = get_release_branch_version()
+        if rel_v and parse_semver(new_version) <= parse_semver(rel_v):
+            print(f"[d2r-release] ERROR: New version v{new_version} must be > release branch v{rel_v}.", file=sys.stderr)
+            sys.exit(1)
+        compat = args.compat or ("breaking" if args.bump == "major" else ("respec" if args.bump == "minor" else "compatible"))
+        cfg["version"] = new_version
+        cfg["save_compat"] = compat
+        if compat == "breaking":
+            cfg["save_schema"] = int(cfg.get("save_schema", 1)) + 1
+        save_mod_config(cfg)
+        prepend_changelog(new_version, compat, args.notes or "")
+        print(f"[d2r-release] Bumped version -> v{new_version} ({compat})")
+
+    tag = f"v{new_version}"
+    print("[d2r-release] Running full mod build & invariant verification ...")
+    run(["python3", os.path.join(REPO_ROOT, "bin", "d2r-build-mod.py")])
+    print("[d2r-release] Running unit test suite ...")
+    run(["python3", "-m", "unittest", "-v"])
+
+    zip_path, sha_path, digest = package_release_zip(new_version)
+    write_latest_json(cfg, digest)
+
+    if args.dry_run:
+        print(f"[d2r-release] Dry run complete for {tag}. Skipping git push, Draft Release, and PR.")
+        return
+
+    notes_text = extract_changelog_section(new_version)
+    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as nf:
+        nf.write(notes_text + "\n")
+        notes_file = nf.name
+
+    try:
+        # Stage or refresh Draft GitHub Release
+        check_rel = run(["gh", "release", "view", tag], check=False, capture=True)
+        if check_rel.returncode == 0:
+            print(f"[d2r-release] Updating existing Draft Release {tag} assets ...")
+            run(["gh", "release", "upload", tag, zip_path, sha_path, "--clobber"])
+            run(["gh", "release", "edit", tag, "--notes-file", notes_file])
+        else:
+            print(f"[d2r-release] Creating Draft GitHub Release {tag} ...")
+            run([
+                "gh", "release", "create", tag, zip_path, sha_path,
+                "--draft", "--target", "release",
+                "--title", f"Castalia {tag}",
+                "--notes-file", notes_file,
+            ])
+
+        # Commit & push master
+        run(["git", "add", MOD_CONFIG_PATH, CHANGELOG_PATH, os.path.join(REPO_ROOT, "docs", "site")])
+        if run(["git", "diff", "--cached", "--quiet"], check=False).returncode != 0:
+            msg = f"release: refresh staged {tag}" if args.refresh else f"release: prepare {tag}"
+            run(["git", "commit", "-m", msg])
+        run(["git", "push", "origin", "master"])
+
+        # Open or report PR master -> release
+        existing_pr = run(
+            ["gh", "pr", "list", "--base", "release", "--head", "master", "--state", "open", "--json", "number,url"],
+            capture=True,
+        )
+        prs = json.loads(existing_pr.stdout or "[]")
+        if prs:
+            pr_num = prs[0]["number"]
+            pr_url = prs[0]["url"]
+            print(f"[d2r-release] Updated open release PR #{pr_num}: {pr_url}")
+        else:
+            pr_body = (
+                f"{notes_text}\n\n"
+                f"---\n"
+                f"### Release Gate Checklist\n"
+                f"- [x] Local build (`d2r-build-mod.py`) & unit tests (`python3 -m unittest -v`) passed\n"
+                f"- [x] Staged Draft GitHub Release `{tag}` (`sha256: {digest[:16]}...`)\n"
+                f"- [ ] Automated `release-pr-gate` CI check passed\n"
+                f"- [ ] Isolated subagent code & test review posted and all threads resolved\n\n"
+                f"Merging this PR into `release` will automatically publish `{tag}` to GitHub Releases, "
+                f"redeploy the Compendium, upload to Nexus Mods (if enabled), and post to Discord.\n"
+            )
+            with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as pf:
+                pf.write(pr_body)
+                pr_body_file = pf.name
+            try:
+                res = run([
+                    "gh", "pr", "create",
+                    "--base", "release",
+                    "--head", "master",
+                    "--title", f"Release {tag}",
+                    "--body-file", pr_body_file,
+                ], capture=True)
+                print(f"[d2r-release] Opened Release PR: {res.stdout.strip()}")
+            finally:
+                os.unlink(pr_body_file)
+    finally:
+        os.unlink(notes_file)
+
+    print(f"\n[d2r-release] Next step: Spawn an isolated reviewer subagent to review the PR and post via `gh pr review`.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Castalia Gated Release Staging Tool")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    sub.add_parser("status", help="Show version, release branch, PR, and Draft Release status")
+
+    p_prep = sub.add_parser("prepare", help="Build, stage Draft Release, and open/update PR into release")
+    p_prep.add_argument("bump", nargs="?", help="patch | minor | major | X.Y.Z")
+    p_prep.add_argument("--refresh", action="store_true", help="Refresh existing staged release after PR fixes")
+    p_prep.add_argument("--compat", choices=["compatible", "respec", "breaking"], help="Override save compatibility")
+    p_prep.add_argument("--notes", help="Optional release highlights for CHANGELOG.md")
+    p_prep.add_argument("--dry-run", action="store_true", help="Build & package zip locally without pushing or creating PR")
+
+    args = parser.parse_args()
+    if args.command == "status":
+        cmd_status(args)
+    elif args.command == "prepare":
+        cmd_prepare(args)
+
+
+if __name__ == "__main__":
+    main()

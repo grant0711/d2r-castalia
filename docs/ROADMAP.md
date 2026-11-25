@@ -38,4 +38,5 @@ Quick orientation for picking up Castalia development cleanly on `master`.
    - Implement Druid (including stationary targetable Life/Mana Totems with `item_healafterkill`/`item_manaafterkill`) and Necromancer.
 4. **Co-Op Campaign Systems & Community Launch Prep:**
    - Implement [`docs/systems/COOP_ENCOUNTERS.md`](file:///home/grant/games/d2r/docs/systems/COOP_ENCOUNTERS.md) (`maxhp`-gated monster escalation, `coop_bounty` MF/GF, `Picks + NoDrop` co-op scaling, tempered Paladin `Vigor` Stamina Recovery, and **`CSvBits` save isolation**).
+   - Implement [`docs/systems/RELEASE_MANAGEMENT.md`](file:///home/grant/games/d2r/docs/systems/RELEASE_MANAGEMENT.md) (Save-Aware SemVer, in-game version UI, `bin/d2r-release`, GitHub Releases → Nexus Mods v3 API + Discord webhook fan-out, and co-op auto-updater).
    - Optionally build [`docs/systems/EXPEDITION_MODE.md`](file:///home/grant/games/d2r/docs/systems/EXPEDITION_MODE.md) (zero field WPs, Superchest windfalls, expedition-leg resistance cohesion audit).

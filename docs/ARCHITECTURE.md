@@ -62,7 +62,8 @@ This document provides a technical orientation for developers working on **Casta
 │   │   └── STATS_AND_PITFALLS.md       # Stat ID / state group / automagic registry & verified C++ traps
 │   ├── systems/                        # Cross-class mod systems & plans
 │   │   ├── COOP_ENCOUNTERS.md          # Dynamic Co-op Encounters & CSvBits save isolation plan
-│   │   └── EXPEDITION_MODE.md          # Optional Expedition Mode plan
+│   │   ├── EXPEDITION_MODE.md          # Optional Expedition Mode plan
+│   │   └── RELEASE_MANAGEMENT.md       # Versioning, packaging & multi-channel release pipeline plan
 │   └── site/                           # Auto-generated strategy guide & interactive skill calculator (index.html)
 ├── vanilla-reference/                  # Read-only pristine D2R extracted tables and sprites
 └── castalia/                           # Compiled mod output symlinked into D2R's mods/castalia/castalia.mpq

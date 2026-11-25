@@ -152,11 +152,12 @@ class CastaliaHub:
 
     @staticmethod
     def _auto_detect_d2r_save_dir() -> str:
+        prefix = os.environ.get("D2R_PREFIX", "acct1")
         candidates = [
             os.path.join(
                 REPO_ROOT,
                 "prefixes",
-                "acct1",
+                prefix,
                 "pfx",
                 "drive_c",
                 "users",

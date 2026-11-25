@@ -29,7 +29,8 @@ while [ $# -gt 0 ]; do
 done
 
 ensure_proton
-export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
+PREFIX_NAME="${D2R_PREFIX:-acct1}"
+export WINEPREFIX="${D2R_ROOT}/prefixes/${PREFIX_NAME}"
 link_shared_game_dir "${WINEPREFIX}"
 
 # Ensure mods/<MOD_NAME> save directory has Settings.json if not already present

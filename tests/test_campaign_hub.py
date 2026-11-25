@@ -132,6 +132,8 @@ class TestCampaignHub(unittest.TestCase):
         with open(intent_path, "r", encoding="utf-8") as f:
             intent = json.load(f)
         self.assertEqual(intent["mode"], "host")
+        self.assertTrue(intent["game_name"].startswith("Cas-A3NM-"))
+        self.assertLessEqual(len(intent["game_name"]), 15)
         self.assertEqual(intent["difficulty"], 1)  # a3nm -> Nightmare (1)
         self.assertEqual(intent["max_players"], 2)
         self.assertTrue(intent["unlisted"])

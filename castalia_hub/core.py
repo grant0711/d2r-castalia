@@ -676,8 +676,9 @@ class CastaliaHub:
 
         wp = str(campaign.get("current_wp", "a1n")).lower()
         diff_idx = 1 if wp.endswith("nm") else (2 if wp.endswith("h") else 0)
-        clean_title = re.sub(r"[^A-Za-z0-9]", "", str(campaign.get("title", "Castalia")))
-        game_name = f"Cas-{clean_title}"[:15]
+        cid = str(campaign.get("id", ""))
+        suffix = cid.rsplit("-", 1)[-1][:4] if "-" in cid else "0000"
+        game_name = f"Cas-{wp.upper()}-{suffix}"[:15]
         join_host, join_port = self.parse_host_port(str(campaign.get("live_join_info") or ""))
         payload = {
             "mode": "host" if is_host else "join",

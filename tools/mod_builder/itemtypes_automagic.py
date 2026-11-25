@@ -673,6 +673,18 @@ def build_automagic(cfg: dict) -> str:
             [
                 ("stamina-fatigue", "Stamina Fatigue", "100", "1"),
                 ("stamina-fatigue-r", "Stamina Fatigue", "100", "1"),
+                ("stun-fatigue", "Stun Fatigue", "100", "1"),
+            ],
+            itype1="armo", itype2="",
+        )
+    )
+    fixed_rows.append(
+        _make_auto_row(
+            headers, "325", "1", "", "1", "1",
+            [
+                ("stamina-fatigue", "Stamina Fatigue", "100", "1"),
+                ("stamina-fatigue-r", "Stamina Fatigue", "100", "1"),
+                ("stun-reset", "Stun Reset", "100", "1"),
             ],
             itype1="armo", itype2="",
         )

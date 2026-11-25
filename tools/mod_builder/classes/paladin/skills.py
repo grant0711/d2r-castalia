@@ -61,19 +61,32 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     sac["calc1"] = f"(({RAMP12}+(skill('Prayer'.blvl)+skill('Redemption'.blvl))*par8+skill('Fanaticism'.blvl)*par7)*(100+{RESTED_PCT}))/200"
     sac["calc2"] = "max(par6, par5 - blvl/par3 - (skill('Prayer'.blvl)+skill('Redemption'.blvl))/4)"
 
-    # Smite (Id 97): 0 Mana; Boosted innate ED (100% + 45%/lvl ramped -> +955% ED at Lvl 20) scaled 50%->100% by Stamina,
-    # 1.0s + 0.24s/lvl stun scaled linearly 100%->33% Stamina (0 stun below 33%), +15%/lvl ED synergy from Charge
+    # Smite (Id 97): 0 Mana; Always-hit shield-brawler attack (no innate knockback — knockback can still be built via gear).
+    # Boosted innate ED (100% + 45%/lvl ramped -> +955% ED at Lvl 20) scaled 50%->100% by Stamina,
+    # brief stun (0.48s at Lvl 1 -> 2.0s at Lvl 20, uncapped for Cold Conduction Stasis) scaled linearly 100%->33% Stamina (0 below 33%),
+    # +15%/lvl ED synergy from Charge.
     smite = by_name["Smite"]
+    smite["srvstfunc"] = ""
+    smite["ResultFlags"] = ""
+    smite["HitClass"] = ""
+    smite["aurastate"] = ""
+    smite["auralencalc"] = ""
+    smite["aurastat1"] = ""
+    smite["aurastatcalc1"] = ""
     smite["minmana"] = "0"
     smite["mana"] = "0"
     smite["lvlmana"] = "0"
-    smite["Param1"] = "25"   # Stun Length baseline (1.0s)
-    smite["Param2"] = "6"    # Stun Length per level (+0.24s)
+    smite["Param1"] = "12"   # Brief Stun Length baseline (0.48s)
+    smite["Param2"] = "2"    # Brief Stun Length per level (+0.08s -> 2.0s at Lvl 20)
     smite["Param3"] = "100"  # Damage % baseline (up from 60%)
     smite["Param4"] = "45"   # Damage % per level (ramped -> +955% ED at Lvl 20)
     smite["Param8"] = "15"   # Charge synergy % (+15%/lvl -> +300% ED at 20 Charge)
-    smite["calc1"] = f"(({RAMP34}+skill('Charge'.blvl)*par8)*(100+{RESTED_PCT}))/200"
-    smite["calc2"] = f"(({RESTED_PCT})>=33)?min(250,((min(ln12,250)*({RESTED_PCT}))/100*{COND_COLD_MULT})/100):0"
+    smite["calc5"] = RESTED_PCT
+    smite["*calc5 desc"] = "Current Stamina %"
+    smite["calc3"] = f"({COND_COLD_MULT}*max(0,4-stat('shortparam1'.accr)))/4"
+    smite["*calc3 desc"] = "Cold Conduction x Stun Fatigue % multiplier (100/75/50/25/0)"
+    smite["calc1"] = f"(({RAMP34}+skill('Charge'.blvl)*par8)*(100+clc5))/200"
+    smite["calc2"] = "(clc5>=33)?min(250,((ln12*clc5)/100*clc3)/100):0"
 
     # Charge (Id 107): 0 Mana; 150% + 32%/lvl (ramped) ED & Charge Speed scaled 50%->100% by Stamina,
     # 12% synergy from Vigor & Might, AND Stuns target on impact (1.4s base + 8%/lvl Smite synergy,
@@ -87,15 +100,19 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     chg["Param6"] = "8"    # Stun duration synergy % from Smite
     chg["*Param6 Description"] = "Stun Duration synergy"
     chg["Param8"] = "12"   # Damage synergy % from Vigor & Might
-    chg["calc1"] = f"(({RAMP34}+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8)*(100+{RESTED_PCT}))/200"
-    chg["calc2"] = f"(par1*(100+{RESTED_PCT}))/200"
+    chg["calc5"] = RESTED_PCT
+    chg["*calc5 desc"] = "Current Stamina %"
+    chg["calc6"] = f"({COND_COLD_MULT}*max(0,4-stat('shortparam1'.accr)))/4"
+    chg["*calc6 desc"] = "Cold Conduction x Stun Fatigue % multiplier (100/75/50/25/0)"
+    chg["calc1"] = f"(({RAMP34}+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8)*(100+clc5))/200"
+    chg["calc2"] = "(par1*(100+clc5))/200"
     chg["calc4"] = "0"     # 0% physical converted to elemental so 100% stays Physical + Stun
     chg["EType"] = "stun"
     chg["ELen"] = "35"     # 1.4s fixed base stun (only increases with points in Smite)
     chg["ELevLen1"] = "0"
     chg["ELevLen2"] = "0"
     chg["ELevLen3"] = "0"
-    chg["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?((((100+skill('Smite'.blvl)*par6)*({RESTED_PCT}))/100*{COND_COLD_MULT})/100-100):-100"
+    chg["ELenSymPerCalc"] = "(clc5>=33)?((((100+skill('Smite'.blvl)*par6)*clc5)/100*clc6)/100-100):(0-100)"
 
     # Zeal (Id 106): 0 Mana; Capped at 5 hits (2 hits Lvl 1-5, 3 hits Lvl 6-11, 4 hits Lvl 12-17, 5 hits Lvl 18+),
     # vanilla 100% rollback (so 4-frame hits strictly require EIAS = 75), 20% + 11%/lvl (ramped -> +229% ED at Lvl 20),
@@ -271,8 +288,8 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     #   - Mana cost: mana = 40, lvlmana = 3 -> 40 Mana at sLvl 1, 97 Mana at sLvl 20 (up from 35 -> 73)
     #   - Radial Holy Bolt count & search radius: aurarangecalc = 10 (6.6 yds, down from 20 / 13.3 yds),
     #     calc4 = 3+(lvl-1)/4 (3 bolts at sLvl 1 -> 7 bolts at sLvl 17-20, down from 6 -> 25 bolts!)
-    #   - Single-target Lightning Damage: 220-300 at sLvl 1 -> 2,092-2,320 at sLvl 20 base,
-    #     synergized by Holy Shock at +18%/lvl (Param8 = 18, +360% max -> 9,623-10,672 Lightning Damage at sLvl 20!)
+    #   - Single-target Lightning Damage: wide Lightning variance (60-280 at sLvl 1 -> 554-2,415 at sLvl 20 base, avg 1,485),
+    #     synergized by Holy Shock at +14%/lvl (Param8 = 14, +280% max -> 2,105-9,177 Lightning Damage at sLvl 20, avg 5,641).
     foh = by_name["Fist of the Heavens"]
     foh["localdelay"] = "35"       # 1.4s tactical nuke cooldown
     foh["mana"] = "40"             # 40 Mana at sLvl 1 -> 97 Mana at sLvl 20
@@ -281,19 +298,19 @@ def _apply_paladin_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     foh["Param1"] = "3"            # # of Holy Bolt Missiles created baseline (down from 6)
     foh["Param2"] = "1"            # +1 bolt per 4 levels via calc4
     foh["calc4"] = f"par1+(lvl-1)/4+(({COND_STANCE}==2)?(({COND_ARC}>=55)?2:(({COND_ARC}>=25)?1:0)):0)"
-    foh["Param8"] = "18"           # 18% Lightning synergy from Holy Shock (up from 12%)
-    foh["EMin"] = "220"
-    foh["EMinLev1"] = "36"
-    foh["EMinLev2"] = "105"
-    foh["EMinLev3"] = "195"
-    foh["EMinLev4"] = "220"
-    foh["EMinLev5"] = "250"
-    foh["EMax"] = "300"
-    foh["EMaxLev1"] = "40"
-    foh["EMaxLev2"] = "115"
-    foh["EMaxLev3"] = "205"
-    foh["EMaxLev4"] = "230"
-    foh["EMaxLev5"] = "260"
+    foh["Param8"] = "14"           # 14% Lightning synergy from Holy Shock
+    foh["EMin"] = "60"
+    foh["EMinLev1"] = "10"
+    foh["EMinLev2"] = "28"
+    foh["EMinLev3"] = "50"
+    foh["EMinLev4"] = "60"
+    foh["EMinLev5"] = "70"
+    foh["EMax"] = "280"
+    foh["EMaxLev1"] = "45"
+    foh["EMaxLev2"] = "120"
+    foh["EMaxLev3"] = "215"
+    foh["EMaxLev4"] = "245"
+    foh["EMaxLev5"] = "275"
     foh["EDmgSymPerCalc"] = "skill('Holy Shock'.blvl)*par8"
 
     # -------------------------------------------------------------------------
@@ -855,9 +872,9 @@ def _apply_paladin_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(sac, "dsc3", 3, "76", "Damplev", "skillname124", "par8", "")
     _set_dsc_line(sac, "dsc3", 4, "76", "Damplev", "skillname122", "par7", "")
 
-    # 2. Smite
+    # 2. Smite (always-hit shield bash with brief stun, no innate knockback)
     smite = by_desc["smite"]
-    smite["desccalca1"] = "clc2"
+    _set_dsc_line(smite, "desc", 1, "36", "StrSkillStunLengthSingular", "StrSkill48", "clc2", "25")
     smite["desccalca2"] = "clc1"
     _clear_dsc3_synergies(smite, "skillname97")
     _set_dsc_line(smite, "dsc3", 2, "76", "Damplev", "skillname107", "par8", "")
@@ -1210,10 +1227,10 @@ def apply_paladin_missiles(
     if "fistoftheheavensbolt" in rows_by_name and "nova" in rows_by_name and rows is not None:
         fohb = rows_by_name["fistoftheheavensbolt"]
         fohb["pSrvDoFunc"] = "2"
-        fohb["SrvCalc1"] = "5"
+        fohb["SrvCalc1"] = "7"
         fohb["SubMissile1"] = "foh_conduction_nova"
         fohb["pCltDoFunc"] = "3"
-        fohb["CltCalc1"] = "5"
+        fohb["CltCalc1"] = "7"
         fohb["CltSubMissile1"] = "foh_conduction_nova"
 
         next_id = max(int(r.get("*ID") or 0) for r in rows) + 1
@@ -1237,20 +1254,20 @@ def apply_paladin_missiles(
             fnova["HitShift"] = "8"
             fnova["HitClass"] = "64"
             fnova["NextHit"] = "1"
-            fnova["NextDelay"] = "12"
-            fnova["EMin"] = "110"
-            fnova["MinELev1"] = "18"
-            fnova["MinELev2"] = "52"
-            fnova["MinELev3"] = "97"
-            fnova["MinELev4"] = "110"
-            fnova["MinELev5"] = "125"
-            fnova["EMax"] = "150"
-            fnova["MaxELev1"] = "20"
-            fnova["MaxELev2"] = "57"
-            fnova["MaxELev3"] = "102"
-            fnova["MaxELev4"] = "115"
-            fnova["MaxELev5"] = "130"
-            fnova["EDmgSymPerCalc"] = "skill('Holy Shock'.blvl)*18"
+            fnova["NextDelay"] = "15"
+            fnova["EMin"] = "15"
+            fnova["MinELev1"] = "3"
+            fnova["MinELev2"] = "7"
+            fnova["MinELev3"] = "12"
+            fnova["MinELev4"] = "15"
+            fnova["MinELev5"] = "18"
+            fnova["EMax"] = "70"
+            fnova["MaxELev1"] = "11"
+            fnova["MaxELev2"] = "30"
+            fnova["MaxELev3"] = "54"
+            fnova["MaxELev4"] = "62"
+            fnova["MaxELev5"] = "70"
+            fnova["EDmgSymPerCalc"] = "skill('Holy Shock'.blvl)*14"
             rows.append(fnova)
             rows_by_name["foh_conduction_nova"] = fnova
 
@@ -1289,6 +1306,8 @@ PALADIN_STRING_UPDATES: List[Tuple[int, str, str]] = [
         (61029, "ModConvicColdDmg", "Your / Party Cold Damage: +%d%% / +%d%%"),
         (61100, "ModConvicLtngDmg", "Your / Party Lightning Damage: +%d%% / +%d%%"),
         (61101, "ModConvicDefPerHit", "-%d to Monster Defense Per Hit"),
+        (0, "skillsd97", "strikes with your shield, briefly stunning the target"),
+        (0, "skillld97", "strikes an enemy with your shield, bypassing defense\nto always hit and briefly stun the target"),
         (0, "skillsd124", "aura - restores life and mana after each kill"),
         (0, "skillld124", "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"),
         (0, "skillxld124", "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"),

@@ -309,9 +309,55 @@ def build_itemstatcost(cfg: dict) -> str:
             r["Save Bits"] = "7"
             r["Save Add"] = "0"
             r["Save Param Bits"] = "16"
+            r["op"] = ""
+            r["op stat1"] = ""
             r["itemevent1"] = "attackedinmelee"
             r["itemeventfunc1"] = "21"
             r["itemevent2"] = "domeleeattack"
+            r["itemeventfunc2"] = "20"
+            r["descfunc"] = ""
+            r["descstrpos"] = ""
+            r["descstrneg"] = ""
+        elif st == "skill_bypass_demons":
+            # Unused vanilla stat (ID 104): hidden melee-attack Stun Fatigue stack trigger
+            # itemevent1=domeleeattack (func 20), Encode=2, zero tooltip
+            r["Signed"] = "1"
+            r["Send Bits"] = "7"
+            r["Send Param Bits"] = "16"
+            r["fCallback"] = "1"
+            r["Encode"] = "2"
+            r["Add"] = "0"
+            r["Multiply"] = "0"
+            r["1.09-Save Bits"] = "21"
+            r["1.09-Save Add"] = "0"
+            r["Save Bits"] = "7"
+            r["Save Add"] = "0"
+            r["Save Param Bits"] = "16"
+            r["itemevent1"] = "domeleeattack"
+            r["itemeventfunc1"] = "20"
+            r["descfunc"] = ""
+            r["descstrpos"] = ""
+            r["descstrneg"] = ""
+        elif st == "skill_passive_staminapercent":
+            # Unused vanilla stat (ID 163): hidden Stun Fatigue reset trigger (on being attacked in melee OR on kill)
+            # itemevent1=attackedinmelee (func 21) + itemevent2=kill (func 20), Encode=2, zero tooltip
+            r["Signed"] = "1"
+            r["Send Bits"] = "7"
+            r["Send Param Bits"] = "16"
+            r["fCallback"] = "1"
+            r["Encode"] = "2"
+            r["Add"] = "0"
+            r["Multiply"] = "0"
+            r["1.09-Save Bits"] = "21"
+            r["1.09-Save Add"] = "0"
+            r["Save Bits"] = "7"
+            r["Save Add"] = "0"
+            r["Save Param Bits"] = "16"
+            r["op"] = ""
+            r["op stat1"] = ""
+            r["itemevent1"] = "attackedinmelee"
+            r["itemeventfunc1"] = "21"
+            r["itemevent2"] = "kill"
             r["itemeventfunc2"] = "20"
             r["descfunc"] = ""
             r["descstrpos"] = ""
@@ -1688,6 +1734,38 @@ def build_properties_txt(cfg: dict) -> str:
         nr["*Min"] = "% Chance"
         nr["*Max"] = "Skill Level"
         nr["*Notes"] = "Castalia hidden ranged/missile stamina exhaustion stat"
+        nr["*eol"] = "0"
+        rows.append(nr)
+    if not any(r.get("code") == "stun-fatigue" for r in rows):
+        max_id = max((int(r["*Id"]) for r in rows if (r.get("*Id") or "").isdigit()), default=283)
+        nr = {h: "" for h in headers}
+        nr["code"] = "stun-fatigue"
+        nr["*Id"] = str(max_id + 1)
+        nr["*Enabled"] = "1"
+        nr["func1"] = "11"
+        nr["stat1"] = "skill_bypass_demons"
+        nr["uiRangeType"] = "7"
+        nr["*Tooltip"] = "Hidden Stun Fatigue melee stack proc"
+        nr["*Parameter"] = "Skill"
+        nr["*Min"] = "% Chance"
+        nr["*Max"] = "Skill Level"
+        nr["*Notes"] = "Castalia hidden domeleeattack trigger incrementing stun_fatigue"
+        nr["*eol"] = "0"
+        rows.append(nr)
+    if not any(r.get("code") == "stun-reset" for r in rows):
+        max_id = max((int(r["*Id"]) for r in rows if (r.get("*Id") or "").isdigit()), default=283)
+        nr = {h: "" for h in headers}
+        nr["code"] = "stun-reset"
+        nr["*Id"] = str(max_id + 1)
+        nr["*Enabled"] = "1"
+        nr["func1"] = "11"
+        nr["stat1"] = "skill_passive_staminapercent"
+        nr["uiRangeType"] = "7"
+        nr["*Tooltip"] = "Hidden Stun Fatigue reset on kill or melee hit"
+        nr["*Parameter"] = "Skill"
+        nr["*Min"] = "% Chance"
+        nr["*Max"] = "Skill Level"
+        nr["*Notes"] = "Castalia hidden attackedinmelee/kill trigger clearing stun_fatigue"
         nr["*eol"] = "0"
         rows.append(nr)
     return write_excel_tsv("properties.txt", headers, rows)

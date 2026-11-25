@@ -736,7 +736,7 @@ def build_site() -> str:
             '<b>Stamina Spenders</b> (<b>Leap</b>, <b>Leap Attack</b>, <b>Whirlwind</b>) deliberately burn breath for explosive engagements and sweeping momentum; '
             'and where other fighters falter in fatigue, the Barbarian\'s <b>Exhaustion</b> skills (<b>Flurry</b>, <b>Barrage</b>, <b>Frenzy</b>, <b>Berserk</b>) surge in ferocity, '
             'while active <b>Bloodlust</b> grants full immunity to global <b>Stamina Fatigue</b> (instantly shaking off prior exhaustion on your next swing).</p>'
-            '<p style="margin:0;">His Warcries are active battlefield roars on a shared 3-second cadence &mdash; <b>Battle Command</b> (party HP burst heal), <b>Second Wind</b> (party Stamina refill), '
+            '<p style="margin:0;">His Warcries are active battlefield roars on a shared 2-second cadence &mdash; <b>Battle Command</b> (party HP burst heal), <b>Second Wind</b> (party Stamina refill), '
             '<b>Enduring Cry</b> (party Max Stamina), <b>War Cry</b> (AoE stun &amp; -75% Phys/Magic resistance shred), and self-only <b>Bloodlust</b>.</p>'
             '</div>'
         ),

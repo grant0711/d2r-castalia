@@ -269,6 +269,66 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         sf["*eol"] = "0"
         s_rows.append(sf)
 
+    # Append hidden Stun Fatigue (domeleeattack) & Stun Reset (attackedinmelee / kill) helper skills:
+    # Consecutive uninterrupted melee swings increment shortparam1 (1 -> 2 -> 3 -> 4, 5.0s window),
+    # scaling Smite stun 100% -> 75% -> 50% -> 25% -> 0% on Hit 5+. Getting attacked in melee or scoring
+    # a kill immediately fires Stun Reset (1-frame wipe via create_season=1), restoring 100% stun in brawls/hallways.
+    if not any(r.get("skill") == "Stun Fatigue" for r in s_rows):
+        max_sid = max((int(r["*Id"]) for r in s_rows if (r.get("*Id") or "").isdigit()), default=428)
+        stf = {h: "" for h in s_headers}
+        stf["skill"] = "Stun Fatigue"
+        stf["*Id"] = str(max_sid + 1)
+        stf["srvdofunc"] = "18"
+        stf["aurastate"] = "stun_fatigue"
+        stf["auralencalc"] = "125"
+        stf["aurastat1"] = "shortparam1"
+        stf["aurastatcalc1"] = "min(4,stat('shortparam1'.accr)+1)"
+        stf["enhanceable"] = "1"
+        stf["attackrank"] = "0"
+        stf["range"] = "none"
+        stf["anim"] = "SC"
+        stf["seqtrans"] = "SC"
+        stf["monanim"] = "SC"
+        stf["ItemEffect"] = "1"
+        stf["maxlvl"] = "20"
+        stf["minmana"] = "0"
+        stf["manashift"] = "8"
+        stf["mana"] = "0"
+        stf["lvlmana"] = "0"
+        stf["InTown"] = "1"
+        stf["InGame"] = "1"
+        stf["HitShift"] = "8"
+        stf["*eol"] = "0"
+        s_rows.append(stf)
+
+    if not any(r.get("skill") == "Stun Reset" for r in s_rows):
+        max_sid = max((int(r["*Id"]) for r in s_rows if (r.get("*Id") or "").isdigit()), default=428)
+        strst = {h: "" for h in s_headers}
+        strst["skill"] = "Stun Reset"
+        strst["*Id"] = str(max_sid + 1)
+        strst["srvdofunc"] = "18"
+        strst["aurastate"] = "stun_fatigue"
+        strst["auralencalc"] = "1"
+        strst["aurastat1"] = "create_season"
+        strst["aurastatcalc1"] = "1"
+        strst["enhanceable"] = "1"
+        strst["attackrank"] = "0"
+        strst["range"] = "none"
+        strst["anim"] = "SC"
+        strst["seqtrans"] = "SC"
+        strst["monanim"] = "SC"
+        strst["ItemEffect"] = "1"
+        strst["maxlvl"] = "20"
+        strst["minmana"] = "0"
+        strst["manashift"] = "8"
+        strst["mana"] = "0"
+        strst["lvlmana"] = "0"
+        strst["InTown"] = "1"
+        strst["InGame"] = "1"
+        strst["HitShift"] = "8"
+        strst["*eol"] = "0"
+        s_rows.append(strst)
+
     p_skills = write_excel_tsv("skills.txt", s_headers, s_rows)
     p_desc = write_excel_tsv("skilldesc.txt", d_headers, d_rows)
     return p_skills, p_desc

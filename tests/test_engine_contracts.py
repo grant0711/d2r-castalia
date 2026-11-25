@@ -422,6 +422,33 @@ class TestEngineContracts(unittest.TestCase):
                 f"barbarian_state_machine.json missing sequence state {req_key}",
             )
 
+    def test_calc_formula_character_length_limits(self):
+        """Every calc/formula cell in skills.txt, skilldesc.txt, and missiles.txt must stay
+        strictly under D2R's 255-byte TSV formula buffer (enforced ceiling: 248 chars), and
+        must never contain D2R's unspaced ternary unary-minus hazard ('?-')."""
+        max_chars = 248
+        violations = []
+        for fn, id_col in (("skills.txt", "skill"), ("skilldesc.txt", "skilldesc"), ("missiles.txt", "Missile")):
+            _, rows = read_mod_tsv(fn)
+            for r in rows:
+                name = r.get(id_col, "")
+                if not name:
+                    continue
+                for col, val in r.items():
+                    if not val:
+                        continue
+                    cl = col.lower()
+                    if any(tok in cl for tok in ("calc", "sym", "len", "range", "petmax")):
+                        if len(val) > max_chars:
+                            violations.append(
+                                f"{fn} ({name}) {col}: {len(val)} chars > {max_chars} limit ({val[:80]}...)"
+                            )
+                        if "?-" in val:
+                            violations.append(
+                                f"{fn} ({name}) {col}: unspaced '?-' unary minus hazard ({val})"
+                            )
+        self.assertEqual(violations, [], "D2R calc formula limits violated:\n" + "\n".join(violations))
+
 
 if __name__ == "__main__":
     unittest.main()

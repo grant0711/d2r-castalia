@@ -140,8 +140,8 @@ def cmd_set(args) -> None:
         class_id=cls_id,
         level=args.level,
         wp_target=args.wp,
-        reset_skills=not args.keep_skills,
-        reset_stats=not args.keep_stats,
+        reset_skills=bool(args.reset_skills or (cls_id is not None and not args.keep_skills)),
+        reset_stats=bool(args.reset_stats or (cls_id is not None and not args.keep_stats)),
         stash_gold=args.stash_gold,
         inv_gold=args.gold,
     )
@@ -232,8 +232,10 @@ def main() -> None:
     p_set.add_argument("--wp", "-w", help="Waypoint target (start, a1n..a5n, a1nm..a5nm, a1h..a5h, all)")
     p_set.add_argument("--stash-gold", type=int, help="Personal stash gold (0..2500000)")
     p_set.add_argument("--gold", type=int, help="Inventory gold")
-    p_set.add_argument("--keep-skills", action="store_true", help="Do not refund allocated skill points")
-    p_set.add_argument("--keep-stats", action="store_true", help="Do not reset attributes to base")
+    p_set.add_argument("--reset-skills", action="store_true", help="Refund all allocated skill points")
+    p_set.add_argument("--reset-stats", action="store_true", help="Reset attributes to base and refund stat points")
+    p_set.add_argument("--keep-skills", action="store_true", help="(Default) Preserve allocated skill points")
+    p_set.add_argument("--keep-stats", action="store_true", help="(Default) Preserve allocated attributes")
     p_set.set_defaults(f=cmd_set)
 
     p_reset = sub.add_parser("reset", help="Refund all skill points (and optionally reset stats/level)")

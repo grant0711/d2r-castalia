@@ -198,7 +198,7 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     stun["SearchEnemyXY"] = "1"
     stun["AttackNoMana"] = ""  # Never auto-switch to regular attack when in melee range or on cooldown!
     stun["KeepCursorStateOnKill"] = "1"
-    stun["localdelay"] = "25"  # 1.0-second local casting delay (25 frames)
+    stun["localdelay"] = ""    # No casting delay (gated by Martial Stamina)
     stun["minmana"] = "0"      # 0 Mana cost
     stun["mana"] = "0"
     stun["lvlmana"] = "0"
@@ -214,14 +214,14 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     stun["*Param6 Description"] = ""
     stun["Param7"] = "12"   # Attack Rating synergy % from Concentrate (+12%/lvl)
     stun["Param8"] = "8"    # Damage % synergy from Strike and Concentrate (+8%/lvl)
-    stun["calc5"] = ""
-    stun["*calc5 desc"] = ""
-    stun["calc6"] = ""
-    stun["*calc6 desc"] = ""
-    stun["calc1"] = f"(({RAMP34}+stat('toblock'.accr)*4+(skill('Bash'.blvl)+skill('Concentrate'.blvl))*par8)*(100+{RESTED_PCT}))/200"
-    stun["calc2"] = f"(par1*(100+{RESTED_PCT}))/200"
+    stun["calc5"] = RESTED_PCT
+    stun["*calc5 desc"] = "Current Stamina %"
+    stun["calc6"] = f"({COND_COLD_MULT}*max(0,4-stat('shortparam1'.accr)))/4"
+    stun["*calc6 desc"] = "Cold Conduction x Stun Fatigue % multiplier (100/75/50/25/0)"
+    stun["calc1"] = f"(({RAMP34}+stat('toblock'.accr)*4+(skill('Bash'.blvl)+skill('Concentrate'.blvl))*par8)*(100+clc5))/200"
+    stun["calc2"] = "(par1*(100+clc5))/200"
     stun["*calc2 desc"] = "Velocity %"
-    stun["calc3"] = f"(stat('toblock'.accr)*4*(100+{RESTED_PCT}))/200"
+    stun["calc3"] = "(stat('toblock'.accr)*4*(100+clc5))/200"
     stun["*calc3 desc"] = "Shield Block Damage % Bonus"
     stun["calc4"] = "0"
     stun["*calc4 desc"] = "% Damage Dealt as Elemental"
@@ -229,13 +229,13 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     stun["LevToHit"] = "15"
     stun["ToHitCalc"] = "75+(lvl-1)*15+skill('Concentrate'.blvl)*par7"
     stun["HitShift"] = "8"
-    stun["SrcDam"] = "128"  # Full 100% Weapon Damage (rate-limited by 25-frame localdelay)
+    stun["SrcDam"] = "128"
     stun["EType"] = "stun"
     stun["ELen"] = "30"     # 1.2s base stun (+0.2s/lvl -> 5.0s at Lvl 20, capped at 250 frames = 10s)
     stun["ELevLen1"] = "5"
     stun["ELevLen2"] = "5"
     stun["ELevLen3"] = "5"
-    stun["ELenSymPerCalc"] = f"(({RESTED_PCT})>=33)?(((150*({RESTED_PCT}))/100*{COND_COLD_MULT})/100-100):-100"
+    stun["ELenSymPerCalc"] = "(clc5>=33)?(((150*clc5)/100*clc6)/100-100):(0-100)"
 
     # Rested Concentrate (Id 144, Col 1 Row 3, Req Lvl 16, requires Bash):
     # Uninterruptible precision strike; both Damage % and Defense % scale UP with current Stamina %.
@@ -563,8 +563,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     shout["reqskill2"] = ""
     shout["reqskill3"] = ""
     shout["InTown"] = ""
-    shout["localdelay"] = "75"
-    shout["globaldelay"] = "75"
+    shout["localdelay"] = "50"
+    shout["globaldelay"] = "50"
     shout["minmana"] = "1"
     shout["manashift"] = "7"
     shout["mana"] = "10"
@@ -574,8 +574,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     shout["*Param1 Description"] = "Physical Damage Reduced baseline"
     shout["Param2"] = "2"    # Flat Physical Damage Reduced per level (ramped -> 41 at Lvl 20)
     shout["*Param2 Description"] = "Physical Damage Reduced per level"
-    shout["Param3"] = "500"  # Duration baseline (20 seconds)
-    shout["Param4"] = "13"   # Duration per level (+0.52 seconds/lvl -> 29.88s at Lvl 20)
+    shout["Param3"] = "625"  # Duration baseline (25 seconds)
+    shout["Param4"] = "125"  # Duration per level (+5.0 seconds/lvl -> 120s at Lvl 20)
     shout["Param5"] = ""
     shout["*Param5 Description"] = ""
     shout["Param6"] = ""
@@ -613,8 +613,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bcmd["aurastat3"] = ""
     bcmd["aurastatcalc3"] = ""
     bcmd["InTown"] = ""
-    bcmd["localdelay"] = "75"
-    bcmd["globaldelay"] = "75"
+    bcmd["localdelay"] = "50"
+    bcmd["globaldelay"] = "50"
     bcmd["minmana"] = "1"
     bcmd["manashift"] = "7"
     bcmd["mana"] = "22"
@@ -641,15 +641,15 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bo["reqskill2"] = ""
     bo["reqskill3"] = ""
     bo["InTown"] = ""
-    bo["localdelay"] = "75"
-    bo["globaldelay"] = "75"
+    bo["localdelay"] = "50"
+    bo["globaldelay"] = "50"
     bo["minmana"] = "1"
     bo["manashift"] = "7"
     bo["mana"] = "28"
     bo["lvlmana"] = "1"
     bo["auralencalc"] = cond_cold_dur("ln12")
-    bo["Param1"] = "500"  # Duration baseline (20 seconds)
-    bo["Param2"] = "13"   # Duration per level (+0.52 seconds/lvl -> 29.88s at Lvl 20)
+    bo["Param1"] = "625"  # Duration baseline (25 seconds)
+    bo["Param2"] = "125"  # Duration per level (+5.0 seconds/lvl -> 120s at Lvl 20)
     bo["Param8"] = ""
     bo["*Param8 Description"] = ""
     bo["aurastat1"] = "item_maxhp_percent"
@@ -666,8 +666,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     taunt["reqskill2"] = ""
     taunt["reqskill3"] = ""
     taunt["InTown"] = ""
-    taunt["localdelay"] = "75"
-    taunt["globaldelay"] = "75"
+    taunt["localdelay"] = "50"
+    taunt["globaldelay"] = "50"
     taunt["minmana"] = "1"
     taunt["manashift"] = "8"
     taunt["mana"] = "3"
@@ -679,8 +679,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     howl["reqskill2"] = ""
     howl["reqskill3"] = ""
     howl["InTown"] = ""
-    howl["localdelay"] = "75"
-    howl["globaldelay"] = "75"
+    howl["localdelay"] = "50"
+    howl["globaldelay"] = "50"
     howl["minmana"] = "1"
     howl["manashift"] = "7"
     howl["mana"] = "14"
@@ -694,8 +694,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     bcry["reqskill2"] = ""
     bcry["reqskill3"] = ""
     bcry["InTown"] = ""
-    bcry["localdelay"] = "75"
-    bcry["globaldelay"] = "75"
+    bcry["localdelay"] = "50"
+    bcry["globaldelay"] = "50"
     bcry["minmana"] = "1"
     bcry["manashift"] = "7"
     bcry["mana"] = "20"
@@ -715,8 +715,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     wcry["reqskill2"] = "Battle Cry"
     wcry["reqskill3"] = "Grim Ward"
     wcry["InTown"] = ""
-    wcry["localdelay"] = "75"
-    wcry["globaldelay"] = "75"
+    wcry["localdelay"] = "50"
+    wcry["globaldelay"] = "50"
     wcry["aurafilter"] = "98304"
     wcry["auratargetstate"] = "bar_warcry_debuff"
     wcry["auralencalc"] = cond_cold_dur("par3+(lvl-1)*par4")
@@ -794,8 +794,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     swind["SelectProc"] = ""
     swind["TargetCorpse"] = ""
     swind["InTown"] = ""
-    swind["localdelay"] = "75"
-    swind["globaldelay"] = "75"
+    swind["localdelay"] = "50"
+    swind["globaldelay"] = "50"
     swind["minmana"] = "1"
     swind["manashift"] = "7"
     swind["mana"] = "16"
@@ -857,8 +857,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ecry["SelectProc"] = ""
     ecry["TargetCorpse"] = ""
     ecry["InTown"] = ""
-    ecry["localdelay"] = "75"
-    ecry["globaldelay"] = "75"
+    ecry["localdelay"] = "50"
+    ecry["globaldelay"] = "50"
     ecry["periodic"] = ""
     ecry["perdelay"] = ""
     ecry["minmana"] = "1"
@@ -869,9 +869,9 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     ecry["*Param1 Description"] = "Flat Max Stamina baseline"
     ecry["Param2"] = "12"    # Flat Max Stamina per level (ramped -> +253 at Lvl 20)
     ecry["*Param2 Description"] = "Flat Max Stamina per level"
-    ecry["Param3"] = "500"   # Duration baseline (20 seconds, matching Shout)
+    ecry["Param3"] = "625"   # Duration baseline (25 seconds, matching Shout)
     ecry["*Param3 Description"] = "Duration baseline"
-    ecry["Param4"] = "13"    # Duration per level (+0.52 seconds/lvl -> 29.88s at Lvl 20)
+    ecry["Param4"] = "125"   # Duration per level (+5.0 seconds/lvl -> 120s at Lvl 20)
     ecry["*Param4 Description"] = "Duration per level"
     ecry["Param5"] = ""
     ecry["*Param5 Description"] = ""
@@ -940,8 +940,8 @@ def _apply_barbarian_skills(by_name: Dict[str, Dict[str, str]]) -> None:
     blust["SelectProc"] = ""
     blust["TargetCorpse"] = ""
     blust["InTown"] = ""
-    blust["localdelay"] = "75"
-    blust["globaldelay"] = "75"
+    blust["localdelay"] = "50"
+    blust["globaldelay"] = "50"
     blust["leftskill"] = "0"
     blust["rightskill"] = "1"
     blust["minmana"] = "1"
@@ -1004,7 +1004,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(stun_d, "desc", 3, "36", "StrSkillStunLengthSingular", "StrSkill48", "min(250,edln)", "25")
     _set_dsc_line(stun_d, "desc", 4, "74", "StrSkill22", "", "toht", "")
     _set_dsc_line(stun_d, "desc", 5, "", "", "", "", "")
-    _set_dsc_line(stun_d, "dsc2", 1, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "25", "25")
+    _set_dsc_line(stun_d, "dsc2", 1, "", "", "", "", "")
     _set_dsc_line(stun_d, "dsc2", 2, "", "", "", "", "")
     _clear_dsc3_synergies(stun_d, "skillname139")
     _set_dsc_line(stun_d, "dsc3", 2, "76", "Damplev", "skillname126", "par8", "")
@@ -1080,26 +1080,26 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     leap_d["SkillRow"] = "2"
     _set_dsc_line(leap_d, "desc", 1, "36", "StrSkillKnockbackRadius", "StrSkillKnockbackRadius", "clc1*2", "3")
     _set_dsc_line(leap_d, "desc", 2, "36", "StrSkillRangeRadius", "StrSkillRangeRadius", "clc3*2", "3")
-    _set_dsc_line(leap_d, "dsc2", 1, "74", "ModBarStamCostJump", "", "12", "")
+    _set_dsc_line(leap_d, "dsc2", 1, "", "", "", "", "")
 
     lpat_d = by_desc["leap attack"]
     lpat_d["SkillColumn"] = "2"
     lpat_d["SkillRow"] = "4"
-    _set_dsc_line(lpat_d, "desc", 1, "74", "ModBarStamDegradePenalty", "", "-50", "")
-    _set_dsc_line(lpat_d, "desc", 2, "74", "StrSkillDamagePercent", "", "clc1", "")
-    _set_dsc_line(lpat_d, "desc", 3, "74", "StrSkill22", "", "toht", "")
-    _set_dsc_line(lpat_d, "desc", 4, "75", "StrSkill4", "", "pnma", "pxma")
-    _set_dsc_line(lpat_d, "desc", 5, "36", "StrSkillRadiusSingular", "StrSkill18", "7*2", "3")
-    _set_dsc_line(lpat_d, "dsc2", 1, "74", "ModBarStamCostJump", "", "16", "")
-    _set_dsc_line(lpat_d, "dsc2", 2, "36", "StrSkill9", "StrSkill20", "clc4", "25")
+    _set_dsc_line(lpat_d, "desc", 1, "74", "StrSkillDamagePercent", "", "clc1", "")
+    _set_dsc_line(lpat_d, "desc", 2, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(lpat_d, "desc", 3, "75", "StrSkill4", "", "pnma", "pxma")
+    _set_dsc_line(lpat_d, "desc", 4, "36", "StrSkillRadiusSingular", "StrSkill18", "7*2", "3")
+    _set_dsc_line(lpat_d, "desc", 5, "", "", "", "", "")
+    _set_dsc_line(lpat_d, "dsc2", 1, "36", "StrSkill9", "StrSkill20", "clc4", "25")
+    _set_dsc_line(lpat_d, "dsc2", 2, "", "", "", "", "")
 
     ww_d = by_desc["whirlwind"]
     ww_d["SkillColumn"] = "2"
     ww_d["SkillRow"] = "6"
-    _set_dsc_line(ww_d, "desc", 1, "74", "ModBarStamCostSpin", "", "6", "")
-    _set_dsc_line(ww_d, "desc", 2, "74", "ModBarStamDegradePenalty", "", "-50", "")
-    _set_dsc_line(ww_d, "desc", 3, "74", "StrSkillDamagePercent", "", "clc1", "")
-    _set_dsc_line(ww_d, "desc", 4, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(ww_d, "desc", 1, "74", "StrSkillDamagePercent", "", "clc1", "")
+    _set_dsc_line(ww_d, "desc", 2, "74", "StrSkill22", "", "toht", "")
+    _set_dsc_line(ww_d, "desc", 3, "", "", "", "", "")
+    _set_dsc_line(ww_d, "desc", 4, "", "", "", "", "")
     _clear_dsc3_synergies(ww_d, "skillname151")
     _set_dsc_line(ww_d, "dsc3", 2, "76", "Damplev", "skillname132", "par8", "")
     _set_dsc_line(ww_d, "dsc3", 3, "76", "Damplev", "skillname143", "par8", "")
@@ -1177,7 +1177,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     for i in range(4, 7):
         _set_dsc_line(shout_d, "desc", i, "", "", "", "", "")
     _set_dsc_line(shout_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(shout_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(shout_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     for i in range(1, 7):
         _set_dsc_line(shout_d, "dsc3", i, "", "", "", "", "")
 
@@ -1190,7 +1190,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     for i in range(3, 7):
         _set_dsc_line(bcmd_d, "desc", i, "", "", "", "", "")
     _set_dsc_line(bcmd_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(bcmd_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(bcmd_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     _set_dsc_line(bcmd_d, "dsc3", 1, "40", "Sksyn", "skillname155", "2", "")
     _set_dsc_line(bcmd_d, "dsc3", 2, "76", "ModSynLifeRestorePerLev", "skillname138", "par7", "")
     for i in range(3, 7):
@@ -1205,7 +1205,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(bo_d, "desc", 4, "", "", "", "", "")
     _set_dsc_line(bo_d, "desc", 5, "", "", "", "", "")
     _set_dsc_line(bo_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(bo_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(bo_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     for i in range(1, 7):
         _set_dsc_line(bo_d, "dsc3", i, "", "", "", "", "")
 
@@ -1214,19 +1214,19 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     taunt_d["SkillColumn"] = "2"
     taunt_d["SkillRow"] = "2"
     _set_dsc_line(taunt_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(taunt_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(taunt_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
 
     howl_d = by_desc["howl"]
     howl_d["SkillColumn"] = "2"
     howl_d["SkillRow"] = "3"
     _set_dsc_line(howl_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(howl_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(howl_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
 
     bcry_d = by_desc["battle cry"]
     bcry_d["SkillColumn"] = "2"
     bcry_d["SkillRow"] = "4"
     _set_dsc_line(bcry_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(bcry_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(bcry_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
 
     wcry_d = by_desc["war cry"]
     wcry_d["SkillColumn"] = "2"
@@ -1239,7 +1239,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(wcry_d, "desc", 5, "", "", "", "", "")
     _set_dsc_line(wcry_d, "desc", 6, "", "", "", "", "")
     _set_dsc_line(wcry_d, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(wcry_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(wcry_d, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     _set_dsc_line(wcry_d, "dsc3", 1, "40", "Sksyn", "skillname154", "2", "")
     _set_dsc_line(wcry_d, "dsc3", 2, "76", "ModSynPhysMagBreakPerLev", "skillname146", "par7", "")
     for i in range(3, 7):
@@ -1251,7 +1251,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     swind["SkillRow"] = "3"
     _set_dsc_line(swind, "desc", 1, "74", "ModBarStamRestore", "", "clc1", "")
     _set_dsc_line(swind, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(swind, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(swind, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     for i in range(1, 7):
         _set_dsc_line(swind, "dsc3", i, "", "", "", "", "")
 
@@ -1265,7 +1265,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     for i in range(4, 7):
         _set_dsc_line(ecry, "desc", i, "", "", "", "", "")
     _set_dsc_line(ecry, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(ecry, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(ecry, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     _set_dsc_line(ecry, "dsc3", 1, "40", "Sksyn", "skillname142", "2", "")
     _set_dsc_line(ecry, "dsc3", 2, "76", "ModSynMaxStamPerLev", "skillname131", "par7", "")
     for i in range(3, 7):
@@ -1281,7 +1281,7 @@ def _apply_barbarian_skilldesc(by_desc: Dict[str, Dict[str, str]]) -> None:
     _set_dsc_line(blust, "desc", 4, "74", "ModBarBloodlustDrain", "", "clc5", "")
     _set_dsc_line(blust, "desc", 5, "36", "StrSkillDurationSingular", "StrSkill20", "len", "25")
     _set_dsc_line(blust, "dsc2", 1, "36", "StrSkill3", "", "usmc", "256")
-    _set_dsc_line(blust, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "75", "25")
+    _set_dsc_line(blust, "dsc2", 2, "36", "StrSkillCastingDelaySingular", "StrSkillCastingDelayPlural", "50", "25")
     for i in range(3, 7):
         _set_dsc_line(blust, "dsc2", i, "", "", "", "", "")
     for i in range(1, 7):
@@ -1468,16 +1468,16 @@ BARBARIAN_STRING_UPDATES: List[Tuple[int, str, str]] = [
         # Tactical / Well-Rested Skills (126 Strike, 139 Shield Slam, 144 Concentrate)
         (0, "skillname126", "Strike"),
         (0, "skillan126", "Strike"),
-        (0, "skillsd126", "heavy blow - stronger while well-rested"),
-        (0, "skillld126", "powerful blow that knocks back target\ndeals more damage with high stamina"),
+        (0, "skillsd126", "powerful blow that knocks back target"),
+        (0, "skillld126", "powerful blow that knocks back target"),
         (0, "skillname139", "Shield Slam"),
         (0, "skillan139", "Shield Slam"),
         (0, "skillsd139", "requires a shield - charges and stuns target"),
-        (0, "skillld139", "requires a shield\ncharges and stuns target; deals more damage with high stamina"),
+        (0, "skillld139", "requires a shield\ncharges and stuns target"),
         (0, "skillname144", "Concentrate"),
         (0, "skillan144", "Concentrate"),
-        (0, "skillsd144", "uninterruptible attack - stronger while well-rested"),
-        (0, "skillld144", "uninterruptible attack that improves defense\ndeals more damage with high stamina"),
+        (0, "skillsd144", "uninterruptible attack that improves defense"),
+        (0, "skillld144", "uninterruptible attack that improves defense"),
         # Exhaustion / Berserker Skills (133 Flurry, 140 Barrage, 147 Frenzy, 152 Berserk)
         (0, "skillname133", "Flurry"),
         (0, "skillan133", "Flurry"),
@@ -1496,12 +1496,12 @@ BARBARIAN_STRING_UPDATES: List[Tuple[int, str, str]] = [
         (0, "skillsd152", "two-handed magic attack - stronger while exhausted"),
         (0, "skillld152", "requires a two-handed weapon\nconverts damage to magic and drops defense to zero\ndeals more damage as stamina is depleted"),
         # Stamina Spenders (132 Leap, 143 Leap Attack, 151 Whirlwind)
-        (0, "skillsd132", "leaps and knocks back - weakens as stamina falls"),
-        (0, "skillld132", "leaps and knocks back nearby enemies\nconsumes stamina; range and speed degrade as stamina is depleted"),
-        (0, "skillsd143", "leaps to attack target - weakens as stamina falls"),
-        (0, "skillld143", "leaps to attack target and stuns nearby enemies\nconsumes stamina; damage and stun degrade as stamina is depleted"),
-        (0, "skillsd151", "whirling attack - weakens as stamina falls"),
-        (0, "skillld151", "whirling dance of death\nconsumes stamina; damage degrades as stamina is depleted"),
+        (0, "skillsd132", "leaps and knocks back nearby enemies (consumes stamina)"),
+        (0, "skillld132", "leaps and knocks back nearby enemies\nconsumes stamina"),
+        (0, "skillsd143", "leaps to attack and stun nearby enemies (consumes stamina)"),
+        (0, "skillld143", "leaps to attack target and stuns nearby enemies\nconsumes stamina"),
+        (0, "skillsd151", "whirling attack through enemies (consumes stamina)"),
+        (0, "skillld151", "whirling dance of death\nconsumes stamina"),
         # Warcries & Passives (131 Second Wind, 138 Shout, 141 Unflinching, 142 Enduring Cry, 149 Battle Orders, 150 Bloodlust, 154 War Cry, 155 Battle Command)
         (0, "skillname131", "Second Wind"),
         (0, "skillan131", "Second Wind"),

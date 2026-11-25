@@ -492,31 +492,42 @@ class TestSkillSimulation(unittest.TestCase):
         self.assertEqual(eval_d2_expr(dt_row["calc1"], dt_row, slvl=18, stats=half_stam, skills_by_name=skills_by_name), 3)
         self.assertEqual(eval_d2_expr(dt_row["calc1"], dt_row, slvl=18, stats=empty_stam, skills_by_name=skills_by_name), 2)
 
-        # Universal Stun Exhaustion Rule (100% -> 33% linear, 0 below 33%) on Paladin Smite & Charge
+        # Universal Stun Exhaustion Rule (100% -> 33% linear, 0 below 33%) on Paladin Smite (no knockback) & Charge
         smite_row = skills_by_name["Smite"]
+        self.assertEqual(smite_row["ResultFlags"], "")
         s_full = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
         s_33 = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
         s_32 = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
         self.assertGreater(s_full, s_33)
         self.assertGreater(s_33, 0)
         self.assertEqual(s_32, 0)
+        # Stun Fatigue decay (shortparam1 = 0..4 -> 100% -> 75% -> 50% -> 25% -> 0%)
+        s_hit2 = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats={**full_stam, "shortparam1": 1}, skills_by_name=skills_by_name)
+        s_hit5 = eval_d2_expr(smite_row["calc2"], smite_row, slvl=10, stats={**full_stam, "shortparam1": 4}, skills_by_name=skills_by_name)
+        self.assertGreater(s_full, s_hit2)
+        self.assertGreater(s_hit2, 0)
+        self.assertEqual(s_hit5, 0)
 
         chg_row = skills_by_name["Charge"]
         c_full = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
         c_33 = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
         c_32 = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
+        c_hit5 = 100 + eval_d2_expr(chg_row["ELenSymPerCalc"], chg_row, slvl=10, stats={**full_stam, "shortparam1": 4}, skills_by_name=skills_by_name)
         self.assertGreater(c_full, c_33)
         self.assertGreater(c_33, 0)
         self.assertEqual(c_32, 0)
+        self.assertEqual(c_hit5, 0)
 
-        # Barbarian Shield Slam (Stun) uses the same 100% -> 33% Stun Exhaustion Rule (0 below 33%)
+        # Barbarian Shield Slam (Stun) uses the same 100% -> 33% Stun Exhaustion + Stun Fatigue Rules
         stun_row = skills_by_name["Stun"]
         st_full = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats=full_stam, skills_by_name=skills_by_name)
         st_33 = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats=stam_33, skills_by_name=skills_by_name)
         st_32 = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats=stam_32, skills_by_name=skills_by_name)
+        st_hit5 = 100 + eval_d2_expr(stun_row["ELenSymPerCalc"], stun_row, slvl=10, stats={**full_stam, "shortparam1": 4}, skills_by_name=skills_by_name)
         self.assertEqual(st_full, 150)
         self.assertGreater(st_33, 0)
         self.assertEqual(st_32, 0)
+        self.assertEqual(st_hit5, 0)
 
         # 2. Well-Rested Skills increase monotonically with Current Stamina %
         for sk_name, col in (

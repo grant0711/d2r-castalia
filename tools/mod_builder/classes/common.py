@@ -138,6 +138,7 @@ PALADIN_PASSIVE_STATES = [
 
 GLOBAL_STATES = [
     ("stamina_fatigue", {}),
+    ("stun_fatigue", {}),
 ]
 
 BARBARIAN_STATES = [

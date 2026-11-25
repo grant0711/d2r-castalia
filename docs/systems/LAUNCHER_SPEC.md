@@ -1,7 +1,7 @@
-# Castalia Launcher & Campaign Hub — Technical Specification (Draft v2)
+# Castalia Launcher, CLI & Campaign Hub — Technical Specification (Draft v3)
 
-> **Status:** Locked MVP Spec (v2 — core architectural decisions resolved)  
-> **Goal:** Replace manual `.zip` extraction, version checks, save juggling, and Discord copy/pasting with a lightweight cross-platform desktop launcher (**Windows + Linux/Steam Deck**) backed by a minimal Campaign API—so Hosts can create/manage scheduled co-op campaigns on any Castalia version and players can swap profiles, sync versions, generate drop-in Starter-Kit characters, and launch into D2RLoader in one click.
+> **Status:** Locked MVP Spec (v3 — unified `castalia-core` library powering both `bin/d2r-campaign` CLI and Tauri Desktop GUI)  
+> **Goal:** Replace manual `.zip` extraction, version checks, save juggling, and Discord copy/pasting with a shared Rust engine (`castalia-core`) exposed as **both** a tight agent-friendly CLI (`bin/d2r-campaign`) and a cross-platform desktop launcher (**Windows + Linux/Steam Deck**), backed by a minimal Campaign API.
 
 ---
 
@@ -9,9 +9,12 @@
 
 ```mermaid
 flowchart TB
-    subgraph Client["Castalia Desktop Launcher (Tauri v2: Rust + Web UI)"]
-        UI["Campaign Browser / Host Form / Drop-In Builder / Profile Switcher"]
-        FS["Local Engine: Version Cache, SHA-256 Verifier, Per-Campaign Save Swapper, .d2s Writer, D2RLoader Runner"]
+    subgraph Clients["Two Thin Frontends Sharing One Engine"]
+        CLI["castalia-cli (bin/d2r-campaign)\nTerminal & Agent-Prompting Interface\n(--json output, ships FIRST)"]
+        GUI["castalia-launcher (Tauri v2 GUI)\nCampaign Browser, Host Form & Drop-In Modal\n(for general players)"]
+        CORE["castalia-core (Shared Rust Library)\nAPI Client, Version Cache, SHA-256 Verifier,\nPer-Campaign Save Swapper, .d2s Telemetry/Gen, D2RLoader Runner"]
+        CLI --> CORE
+        GUI --> CORE
     end
 
     subgraph Static["Static Distribution ($0/mo)"]
@@ -25,13 +28,30 @@ flowchart TB
         HOOK["Discord Webhook Dispatcher"]
     end
 
-    FS -->|"Fetch release catalog & latest.json"| GH
-    FS -->|"Download & verify zip"| GH
-    UI <-->|"HTTPS JSON"| API
+    CORE -->|"Fetch release catalog & zips"| GH
+    CORE -->|"Check latest.json"| PAGES
+    CORE <-->|"HTTPS JSON"| API
     API <--> DB
     API -->|"Auto-post / edit embeds"| HOOK
     HOOK --> DISCORD["Discord (#campaign-board, #hall-of-heroes)"]
 ```
+
+### Workspace Layout (Zero Logic Duplication)
+```text
+castalia-hub/
+├── crates/
+│   ├── castalia-core/        # 100% of local & API logic (shared by CLI and GUI)
+│   │   ├── api.rs            # Campaign Hub REST client + tokens.json store
+│   │   ├── versions.rs       # GitHub Releases fetcher, SHA-256 verifier, versions/ cache
+│   │   ├── profiles.rs       # Crash-safe per-campaign save swapper (solo / campaign-<id>)
+│   │   ├── d2s.rs            # .d2s parser (telemetry/build label) + Starter-Kit generator
+│   │   └── runner.rs         # D2R / D2RLoader detection, spawn & post-exit sync hook
+│   ├── castalia-cli/         # Tight CLI binary (`bin/d2r-campaign`) — built & dogfooded FIRST
+│   └── castalia-launcher/    # Tauri v2 Desktop GUI — thin UI over `castalia-core`
+└── worker/                   # Cloudflare Workers + D1 REST API + Discord Webhooks
+```
+
+**Why CLI-First Wins:** Both frontends share the exact same `<launcher_data>/` directory (`config.json`, `tokens.json`, `versions/`, `profiles/`, `active_profile.json`). You can build `worker/` + `castalia-core` + `bin/d2r-campaign` **first**, host real weekly co-op sessions from your terminal (and via Antigravity agent prompting), battle-test the save swapper and `.d2s` telemetry, and then wrap `castalia-core` in the Tauri v2 GUI for general players with zero rewritten logic.
 
 ### Core Stack Choices
 * **Desktop Client:** **Tauri v2** (Rust backend + lightweight HTML/JS frontend) → ~8 MB native binary for Windows (`.exe`/`.msi`) and Linux (`AppImage`), native filesystem/zip/SHA-256/process spawning.
@@ -200,6 +220,18 @@ Because the launcher already intercepts `D2RLoader.exe` exit to sync the active 
      * Displays a brief non-blocking toast in the launcher: *"Session synced: Level 52 · NM Act 4 (`a4nm`) — Next session auto-scheduled for Thu Dec 3 [Edit]"* so the Host only ever clicks anything if they want to override.
    * **Auto-Detected Campaign Victory:** If the Host's `.d2s` shows **Hell Baal defeated**, the launcher pops a 1-click **"🏆 Hell Baal Cleared — Publish to Hall of Heroes?"** prompt with the final party roster, levels, and build labels already pre-populated!
 
+### F. Launcher → D2RLoader Handoff & Zero-Typing Join Flow (MVP)
+D2RLoader's `d2rloader/config/d2rloader.toml` already provides `default_mod = "castalia"`, `skip_title_screen = true`, `show_tcpip_button = true`, advertised **Game IDs** (`show_game_id = true`, keeping the Host's IP private), optional UPnP (`automatic_port_mapping = true`), and release-mode hosting trace logs (`[d2rloader.developer.logs] hosting = true` → `d2rloader/logs/d2rloader.log`).
+
+* **Host Handoff (Zero Alt-Tabbing):**
+  1. Host clicks **`▶ HOST & LAUNCH`** (or `d2r-campaign launch <id>`). Launcher syncs mod/profile, verifies `hosting = true` in `d2rloader.toml`, and spawns `D2RLoader.exe`.
+  2. D2R opens straight to Character Select (only the Host's campaign character is shown) → Host clicks **Multiplayer → Host Game** (Unlisted with advertised Game ID).
+  3. Launcher tails `d2rloader/logs/d2rloader.log`, detects the advertised Game ID automatically, and calls `POST /api/campaigns/:id/go-live`—unlocking the Game ID for RSVPed players and firing the Discord ping without the Host ever leaving D2R.
+* **Joining Player Handoff (3 Clicks + `Ctrl+V`, Zero Typing):**
+  1. Player clicks **`▶ SYNC & LAUNCH`** (or `d2r-campaign launch <id>`). Launcher syncs pinned `vX.Y.Z`, swaps in `profiles/campaign-<id>/`, **automatically copies the Host's Game ID to the system clipboard**, and spawns `D2RLoader.exe`.
+  2. D2R opens straight to Character Select (only their character for this campaign is present).
+  3. Player clicks **Multiplayer → Join by Game ID → `Ctrl+V` → Join**.
+
 ---
 
 ## 7. Discord Webhook Automation (Zero Copy-Paste)
@@ -326,9 +358,67 @@ Dark gothic-gold aesthetic matching the **Castalia Compendium** (`#111` charcoal
 
 ---
 
-## 9. Phase 2 Backburner (Explicitly Deferred)
+## 9. Agent-Friendly CLI (`bin/d2r-campaign`) Surface
+
+Every command supports `--json` for structured agent/script consumption alongside concise human-readable terminal tables (mirroring `bin/d2r-char` and `bin/d2r-class` in `AGENTS.md`).
+
+### Discovery & Status
+```bash
+d2r-campaign list [--open] [--ruleset standard|expedition|oneshot] [--json]
+d2r-campaign show <campaign_id> [--json]     # Details, roster, live Game ID (if authorized)
+d2r-campaign versions [--cached] [--json]    # List available GitHub Releases & local cache
+d2r-campaign chars <campaign_id|solo> [--json] # Inspect .d2s characters + parsed builds in profile
+```
+
+### Host Lifecycle
+```bash
+# Create a campaign (pins version, posts to Discord #campaign-board, saves host_token locally):
+d2r-campaign create \
+  --title "Thursday Night Pilgrimage" \
+  --ruleset standard \
+  --version 0.4.2 \
+  --level 1 --wp a1n --seats 5 \
+  --schedule "Thursdays 8–10 PM EST" \
+  --next "2026-11-26T20:00-05:00"
+
+# Mark session LIVE with D2RLoader Game ID (notifies Discord & unlocks join info for RSVPs):
+d2r-campaign live <campaign_id> --game-id CST-4821
+
+# Explicitly upgrade a campaign's pinned Castalia version:
+d2r-campaign upgrade <campaign_id> --version 0.4.3
+
+# Archive completed Hell Baal run to Hall of Heroes:
+d2r-campaign complete <campaign_id> --deaths 12 --summary "Clean 8-session clear!"
+```
+
+### Player Lifecycle & Launching
+```bash
+# RSVP with an existing character in profiles/campaign-<id>/:
+d2r-campaign rsvp <campaign_id> --char Thoren
+
+# RSVP as a Drop-In (auto-generates level/Act-matched Starter-Kit .d2s into campaign profile!):
+d2r-campaign rsvp <campaign_id> --drop-in --name Lyra --class sor
+
+# Manually switch active save profile without launching (for inspection/testing):
+d2r-campaign switch <campaign_id|solo>
+
+# Sync pinned mod version -> swap isolated save profile -> launch D2RLoader ->
+# on exit: sync saves back + parse .d2s telemetry + auto-roll Host progress!
+d2r-campaign launch <campaign_id|solo>
+```
+
+### Agent Prompting Integration (`AGENTS.md`)
+Once `bin/d2r-campaign` is built, registering its command cheatsheet in `AGENTS.md` (just like `bin/d2r-char`) lets you drive your entire hosting workflow via natural language:
+* *"Create a Saturday 7pm Hell Act 1 Pure Expedition one-shot on v0.4.2 for 4 players."*
+* *"Who RSVPed for tonight's Thursday campaign, and what classes are we missing?"*
+* *"Go live on `thu-pilgrimage-4k9a` with Game ID `CST-4821` and launch it."*
+
+---
+
+## 10. Phase 2 Backburner (Explicitly Deferred)
 
 1. **Discord OAuth2 (`identify` scope):** Multi-device Host ownership, real `@mention` pings, anti-spam rate limits, `OPEN_HOSTING` allowlist.
 2. **Unlisted / Invite-Code Private Campaigns:** Hide private friend-group tables from the public browser and `#campaign-board`.
 3. **Auto-Install / Update D2RLoader:** Fetch official D2RLoader release directly inside the launcher.
 4. **Cloud `.d2s` Save Vault:** Optional server-side save backup & strict party-lock sync across PCs.
+5. **D2RLoader PluginSDK (ABI 4) Auto-Join & Atmospheric Extensions:** Following [`latedozer/Horror-mod`](https://github.com/latedozer/Horror-mod) (which we plan to experiment with and selectively adapt for Castalia's atmosphere/weather), use the same mod-scoped C++ plugin architecture (`mods/castalia/d2rloader/plugins/`) to optionally support true 0-click auto-join from a launcher-written `join_target.json`.

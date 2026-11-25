@@ -445,6 +445,7 @@ function openDropInModal(autoPrompt = false, soloMode = false) {
     document.getElementById("di-banner").innerHTML =
       `Creates a fresh <b>Level 1</b> character in <code>profiles/solo/</code> (Normal Act 1, 4x Minor Healing Potions + <b>2,000 Gold</b>) so you can buy starter gear and launch straight into play.`;
     document.getElementById("di-save-btn").textContent = "Create Character";
+    document.getElementById("di-launch-btn").textContent = "Play Solo";
   } else {
     const c = STATE.activeCampaign;
     const isFresh = Number(c.current_level) <= 1;
@@ -457,6 +458,7 @@ function openDropInModal(autoPrompt = false, soloMode = false) {
       : `Locked to Campaign Snapshot: <b>Level ${c.current_level} &middot; ${c.current_wp}</b> (tier-matched Starter Kit).`;
     document.getElementById("di-banner").innerHTML = `${note}${kit} &middot; Castalia <b>v${c.castalia_version}</b>`;
     document.getElementById("di-save-btn").textContent = "Create .d2s & RSVP";
+    document.getElementById("di-launch-btn").textContent = c.is_host ? "Start Campaign" : "Join Campaign";
   }
   document.getElementById("di-name").value = "";
   openModal("modal-dropin");

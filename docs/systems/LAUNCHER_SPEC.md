@@ -1,7 +1,7 @@
-# Castalia Launcher, CLI & Campaign Hub — Technical Specification (Draft v3)
+# Castalia Launcher, CLI & Campaign Hub — Technical Specification & Status (v3)
 
-> **Status:** Locked MVP Spec (v3 — unified `castalia-core` library powering both `bin/d2r-campaign` CLI and Tauri Desktop GUI)  
-> **Goal:** Replace manual `.zip` extraction, version checks, save juggling, and Discord copy/pasting with a shared Rust engine (`castalia-core`) exposed as **both** a tight agent-friendly CLI (`bin/d2r-campaign`) and a cross-platform desktop launcher (**Windows + Linux/Steam Deck**), backed by a minimal Campaign API.
+> **Status:** **MVP Built & E2E Verified** on `feat/campaign-launcher` (Python 3.12 zero-dependency MVP + Cloudflare Workers `worker/` + native MSVC `castalia-autohost.dll` plugin; ready for Cloudflare deploy & Windows packaging).  
+> **Goal:** Replace manual `.zip` extraction, version checks, save juggling, and Discord copy/pasting with a shared engine exposed as **both** a tight agent-friendly CLI (`bin/d2r-campaign`) and a cross-platform desktop launcher (`bin/d2r-launcher`), backed by a minimal Campaign API.
 
 ---
 
@@ -415,7 +415,36 @@ Once `bin/d2r-campaign` is built, registering its command cheatsheet in `AGENTS.
 
 ---
 
-## 10. Phase 2 Backburner (Explicitly Deferred)
+## 10. Shipped MVP Status (Verified E2E on `feat/campaign-launcher`)
+
+### Accomplished & Verified
+* **Shared Engine ([`castalia_hub/core.py`](file:///home/grant/games/d2r/castalia_hub/core.py), [`d2s_telemetry.py`](file:///home/grant/games/d2r/castalia_hub/d2s_telemetry.py)):**
+  * Crash-safe per-campaign save swapper (`profiles/solo/`, `profiles/campaign-<id>/`, preserving global `Settings.json`).
+  * Multi-version GitHub Releases cache with SHA-256 verification and strict version pinning (including historical versions).
+  * Fresh Level 1 & Drop-In Starter-Kit `.d2s` generation directly into campaign profiles (reusing `char_manager.py`).
+  * Post-session `.d2s` telemetry parser (Name, Class, Level, Act/WP, top-2 skill `build_summary`, Hell Baal completion) and automatic Host progress rollover (`+7d` schedule).
+  * `playit.gg` `host:port` parsing with automatic `d2rloader.toml` `game_port` sync & restore on exit, plus `d2rloader.log` log-truncation-safe tailing (`Listener ready: bound_port=4000` → auto **🟢 LIVE**).
+* **CLI & Desktop Launcher ([`bin/d2r-campaign`](file:///home/grant/games/d2r/bin/d2r-campaign), [`bin/d2r-launcher`](file:///home/grant/games/d2r/bin/d2r-launcher), [`bin/d2r-launcher-p2`](file:///home/grant/games/d2r/bin/d2r-launcher-p2)):**
+  * Full `--json` agent-friendly CLI + local SQLite API (`local_server.py`) + gothic-gold desktop UI (`static/index.html`) with empty-profile launch guard and Host Quick-Fill Cheat-Sheet.
+  * Dual-instance co-op testing verified on Linux/i3 via `D2R_PREFIX=mod` (`acct1` Host + `mod` Player 2 in `"Window Mode": 0`).
+* **Native D2RLoader Plugin ([`plugins/castalia-autohost/`](file:///home/grant/games/d2r/plugins/castalia-autohost), [`.github/workflows/build-plugin.yml`](file:///home/grant/games/d2r/.github/workflows/build-plugin.yml)):**
+  * MIT-licensed MSVC x64 `castalia-autohost.dll` (ABI 4, `PluginFlags::Client`, embedded PE manifest resource) built automatically on GitHub Actions `windows-latest`.
+  * Renders right-docked in-game **`CASTALIA HOST GUIDE`** / **`CASTALIA JOIN GUIDE`** (with `[X]` Close button & auto-close) on `D2RLoader 1.3.1-beta`, and automatically upgrades to full `WidgetService` field auto-fill once D2RLoader ships `1.3.2+`.
+* **Live Internet Co-Op Round-Trip Verified:**
+  * Persistent `castalia-playit.service` (`systemd --user`, `playit` v2.0.2) forwarding `209.25.140.16:11887` → `127.0.0.1:4000`.
+  * Both Host (`Jesse`, `acct1`) and Joiner (`Steven`, `mod`) connected simultaneously over the internet via `Browse Games → Direct Join (lower left) → Ctrl+V`, with isolated saves and 43/43 unit tests passing (`tests/test_campaign_hub.py`).
+* **Cloudflare Production Backend ([`worker/`](file:///home/grant/games/d2r/worker)):** `schema.sql`, `wrangler.toml`, and `src/index.js` implemented and ready for deployment.
+
+### Immediate Next Steps
+1. **Verify Trade-Window Stability (1-Variable Test):** Re-test opening Trade between Host and Player 2 with `write_crash_dumps = true` in `d2rloader.toml` to confirm whether the Host exit during Trade was a one-off X11 focus/resize glitch or a trade-panel bug.
+2. **Deploy Production Campaign API (`worker/`):** Provision Cloudflare D1 (`npx wrangler d1 create castalia-campaigns`), apply `worker/schema.sql`, set `DISCORD_CAMPAIGN_WEBHOOK_URL`, and run `npx wrangler deploy`.
+3. **Bundle `castalia-autohost.dll` in Release Zips:** Update `bin/d2r-release` to include `mods/castalia/d2rloader/plugins/castalia-autohost.dll` in `castalia-vX.Y.Z.zip`.
+4. **Merge `feat/campaign-launcher` → `master` & Run First Gated Release:** Merge the MVP branch, then test `./bin/d2r-release prepare` → isolated subagent PR review → `release` branch cascade.
+5. **Windows Teammate Packaging:** Package the launcher for Windows friends (PyInstaller/standalone or Tauri v2 wrapping the existing `static/index.html`).
+
+---
+
+## 11. Phase 2 Backburner (Explicitly Deferred)
 
 1. **Discord OAuth2 (`identify` scope):** Multi-device Host ownership, real `@mention` pings, anti-spam rate limits, `OPEN_HOSTING` allowlist.
 2. **Unlisted / Invite-Code Private Campaigns:** Hide private friend-group tables from the public browser and `#campaign-board`.

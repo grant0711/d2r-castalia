@@ -274,6 +274,12 @@ export default {
           return jsonResp(sanitizeCampaign(updated, true));
         }
 
+        if (parts.length === 3 && req.method === "DELETE") {
+          await env.DB.prepare("DELETE FROM chronicles WHERE campaign_id = ?").bind(cid).run();
+          await env.DB.prepare("DELETE FROM campaigns WHERE id = ?").bind(cid).run();
+          return jsonResp({ deleted: cid });
+        }
+
         if (parts.length === 4 && parts[3] === "complete" && req.method === "POST") {
           const body = await req.json();
           const rsvps = (

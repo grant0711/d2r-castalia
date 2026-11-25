@@ -276,6 +276,13 @@ class CampaignDB:
             self._sync_campaign_discord(camp, camp["confirmed_seats"])
             return camp
 
+    def delete_campaign(self, cid: str, bearer: Optional[str]) -> Dict[str, Any]:
+        with self._lock, self._conn() as conn:
+            self._require_host(conn, cid, bearer)
+            conn.execute("DELETE FROM chronicles WHERE campaign_id = ?", (cid,))
+            conn.execute("DELETE FROM campaigns WHERE id = ?", (cid,))
+            return {"deleted": cid}
+
     def go_live(self, cid: str, join_info: str, bearer: Optional[str]) -> Dict[str, Any]:
         with self._lock, self._conn() as conn:
             self._require_host(conn, cid, bearer)
@@ -512,6 +519,8 @@ def make_handler(db: CampaignDB):
                         return self._send(200, res) if res else self._send(404, {"error": "not_found"})
                     if len(parts) == 3 and method == "PATCH":
                         return self._send(200, db.update_campaign(cid, self._read_json(), bearer))
+                    if len(parts) == 3 and method == "DELETE":
+                        return self._send(200, db.delete_campaign(cid, bearer))
                     if len(parts) == 4 and parts[3] == "go-live" and method == "POST":
                         body = self._read_json()
                         return self._send(200, db.go_live(cid, str(body.get("live_join_info", "")), bearer))

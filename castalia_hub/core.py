@@ -481,6 +481,17 @@ class CastaliaHub:
             raise RuntimeError(f"No local host_token found for campaign '{campaign_id}'")
         return self._api("PATCH", f"/api/campaigns/{campaign_id}", body=updates, token=tok)
 
+    def delete_campaign(self, campaign_id: str) -> Dict[str, Any]:
+        tok = self.get_token(campaign_id, "host_token")
+        if not tok:
+            raise RuntimeError(f"No local host_token found for campaign '{campaign_id}'")
+        res = self._api("DELETE", f"/api/campaigns/{campaign_id}", token=tok)
+        tokens = self.load_tokens()
+        if campaign_id in tokens:
+            tokens.pop(campaign_id, None)
+            self._save_json(self.tokens_path, tokens)
+        return res
+
     def go_live(self, campaign_id: str, game_id: str) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:

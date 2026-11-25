@@ -362,7 +362,8 @@ async function openCampaign(cid) {
         <button class="btn primary" onclick="promptGoLive('${c.id}')">Go Live (Set Game ID)</button>
         <button class="btn" onclick="promptEndSession('${c.id}', ${c.current_level}, '${c.current_wp}')">End Session &amp; Update Progress</button>
         <button class="btn" onclick="promptUpgrade('${c.id}')">Upgrade Pinned Version</button>
-        <button class="btn danger" onclick="promptComplete('${c.id}')">Complete &#8594; Hall of Heroes</button>
+        <button class="btn" onclick="promptComplete('${c.id}')">Complete &#8594; Hall of Heroes</button>
+        <button class="btn danger" onclick="promptDelete('${c.id}', '${c.title.replace(/'/g, "")}')">Delete Campaign</button>
       </div>
     </div>` : "";
 
@@ -565,6 +566,7 @@ async function promptGoLive(cid) { const g = prompt("Enter D2RLoader Game ID (or
 async function promptEndSession(cid, lvl, wp) { const nl = prompt("New Campaign Level:", String(lvl)); const nw = prompt("New Act/WP (e.g. a3nm):", wp); if (nl && nw) { await api("/local/end-session", { method: "POST", body: { campaign_id: cid, current_level: Number(nl), current_wp: nw } }); toast("Session ended & rolled forward!"); openCampaign(cid); } }
 async function promptUpgrade(cid) { const v = prompt("Upgrade pinned Castalia version to (e.g. 0.4.2):"); if (v) { await api("/local/upgrade", { method: "POST", body: { campaign_id: cid, version: v } }); toast("Upgraded pinned version!"); openCampaign(cid); } }
 async function promptComplete(cid) { const s = prompt("Hall of Heroes summary:"); const d = prompt("Total party deaths:", "0"); if (s) { await api("/local/complete", { method: "POST", body: { campaign_id: cid, summary: s, death_count: Number(d || 0) } }); toast("Archived to Hall of Heroes!"); showTab("hoh"); } }
+async function promptDelete(cid, title) { if (confirm(`Permanently delete campaign "${title}"? (Local character saves in your profile folder are kept.)`)) { await api("/local/delete", { method: "POST", body: { campaign_id: cid } }); toast("Campaign deleted."); showTab("campaigns"); } }
 async function saveSettings() {
   await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });
   await refreshState(); toast("Settings saved!");

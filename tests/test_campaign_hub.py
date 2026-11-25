@@ -193,6 +193,14 @@ class TestCampaignHub(unittest.TestCase):
         self.assertEqual(ch[0]["death_count"], 9)
         self.assertEqual(len(ch[0]["party_roster"]), 1)
 
+        # 6. Host delete campaign (non-host rejected; host succeeds)
+        with self.assertRaises(RuntimeError):
+            p2_hub.delete_campaign(cid)
+        del_res = self.hub.delete_campaign(cid)
+        self.assertEqual(del_res["deleted"], cid)
+        self.assertEqual(len(self.hub.list_campaigns()), 0)
+        self.assertIsNone(self.hub.get_token(cid, "host_token"))
+
     def test_playit_host_port_parsing_and_d2rloader_toml_port_sync(self):
         self.assertEqual(CastaliaHub.parse_host_port("147.185.221.21:14322"), ("147.185.221.21", 14322))
         self.assertEqual(CastaliaHub.parse_host_port("my-tunnel.gl.at.ply.gg:25565"), ("my-tunnel.gl.at.ply.gg", 25565))

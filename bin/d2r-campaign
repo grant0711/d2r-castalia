@@ -84,6 +84,9 @@ def main():
     p_upg.add_argument("campaign_id")
     p_upg.add_argument("--version", required=True)
 
+    p_del = sub.add_parser("delete", help="Permanently delete a campaign you created (Host)")
+    p_del.add_argument("campaign_id")
+
     p_comp = sub.add_parser("complete", help="Complete campaign & archive to Hall of Heroes (Host)")
     p_comp.add_argument("campaign_id")
     p_comp.add_argument("--summary", required=True)
@@ -234,6 +237,11 @@ def main():
     if args.cmd == "upgrade":
         res = hub.update_campaign(args.campaign_id, {"castalia_version": args.version})
         _out(res, args.json, lambda d: print(f"Upgraded campaign '{d['id']}' pinned version -> v{d['castalia_version']}"))
+        return
+
+    if args.cmd == "delete":
+        res = hub.delete_campaign(args.campaign_id)
+        _out(res, args.json, lambda d: print(f"Deleted campaign '{d['deleted']}'"))
         return
 
     if args.cmd == "complete":

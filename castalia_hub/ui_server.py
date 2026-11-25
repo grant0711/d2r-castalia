@@ -119,6 +119,8 @@ def make_ui_handler(hub: CastaliaHub):
                     ))
                 if p == "/local/upgrade":
                     return self._send_json(200, hub.update_campaign(body["campaign_id"], {"castalia_version": body["version"]}))
+                if p == "/local/delete":
+                    return self._send_json(200, hub.delete_campaign(body["campaign_id"]))
                 if p == "/local/complete":
                     return self._send_json(200, hub.complete_campaign(
                         body["campaign_id"],

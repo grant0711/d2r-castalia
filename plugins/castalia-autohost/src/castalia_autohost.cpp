@@ -171,6 +171,8 @@ static void TrySetDropdown(const D2RL::PluginContext* ctx, D2RL::Widgets::Widget
 	}
 }
 
+static void ProbeWidgetsOnUiThread(const D2RL::PluginContext* ctx, void*) noexcept;
+
 static void ApplyIntentOnUiThread(const D2RL::PluginContext* ctx, void*) noexcept {
 	if (ctx == nullptr || gWidgets == nullptr || !gIntent.loaded || gApplied.load()) return;
 
@@ -187,6 +189,7 @@ static void ApplyIntentOnUiThread(const D2RL::PluginContext* ctx, void*) noexcep
 	}
 
 	D2RL::LogInfoF(ctx, "[castalia-autohost] D2RLoaderMultiplayerPanel visible! Applying mode='%s'...", gIntent.mode.c_str());
+	ProbeWidgetsOnUiThread(ctx, nullptr);
 
 	if (gIntent.mode == "host") {
 		TrySetInput(ctx, mpPanel, "GameName",

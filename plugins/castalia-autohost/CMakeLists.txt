@@ -19,6 +19,7 @@ FetchContent_MakeAvailable(D2RLPluginSDK)
 
 add_library(castalia-autohost SHARED
   src/castalia_autohost.cpp
+  src/castalia_autohost.rc
 )
 
 target_link_libraries(castalia-autohost PRIVATE D2RLPlugin::D2RLPlugin)

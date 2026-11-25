@@ -1,0 +1,120 @@
+{
+  "slug": "death_sentry",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Death Sentry behaviour"
+    },
+    "final": {
+      "description": "Ice Sentry (Death Sentry)",
+      "tables": {
+        "skills.txt": {
+          "Death Sentry": {
+            "srvstfunc": "39",
+            "aurastate": "progressive_cold",
+            "auralencalc": "12",
+            "aurastat1": "item_kickdamage",
+            "aurastatcalc1": "max(stat('progressive_cold'.accr), stat('item_kickdamage'.accr))",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "passivestat2": "",
+            "passivecalc2": "",
+            "passivestat3": "passive_cold_mastery",
+            "passivecalc3": "stat('passive_cold_mastery'.accr)",
+            "passivestat4": "",
+            "passivecalc4": "",
+            "passivestat5": "",
+            "passivecalc5": "",
+            "passivestat6": "",
+            "passivecalc6": "",
+            "passivestat7": "",
+            "passivecalc7": "",
+            "pettype": "deathtrap",
+            "petmax": "1 + (((skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 10) ? 1 : 0) + (((skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 25) ? 1 : 0)",
+            "sumskill2": "Death Sentry",
+            "sumskill3": "Blades of Ice",
+            "sumsk3calc": "skill('Blades of Ice'.blvl)",
+            "sumskill4": "Wake of Fire Sentry",
+            "sumsk4calc": "skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl)",
+            "sumskill5": "Ass Trap Charge Consume",
+            "sumsk5calc": "max(max(stat('progressive_cold'.accr), stat('item_kickdamage'.accr)), ((stat('target0'.accr)/1000) == 3) ? 3 : 0)",
+            "sumumod": "",
+            "minmana": "22",
+            "manashift": "7",
+            "mana": "44",
+            "lvlmana": "3",
+            "calc1": "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 16*max(0,lvl-16) + 32*max(0,lvl-22)",
+            "*calc1 desc": "Base Cold Damage Level Ramp (%)",
+            "calc3": "12*skill('Blades of Ice'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Lightning Sentry'.blvl)",
+            "*calc3 desc": "Total Synergy Bonus (%)",
+            "Param1": "25",
+            "*Param1 Description": "# of shots",
+            "EType": "cold",
+            "EMin": "10",
+            "EMax": "16",
+            "EMaxLev1": "0",
+            "EMaxLev2": "0",
+            "EMaxLev3": "0",
+            "EMaxLev4": "0",
+            "EMaxLev5": "0",
+            "EDmgSymPerCalc": "(clc1 * (100 + clc3)) / 100 - 100"
+          }
+        },
+        "skilldesc.txt": {
+          "death sentry": {
+            "descline1": "75",
+            "desctexta1": "StrSkill6",
+            "desctextb1": "",
+            "desccalca1": "enma",
+            "desccalcb1": "exma",
+            "descline2": "",
+            "desctexta2": "",
+            "desccalca2": "",
+            "desccalcb2": "",
+            "dsc2calca2": "par1",
+            "dsc2line3": "74",
+            "dsc2texta3": "ModIceSentryMaxTraps",
+            "dsc2calca3": "1 + (((skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 10) ? 1 : 0) + (((skill('Wake of Fire Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 25) ? 1 : 0)",
+            "dsc2calcb3": "",
+            "dsc2line4": "74",
+            "dsc2texta4": "ModIceSentryChargedShots",
+            "dsc2calca4": "par1 + 15 + skill('Blades of Ice'.blvl) / 2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Colddplev",
+            "dsc3textb2": "Skillname275",
+            "dsc3calca2": "12",
+            "dsc3calcb2": "",
+            "dsc3texta3": "Colddplev",
+            "dsc3textb3": "Skillname263",
+            "dsc3calca3": "6",
+            "dsc3line4": "76",
+            "dsc3texta4": "Colddplev",
+            "dsc3textb4": "Skillname272",
+            "dsc3calca4": "6"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillan277",
+          "Ice Sentry"
+        ],
+        [
+          0,
+          "Skillld277",
+          "deploys a sentry that fires freezing arctic blast streams\nconsumes Blades of Ice charges to increase\nrange, duration, and freeze enemies solid in place"
+        ],
+        [
+          61078,
+          "ModIceSentryMaxTraps",
+          "Maximum Active Ice Sentries: %d"
+        ],
+        [
+          61079,
+          "ModIceSentryChargedShots",
+          "Charged Shots (2+ Orbs): %d"
+        ]
+      ]
+    }
+  }
+}

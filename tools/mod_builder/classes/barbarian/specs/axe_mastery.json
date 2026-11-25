@@ -1,0 +1,52 @@
+{
+  "slug": "axe_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Axe Mastery behaviour"
+    },
+    "final": {
+      "description": "Two-Handed Mastery (Axe Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Axe Mastery": {
+            "passiveitype": "2hml",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "axe mastery": {
+            "desctexta1": "StrSkillDamagePercent",
+            "desccalca1": "madm",
+            "desctexta2": "StrSkill22",
+            "desccalca2": "math",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillname128",
+          "Two-Handed Mastery"
+        ],
+        [
+          0,
+          "skillan128",
+          "Two-Handed Mastery"
+        ],
+        [
+          0,
+          "skillld128",
+          "passive - improves two-handed melee fighting skill"
+        ]
+      ]
+    }
+  }
+}

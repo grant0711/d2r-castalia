@@ -1,0 +1,44 @@
+{
+  "slug": "prayer",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Prayer behaviour"
+    },
+    "final": {
+      "description": "Prayer (Prayer)",
+      "tables": {
+        "skills.txt": {
+          "Prayer": {
+            "aurarangecalc": "((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "immediate": "1",
+            "minmana": "0",
+            "manashift": "7",
+            "mana": "0",
+            "lvlmana": "0",
+            "Param8": "9",
+            "*Param8 Description": "Healing synergy % from Cleansing",
+            "EMin": "3",
+            "EMinLev3": "3",
+            "EMinLev4": "3",
+            "EMinLev5": "4",
+            "EDmgSymPerCalc": "skill('Cleansing'.blvl)*par8"
+          }
+        },
+        "skilldesc.txt": {
+          "prayer": {
+            "desccalcb1": "512",
+            "desccalca3": "enma",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "skillname99",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Healplev",
+            "dsc3textb2": "skillname109",
+            "dsc3calca2": "par8"
+          }
+        }
+      }
+    }
+  }
+}

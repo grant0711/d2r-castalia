@@ -1,0 +1,31 @@
+{
+  "slug": "blade_shield",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Blade Shield behaviour"
+    },
+    "final": {
+      "description": "Blade Shield (Blade Shield)",
+      "tables": {
+        "skills.txt": {
+          "Blade Shield": {
+            "auralencalc": "((ln12)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurarangecalc": "((par4)+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/50)",
+            "minmana": "30",
+            "mana": "30",
+            "Param8": "20",
+            "DmgSymPerCalc": "skill('Blade Sentinel'.blvl)*par8"
+          }
+        },
+        "skilldesc.txt": {
+          "blade shield": {
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": ""
+          }
+        }
+      }
+    }
+  }
+}

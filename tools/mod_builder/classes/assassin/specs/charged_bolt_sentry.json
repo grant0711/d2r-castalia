@@ -1,0 +1,106 @@
+{
+  "slug": "charged_bolt_sentry",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Charged Bolt Sentry behaviour"
+    },
+    "final": {
+      "description": "Soul Siphon Sentry (Charged Bolt Sentry)",
+      "tables": {
+        "skills.txt": {
+          "Charged Bolt Sentry": {
+            "srvstfunc": "39",
+            "aurastate": "progressive_steal",
+            "auralencalc": "((12)+((max(0,stat('goldlost'.accr)-1)>=55)?2:((max(0,stat('goldlost'.accr)-1)>=25)?1:0)))",
+            "aurastat1": "item_kickdamage",
+            "aurastatcalc1": "max(stat('progressive_steal'.accr), stat('item_kickdamage'.accr))",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "passivestat2": "",
+            "passivecalc2": "",
+            "passivestat3": "passive_mag_mastery",
+            "passivecalc3": "stat('passive_mag_mastery'.accr)",
+            "pettype": "miasmatrap",
+            "petmax": "1 + (((skill('Fire Trauma'.blvl) + skill('Cobra Strike'.blvl)) >= 10) ? 1 : 0) + (((skill('Fire Trauma'.blvl) + skill('Cobra Strike'.blvl)) >= 25) ? 1 : 0)",
+            "sumsk1calc": "(max(stat('progressive_steal'.accr), stat('item_kickdamage'.accr)) >= 3) ? 10 : ((max(stat('progressive_steal'.accr), stat('item_kickdamage'.accr)) == 2) ? 2 : 1)",
+            "sumskill2": "Charged Bolt Sentry",
+            "sumsk2calc": "lvl",
+            "sumskill3": "Cobra Strike",
+            "sumsk3calc": "skill('Cobra Strike'.blvl)",
+            "sumskill4": "Fire Trauma",
+            "sumsk4calc": "skill('Fire Trauma'.blvl)",
+            "sumskill5": "Ass Trap Charge Consume",
+            "sumsk5calc": "max(stat('progressive_steal'.accr), stat('item_kickdamage'.accr))",
+            "minmana": "10",
+            "manashift": "7",
+            "mana": "20",
+            "lvlmana": "1",
+            "calc1": "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 14*max(0,lvl-16) + 26*max(0,lvl-22)",
+            "*calc1 desc": "Base Magic Damage Level Ramp (%)",
+            "calc3": "15*skill('Cobra Strike'.blvl) + 9*skill('Fire Trauma'.blvl)",
+            "*calc3 desc": "Total Synergy Bonus (%)",
+            "calc4": "",
+            "Param1": "9",
+            "*Param1 Description": "# of shots",
+            "HitShift": "8",
+            "EType": "mag",
+            "EMin": "32",
+            "EMax": "50",
+            "EMaxLev1": "0",
+            "EMaxLev2": "0",
+            "EMaxLev3": "0",
+            "EMaxLev4": "0",
+            "EMaxLev5": "0",
+            "EDmgSymPerCalc": "(clc1 * (100 + clc3)) / 100 - 100"
+          }
+        },
+        "skilldesc.txt": {
+          "charged bolt sentry": {
+            "descdam": "5",
+            "desctexta1": "StrSkill39",
+            "dsc2texta2": "ESkillShoots",
+            "dsc2calca2": "par1",
+            "dsc2texta3": "ModSoulSiphonMaxTraps",
+            "dsc2calca3": "1 + (((skill('Fire Trauma'.blvl) + skill('Cobra Strike'.blvl)) >= 10) ? 1 : 0) + (((skill('Fire Trauma'.blvl) + skill('Cobra Strike'.blvl)) >= 25) ? 1 : 0)",
+            "dsc2line4": "74",
+            "dsc2texta4": "ModFireSentryChargedShots",
+            "dsc2calca4": "par1 + 5 + skill('Cobra Strike'.blvl) / 4",
+            "dsc3line2": "76",
+            "dsc3texta2": "Magdplev",
+            "dsc3textb2": "Skillname266",
+            "dsc3calca2": "15",
+            "dsc3line3": "76",
+            "dsc3texta3": "Magdplev",
+            "dsc3textb3": "Skillname252",
+            "dsc3calca3": "9",
+            "dsc3line4": "",
+            "dsc3texta4": "",
+            "dsc3textb4": "",
+            "dsc3calca4": "",
+            "dsc3line5": "",
+            "dsc3texta5": "",
+            "dsc3textb5": "",
+            "dsc3calca5": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillan262",
+          "Soul Siphon Sentry"
+        ],
+        [
+          0,
+          "Skillld262",
+          "deploys a sentry that fires piercing unholy bolts\ndealing magic damage to enemies\nconsumes Cobra Strike charges to increase\nshots, velocity, range, and apply small-radius life tap"
+        ],
+        [
+          61072,
+          "ModSoulSiphonMaxTraps",
+          "Maximum Active Soul Siphon Sentries: %d"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "slug": "iron_skin",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Iron Skin behaviour"
+    },
+    "final": {
+      "description": "Iron Skin (Iron Skin)"
+    }
+  }
+}

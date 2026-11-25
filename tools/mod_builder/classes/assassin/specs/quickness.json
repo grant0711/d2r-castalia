@@ -1,0 +1,33 @@
+{
+  "slug": "quickness",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Quickness behaviour"
+    },
+    "final": {
+      "description": "Burst of Speed (Quickness)",
+      "tables": {
+        "skills.txt": {
+          "Quickness": {
+            "auralencalc": "((ln56)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurastatcalc1": "(dm12*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "aurastatcalc2": "(dm34*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "minmana": "25",
+            "manashift": "7",
+            "mana": "50",
+            "lvlmana": "3",
+            "Param5": "550",
+            "Param6": "50",
+            "*Param6 Description": "Duration per level (frames)"
+          }
+        },
+        "skilldesc.txt": {
+          "quickness": {
+            "desccalca2": "(dm12*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "desccalca3": "(dm34*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200"
+          }
+        }
+      }
+    }
+  }
+}

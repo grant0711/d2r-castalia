@@ -1,0 +1,61 @@
+{
+  "slug": "berserk",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Berserk behaviour"
+    },
+    "final": {
+      "description": "Berserk (Berserk)",
+      "tables": {
+        "skills.txt": {
+          "Berserk": {
+            "itypea1": "2hml",
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "clc5+(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc6)/100",
+            "calc5": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+(skill('Double Swing'.blvl)+skill('Frenzy'.blvl))*par8",
+            "*calc5 desc": "Base Magic Damage % at Full Stamina",
+            "calc6": "100+(lvl-1)*20+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc1):0)",
+            "*calc6 desc": "Max Exhaustion Magic Damage % Bonus at Zero Stamina",
+            "Param1": "80",
+            "Param2": "12",
+            "Param8": "8",
+            "ToHitCalc": "100+(lvl-1)*15+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc4):0)"
+          }
+        },
+        "skilldesc.txt": {
+          "berserk": {
+            "descline1": "74",
+            "desctexta1": "ModBarExhaustedBonus",
+            "desctextb1": "",
+            "desccalca1": "clc6",
+            "desccalcb1": "",
+            "descline4": "36",
+            "desctexta4": "StrSkillDurationSingular",
+            "desctextb4": "StrSkill20",
+            "desccalca4": "\"par4-min(((110*lvl)/(lvl+6)*(par4-par3)/100),(par4-par3))\"",
+            "desccalcb4": "25",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": "",
+            "dsc3textb2": "skillname133",
+            "dsc3textb3": "skillname147"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan152",
+          "Berserk"
+        ],
+        [
+          0,
+          "skillld152",
+          "requires a two-handed weapon\nconverts damage to magic and drops defense to zero\ndeals more damage as stamina is depleted"
+        ]
+      ]
+    }
+  }
+}

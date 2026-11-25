@@ -1,0 +1,88 @@
+{
+  "slug": "frenzy",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Frenzy behaviour"
+    },
+    "final": {
+      "description": "Frenzy (Frenzy)",
+      "tables": {
+        "skills.txt": {
+          "Frenzy": {
+            "auralencalc": "((par7)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "clc5+(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc6)/100",
+            "calc5": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+(skill('Double Swing'.blvl)+skill('Berserk'.blvl))*par8",
+            "*calc5 desc": "Base Damage % at Full Stamina",
+            "calc6": "90+(lvl-1)*20+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc1):0)",
+            "*calc6 desc": "Max Exhaustion Damage % Bonus at Zero Stamina",
+            "Param1": "70",
+            "Param2": "10",
+            "Param3": "10",
+            "Param4": "50",
+            "Param5": "10",
+            "ToHitCalc": "100+(lvl-1)*7+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc4):0)"
+          }
+        },
+        "skilldesc.txt": {
+          "frenzy": {
+            "descline1": "74",
+            "desctexta1": "ModBarExhaustedBonus",
+            "desccalca1": "clc6",
+            "desccalcb1": "",
+            "descline2": "74",
+            "desctexta2": "StrSkillDamagePercent",
+            "desccalca2": "clc1",
+            "desccalcb2": "",
+            "descline3": "75",
+            "desctexta3": "StrSkillRunWalkRange",
+            "desccalca3": "15*(par4-par3)/100+par3",
+            "desccalcb3": "dm34",
+            "descline4": "75",
+            "desctexta4": "StrSkillAttackSpeedRange",
+            "desccalca4": "15*(par6-par5)/100+par5",
+            "desccalcb4": "dm56",
+            "descline5": "74",
+            "desctexta5": "StrSkill22",
+            "desccalca5": "toht",
+            "dsc2texta1": "StrSkillDurationSingular",
+            "dsc2textb1": "StrSkill20",
+            "dsc2calca1": "par7",
+            "dsc2calcb1": "25",
+            "dsc2line2": "74",
+            "dsc2texta2": "StrSkillMagicDamagePercent",
+            "dsc2textb2": "",
+            "dsc2calca2": "clc4",
+            "dsc2calcb2": "",
+            "dsc2line3": "",
+            "dsc2texta3": "",
+            "dsc2calca3": "",
+            "dsc3textb3": "skillname152",
+            "dsc3line4": "76",
+            "dsc3texta4": "Magdplev",
+            "dsc3textb4": "skillname152",
+            "dsc3calca4": "1",
+            "dsc3calcb4": "",
+            "dsc3line5": "",
+            "dsc3texta5": "",
+            "dsc3textb5": "",
+            "dsc3calca5": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan147",
+          "Frenzy"
+        ],
+        [
+          0,
+          "skillld147",
+          "swings two weapons and increases speed on hit\ndeals more damage as stamina is depleted"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "slug": "blessed_hammer",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Blessed Hammer behaviour"
+    },
+    "final": {
+      "description": "Blessed Hammer (Blessed Hammer)",
+      "tables": {
+        "skills.txt": {
+          "Blessed Hammer": {
+            "srvdofunc": "26",
+            "srvmissileb": "blessedhammer",
+            "srvmissilec": "blessedhammer",
+            "aurarangecalc": "((par1)+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50)",
+            "cltdofunc": "27",
+            "cltmissileb": "blessedhammer",
+            "cltmissilec": "blessedhammer",
+            "localdelay": "25",
+            "manashift": "8",
+            "mana": "15",
+            "calc1": "((ln34/par5)+((max(0,stat('goldlost'.accr)-1)>=55)?2:((max(0,stat('goldlost'.accr)-1)>=25)?1:0)))",
+            "*calc1 desc": "# of target jump hits",
+            "calc4": "min(250,((par2*(100+skill('Smite'.blvl)*par6)/100)*(100+max(0,stat('target1'.accr)-1)/2))/100)",
+            "*calc4 desc": "Stun Length",
+            "Param1": "16",
+            "*Param1 Description": "Radius of jump to next target",
+            "Param2": "15",
+            "*Param2 Description": "Stun Length baseline",
+            "Param3": "16",
+            "*Param3 Description": "# of target jump hits baseline",
+            "Param4": "1",
+            "*Param4 Description": "# of target jump hits per level",
+            "Param5": "4",
+            "*Param5 Description": "Every # levels, increase target jump",
+            "Param6": "10",
+            "*Param6 Description": "Stun Duration synergy",
+            "Param8": "12",
+            "EMin": "48",
+            "EMinLev2": "16",
+            "EMinLev3": "40",
+            "EMinLev4": "55",
+            "EMinLev5": "70",
+            "EMax": "64",
+            "EMaxLev1": "10",
+            "EMaxLev2": "18",
+            "EMaxLev3": "44",
+            "EMaxLev4": "60",
+            "EMaxLev5": "75",
+            "EDmgSymPerCalc": "skill('Sanctuary'.blvl)*par8"
+          }
+        },
+        "skilldesc.txt": {
+          "blessed hammer": {
+            "descdam": "5",
+            "descline3": "74",
+            "desctexta3": "StrSkill11",
+            "desccalca3": "ln34/par5",
+            "descline4": "36",
+            "desctexta4": "StrSkillStunLengthSingular",
+            "desctextb4": "StrSkill48",
+            "desccalca4": "min(250,par2*(100+skill('Smite'.blvl)*par6)/100)",
+            "desccalcb4": "25",
+            "dsc2line1": "36",
+            "dsc2texta1": "StrSkillCastingDelaySingular",
+            "dsc2textb1": "StrSkillCastingDelayPlural",
+            "dsc2calca1": "25",
+            "dsc2calcb1": "25",
+            "dsc3textb2": "skillname119",
+            "dsc3texta3": "Durateplev",
+            "dsc3textb3": "skillname97",
+            "dsc3calca3": "par6"
+          }
+        },
+        "missiles.txt": {
+          "blessedhammer": {
+            "pCltHitFunc": "16",
+            "pSrvHitFunc": "12",
+            "pSrvDmgFunc": "7",
+            "sHitPar1": "0",
+            "cHitPar1": "0",
+            "dParam1": "0",
+            "dParam2": "0",
+            "Vel": "16",
+            "MaxVel": "40",
+            "VelLev": "6",
+            "Accel": "",
+            "Range": "35",
+            "CollideKill": "1",
+            "ClientCol": "1",
+            "NextHit": "1",
+            "NextDelay": "4",
+            "Size": "2",
+            "Pierce": "",
+            "ResultFlags": "5",
+            "ProgOverlay": "doubledamage1"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld112",
+          "hurls an ethereal hammer that bounces between nearby enemies,\ndealing magic damage, knocking back, and stunning targets"
+        ]
+      ]
+    }
+  }
+}

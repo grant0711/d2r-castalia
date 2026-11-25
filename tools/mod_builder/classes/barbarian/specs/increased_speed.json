@@ -1,0 +1,11 @@
+{
+  "slug": "increased_speed",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Increased Speed behaviour"
+    },
+    "final": {
+      "description": "Increased Speed (Increased Speed)"
+    }
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "slug": "leap",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Leap behaviour"
+    },
+    "final": {
+      "description": "Leap (Leap)",
+      "tables": {
+        "skills.txt": {
+          "Leap": {
+            "srvdofunc": "170",
+            "aurarangecalc": "clc3",
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "((2+((ln34-2)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "calc2": "90+((par7-90)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100",
+            "calc3": "6+((dm12-6)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100",
+            "*calc3 desc": "Stamina-scaled Leap Range",
+            "calc5": "429",
+            "*calc5 desc": "Skill ID to cast when leap ends",
+            "calc6": "1",
+            "*calc6 desc": "Level of cast skill ID"
+          }
+        },
+        "skilldesc.txt": {
+          "leap": {
+            "desccalca1": "clc1*2",
+            "desccalca2": "clc3*2",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": ""
+          }
+        },
+        "missiles.txt": {
+          "leapknockback": {
+            "Vel": "10",
+            "MaxVel": "10",
+            "Range": "4",
+            "InitSteps": "1",
+            "AnimLen": "4",
+            "NextHit": "1",
+            "NextDelay": "4",
+            "GetHit": "1",
+            "KnockBack": "100",
+            "ResultFlags": "9",
+            "NumDirections": "32"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld132",
+          "leaps and knocks back nearby enemies\nconsumes stamina"
+        ]
+      ]
+    }
+  }
+}

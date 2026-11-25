@@ -1,0 +1,24 @@
+{
+  "slug": "fade",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Fade behaviour"
+    },
+    "final": {
+      "description": "Fade (Fade)",
+      "tables": {
+        "skills.txt": {
+          "Fade": {
+            "auralencalc": "((ln56)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "minmana": "30",
+            "mana": "30",
+            "lvlmana": "2",
+            "Param5": "550",
+            "Param6": "50",
+            "*Param6 Description": "Duration per level (frames)"
+          }
+        }
+      }
+    }
+  }
+}

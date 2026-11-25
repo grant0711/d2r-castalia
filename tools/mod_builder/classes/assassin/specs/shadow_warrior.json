@@ -1,0 +1,128 @@
+{
+  "slug": "shadow_warrior",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Shadow Warrior behaviour"
+    },
+    "final": {
+      "description": "Shadow Bind (Shadow Warrior)",
+      "tables": {
+        "skills.txt": {
+          "Shadow Warrior": {
+            "srvdofunc": "30",
+            "aurafilter": "3",
+            "aurastate": "",
+            "auratargetstate": "ass_shadow_bind",
+            "auralencalc": "((par3+(lvl-1)*par4)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurarangecalc": "((3)+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/50)",
+            "aurastat1": "velocitypercent",
+            "aurastatcalc1": "-dm12",
+            "aurastat2": "attackrate",
+            "aurastatcalc2": "-dm56",
+            "aurastat3": "other_animrate",
+            "aurastatcalc3": "-dm56",
+            "aurastat4": "item_tohit_percent",
+            "aurastatcalc4": "-dm56",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "passivestat2": "",
+            "passivecalc2": "",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "passivestat4": "",
+            "passivecalc4": "",
+            "passivestat5": "",
+            "passivecalc5": "",
+            "passivestat6": "",
+            "passivecalc6": "",
+            "passivestat7": "",
+            "passivecalc7": "",
+            "passivestat8": "",
+            "passivecalc8": "",
+            "passivestat9": "",
+            "passivecalc9": "",
+            "summon": "",
+            "pettype": "",
+            "petmax": "",
+            "summode": "",
+            "sumumod": "",
+            "stsound": "assassin_psychichammer",
+            "castoverlay": "psychic_hammer_curse",
+            "cltstfunc": "18",
+            "cltdofunc": "30",
+            "localdelay": "",
+            "minmana": "15",
+            "mana": "30",
+            "InTown": "",
+            "Param1": "60",
+            "*Param1 Description": "Enemy Move Speed Slow % Min",
+            "Param2": "95",
+            "*Param2 Description": "Enemy Move Speed Slow % Max",
+            "Param3": "150",
+            "*Param3 Description": "Duration baseline (frames)",
+            "Param4": "10",
+            "*Param4 Description": "Duration per level (frames)",
+            "Param5": "25",
+            "*Param5 Description": "Enemy Attack/Cast Speed & AR Slow % Min",
+            "Param6": "60",
+            "*Param6 Description": "Enemy Attack/Cast Speed & AR Slow % Max",
+            "aitype": "2"
+          }
+        },
+        "skilldesc.txt": {
+          "shadow warrior": {
+            "descline1": "74",
+            "desctexta1": "ModShadowBindMove",
+            "desccalca1": "dm12",
+            "desccalcb1": "",
+            "desctexta2": "ModShadowBindAttack",
+            "desccalca2": "dm56",
+            "desctexta3": "ModShadowBindAR",
+            "desccalca3": "dm56",
+            "descline4": "36",
+            "desctexta4": "StrSkillDurationSingular",
+            "desctextb4": "StrSkill20",
+            "desccalca4": "par3+(lvl-1)*par4",
+            "desccalcb4": "25",
+            "dsc2texta1": "StrSkill3",
+            "dsc2textb1": "",
+            "dsc2calca1": "usmc",
+            "dsc2calcb1": "256"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61097,
+          "ModShadowBindMove",
+          "Enemy Movement Speed: -%d%%"
+        ],
+        [
+          61098,
+          "ModShadowBindAttack",
+          "Enemy Attack and Cast Speed: -%d%%"
+        ],
+        [
+          61099,
+          "ModShadowBindAR",
+          "Enemy Attack Rating: -%d%%"
+        ],
+        [
+          0,
+          "Skillname269",
+          "Shadow Bind"
+        ],
+        [
+          0,
+          "Skillan269",
+          "Shadow Bind"
+        ],
+        [
+          0,
+          "Skillld269",
+          "binds a target in tendrils of shadow\ncrippling its movement speed, attack speed, and accuracy\neffective against unique monsters and bosses"
+        ]
+      ]
+    }
+  }
+}

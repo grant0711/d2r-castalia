@@ -1,0 +1,93 @@
+{
+  "slug": "shock_field",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Shock Field behaviour"
+    },
+    "final": {
+      "description": "Caltrops (Shock Field)",
+      "tables": {
+        "skills.txt": {
+          "Shock Field": {
+            "aurarangecalc": "(((par1+lvl/par2+skill('Fire Trauma'.blvl)/3)/4+1)+((max(0,stat('goldlost'.accr)-1)>=55)?2:((max(0,stat('goldlost'.accr)-1)>=25)?1:0)))",
+            "minmana": "5",
+            "manashift": "6",
+            "mana": "20",
+            "lvlmana": "1",
+            "Param8": "",
+            "*Param8 Description": "",
+            "MinDam": "2",
+            "MinLevDam1": "2",
+            "MinLevDam2": "4",
+            "MinLevDam3": "7",
+            "MinLevDam4": "10",
+            "MinLevDam5": "14",
+            "MaxDam": "5",
+            "MaxLevDam1": "4",
+            "MaxLevDam2": "7",
+            "MaxLevDam3": "11",
+            "MaxLevDam4": "16",
+            "MaxLevDam5": "22",
+            "EType": "",
+            "EMin": "",
+            "EMinLev1": "",
+            "EMinLev2": "",
+            "EMinLev3": "",
+            "EMinLev4": "",
+            "EMinLev5": "",
+            "EMax": "",
+            "EMaxLev1": "",
+            "EMaxLev2": "",
+            "EMaxLev3": "",
+            "EMaxLev4": "",
+            "EMaxLev5": "",
+            "EDmgSymPerCalc": ""
+          }
+        },
+        "skilldesc.txt": {
+          "shock field": {
+            "descdam": "",
+            "descmissile1": "",
+            "desctexta2": "ModCaltropsDamage",
+            "desccalca2": "2 + 2*max(0,min(lvl,8)-1) + 4*max(0,min(lvl,16)-8) + 7*max(0,min(lvl,22)-16) + 10*max(0,min(lvl,28)-22) + 14*max(0,lvl-28)",
+            "desccalcb2": "5 + 4*max(0,min(lvl,8)-1) + 7*max(0,min(lvl,16)-8) + 11*max(0,min(lvl,22)-16) + 16*max(0,min(lvl,28)-22) + 22*max(0,lvl-28)",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": "",
+            "dsc3line4": "",
+            "dsc3texta4": "",
+            "dsc3textb4": "",
+            "dsc3calca4": ""
+          }
+        },
+        "missiles.txt": {
+          "shock field on ground": {
+            "Range": "85 + 5*lvl",
+            "Light": "",
+            "CelFile": "expansion\\FireSpikesGround",
+            "AnimLen": "8",
+            "TravelSound": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61093,
+          "ModCaltropsDamage",
+          "Physical Damage per Second: %d-%d"
+        ],
+        [
+          0,
+          "Skillan257",
+          "Caltrops"
+        ],
+        [
+          0,
+          "Skillld257",
+          "throws a cluster of spiked caltrops onto the ground\nthat damage enemies walking over them"
+        ]
+      ]
+    }
+  }
+}

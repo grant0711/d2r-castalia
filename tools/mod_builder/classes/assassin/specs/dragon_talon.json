@@ -1,0 +1,26 @@
+{
+  "slug": "dragon_talon",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Dragon Talon behaviour"
+    },
+    "final": {
+      "description": "Dragon Talon (Dragon Talon)",
+      "tables": {
+        "skills.txt": {
+          "Dragon Talon": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "((max(1,((lvl/6+1)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200))+((max(0,stat('goldlost'.accr)-1)>=40)?1:0))",
+            "calc2": "(dm34*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200"
+          }
+        },
+        "skilldesc.txt": {
+          "dragon talon": {
+            "desccalca3": "clc1"
+          }
+        }
+      }
+    }
+  }
+}

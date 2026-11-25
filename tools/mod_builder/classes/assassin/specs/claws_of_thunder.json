@@ -1,0 +1,179 @@
+{
+  "slug": "claws_of_thunder",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Claws of Thunder behaviour"
+    },
+    "final": {
+      "description": "Electrocute (Claws of Thunder)",
+      "tables": {
+        "skills.txt": {
+          "Claws of Thunder": {
+            "srvdofunc": "34",
+            "prgstack": "",
+            "srvprgfunc1": "37",
+            "srvprgfunc3": "143",
+            "prgcalc1": "max(2, max(4, 8 - lvl / 5) - (((stat('target0'.accr)/1000)==2)?((max(0,stat('goldlost'.accr)-1)*2)/75):0))",
+            "prgcalc3": "0",
+            "prgdam": "",
+            "srvmissilea": "clawsofthunderbolt",
+            "srvmissilec": "royalstrikechainlightning",
+            "aurarangecalc": "5 + lvl / 4 + (((stat('target0'.accr)/1000)==2)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50):0)",
+            "aurastat2": "item_thrust_damage_percent",
+            "aurastatcalc2": "clc3",
+            "passivestate": "ass_cot_passive",
+            "passivestat1": "item_absorb_thrust",
+            "passivecalc1": "1",
+            "passivestat2": "lightmindam",
+            "passivecalc2": "1",
+            "cltprgfunc1": "11",
+            "cltprgfunc3": "83",
+            "cltmissilea": "clawsofthunderbolt",
+            "cltmissilec": "royalstrikechainlightning",
+            "weapsel": "",
+            "itypea1": "mele",
+            "anim": "A1",
+            "seqnum": "",
+            "minmana": "3",
+            "manashift": "5",
+            "mana": "28",
+            "lvlmana": "1",
+            "calc1": "max(2, max(4, 8 - lvl / 5) - (((stat('target0'.accr)/1000)==2)?((max(0,stat('goldlost'.accr)-1)*2)/75):0))",
+            "*calc1 desc": "Charged Bolt Spread Step (64 / clc1 bolts)",
+            "calc2": "64 / clc1",
+            "*calc2 desc": "Charge 1 Finisher Charged Bolt Count",
+            "calc3": "((10 + 2*max(0,lvl-1) + 2*max(0,lvl-16) + 8*max(0,lvl-20) + 14*max(0,lvl-26)) * (100 + clc4)) / 100",
+            "*calc3 desc": "Held Max Lightning Damage per Orb (Min = +1, Max = clc3)",
+            "calc4": "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)",
+            "*calc4 desc": "Total Synergy Bonus (%)",
+            "Param3": "22500",
+            "EType": "",
+            "EMin": "",
+            "EMinLev1": "",
+            "EMinLev2": "",
+            "EMinLev3": "",
+            "EMinLev4": "",
+            "EMinLev5": "",
+            "EMax": "",
+            "EMaxLev1": "",
+            "EMaxLev2": "",
+            "EMaxLev3": "",
+            "EMaxLev4": "",
+            "EMaxLev5": "",
+            "EDmgSymPerCalc": ""
+          }
+        },
+        "skilldesc.txt": {
+          "claws of thunder": {
+            "descdam": "1",
+            "p1dmelem": "",
+            "p1dmmin": "",
+            "p1dmmax": "",
+            "p2dmelem": "",
+            "p2dmmin": "",
+            "p2dmmax": "",
+            "p3dmelem": "",
+            "p3dmmin": "",
+            "p3dmmax": "",
+            "descmissile1": "clawsofthunderbolt",
+            "descmissile3": "royalstrikechainlightning",
+            "desctexta1": "ModClawsOfThunderOrb3",
+            "desctexta2": "ModClawsOfThunderOrb2",
+            "desctexta3": "ModClawsOfThunderOrb1",
+            "desccalca3": "m1en",
+            "desccalcb3": "m1ex",
+            "descline4": "75",
+            "desctexta4": "ModClawsOfThunderHoldBuff",
+            "desccalca4": "1",
+            "desccalcb4": "clc3",
+            "descline5": "74",
+            "desctexta5": "StrSkill22",
+            "desccalca5": "toht",
+            "dsc3textb2": "Skillname272",
+            "dsc3calca2": "12",
+            "dsc3line3": "76",
+            "dsc3texta3": "Ltngdplev",
+            "dsc3textb3": "Skillname260",
+            "dsc3calca3": "6",
+            "dsc3line4": "76",
+            "dsc3texta4": "Ltngdplev",
+            "dsc3textb4": "Skillname275",
+            "dsc3calca4": "6"
+          }
+        },
+        "missiles.txt": {
+          "clawsofthunderbolt": {
+            "EMax": "30",
+            "MaxELev1": "8",
+            "MaxELev2": "12",
+            "MaxELev3": "18",
+            "MaxELev4": "42",
+            "MaxELev5": "64",
+            "EDmgSymPerCalc": "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)"
+          },
+          "clawsofthundernova": {
+            "Range": "5 + min(5, (lvl - 1) * 5 / 19) + (((stat('target0'.accr)/1000)==2)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*6)/50):0)",
+            "EMax": "80",
+            "MaxELev1": "20",
+            "MaxELev2": "30",
+            "MaxELev3": "46",
+            "MaxELev4": "110",
+            "MaxELev5": "168",
+            "EDmgSymPerCalc": "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)"
+          },
+          "royalstrikechainlightning": {
+            "pCltHitFunc": "16",
+            "pSrvDoFunc": "2",
+            "pSrvHitFunc": "12",
+            "SrvCalc1": "6",
+            "sHitPar1": "12",
+            "cHitPar1": "12",
+            "Range": "6 + min(8, (lvl - 1) * 8 / 19) + (((stat('target0'.accr)/1000)==2)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*8)/50):0)",
+            "CollideKill": "1",
+            "LastCollide": "1",
+            "EMax": "120",
+            "MaxELev1": "30",
+            "MaxELev2": "45",
+            "MaxELev3": "70",
+            "MaxELev4": "165",
+            "MaxELev5": "252",
+            "EDmgSymPerCalc": "12*skill('Lightning Sentry'.blvl) + 6*skill('Fists of Fire'.blvl) + 6*skill('Blades of Ice'.blvl)",
+            "SubMissile1": "cot_conduction_spark"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillan270",
+          "Electrocute"
+        ],
+        [
+          0,
+          "Skillld270",
+          "Charge-up Skill\n\nbuilds up to 3 lightning orbs that add lightning damage to melee attacks\nrelease charges with a finishing move or cast Lightning Sentry"
+        ],
+        [
+          61080,
+          "ModClawsOfThunderOrb1",
+          "Charge 1 Finisher - Charged Bolts: %d-%d"
+        ],
+        [
+          61081,
+          "ModClawsOfThunderOrb2",
+          "Charge 2 Finisher - Lightning Nova: %d-%d"
+        ],
+        [
+          61082,
+          "ModClawsOfThunderOrb3",
+          "Charge 3 Finisher - Chain Lightning: %d-%d"
+        ],
+        [
+          61083,
+          "ModClawsOfThunderHoldBuff",
+          "Held Charge Bonus: +%d-%d Lightning Damage per Orb"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "slug": "spear_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Spear Mastery behaviour"
+    },
+    "final": {
+      "description": "Venom Ward (Spear Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Spear Mastery": {
+            "passiveitype": "",
+            "passivestat1": "item_poisonlengthresist",
+            "passivecalc1": "dm12",
+            "passivestat2": "maxpoisonresist",
+            "passivecalc2": "clc1",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "calc1": "min(15,2+lvl/2)",
+            "*calc1 desc": "+Maximum Poison Resist %",
+            "Param1": "15",
+            "*Param1 Description": "Poison Length Reduced % Min",
+            "Param2": "75",
+            "*Param2 Description": "Poison Length Reduced % Max",
+            "Param3": "",
+            "*Param3 Description": "",
+            "Param4": "",
+            "*Param4 Description": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "spear mastery": {
+            "desctexta1": "ModBarPoisonLenRedPassive",
+            "desccalca1": "dm12",
+            "desctexta2": "ModBarMaxPoisResPassive",
+            "desccalca2": "clc1",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61048,
+          "ModBarPoisonLenRedPassive",
+          "Poison Length Reduced by %d%%"
+        ],
+        [
+          61049,
+          "ModBarMaxPoisResPassive",
+          "Maximum Poison Resist: +%d%%"
+        ],
+        [
+          0,
+          "skillname136",
+          "Venom Ward"
+        ],
+        [
+          0,
+          "skillan136",
+          "Venom Ward"
+        ],
+        [
+          0,
+          "skillld136",
+          "passive - reduces poison duration and raises max poison resist"
+        ]
+      ]
+    }
+  }
+}

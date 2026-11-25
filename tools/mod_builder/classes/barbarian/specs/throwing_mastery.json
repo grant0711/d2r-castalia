@@ -1,0 +1,47 @@
+{
+  "slug": "throwing_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Throwing Mastery behaviour"
+    },
+    "final": {
+      "description": "Throwing Mastery (Throwing Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Throwing Mastery": {
+            "passivestat3": "skill_pierce",
+            "passivecalc3": "dm78",
+            "passivestat4": "passive_mastery_noconsume",
+            "passivecalc4": "dm91",
+            "passivestat5": "passive_mastery_replenish_oncrit",
+            "passivecalc5": "pa11",
+            "passivestat6": "",
+            "passivecalc6": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "throwing mastery": {
+            "desctexta4": "StrSkillDamagePercent",
+            "desccalca4": "madm",
+            "desctexta5": "StrSkill22",
+            "desccalca5": "math",
+            "descline6": "",
+            "desctexta6": "",
+            "desccalca6": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld135",
+          "passive - improves thrown weapon skill"
+        ]
+      ]
+    }
+  }
+}

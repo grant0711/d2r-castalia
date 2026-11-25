@@ -1,0 +1,149 @@
+{
+  "slug": "grim_ward",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Grim Ward behaviour"
+    },
+    "final": {
+      "description": "Bloodlust (Grim Ward)",
+      "tables": {
+        "skills.txt": {
+          "Grim Ward": {
+            "srvstfunc": "",
+            "srvdofunc": "18",
+            "srvmissilea": "shout",
+            "srvmissileb": "",
+            "srvmissilec": "",
+            "aurafilter": "",
+            "aurastate": "bar_totem_debuff",
+            "auratargetstate": "",
+            "auralencalc": "((par7+(lvl-1)*par8)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurarangecalc": "",
+            "aurastat1": "hpregen",
+            "aurastatcalc1": "-(clc5*256)/25",
+            "aurastat2": "skill_chillingarmor",
+            "aurastatcalc2": "1",
+            "aurastat3": "",
+            "aurastatcalc3": "",
+            "aurastat4": "",
+            "aurastatcalc4": "",
+            "stsoundclass": "barbarian_warcry_1",
+            "tgtsound": "",
+            "cltstfunc": "",
+            "cltdofunc": "25",
+            "cltmissilea": "shout",
+            "cltmissileb": "",
+            "cltmissilec": "",
+            "range": "none",
+            "SearchEnemyNear": "",
+            "SelectProc": "",
+            "TargetCorpse": "",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "28",
+            "lvlmana": "1",
+            "calc1": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)",
+            "*calc1 desc": "Max Exhaustion Damage % Bonus at Zero Stamina",
+            "calc2": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)",
+            "*calc2 desc": "Max Exhaustion Attack Rating % Bonus at Zero Stamina",
+            "calc3": "(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc1)/100",
+            "*calc3 desc": "Current Exhaustion Damage % Bonus",
+            "calc4": "(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc2)/100",
+            "*calc4 desc": "Current Exhaustion Attack Rating % Bonus",
+            "calc5": "(par5+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par6/20)",
+            "*calc5 desc": "Life Drained per Second",
+            "Param1": "30",
+            "*Param1 Description": "Max Exhaustion Damage % baseline",
+            "Param2": "14",
+            "*Param2 Description": "Max Exhaustion Damage % per level",
+            "*Param3 Description": "Max Exhaustion Attack Rating % baseline",
+            "Param4": "8",
+            "*Param4 Description": "Max Exhaustion Attack Rating % per level",
+            "Param5": "4",
+            "*Param5 Description": "Life Drained per Second baseline",
+            "Param6": "1",
+            "*Param6 Description": "Life Drained per Second per level",
+            "Param7": "500",
+            "*Param7 Description": "Duration baseline",
+            "Param8": "13",
+            "*Param8 Description": "Duration per level"
+          }
+        },
+        "skilldesc.txt": {
+          "grim ward": {
+            "desctexta1": "ModBarBloodlustMaxDmg",
+            "desccalca1": "clc1",
+            "descline2": "74",
+            "desctexta2": "ModBarBloodlustCurDmg",
+            "desctextb2": "",
+            "desccalca2": "clc3",
+            "desccalcb2": "",
+            "descline3": "74",
+            "desctexta3": "ModBarBloodlustMaxAR",
+            "desccalca3": "clc2",
+            "descline4": "74",
+            "desctexta4": "ModBarBloodlustDrain",
+            "desccalca4": "clc5",
+            "descline5": "36",
+            "desctexta5": "StrSkillDurationSingular",
+            "desctextb5": "StrSkill20",
+            "desccalca5": "len",
+            "desccalcb5": "25",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2line3": "",
+            "dsc2texta3": "",
+            "dsc2calca3": "",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": "",
+            "dsc3textb2": "",
+            "dsc3calca2": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61039,
+          "ModBarBloodlustMaxDmg",
+          "Max Damage Bonus at Zero Stamina: +%d%%"
+        ],
+        [
+          61040,
+          "ModBarBloodlustCurDmg",
+          "Current Exhaustion Damage Bonus: +%d%%"
+        ],
+        [
+          61041,
+          "ModBarBloodlustMaxAR",
+          "Max Attack Rating at Zero Stamina: +%d%%"
+        ],
+        [
+          61043,
+          "ModBarBloodlustDrain",
+          "Life Drained per Second: -%d"
+        ],
+        [
+          0,
+          "skillname150",
+          "Bloodlust"
+        ],
+        [
+          0,
+          "skillan150",
+          "Bloodlust"
+        ],
+        [
+          0,
+          "skillld150",
+          "boosts exhausted attacks for you, but drains life"
+        ]
+      ]
+    }
+  }
+}

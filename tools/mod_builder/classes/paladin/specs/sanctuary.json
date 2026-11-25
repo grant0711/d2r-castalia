@@ -1,0 +1,78 @@
+{
+  "slug": "sanctuary",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Sanctuary behaviour"
+    },
+    "final": {
+      "description": "Sanctuary (Sanctuary)",
+      "tables": {
+        "skills.txt": {
+          "Sanctuary": {
+            "aurarangecalc": "((((min(20,par1+(lvl-1)*3/4))+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50))*clc6)/100",
+            "passivestat1": "magicmindam",
+            "passivecalc1": "enms*par5/256",
+            "passivestat2": "magicmaxdam",
+            "passivecalc2": "exms*par5/256",
+            "immediate": "1",
+            "manashift": "7",
+            "mana": "2",
+            "lvlmana": "1",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)",
+            "Param5": "4",
+            "Param6": "100",
+            "Param7": "12",
+            "Param8": "6",
+            "EMin": "11",
+            "EMinLev1": "1",
+            "EMinLev2": "3",
+            "EMinLev3": "9",
+            "EMinLev4": "11",
+            "EMinLev5": "13",
+            "EMaxLev1": "2",
+            "EMaxLev2": "4",
+            "EMaxLev3": "10",
+            "EMaxLev4": "12",
+            "EMaxLev5": "14",
+            "EDmgSymPerCalc": "((100+(skill('Cleansing'.blvl)*par8+skill('Blessed Hammer'.blvl)*par7))*clc6)/100-100"
+          }
+        },
+        "skilldesc.txt": {
+          "sanctuary": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "512",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "((min(20,par1+(lvl-1)*3/4)*2)*clc6)/100",
+            "desccalcb2": "3",
+            "descline3": "75",
+            "desctexta3": "StrSkill39",
+            "desccalca3": "enma",
+            "desccalcb3": "exma*((100+par6)/100)",
+            "descline4": "75",
+            "desctexta4": "StrSkillMagicDamageToYourAttack",
+            "desccalca4": "edns*par5/256",
+            "desccalcb4": "edxs*par5/256",
+            "dsc3line3": "76",
+            "dsc3texta3": "Magdplev",
+            "dsc3textb3": "skillname112",
+            "dsc3calca3": "par7"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61026,
+          "StrSkillMagicDamageToYourAttack",
+          "Magic Damage To Your Attack: %d-%d"
+        ]
+      ]
+    }
+  }
+}

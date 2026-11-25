@@ -1,0 +1,109 @@
+{
+  "slug": "stun",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Stun behaviour"
+    },
+    "final": {
+      "description": "Shield Slam (Stun)",
+      "tables": {
+        "skills.txt": {
+          "Stun": {
+            "srvstfunc": "31",
+            "srvdofunc": "67",
+            "stsuccessonly": "1",
+            "cltstfunc": "25",
+            "cltdofunc": "37",
+            "attackrank": "3",
+            "range": "none",
+            "itypea1": "shld",
+            "anim": "SQ",
+            "seqnum": "4",
+            "seqinput": "8",
+            "durability": "1",
+            "UseAttackRate": "",
+            "AttackNoMana": "",
+            "minmana": "0",
+            "mana": "0",
+            "interrupt": "",
+            "calc1": "(((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+stat('toblock'.accr)*4+(skill('Bash'.blvl)+skill('Concentrate'.blvl))*par8)*(100+clc5))/200",
+            "calc2": "(par1*(100+clc5))/200",
+            "*calc2 desc": "Velocity %",
+            "calc3": "(stat('toblock'.accr)*4*(100+clc5))/200",
+            "*calc3 desc": "Shield Block Damage % Bonus",
+            "*calc4 desc": "% Damage Dealt as Elemental",
+            "calc5": "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))",
+            "*calc5 desc": "Current Stamina %",
+            "calc6": "((100+max(0,stat('target1'.accr)-1)/2)*max(0,4-stat('shortparam1'.accr)))/4",
+            "*calc6 desc": "Cold Conduction x Stun Fatigue % multiplier (100/75/50/25/0)",
+            "Param1": "200",
+            "*Param1 Description": "Velocity %",
+            "Param2": "",
+            "*Param2 Description": "",
+            "Param3": "200",
+            "*Param3 Description": "Damage % baseline",
+            "Param4": "30",
+            "*Param4 Description": "Damage % per level",
+            "Param6": "",
+            "*Param6 Description": "",
+            "Param7": "12",
+            "ToHit": "75",
+            "LevToHit": "15",
+            "ToHitCalc": "75+(lvl-1)*15+skill('Concentrate'.blvl)*par7",
+            "ELevLen3": "5",
+            "ELenSymPerCalc": "(clc5>=33)?(((150*clc5)/100*clc6)/100-100):(0-100)"
+          }
+        },
+        "skilldesc.txt": {
+          "stun": {
+            "descatt": "2",
+            "descline1": "74",
+            "desctexta1": "ModBarShieldBlockDmg",
+            "desctextb1": "",
+            "desccalca1": "clc3",
+            "desccalcb1": "",
+            "desctexta2": "StrSkillDamagePercent",
+            "desccalca2": "clc1",
+            "descline3": "36",
+            "desctexta3": "StrSkillStunLengthSingular",
+            "desctextb3": "StrSkill48",
+            "desccalca3": "min(250,edln)",
+            "desccalcb3": "25",
+            "descline4": "74",
+            "desctexta4": "StrSkill22",
+            "desccalca4": "toht",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": "",
+            "dsc2line2": "",
+            "dsc2texta2": "",
+            "dsc2calca2": "",
+            "dsc3texta3": "Damplev",
+            "dsc3calca3": "par8",
+            "dsc3texta4": "AttRateplev",
+            "dsc3textb4": "skillname144",
+            "dsc3calca4": "par7"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61044,
+          "ModBarShieldBlockDmg",
+          "Shield Block Damage Bonus: +%d%%"
+        ],
+        [
+          0,
+          "skillan139",
+          "Shield Slam"
+        ],
+        [
+          0,
+          "skillld139",
+          "requires a shield\ncharges and stuns target"
+        ]
+      ]
+    }
+  }
+}

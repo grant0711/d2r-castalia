@@ -1,0 +1,49 @@
+{
+  "slug": "claw_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Claw Mastery behaviour"
+    },
+    "final": {
+      "description": "Lethality (Claw Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Claw Mastery": {
+            "passiveitype": "mele",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "itypea1": "",
+            "Param2": "8",
+            "Param3": "25",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "claw mastery": {
+            "desctexta1": "StrSkill22",
+            "desccalca1": "ln12",
+            "desccalca2": "ln34",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillan253",
+          "Lethality"
+        ],
+        [
+          0,
+          "Skillld253",
+          "Passive\n\nimproves your attack rating and damage\nwith all melee weapons"
+        ]
+      ]
+    }
+  }
+}

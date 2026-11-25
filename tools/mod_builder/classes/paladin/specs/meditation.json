@@ -1,0 +1,45 @@
+{
+  "slug": "meditation",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Meditation behaviour"
+    },
+    "final": {
+      "description": "Meditation (Meditation)",
+      "tables": {
+        "skills.txt": {
+          "Meditation": {
+            "aurarangecalc": "((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "aurastatcalc1": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)",
+            "aurastat2": "",
+            "aurastatcalc2": "",
+            "passivestat1": "item_slash_damage_percent",
+            "passivecalc1": "-50",
+            "passivestat2": "item_crush_damage_percent",
+            "passivecalc2": "-50",
+            "immediate": "1",
+            "perdelay": "10"
+          }
+        },
+        "skilldesc.txt": {
+          "meditation": {
+            "desccalca2": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)",
+            "descline3": "74",
+            "desctexta3": "FanYDam",
+            "desccalca3": "-50",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2textb1": "",
+            "dsc2calca1": "",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": ""
+          }
+        }
+      }
+    }
+  }
+}

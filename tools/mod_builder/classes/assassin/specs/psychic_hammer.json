@@ -1,0 +1,124 @@
+{
+  "slug": "psychic_hammer",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Psychic Hammer behaviour"
+    },
+    "final": {
+      "description": "Flow (Psychic Hammer)",
+      "tables": {
+        "skills.txt": {
+          "Psychic Hammer": {
+            "srvstfunc": "",
+            "srvdofunc": "",
+            "passivestate": "ass_flow_passive",
+            "passivestat1": "item_charge_noconsume",
+            "passivecalc1": "min(75, 20 + (lvl-1)*30/19)",
+            "stsuccessonly": "",
+            "stsound": "",
+            "tgtoverlay": "",
+            "tgtsound": "",
+            "castoverlay": "",
+            "cltstfunc": "",
+            "cltdofunc": "",
+            "range": "none",
+            "LineOfSight": "",
+            "TargetableOnly": "",
+            "SearchEnemyNear": "",
+            "KeepCursorStateOnKill": "",
+            "rightskill": "0",
+            "minmana": "0",
+            "manashift": "8",
+            "mana": "0",
+            "lvlmana": "0",
+            "passive": "1",
+            "calc1": "",
+            "*calc1 desc": "",
+            "calc2": "",
+            "*calc2 desc": "",
+            "calc3": "",
+            "*calc3 desc": "",
+            "calc4": "",
+            "*calc4 desc": "",
+            "Param1": "",
+            "*Param1 Description": "",
+            "Param3": "",
+            "*Param3 Description": "",
+            "Param4": "",
+            "*Param4 Description": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": "",
+            "HitShift": "8",
+            "MinDam": "",
+            "MinLevDam1": "",
+            "MinLevDam2": "",
+            "MinLevDam3": "",
+            "MinLevDam4": "",
+            "MinLevDam5": "",
+            "MaxDam": "",
+            "MaxLevDam1": "",
+            "MaxLevDam2": "",
+            "MaxLevDam3": "",
+            "MaxLevDam4": "",
+            "MaxLevDam5": "",
+            "EType": "",
+            "EMin": "",
+            "EMinLev1": "",
+            "EMinLev2": "",
+            "EMinLev3": "",
+            "EMinLev4": "",
+            "EMinLev5": "",
+            "EMax": "",
+            "EMaxLev1": "",
+            "EMaxLev2": "",
+            "EMaxLev3": "",
+            "EMaxLev4": "",
+            "EMaxLev5": "",
+            "aitype": "10"
+          }
+        },
+        "skilldesc.txt": {
+          "psychic hammer": {
+            "descdam": "",
+            "descline1": "74",
+            "desctexta1": "ModFlowNoConsume",
+            "desccalca1": "min(75, 20 + (lvl-1)*30/19)",
+            "desccalcb1": "",
+            "descline2": "",
+            "desctexta2": "",
+            "desccalca2": "",
+            "desccalcb2": "",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": "",
+            "desccalcb3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61096,
+          "ModFlowNoConsume",
+          "Chance Not to Consume Orbs when Using a Finishing Move: %d%%"
+        ],
+        [
+          0,
+          "Skillname254",
+          "Flow"
+        ],
+        [
+          0,
+          "Skillan254",
+          "Flow"
+        ],
+        [
+          0,
+          "Skillld254",
+          "Passive\n\ngives a chance that using a finishing move\ndoes not consume the orbs you are holding"
+        ]
+      ]
+    }
+  }
+}

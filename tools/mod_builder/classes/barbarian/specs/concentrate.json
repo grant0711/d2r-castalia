@@ -1,0 +1,56 @@
+{
+  "slug": "concentrate",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Concentrate behaviour"
+    },
+    "final": {
+      "description": "Concentrate (Concentrate)",
+      "tables": {
+        "skills.txt": {
+          "Concentrate": {
+            "aurastatcalc1": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+((((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20))/100",
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "(((par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Bash'.blvl)*par8+skill('Stun'.blvl)*par7)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "calc4": "0",
+            "Param1": "110",
+            "Param2": "18",
+            "Param7": "6",
+            "Param8": "6",
+            "EType": ""
+          }
+        },
+        "skilldesc.txt": {
+          "concentrate": {
+            "desctexta1": "StrSkillDamagePercent",
+            "desccalca1": "clc1",
+            "desctexta2": "StrSkill21",
+            "desccalca2": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))*(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20))/100",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": "",
+            "dsc3textb3": "skillname139",
+            "dsc3line4": "",
+            "dsc3texta4": "",
+            "dsc3textb4": "",
+            "dsc3calca4": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan144",
+          "Concentrate"
+        ],
+        [
+          0,
+          "skillld144",
+          "uninterruptible attack that improves defense"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "slug": "sacrifice",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Sacrifice behaviour"
+    },
+    "final": {
+      "description": "Sacrifice (Sacrifice)",
+      "tables": {
+        "skills.txt": {
+          "Sacrifice": {
+            "calc1": "(((par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+(skill('Prayer'.blvl)+skill('Redemption'.blvl))*par8+skill('Fanaticism'.blvl)*par7)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "calc2": "max(par6, par5 - blvl/par3 - (skill('Prayer'.blvl)+skill('Redemption'.blvl))/4)",
+            "Param1": "300",
+            "Param2": "32",
+            "Param5": "12",
+            "Param6": "4",
+            "Param7": "10",
+            "Param8": "12"
+          }
+        },
+        "skilldesc.txt": {
+          "sacrifice": {
+            "ddam calc1": "clc1",
+            "desccalca1": "clc1",
+            "dsc2calca1": "clc2",
+            "dsc3textb2": "skillname99",
+            "dsc3textb3": "skillname124",
+            "dsc3calca3": "par8",
+            "dsc3line4": "76",
+            "dsc3texta4": "Damplev",
+            "dsc3textb4": "skillname122",
+            "dsc3calca4": "par7"
+          }
+        }
+      }
+    }
+  }
+}

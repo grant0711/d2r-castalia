@@ -14,7 +14,7 @@ This document provides a technical orientation for developers working on **Casta
 ├── bin/                                # Executable CLI entrypoints
 │   ├── d2r-build-mod.py                # Master pure-function build & verification pipeline
 │   ├── d2r-char                        # Multi-class character generator, respec/waypoint/gold & starter-kit CLI
-│   ├── d2r-sorc                        # Interactive one-skill-at-a-time Sorceress experiment CLI
+│   ├── d2r-class                       # Unified declarative per-skill JSON CLI for all classes (d2r-sorc is a thin alias)
 │   ├── d2r-mod                         # Offline mod launcher (D2RLoader default, --direct for direct D2R.exe)
 │   ├── d2r-qa-harness.py               # Automated X11 smoke-test harness
 │   └── setup/                          # One-time CASC extraction & Battle.net prefix setup scripts
@@ -28,12 +28,13 @@ This document provides a technical orientation for developers working on **Casta
 │       ├── mod_config.json             # Tunable global parameters
 │       ├── verify.py                   # 8-suite invariant verification harness
 │       ├── skills.py                   # Thin orchestrator delegating to classes/*
-│       ├── classes/                    # Unified per-class skill, missile, sprite & animation packages
-│       │   ├── common.py               # Shared formulas (RAMP12/34/56), states.txt, animdata.d2, pettype.txt
-│       │   ├── paladin/                # Paladin 30-skill overhaul (skills.py, sprites.py)
-│       │   ├── barbarian/              # Barbarian 30-skill Stamina Pendulum overhaul (skills.py, sprites.py)
-│       │   ├── assassin/               # Assassin 30-skill Charge-Up/Sentry/Blade overhaul (skills.py, sprites.py)
-│       │   └── sorceress/              # Sorceress 30-skill declarative engine (registry, engine, patterns, tree, icons, specs/)
+│       ├── classes/                    # Unified per-class declarative JSON-spec packages
+│       │   ├── common.py               # Shared formulas, states.txt, animdata.d2, pettype.txt
+│       │   ├── spec_engine.py          # Shared declarative JSON spec & macro engine for all 7 classes
+│       │   ├── paladin/                # Paladin 30-skill overhaul (registry.py, engine.py, state.json, specs/, sprites.py)
+│       │   ├── barbarian/              # Barbarian 30-skill overhaul (registry.py, engine.py, state.json, specs/, sprites.py)
+│       │   ├── assassin/               # Assassin 30-skill overhaul (registry.py, engine.py, state.json, specs/, sprites.py)
+│       │   └── sorceress/              # Sorceress 30-skill overhaul (registry.py, engine.py, state.json, specs/, icons/tree/sm)
 │       ├── affixes.py                  # Magic/Rare/Crafted affix pruning, levelreq calibration, itemstatcost.txt
 │       ├── cubemain.py                 # 7 Horadric Cube recipe families (~394,000 rows)
 │       ├── gamble_npc.py               # Act-partitioned vendor inventory & gamble tables

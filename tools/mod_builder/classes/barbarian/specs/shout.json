@@ -1,0 +1,78 @@
+{
+  "slug": "shout",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Shout behaviour"
+    },
+    "final": {
+      "description": "Shout (Shout)",
+      "tables": {
+        "skills.txt": {
+          "Shout": {
+            "auralencalc": "((ln34)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurastat1": "normal_damage_reduction",
+            "aurastatcalc1": "clc1",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "10",
+            "lvlmana": "1",
+            "calc1": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)",
+            "*calc1 desc": "Physical Damage Reduced",
+            "Param1": "3",
+            "*Param1 Description": "Physical Damage Reduced baseline",
+            "Param2": "2",
+            "*Param2 Description": "Physical Damage Reduced per level",
+            "Param3": "625",
+            "Param4": "125",
+            "Param8": "",
+            "*Param8 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "shout": {
+            "descline1": "74",
+            "desctexta1": "ModActiveFlatPDR",
+            "desctextb1": "",
+            "desccalca1": "clc1",
+            "desccalcb1": "",
+            "descline2": "36",
+            "desctexta2": "StrSkillDurationSingular",
+            "desctextb2": "StrSkill20",
+            "desccalca2": "len",
+            "desccalcb2": "25",
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": "",
+            "dsc3textb2": "",
+            "dsc3calca2": "",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan138",
+          "Shout"
+        ],
+        [
+          0,
+          "skillld138",
+          "reduces damage taken by you and your party"
+        ]
+      ]
+    }
+  }
+}

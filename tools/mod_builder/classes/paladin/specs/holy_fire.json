@@ -1,0 +1,61 @@
+{
+  "slug": "holy_fire",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Holy Fire behaviour"
+    },
+    "final": {
+      "description": "Holy Fire (Holy Fire)",
+      "tables": {
+        "skills.txt": {
+          "Holy Fire": {
+            "aurarangecalc": "((min(20,par1+(lvl-1)*3/4) + (((stat('target0'.accr)/1000)==1)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50):0))*clc6)/100",
+            "immediate": "1",
+            "minmana": "1",
+            "manashift": "7",
+            "mana": "2",
+            "lvlmana": "1",
+            "perdelay": "50 - (((stat('target0'.accr)/1000)==1)?((max(0,stat('goldlost'.accr)-1)*15)/75):0)",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)",
+            "Param7": "12",
+            "Param8": "6",
+            "EMin": "4",
+            "EMinLev2": "3",
+            "EMinLev3": "7",
+            "EMinLev4": "14",
+            "EMinLev5": "18",
+            "EMax": "8",
+            "EMaxLev2": "4",
+            "EMaxLev3": "9",
+            "EMaxLev4": "16",
+            "EMaxLev5": "20",
+            "EDmgSymPerCalc": "((100+(skill('Resist Fire'.blvl)*par8+skill('Salvation'.blvl)*par7))*clc6)/100-100"
+          }
+        },
+        "skilldesc.txt": {
+          "holy fire": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "512",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "(((min(20,par1+(lvl-1)*3/4)+(((stat('target0'.accr)/1000)==1)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50):0))*2)*clc6)/100",
+            "desccalcb2": "3",
+            "desctexta3": "StrSkill5",
+            "desccalca3": "enma",
+            "desccalcb3": "exma*((100+par6)/100)",
+            "descline4": "75",
+            "desctexta4": "StrSkillFireDamageToYourAttack",
+            "desccalca4": "edns*par5/256",
+            "desccalcb4": "edxs*par5/256"
+          }
+        }
+      }
+    }
+  }
+}

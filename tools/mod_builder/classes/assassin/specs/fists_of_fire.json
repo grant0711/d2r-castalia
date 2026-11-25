@@ -1,0 +1,189 @@
+{
+  "slug": "fists_of_fire",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Fists of Fire behaviour"
+    },
+    "final": {
+      "description": "Flamestrike (Fists of Fire)",
+      "tables": {
+        "skills.txt": {
+          "Fists of Fire": {
+            "srvdofunc": "34",
+            "prgstack": "",
+            "srvprgfunc1": "39",
+            "srvprgfunc2": "39",
+            "srvprgfunc3": "41",
+            "prgcalc1": "3 + min(3, (lvl - 1) * 3 / 19) + (((stat('target0'.accr)/1000)==1)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*3)/50):0)",
+            "prgcalc2": "4 + min(5, (lvl - 1) * 5 / 19) + (((stat('target0'.accr)/1000)==1)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50):0)",
+            "prgcalc3": "8 + (((stat('target0'.accr)/1000)==1)?((max(0,stat('goldlost'.accr)-1)*8)/75):0)",
+            "prgdam": "",
+            "srvmissilea": "fistsoffireexplode",
+            "srvmissileb": "fistsoffirefirewall",
+            "srvmissilec": "fof_pyroclasm_ball",
+            "aurastat2": "item_slash_damage",
+            "aurastatcalc2": "clc3",
+            "passivestate": "ass_fof_passive",
+            "passivestat1": "item_absorb_slash",
+            "passivecalc1": "1",
+            "cltprgfunc1": "9",
+            "cltprgfunc3": "15",
+            "cltmissilea": "fistsoffireexplode",
+            "cltmissileb": "fistsoffirefirewall",
+            "cltmissilec": "fof_pyroclasm_ball",
+            "weapsel": "",
+            "itypea1": "mele",
+            "anim": "A1",
+            "seqnum": "",
+            "minmana": "2",
+            "manashift": "5",
+            "mana": "20",
+            "lvlmana": "1",
+            "calc1": "8 + (((stat('target0'.accr)/1000)==1)?((max(0,stat('goldlost'.accr)-1)*8)/75):0)",
+            "*calc1 desc": "Pyroclasm Burst Fireball Count",
+            "calc2": "1",
+            "*calc2 desc": "Min Fire Damage per Orb",
+            "calc3": "((2 + (lvl-1)/2 + max(0,lvl-16) + 3*max(0,lvl-20) + 5*max(0,lvl-26)) * (100 + clc4)) / 100",
+            "*calc3 desc": "Min Fire Damage per Orb (Max = 2 * clc3)",
+            "calc4": "12*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl) + 6*skill('Claws of Thunder'.blvl)",
+            "*calc4 desc": "Total Synergy Bonus (%)",
+            "Param3": "22500",
+            "EType": "",
+            "EMin": "",
+            "EMinLev1": "",
+            "EMinLev2": "",
+            "EMinLev3": "",
+            "EMinLev4": "",
+            "EMinLev5": "",
+            "EMax": "",
+            "EMaxLev1": "",
+            "EMaxLev2": "",
+            "EMaxLev3": "",
+            "EMaxLev4": "",
+            "EMaxLev5": "",
+            "EDmgSymPerCalc": ""
+          }
+        },
+        "skilldesc.txt": {
+          "fists of fire": {
+            "descdam": "1",
+            "p1dmelem": "",
+            "p1dmmin": "",
+            "p1dmmax": "",
+            "p2dmelem": "",
+            "p2dmmin": "",
+            "p2dmmax": "",
+            "p3dmelem": "",
+            "p3dmmin": "",
+            "p3dmmax": "",
+            "descmissile1": "fistsoffireexplode",
+            "descmissile2": "fistsoffirefirewall",
+            "descmissile3": "fof_pyroclasm_ball",
+            "desctexta1": "ModFistsOfFireOrb3",
+            "desccalca1": "m3en",
+            "desccalcb1": "m3ex",
+            "descline2": "75",
+            "desctexta2": "ModFistsOfFireOrb2",
+            "desccalca2": "m2en*25/8",
+            "desccalcb2": "m2ex*25/8",
+            "desctexta3": "ModFistsOfFireOrb1",
+            "desccalca3": "m1en",
+            "desccalcb3": "m1ex",
+            "descline4": "75",
+            "desctexta4": "ModFistsOfFireHoldBuff",
+            "desccalca4": "clc3",
+            "desccalcb4": "2*clc3",
+            "descline5": "74",
+            "desctexta5": "StrSkill22",
+            "desccalca5": "toht",
+            "dsc3textb2": "Skillname263",
+            "dsc3calca2": "12",
+            "dsc3line3": "76",
+            "dsc3texta3": "Firedplev",
+            "dsc3textb3": "Skillname275",
+            "dsc3calca3": "6",
+            "dsc3line4": "76",
+            "dsc3texta4": "Firedplev",
+            "dsc3textb4": "Skillname270",
+            "dsc3calca4": "6"
+          }
+        },
+        "missiles.txt": {
+          "fistsoffireexplode": {
+            "CollideType": "3",
+            "CollideKill": "",
+            "Collision": "1",
+            "NextHit": "1",
+            "NextDelay": "25",
+            "Size": "3",
+            "ApplyMastery": "1",
+            "EType": "fire",
+            "EMin": "8",
+            "MinELev1": "2",
+            "MinELev2": "3",
+            "MinELev3": "5",
+            "MinELev4": "14",
+            "MinELev5": "24",
+            "EMax": "16",
+            "MaxELev1": "4",
+            "MaxELev2": "6",
+            "MaxELev3": "10",
+            "MaxELev4": "28",
+            "MaxELev5": "48",
+            "EDmgSymPerCalc": "12*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+          },
+          "fistsoffirefirewall": {
+            "pCltDoFunc": "1",
+            "Range": "85",
+            "SubLoop": "",
+            "Size": "3",
+            "EMin": "5",
+            "MinELev1": "1",
+            "MinELev2": "2",
+            "MinELev3": "3",
+            "MinELev4": "9",
+            "MinELev5": "15",
+            "MaxELev1": "2",
+            "MaxELev2": "4",
+            "MaxELev3": "6",
+            "MaxELev4": "18",
+            "MaxELev5": "30",
+            "EDmgSymPerCalc": "12*skill('Wake of Fire Sentry'.blvl) + 6*skill('Blades of Ice'.blvl) + 6*skill('Claws of Thunder'.blvl)"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillan260",
+          "Flamestrike"
+        ],
+        [
+          0,
+          "Skillld260",
+          "Charge-up Skill\n\nbuilds up to 3 fire orbs that add fire damage to melee attacks\nrelease charges with a finishing move or cast Fire Sentry"
+        ],
+        [
+          61060,
+          "ModFistsOfFireOrb1",
+          "Charge 1 Finisher - Fire Explosion: %d-%d"
+        ],
+        [
+          61061,
+          "ModFistsOfFireOrb2",
+          "Charge 2 Finisher - Burning Ground: %d-%d per second"
+        ],
+        [
+          61062,
+          "ModFistsOfFireOrb3",
+          "Charge 3 Finisher - Pyroclasm Burst: %d-%d"
+        ],
+        [
+          61063,
+          "ModFistsOfFireHoldBuff",
+          "Held Charge Bonus: +%d-%d Fire Damage per Orb"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "slug": "blessed_aim",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Blessed Aim behaviour"
+    },
+    "final": {
+      "description": "Blessed Aim (Blessed Aim)",
+      "tables": {
+        "skills.txt": {
+          "Blessed Aim": {
+            "aurarangecalc": "((((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100)*clc6)/100",
+            "aurastatcalc1": "(((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20))*clc6)/100",
+            "passivestat2": "damagepercent",
+            "passivecalc2": "(skill('Might'.blvl)+skill('Concentration'.blvl))*3",
+            "manashift": "4",
+            "mana": "2",
+            "lvlmana": "1",
+            "perdelay": "10",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)"
+          }
+        },
+        "skilldesc.txt": {
+          "blessed aim": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc*5",
+            "desccalcb1": "256",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "((ln12*2)*clc6)/100",
+            "desccalcb2": "3",
+            "desctexta3": "StrSkillAttackRatingPassive",
+            "desccalca3": "(skill('Blessed Aim'.blvl) < 1) ? par8 : skill('Blessed Aim'.blvl) * par8",
+            "descline4": "74",
+            "desctexta4": "StrSkillAttackRatingActive",
+            "desccalca4": "(((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20))*clc6)/100"
+          }
+        }
+      }
+    }
+  }
+}

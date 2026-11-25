@@ -1,0 +1,46 @@
+{
+  "slug": "conversion",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Conversion behaviour"
+    },
+    "final": {
+      "description": "Conversion (Conversion)",
+      "tables": {
+        "skills.txt": {
+          "Conversion": {
+            "auralencalc": "((300+(lvl-1)*25/2)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "manashift": "6",
+            "mana": "16",
+            "lvlmana": "1",
+            "Param1": "300",
+            "Param2": "12",
+            "ToHit": "50",
+            "LevToHit": "15",
+            "SrcDam": "64"
+          }
+        },
+        "skilldesc.txt": {
+          "conversion": {
+            "descline2": "74",
+            "desctexta2": "StrSkill22",
+            "desccalca2": "toht",
+            "dsc2line1": "74",
+            "dsc2texta1": "WeapDamsk",
+            "dsc2calca1": "64*100/128",
+            "dsc2calcb1": "",
+            "dsc2texta2": "StrSkill3",
+            "dsc2textb2": "",
+            "dsc2calca2": "usmc",
+            "dsc2calcb2": "256",
+            "dsc2line3": "36",
+            "dsc2texta3": "StrSkillDurationSingular",
+            "dsc2textb3": "StrSkill20",
+            "dsc2calca3": "300+(lvl-1)*25/2",
+            "dsc2calcb3": "25"
+          }
+        }
+      }
+    }
+  }
+}

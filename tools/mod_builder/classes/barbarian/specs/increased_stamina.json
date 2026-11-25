@@ -1,0 +1,51 @@
+{
+  "slug": "increased_stamina",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Increased Stamina behaviour"
+    },
+    "final": {
+      "description": "Unflinching (Increased Stamina)",
+      "tables": {
+        "skills.txt": {
+          "Increased Stamina": {
+            "passivestat1": "item_fastergethitrate",
+            "passivecalc1": "dm12",
+            "Param1": "15",
+            "*Param1 Description": "Faster Hit Recovery % Min",
+            "Param2": "75",
+            "*Param2 Description": "Faster Hit Recovery % Max"
+          }
+        },
+        "skilldesc.txt": {
+          "increased stamina": {
+            "desctexta1": "ModBarFHRPassive",
+            "desccalca1": "dm12"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61037,
+          "ModBarFHRPassive",
+          "Faster Hit Recovery: +%d%%"
+        ],
+        [
+          0,
+          "skillname141",
+          "Unflinching"
+        ],
+        [
+          0,
+          "skillan141",
+          "Unflinching"
+        ],
+        [
+          0,
+          "skillld141",
+          "passive - improves hit recovery speed"
+        ]
+      ]
+    }
+  }
+}

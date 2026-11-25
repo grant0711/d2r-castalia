@@ -12,7 +12,10 @@ import unittest
 from typing import Dict, Tuple
 
 from tests.fixture import get_indexed_tables, read_mod_tsv
-from mod_builder.classes.sorceress.registry import check_registry
+from mod_builder.classes.assassin.registry import check_registry as check_ass_registry
+from mod_builder.classes.barbarian.registry import check_registry as check_bar_registry
+from mod_builder.classes.paladin.registry import check_registry as check_pal_registry
+from mod_builder.classes.sorceress.registry import check_registry as check_sor_registry
 
 
 class TestSkillTrees(unittest.TestCase):
@@ -21,8 +24,14 @@ class TestSkillTrees(unittest.TestCase):
     REWORKED_CLASSES = ("pal", "bar", "ass", "sor")
     VALID_REQLEVELS = {1, 8, 16, 24, 32, 40}
 
-    def test_sorceress_registry_integrity(self):
-        self.assertEqual(check_registry(), [])
+    def test_all_class_registries_integrity(self):
+        for name, fn in (
+            ("paladin", check_pal_registry),
+            ("barbarian", check_bar_registry),
+            ("assassin", check_ass_registry),
+            ("sorceress", check_sor_registry),
+        ):
+            self.assertEqual(fn(), [], f"{name} registry check failed")
 
     def test_reworked_class_tree_grid_gates_and_prereq_dag(self):
         idx = get_indexed_tables()

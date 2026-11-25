@@ -1,0 +1,84 @@
+{
+  "slug": "thorns",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Thorns behaviour"
+    },
+    "final": {
+      "description": "Thorns (Thorns)",
+      "tables": {
+        "skills.txt": {
+          "Thorns": {
+            "aurarangecalc": "((((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100)*clc6)/100",
+            "aurastat1": "thorns_percent",
+            "aurastatcalc1": "((clc1)*clc6)/100",
+            "aurastat2": "damageresist",
+            "aurastatcalc2": "((min(20,lvl))*clc6)/100",
+            "aurastat3": "item_openwounds",
+            "aurastatcalc3": "((clc2)*clc6)/100",
+            "immediate": "1",
+            "manashift": "4",
+            "mana": "2",
+            "lvlmana": "1",
+            "perdelay": "10",
+            "calc1": "((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20))*(100+skill('Sacrifice'.blvl)*par8+skill('Redemption'.blvl)*par7)/100",
+            "calc2": "min(75,(par5+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par6/20))",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)",
+            "Param5": "10",
+            "Param6": "2",
+            "Param7": "6",
+            "Param8": "3",
+            "EMin": "",
+            "EMinLev1": "",
+            "EMinLev2": "",
+            "EMinLev3": "",
+            "EMinLev4": "",
+            "EMinLev5": ""
+          }
+        },
+        "skilldesc.txt": {
+          "thorns": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc*5",
+            "desccalcb1": "256",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "((ln12*2)*clc6)/100",
+            "desccalcb2": "3",
+            "desccalca3": "((clc1)*clc6)/100",
+            "descline4": "74",
+            "desctexta4": "ModActivePctPDR",
+            "desccalca4": "((min(20,lvl))*clc6)/100",
+            "descline5": "74",
+            "desctexta5": "ModStr3m",
+            "desccalca5": "((clc2)*clc6)/100",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "skillname103",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Damplev",
+            "dsc3textb2": "skillname96",
+            "dsc3calca2": "par8",
+            "dsc3line3": "76",
+            "dsc3texta3": "Damplev",
+            "dsc3textb3": "skillname124",
+            "dsc3calca3": "par7"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61025,
+          "ModActivePctPDR",
+          "Physical Damage Reduced by %d%%"
+        ]
+      ]
+    }
+  }
+}

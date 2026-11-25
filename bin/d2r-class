@@ -1,0 +1,482 @@
+#!/usr/bin/env python3
+"""
+d2r-class - unified per-skill declarative JSON workflow for all Castalia classes.
+
+Usage:
+  d2r-class <pal|bar|ass|sor|ama|dru|nec> <command> [args...]
+
+Commands:
+  map [tree]                         30-slot map (vanilla row -> new skill), status, active variant
+  show <slug>                        design intent, variants, active patch, built-row diff vs vanilla
+  use <slug> <variant>               switch the active variant (instant revert / A-B test)
+  variant <slug> <name> [--from V] [-m TEXT]
+                                     create a variant (copy of V, default baseline)
+  set <slug> <table>/<key>.<col>=<val> [-v VARIANT]
+                                     patch one column in a variant (use _clone=<key> for new rows)
+  unset <slug> <table>/<key>[.<col>] [-v VARIANT]
+  string <slug> name|short|long <text> [-v VARIANT]
+  status <slug> stub|wip|tested|done
+  build                              rebuild skills tables + verify, print active experiments
+  char [--init|--stats|--level N]    reset the class test character (skills refunded)
+  commit [-m MSG]                    git commit this class's spec/doc work
+  revert <slug>                      restore this skill's spec + state from HEAD
+  check                              validate the 30-slot map/layout and active variants
+  funcs [query]                      query indexed skills.txt & missiles.txt functions & pitfalls
+  patterns [slug_or_role]            show reusable skill archetype blueprint (where defined)
+  compact [slug|--all]               prune old inactive variants from specs/*.json (keeps baseline + active)
+  test [slug]                        run TDD engine contract, formula linter & simulation tests
+"""
+import argparse
+import csv
+import importlib
+import json
+import os
+import subprocess
+import sys
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+
+from mod_builder.common import MOD_EXCEL, VANILLA_EXCEL  # noqa: E402
+from mod_builder.classes.sorceress.patterns import (  # noqa: E402
+    MISSILE_FUNCS,
+    SKILL_ARCHETYPES,
+    SKILL_FUNCS,
+    STANCE_MARKERS,
+)
+
+CLASS_ALIASES = {
+    "pal": ("paladin", "PAL"),
+    "paladin": ("paladin", "PAL"),
+    "bar": ("barbarian", "BAR"),
+    "barbarian": ("barbarian", "BAR"),
+    "ass": ("assassin", "ASS"),
+    "assassin": ("assassin", "ASS"),
+    "sor": ("sorceress", "SORC"),
+    "sorc": ("sorceress", "SORC"),
+    "sorceress": ("sorceress", "SORC"),
+    "ama": ("amazon", "AMA"),
+    "amazon": ("amazon", "AMA"),
+    "dru": ("druid", "DRU"),
+    "druid": ("druid", "DRU"),
+    "nec": ("necromancer", "NEC"),
+    "necromancer": ("necromancer", "NEC"),
+}
+
+EXCEL = MOD_EXCEL
+VANILLA = VANILLA_EXCEL
+
+
+def die(msg: str):
+    print(f"error: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def load_class_ctx(cls_arg: str):
+    key = cls_arg.lower().strip()
+    if key not in CLASS_ALIASES:
+        die(f"unknown class '{cls_arg}'. Choose one of: pal, bar, ass, sor, ama, dru, nec")
+    cls_name, char_name = CLASS_ALIASES[key]
+    try:
+        eng_mod = importlib.import_module(f"mod_builder.classes.{cls_name}.engine")
+        reg_mod = importlib.import_module(f"mod_builder.classes.{cls_name}.registry")
+    except ModuleNotFoundError as e:
+        die(f"class '{cls_name}' does not have declarative specs initialized yet ({e})")
+    return {
+        "cls": cls_name,
+        "char": char_name,
+        "engine": eng_mod,
+        "registry": reg_mod,
+        "paths": [f"tools/mod_builder/classes/{cls_name}", f"docs/classes/{cls_name}.md", "bin/d2r-class"],
+    }
+
+
+def slot(ctx, slug: str) -> dict:
+    if slug == "_shared":
+        return {
+            "slug": "_shared",
+            "name": "shared rows",
+            "tree": "-",
+            "row": 0,
+            "col": 0,
+            "vid": 0,
+            "vname": "-",
+            "role": "shared helper rows",
+            "design": "states/stats/helper skills shared by several skills",
+        }
+    if slug not in ctx["registry"].BY_SLUG:
+        die(f"unknown skill '{slug}' for {ctx['cls']}. Try: d2r-class {ctx['cls']} map")
+    return ctx["registry"].BY_SLUG[slug]
+
+
+def variants_of(ctx, slug: str) -> dict:
+    return ctx["engine"].load_spec(slug)["variants"]
+
+
+def cmd_map(ctx, args):
+    eng, reg = ctx["engine"], ctx["registry"]
+    state = eng.load_state()
+    trees = [args.tree] if args.tree else list(reg.PAGE)
+    for tree in trees:
+        if tree not in reg.PAGE:
+            die(f"unknown tree '{tree}' for {ctx['cls']}. Have: {', '.join(reg.PAGE)}")
+        print(f"\n== {ctx['cls'].upper()} / {tree.upper()} (page {reg.PAGE[tree]}) ==")
+        print(f"{'slug':20} {'new name':22} {'r.c':4} {'lvl':>3}  {'vanilla row':22} {'id':>3}  {'status':7} variant")
+        for s in sorted((x for x in reg.SLOTS if x["tree"] == tree), key=lambda x: (x["row"], x["col"])):
+            print(
+                f"{s['slug']:20} {s['name']:22} {s['row']}.{s['col']}  {reg.slot_level(s):>3}  "
+                f"{s['vname']:22} {s['vid']:>3}  {eng.status_of(s['slug'], state):7} "
+                f"{eng.active_variant(s['slug'], state)}"
+            )
+
+
+def read_rows(path: str, key: str) -> dict:
+    with open(path, encoding="latin-1") as f:
+        rows = list(csv.DictReader(f, delimiter="\t"))
+    return {r[key]: r for r in rows if r.get(key)}
+
+
+def built_diff(ctx, s: dict, patch_tables: dict):
+    eng = ctx["engine"]
+    tables = [("skills.txt", [s["vname"]])] if s["vname"] != "-" else []
+    for t, rows in patch_tables.items():
+        if t in eng.TABLE_KEYS:
+            tables.append((t, list(rows)))
+    seen = set()
+    for t, keys in tables:
+        key_col = eng.TABLE_KEYS[t]
+        vp, mp = os.path.join(VANILLA, t), os.path.join(EXCEL, t)
+        if not os.path.exists(mp):
+            continue
+        v_rows, m_rows = read_rows(vp, key_col), read_rows(mp, key_col)
+        for k in keys:
+            if (t, k) in seen or k not in m_rows:
+                continue
+            seen.add((t, k))
+            mr, vr = m_rows[k], v_rows.get(k, {})
+            diffs = [
+                (c, vr.get(c, ""), mr[c])
+                for c in mr
+                if mr[c] != vr.get(c, "") and not c.startswith("*")
+            ]
+            tag = " (NEW)" if k not in v_rows else ""
+            print(f"  {t} / {k}{tag}: {len(diffs)} cols differ from vanilla")
+            for c, old, new in diffs[:40]:
+                print(f"    {c:22}  {old or '-':24}  ->  {new or '-'}")
+            if len(diffs) > 40:
+                print(f"    ... (+{len(diffs) - 40} more)")
+
+
+def cmd_show(ctx, args):
+    eng, reg = ctx["engine"], ctx["registry"]
+    s = slot(ctx, args.slug)
+    spec = eng.load_spec(s["slug"])
+    var = eng.active_variant(s["slug"])
+    st = eng.status_of(s["slug"])
+    lvl = reg.slot_level(s) if s["row"] else "-"
+    print(f"{s['name']} ({s['slug']})  [{st}]  {ctx['cls']}/{s['tree']} r{s['row']}c{s['col']} lvl {lvl}")
+    print(f"Replaces: {s['vname']} (id {s['vid']})   Role: {s['role']}")
+    print(f"Design:   {s['design']}")
+    print("\nVARIANTS:")
+    for name, blk in spec["variants"].items():
+        mark = "*" if name == var else " "
+        print(f"  {mark} {name:18} {blk.get('description', '')}")
+    active = spec["variants"][var]
+    print(f"\nACTIVE PATCH ({var}):")
+    print(json.dumps({k: active[k] for k in active if k != "description"}, indent=2) if len(active) > 1 else "  (none - vanilla behaviour)")
+    print("\nBUILT ROWS vs VANILLA (from last build):")
+    built_diff(ctx, s, active.get("tables", {}))
+
+
+def get_variant(ctx, slug: str, name: str = None) -> tuple:
+    eng = ctx["engine"]
+    spec = eng.load_spec(slug)
+    name = name or eng.active_variant(slug)
+    if name not in spec["variants"]:
+        die(f"{slug}: variant '{name}' does not exist (have {list(spec['variants'])})")
+    return spec, name, spec["variants"][name]
+
+
+def cmd_use(ctx, args):
+    eng = ctx["engine"]
+    s = slot(ctx, args.slug)
+    spec = eng.load_spec(s["slug"])
+    if args.variant not in spec["variants"]:
+        die(f"{s['slug']}: no variant '{args.variant}' (have {list(spec['variants'])})")
+    state = eng.load_state()
+    state.setdefault(s["slug"], {})["variant"] = args.variant
+    if eng.status_of(s["slug"], state) == "stub" and args.variant != "baseline":
+        state[s["slug"]]["status"] = "wip"
+    eng.save_state(state)
+    print(f"{ctx['cls']}/{s['slug']}: active variant = {args.variant}")
+
+
+def cmd_variant(ctx, args):
+    eng = ctx["engine"]
+    s = slot(ctx, args.slug)
+    spec = eng.load_spec(s["slug"])
+    if args.name in spec["variants"]:
+        die(f"{s['slug']}: variant '{args.name}' already exists")
+    src = args.src or eng.active_variant(s["slug"])
+    if src not in spec["variants"]:
+        die(f"{s['slug']}: --from '{src}' not found")
+    blk = json.loads(json.dumps(spec["variants"][src]))
+    if args.m:
+        blk["description"] = args.m
+    spec["variants"][args.name] = blk
+    eng.save_spec(s["slug"], spec)
+    print(f"{ctx['cls']}/{s['slug']}: created variant '{args.name}' (from '{src}'). Activate with: d2r-class {ctx['cls']} use {s['slug']} {args.name}")
+
+
+def parse_assign(expr: str) -> tuple:
+    if "=" not in expr:
+        die("expected <table>/<key>.<col>=<val>")
+    lhs, val = expr.split("=", 1)
+    if "/" not in lhs or "." not in lhs.split("/", 1)[1]:
+        die("expected <table>/<key>.<col>=<val>")
+    table, rest = lhs.split("/", 1)
+    if not table.endswith(".txt"):
+        table += ".txt"
+    key, col = rest.rsplit(".", 1)
+    return table, key, col, val
+
+
+def cmd_set(ctx, args):
+    eng = ctx["engine"]
+    s = slot(ctx, args.slug)
+    spec, vname, blk = get_variant(ctx, s["slug"], args.v)
+    if vname == "baseline":
+        die("refusing to edit 'baseline' (keep it pristine). Make a variant first.")
+    for expr in args.expr:
+        table, key, col, val = parse_assign(expr)
+        if table not in eng.TABLE_KEYS:
+            die(f"unknown table '{table}' (valid: {list(eng.TABLE_KEYS)})")
+        blk.setdefault("tables", {}).setdefault(table, {}).setdefault(key, {})[col] = val
+    eng.save_spec(s["slug"], spec)
+    print(f"{ctx['cls']}/{s['slug']}[{vname}]: updated {len(args.expr)} field(s)")
+
+
+def cmd_unset(ctx, args):
+    eng = ctx["engine"]
+    s = slot(ctx, args.slug)
+    spec, vname, blk = get_variant(ctx, s["slug"], args.v)
+    table, rest = args.path.split("/", 1)
+    if not table.endswith(".txt"):
+        table += ".txt"
+    t = blk.get("tables", {}).get(table, {})
+    if "." in rest:
+        key, col = rest.rsplit(".", 1)
+        t.get(key, {}).pop(col, None)
+        if not t.get(key):
+            t.pop(key, None)
+    else:
+        t.pop(rest, None)
+    eng.save_spec(s["slug"], spec)
+    print(f"{ctx['cls']}/{s['slug']}[{vname}]: unset {args.path}")
+
+
+def cmd_string(ctx, args):
+    eng = ctx["engine"]
+    s = slot(ctx, args.slug)
+    spec, vname, blk = get_variant(ctx, s["slug"], args.v)
+    blk.setdefault("strings", {})[args.field] = args.text
+    eng.save_spec(s["slug"], spec)
+    print(f"{ctx['cls']}/{s['slug']}[{vname}]: strings.{args.field} set")
+
+
+def cmd_status(ctx, args):
+    eng = ctx["engine"]
+    slot(ctx, args.slug)
+    state = eng.load_state()
+    state.setdefault(args.slug, {})["status"] = args.value
+    eng.save_state(state)
+    print(f"{ctx['cls']}/{args.slug}: status = {args.value}")
+
+
+def cmd_check(ctx, _args):
+    eng, reg = ctx["engine"], ctx["registry"]
+    problems = reg.check_registry()
+    state = eng.load_state()
+    for s in reg.SLOTS:
+        v = eng.active_variant(s["slug"], state)
+        if v not in variants_of(ctx, s["slug"]):
+            problems.append(f"{s['slug']}: active variant '{v}' missing")
+        if eng.status_of(s["slug"], state) not in eng.STATUSES:
+            problems.append(f"{s['slug']}: bad status")
+    if problems:
+        die("; ".join(problems))
+    print(f"ok ({ctx['cls']}): 30 slots, no cell collisions, variants resolve.")
+
+
+def cmd_build(ctx, _args):
+    cmd_check(ctx, _args)
+    r = subprocess.run(
+        [sys.executable, os.path.join(ROOT, "bin/d2r-build-mod.py"), "itemtypes", "skills", "verify"],
+        capture_output=True,
+        text=True,
+    )
+    tail = (r.stdout + r.stderr).strip().splitlines()
+    if r.returncode != 0:
+        print("\n".join(tail[-12:]))
+        die("build/verify FAILED")
+    print(tail[-1][:160] if tail else "built")
+
+
+def cmd_char(ctx, args):
+    cmd = [sys.executable, os.path.join(ROOT, "bin/d2r-char"), "reset", ctx["char"]]
+    if args.init:
+        cmd.append("--init")
+    if args.stats:
+        cmd.append("--stats")
+    if args.level:
+        cmd += ["--level", str(args.level)]
+    sys.exit(subprocess.call(cmd))
+
+
+def git(*a):
+    return subprocess.run(["git", "-C", ROOT, *a], capture_output=True, text=True)
+
+
+def cmd_commit(ctx, args):
+    git("add", *ctx["paths"], "tools/mod_builder")
+    r = git("commit", "-m", args.m or f"{ctx['cls']} checkpoint")
+    print((r.stdout or r.stderr).strip().splitlines()[0] if (r.stdout or r.stderr) else "nothing to commit")
+
+
+def cmd_revert(ctx, args):
+    eng = ctx["engine"]
+    s = slot(ctx, args.slug)
+    spec_rel = f"tools/mod_builder/classes/{ctx['cls']}/specs/{s['slug']}.json"
+    r = git("checkout", "HEAD", "--", spec_rel)
+    if r.returncode != 0:
+        die(r.stderr.strip())
+    head_state = git("show", f"HEAD:tools/mod_builder/classes/{ctx['cls']}/state.json")
+    if head_state.returncode == 0:
+        old = json.loads(head_state.stdout).get(s["slug"])
+        state = eng.load_state()
+        if old:
+            state[s["slug"]] = old
+            eng.save_state(state)
+    print(f"{ctx['cls']}/{s['slug']} restored to HEAD. Run: d2r-class {ctx['cls']} build")
+
+
+def cmd_funcs(_ctx, args):
+    q = (args.query or "").lower().strip()
+    print("== STANCE MARKERS & CROSS-STANCE FIZZLE GUARDS ==")
+    for tree, info in STANCE_MARKERS.items():
+        if not q or q in tree or q in json.dumps(info).lower():
+            print(f"  {tree:9} | state={info['state']:17} | stat={info['stat']:18}")
+            print(f"            | active:   {info['expr']}")
+            print(f"            | opposing: {info['opposing_expr']}")
+    print("\n== PROVEN SKILLS.TXT (srvstfunc / srvdofunc / cltstfunc / cltdofunc) ==")
+    for sf in SKILL_FUNCS:
+        if not q or q in json.dumps(sf).lower():
+            print(f"\n  [{sf['id']}] {sf['name']}")
+            print(f"    srvst={sf['srvstfunc'] or '-'}  srvdo={sf['srvdofunc'] or '-'}  cltst={sf['cltstfunc'] or '-'}  cltdo={sf['cltdofunc'] or '-'}")
+            print(f"    Missiles:  {sf['missile_cols']}")
+            print(f"    Calcs:     {sf['calcs']}")
+            print(f"    Proven in: {sf['proven_in']}")
+            print(f"    Pitfalls:  {sf['pitfalls']}")
+    print("\n== PROVEN MISSILES.TXT (pSrvDoFunc / pCltDoFunc / pSrvHitFunc / pCltHitFunc) ==")
+    for mf in MISSILE_FUNCS:
+        if not q or q in json.dumps(mf).lower():
+            print(f"  [{mf['id']:10}] {mf['name']}: {mf['notes']}")
+
+
+def cmd_patterns(ctx, args):
+    reg = ctx["registry"]
+    q = (args.target or "").lower().strip()
+    if q and q in reg.BY_SLUG:
+        s = reg.BY_SLUG[q]
+        role = s["role"]
+        arch = SKILL_ARCHETYPES.get(role)
+        print(f"Skill: {s['name']} ({s['slug']}) — {ctx['cls']}/{s['tree']} r{s['row']}c{s['col']} (Lvl {reg.slot_level(s)}), replaces '{s['vname']}' (ID {s['vid']})")
+        print(f"Role:  {role}")
+        print(f"Design: {s['design']}")
+        if ctx["cls"] == "sorceress" and s["tree"] in STANCE_MARKERS:
+            tm = STANCE_MARKERS[s["tree"]]
+            print(f"Stance Marker ({tm['stance_slug']}): {tm['expr']}")
+            print(f"Cross-Stance Fizzle Guard: {tm['opposing_expr']} ? <fizzle_val> : (<normal_expr>)")
+        if arch:
+            t_slug = arch["template_slug"]
+            print(f"\nParallel Template Skill: {t_slug} (tools/mod_builder/classes/{ctx['cls']}/specs/{t_slug}.json)")
+            print(f"Functions: {arch['skills_funcs']}")
+            print(f"Pattern:   {arch['missile_pattern']}")
+        return
+
+    for role, arch in SKILL_ARCHETYPES.items():
+        if not q or q in role.lower() or q in json.dumps(arch).lower():
+            print(f"\n== Archetype: {role} (Template: {arch['template_slug']}) ==")
+            print(f"  Functions:  {arch['skills_funcs']}")
+            print(f"  Pattern:    {arch['missile_pattern']}")
+            print(f"  Tree Slots: {arch['tree_slots']}")
+
+
+def cmd_compact(ctx, args):
+    eng, reg = ctx["engine"], ctx["registry"]
+    if not args.all and not args.slug:
+        die("specify a <slug> or --all")
+    slugs = (["_shared"] + [s["slug"] for s in reg.SLOTS]) if args.all else [slot(ctx, args.slug)["slug"]]
+    state = eng.load_state()
+    pruned_total = 0
+    for slug in slugs:
+        p = eng.spec_path(slug)
+        if not os.path.exists(p):
+            continue
+        spec = eng.load_spec(slug)
+        active = eng.active_variant(slug, state)
+        keep = {"baseline", active}
+        old_vars = [v for v in spec["variants"] if v not in keep]
+        if old_vars:
+            spec["variants"] = {k: v for k, v in spec["variants"].items() if k in keep}
+            eng.save_spec(slug, spec)
+            pruned_total += len(old_vars)
+            print(f"  {slug:18} pruned {len(old_vars)} inactive variant(s): {', '.join(old_vars)}")
+    print(f"compacted ({ctx['cls']}): removed {pruned_total} obsolete variant(s)")
+
+
+def cmd_test(_ctx, _args):
+    r = subprocess.run(
+        [sys.executable, "-m", "unittest", "-v", "tests.test_engine_contracts", "tests.test_skill_trees", "tests.test_skill_simulation"],
+        cwd=ROOT,
+    )
+    sys.exit(r.returncode)
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="d2r-class", add_help=True)
+    ap.add_argument("cls", help="Class name or short code (pal|bar|ass|sor|ama|dru|nec)")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("map"); p.add_argument("tree", nargs="?"); p.set_defaults(f=cmd_map)
+    p = sub.add_parser("show"); p.add_argument("slug"); p.set_defaults(f=cmd_show)
+    p = sub.add_parser("use"); p.add_argument("slug"); p.add_argument("variant"); p.set_defaults(f=cmd_use)
+    p = sub.add_parser("variant"); p.add_argument("slug"); p.add_argument("name")
+    p.add_argument("--from", dest="src"); p.add_argument("-m", default=""); p.set_defaults(f=cmd_variant)
+    p = sub.add_parser("set"); p.add_argument("slug"); p.add_argument("expr", nargs="+")
+    p.add_argument("-v"); p.set_defaults(f=cmd_set)
+    p = sub.add_parser("unset"); p.add_argument("slug"); p.add_argument("path"); p.add_argument("-v")
+    p.set_defaults(f=cmd_unset)
+    p = sub.add_parser("string"); p.add_argument("slug"); p.add_argument("field", choices=["name", "short", "long"])
+    p.add_argument("text"); p.add_argument("-v"); p.set_defaults(f=cmd_string)
+    p = sub.add_parser("status"); p.add_argument("slug"); p.add_argument("value", choices=["stub", "wip", "tested", "done"])
+    p.set_defaults(f=cmd_status)
+    p = sub.add_parser("build"); p.set_defaults(f=cmd_build)
+    p = sub.add_parser("check"); p.set_defaults(f=cmd_check)
+    p = sub.add_parser("char"); p.add_argument("--init", action="store_true"); p.add_argument("--stats", action="store_true")
+    p.add_argument("--level", type=int); p.set_defaults(f=cmd_char)
+    p = sub.add_parser("commit"); p.add_argument("-m"); p.set_defaults(f=cmd_commit)
+    p = sub.add_parser("revert"); p.add_argument("slug"); p.set_defaults(f=cmd_revert)
+    p = sub.add_parser("funcs"); p.add_argument("query", nargs="?"); p.set_defaults(f=cmd_funcs)
+    p = sub.add_parser("patterns"); p.add_argument("target", nargs="?"); p.set_defaults(f=cmd_patterns)
+    p = sub.add_parser("compact"); p.add_argument("slug", nargs="?"); p.add_argument("--all", action="store_true")
+    p.set_defaults(f=cmd_compact)
+    p = sub.add_parser("test"); p.add_argument("slug", nargs="?"); p.set_defaults(f=cmd_test)
+
+    args = ap.parse_args()
+    ctx = load_class_ctx(args.cls)
+    args.f(ctx, args)
+
+
+if __name__ == "__main__":
+    main()

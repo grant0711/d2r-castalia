@@ -1,12 +1,18 @@
-from mod_builder.classes.barbarian.skills import (
-    BARBARIAN_STRING_UPDATES,
-    _apply_barbarian_skilldesc,
-    _apply_barbarian_skills,
-    append_barbarian_helper_skills,
-    apply_barbarian_missiles,
-)
-from mod_builder.classes.barbarian.sprites import (
+"""
+barbarian/__init__.py
+Unified access point for the Barbarian 30-skill overhaul.
+"""
+from . import engine, registry
+from .sprites import (
     _build_barbarian_state_machine,
     _build_baskillicon_pair,
     _build_baskilltree_pair,
 )
+
+__all__ = [
+    "engine",
+    "registry",
+    "_build_barbarian_state_machine",
+    "_build_baskillicon_pair",
+    "_build_baskilltree_pair",
+]

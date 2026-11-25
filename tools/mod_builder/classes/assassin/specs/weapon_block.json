@@ -1,0 +1,11 @@
+{
+  "slug": "weapon_block",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Weapon Block behaviour"
+    },
+    "final": {
+      "description": "Weapon Block (Weapon Block)"
+    }
+  }
+}

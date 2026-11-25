@@ -1,0 +1,33 @@
+{
+  "slug": "howl",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Howl behaviour"
+    },
+    "final": {
+      "description": "Howl (Howl)",
+      "tables": {
+        "skills.txt": {
+          "Howl": {
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "14",
+            "lvlmana": "1",
+            "calc1": "((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "calc2": "((ln34)*(100+max(0,stat('target1'.accr)-1)/2))/100"
+          }
+        },
+        "skilldesc.txt": {
+          "howl": {
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25"
+          }
+        }
+      }
+    }
+  }
+}

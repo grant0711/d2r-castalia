@@ -1,0 +1,48 @@
+{
+  "slug": "salvation",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Salvation behaviour"
+    },
+    "final": {
+      "description": "Salvation (Salvation)",
+      "tables": {
+        "skills.txt": {
+          "Salvation": {
+            "aurarangecalc": "((((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100)*clc6)/100",
+            "aurastatcalc1": "((clc1)*clc6)/100",
+            "aurastatcalc2": "((clc1)*clc6)/100",
+            "aurastatcalc3": "((clc1)*clc6)/100",
+            "manashift": "4",
+            "mana": "2",
+            "lvlmana": "1",
+            "perdelay": "10",
+            "calc1": "par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*15/62",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)",
+            "Param3": "25",
+            "Param4": "4"
+          }
+        },
+        "skilldesc.txt": {
+          "salvation": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc*5",
+            "desccalcb1": "256",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "((ln12*2)*clc6)/100",
+            "desccalcb2": "3",
+            "descline3": "74",
+            "desctexta3": "StrSkill54",
+            "desccalca3": "((clc1)*clc6)/100"
+          }
+        }
+      }
+    }
+  }
+}

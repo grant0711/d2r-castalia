@@ -1,0 +1,126 @@
+{
+  "_shared": {
+    "status": "done",
+    "variant": "final"
+  },
+  "blessed_aim": {
+    "status": "done",
+    "variant": "final"
+  },
+  "blessed_hammer": {
+    "status": "done",
+    "variant": "final"
+  },
+  "charge": {
+    "status": "done",
+    "variant": "final"
+  },
+  "cleansing": {
+    "status": "done",
+    "variant": "final"
+  },
+  "concentration": {
+    "status": "done",
+    "variant": "final"
+  },
+  "conversion": {
+    "status": "done",
+    "variant": "final"
+  },
+  "conviction": {
+    "status": "done",
+    "variant": "final"
+  },
+  "defiance": {
+    "status": "done",
+    "variant": "final"
+  },
+  "fanaticism": {
+    "status": "done",
+    "variant": "final"
+  },
+  "fist_of_the_heavens": {
+    "status": "done",
+    "variant": "final"
+  },
+  "holy_bolt": {
+    "status": "done",
+    "variant": "final"
+  },
+  "holy_fire": {
+    "status": "done",
+    "variant": "final"
+  },
+  "holy_freeze": {
+    "status": "done",
+    "variant": "final"
+  },
+  "holy_shield": {
+    "status": "done",
+    "variant": "final"
+  },
+  "holy_shock": {
+    "status": "done",
+    "variant": "final"
+  },
+  "meditation": {
+    "status": "done",
+    "variant": "final"
+  },
+  "might": {
+    "status": "done",
+    "variant": "final"
+  },
+  "prayer": {
+    "status": "done",
+    "variant": "final"
+  },
+  "redemption": {
+    "status": "done",
+    "variant": "final"
+  },
+  "resist_cold": {
+    "status": "done",
+    "variant": "final"
+  },
+  "resist_fire": {
+    "status": "done",
+    "variant": "final"
+  },
+  "resist_lightning": {
+    "status": "done",
+    "variant": "final"
+  },
+  "sacrifice": {
+    "status": "done",
+    "variant": "final"
+  },
+  "salvation": {
+    "status": "done",
+    "variant": "final"
+  },
+  "sanctuary": {
+    "status": "done",
+    "variant": "final"
+  },
+  "smite": {
+    "status": "done",
+    "variant": "final"
+  },
+  "thorns": {
+    "status": "done",
+    "variant": "final"
+  },
+  "vengeance": {
+    "status": "done",
+    "variant": "final"
+  },
+  "vigor": {
+    "status": "done",
+    "variant": "final"
+  },
+  "zeal": {
+    "status": "done",
+    "variant": "final"
+  }
+}

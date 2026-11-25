@@ -1,0 +1,126 @@
+{
+  "_shared": {
+    "status": "done",
+    "variant": "final"
+  },
+  "axe_mastery": {
+    "status": "done",
+    "variant": "final"
+  },
+  "bash": {
+    "status": "done",
+    "variant": "final"
+  },
+  "battle_command": {
+    "status": "done",
+    "variant": "final"
+  },
+  "battle_cry": {
+    "status": "done",
+    "variant": "final"
+  },
+  "battle_orders": {
+    "status": "done",
+    "variant": "final"
+  },
+  "berserk": {
+    "status": "done",
+    "variant": "final"
+  },
+  "blade_mastery": {
+    "status": "done",
+    "variant": "final"
+  },
+  "concentrate": {
+    "status": "done",
+    "variant": "final"
+  },
+  "double_swing": {
+    "status": "done",
+    "variant": "final"
+  },
+  "double_throw": {
+    "status": "done",
+    "variant": "final"
+  },
+  "find_item": {
+    "status": "done",
+    "variant": "final"
+  },
+  "find_potion": {
+    "status": "done",
+    "variant": "final"
+  },
+  "frenzy": {
+    "status": "done",
+    "variant": "final"
+  },
+  "grim_ward": {
+    "status": "done",
+    "variant": "final"
+  },
+  "howl": {
+    "status": "done",
+    "variant": "final"
+  },
+  "increased_speed": {
+    "status": "done",
+    "variant": "final"
+  },
+  "increased_stamina": {
+    "status": "done",
+    "variant": "final"
+  },
+  "iron_skin": {
+    "status": "done",
+    "variant": "final"
+  },
+  "leap": {
+    "status": "done",
+    "variant": "final"
+  },
+  "leap_attack": {
+    "status": "done",
+    "variant": "final"
+  },
+  "mace_mastery": {
+    "status": "done",
+    "variant": "final"
+  },
+  "natural_resistance": {
+    "status": "done",
+    "variant": "final"
+  },
+  "pole_arm_mastery": {
+    "status": "done",
+    "variant": "final"
+  },
+  "shout": {
+    "status": "done",
+    "variant": "final"
+  },
+  "spear_mastery": {
+    "status": "done",
+    "variant": "final"
+  },
+  "stun": {
+    "status": "done",
+    "variant": "final"
+  },
+  "taunt": {
+    "status": "done",
+    "variant": "final"
+  },
+  "throwing_mastery": {
+    "status": "done",
+    "variant": "final"
+  },
+  "war_cry": {
+    "status": "done",
+    "variant": "final"
+  },
+  "whirlwind": {
+    "status": "done",
+    "variant": "final"
+  }
+}

@@ -1,0 +1,93 @@
+{
+  "slug": "wake_of_fire_sentry",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Wake of Fire Sentry behaviour"
+    },
+    "final": {
+      "description": "Fire Sentry (Wake of Fire Sentry)",
+      "tables": {
+        "skills.txt": {
+          "Wake of Fire Sentry": {
+            "srvstfunc": "39",
+            "aurastate": "progressive_fire",
+            "auralencalc": "12",
+            "aurastat1": "item_kickdamage",
+            "aurastatcalc1": "max(stat('progressive_fire'.accr), stat('item_kickdamage'.accr))",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "passivestat2": "",
+            "passivecalc2": "",
+            "pettype": "firetrap",
+            "petmax": "1 + (((skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 10) ? 1 : 0) + (((skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 25) ? 1 : 0)",
+            "sumsk1calc": "(max(max(stat('progressive_fire'.accr), stat('item_kickdamage'.accr)), ((stat('target0'.accr)/1000) == 1) ? 3 : 0) >= 2) ? (9 + skill('Fists of Fire'.blvl) / 2) : 1",
+            "sumskill2": "Wake of Fire Sentry",
+            "sumsk2calc": "lvl",
+            "sumskill3": "Fists of Fire",
+            "sumsk3calc": "skill('Fists of Fire'.blvl)",
+            "sumskill4": "Fire Trauma",
+            "sumsk4calc": "skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)",
+            "sumskill5": "Ass Trap Charge Consume",
+            "sumsk5calc": "max(max(stat('progressive_fire'.accr), stat('item_kickdamage'.accr)), ((stat('target0'.accr)/1000) == 1) ? 3 : 0)",
+            "minmana": "18",
+            "manashift": "7",
+            "mana": "36",
+            "lvlmana": "3",
+            "calc1": "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 18*max(0,lvl-16) + 36*max(0,lvl-22)",
+            "*calc1 desc": "Base Fire Damage Level Ramp (%)",
+            "calc3": "12*skill('Fists of Fire'.blvl) + 6*skill('Death Sentry'.blvl) + 6*skill('Lightning Sentry'.blvl)",
+            "*calc3 desc": "Total Synergy Bonus (%)",
+            "EMin": "14",
+            "EMinLev1": "0",
+            "EMinLev2": "0",
+            "EMinLev3": "0",
+            "EMinLev4": "0",
+            "EMinLev5": "0",
+            "EMax": "24",
+            "EMaxLev1": "0",
+            "EMaxLev2": "0",
+            "EMaxLev3": "0",
+            "EMaxLev4": "0",
+            "EMaxLev5": "0",
+            "EDmgSymPerCalc": "(clc1 * (100 + clc3)) / 100 - 100"
+          }
+        },
+        "skilldesc.txt": {
+          "wake of fire sentry": {
+            "dsc2line3": "74",
+            "dsc2texta3": "ModFireSentryMaxTraps",
+            "dsc2calca3": "1 + (((skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 10) ? 1 : 0) + (((skill('Death Sentry'.blvl) + skill('Lightning Sentry'.blvl)) >= 25) ? 1 : 0)",
+            "dsc2line4": "74",
+            "dsc2texta4": "ModFireSentryChargedShots",
+            "dsc2calca4": "par1 + 3 + skill('Fists of Fire'.blvl) / 10",
+            "dsc3textb2": "Skillname260",
+            "dsc3calca2": "12",
+            "dsc3textb3": "Skillname277",
+            "dsc3calca3": "6",
+            "dsc3line4": "76",
+            "dsc3texta4": "Firedplev",
+            "dsc3textb4": "Skillname272",
+            "dsc3calca4": "6"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillan263",
+          "Fire Sentry"
+        ],
+        [
+          0,
+          "Skillld263",
+          "deploys a sentry that fires exploding fireballs\nconsumes Flamestrike charges to increase\nshots, range, velocity, and stun on impact"
+        ],
+        [
+          61057,
+          "ModFireSentryMaxTraps",
+          "Maximum Active Fire Sentries: %d"
+        ]
+      ]
+    }
+  }
+}

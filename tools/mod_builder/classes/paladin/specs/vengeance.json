@@ -1,0 +1,56 @@
+{
+  "slug": "vengeance",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Vengeance behaviour"
+    },
+    "final": {
+      "description": "Vengeance (Vengeance)",
+      "tables": {
+        "skills.txt": {
+          "Vengeance": {
+            "srvdofunc": "164",
+            "srvoverlay": "fire_hit",
+            "aurafilter": "41347",
+            "tgtoverlay": "fire_hit",
+            "cltdofunc": "103",
+            "mana": "12",
+            "calc1": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Resist Fire'.blvl)*par8",
+            "calc2": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Resist Cold'.blvl)*par8",
+            "calc3": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Resist Lightning'.blvl)*par8",
+            "calc5": "13 + (((stat('target0'.accr)/1000) >= 1) ? (((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000) * 7) / 50) : 0)",
+            "calc6": "30",
+            "calc7": "((stat('target0'.accr)/1000) >= 1) ? (((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000) * 2) / 50) : 0",
+            "Param1": "45",
+            "Param7": "",
+            "Param8": "23",
+            "ToHit": "40",
+            "LevToHit": "15",
+            "ELenSymPerCalc": "(((stat('target0'.accr)/1000)==3)?((max(0,stat('target1'.accr)-1)*100)/100):0)"
+          }
+        },
+        "skilldesc.txt": {
+          "vengeance": {
+            "desccalca2": "clc3",
+            "desccalca4": "clc2",
+            "desccalca5": "clc1",
+            "dsc2line1": "74",
+            "dsc2texta1": "StrSkillCleaveArcRadius",
+            "dsc2calca1": "clc5*12",
+            "dsc3line5": "",
+            "dsc3texta5": "",
+            "dsc3textb5": "",
+            "dsc3calca5": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld111",
+          "cleaves enemies in a frontal arc, adding fire, lightning,\nand cold damage to each successful attack"
+        ]
+      ]
+    }
+  }
+}

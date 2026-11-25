@@ -1,0 +1,24 @@
+{
+  "slug": "mind_blast",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Mind Blast behaviour"
+    },
+    "final": {
+      "description": "Mind Blast (Mind Blast)",
+      "tables": {
+        "skills.txt": {
+          "Mind Blast": {
+            "aurarangecalc": "((par7)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "minmana": "18",
+            "manashift": "7",
+            "mana": "36",
+            "lvlmana": "1",
+            "calc1": "dm56",
+            "ELenSymPerCalc": "max(0,stat('target1'.accr)-1)/2"
+          }
+        }
+      }
+    }
+  }
+}

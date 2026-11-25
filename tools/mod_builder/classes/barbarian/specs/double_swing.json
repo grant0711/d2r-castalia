@@ -1,0 +1,59 @@
+{
+  "slug": "double_swing",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Double Swing behaviour"
+    },
+    "final": {
+      "description": "Flurry (Double Swing)",
+      "tables": {
+        "skills.txt": {
+          "Double Swing": {
+            "mana": "0",
+            "lvlmana": "0",
+            "calc1": "clc5+(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc6)/100",
+            "calc5": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+skill('Double Throw'.blvl)*par8",
+            "*calc5 desc": "Base Damage % at Full Stamina",
+            "calc6": "50+(lvl-1)*10+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc1):0)",
+            "*calc6 desc": "Max Exhaustion Damage % Bonus at Zero Stamina",
+            "Param3": "25",
+            "*Param3 Description": "Damage % baseline",
+            "Param4": "6",
+            "*Param4 Description": "Damage % per level",
+            "Param8": "6",
+            "ToHitCalc": "15+(lvl-1)*5+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc4):0)"
+          }
+        },
+        "skilldesc.txt": {
+          "double swing": {
+            "descline1": "74",
+            "desctexta1": "ModBarExhaustedBonus",
+            "desccalca1": "clc6",
+            "desccalcb1": "",
+            "desctexta2": "StrSkillDamagePercent",
+            "desccalca2": "clc1",
+            "descline3": "74",
+            "desctexta3": "StrSkill22",
+            "desccalca3": "toht",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc3textb2": "skillname140"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan133",
+          "Flurry"
+        ],
+        [
+          0,
+          "skillld133",
+          "rapidly attacks with two weapons\ndeals more damage as stamina is depleted"
+        ]
+      ]
+    }
+  }
+}

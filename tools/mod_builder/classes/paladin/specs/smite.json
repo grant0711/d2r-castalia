@@ -1,0 +1,52 @@
+{
+  "slug": "smite",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Smite behaviour"
+    },
+    "final": {
+      "description": "Smite (Smite)",
+      "tables": {
+        "skills.txt": {
+          "Smite": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "(((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+skill('Charge'.blvl)*par8)*(100+clc5))/200",
+            "calc2": "(clc5>=33)?min(250,((ln12*clc5)/100*clc3)/100):0",
+            "calc3": "((100+max(0,stat('target1'.accr)-1)/2)*max(0,4-stat('shortparam1'.accr)))/4",
+            "*calc3 desc": "Cold Conduction x Stun Fatigue % multiplier (100/75/50/25/0)",
+            "calc5": "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))",
+            "*calc5 desc": "Current Stamina %",
+            "Param1": "12",
+            "Param2": "2",
+            "Param3": "100",
+            "Param4": "45",
+            "Param8": "15",
+            "ResultFlags": ""
+          }
+        },
+        "skilldesc.txt": {
+          "smite": {
+            "desccalca1": "clc2",
+            "desccalca2": "clc1",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "skillname97",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Damplev",
+            "dsc3textb2": "skillname107",
+            "dsc3calca2": "par8"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld97",
+          "strikes an enemy with your shield, bypassing defense\nto always hit and briefly stun the target"
+        ]
+      ]
+    }
+  }
+}

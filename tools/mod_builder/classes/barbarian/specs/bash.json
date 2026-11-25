@@ -1,0 +1,51 @@
+{
+  "slug": "bash",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Bash behaviour"
+    },
+    "final": {
+      "description": "Strike (Bash)",
+      "tables": {
+        "skills.txt": {
+          "Bash": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "(((par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Concentrate'.blvl)*par8)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "calc2": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)",
+            "Param1": "70",
+            "Param2": "11",
+            "Param3": "2",
+            "Param7": "8",
+            "Param8": "6"
+          }
+        },
+        "skilldesc.txt": {
+          "bash": {
+            "desctexta1": "StrSkillDamagePercent",
+            "desccalca1": "clc1",
+            "desctexta2": "StrSkillDamageFlat",
+            "desccalca2": "clc2",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": "",
+            "dsc3textb2": "skillname144"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan126",
+          "Strike"
+        ],
+        [
+          0,
+          "skillld126",
+          "powerful blow that knocks back target"
+        ]
+      ]
+    }
+  }
+}

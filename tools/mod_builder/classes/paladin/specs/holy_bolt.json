@@ -1,0 +1,56 @@
+{
+  "slug": "holy_bolt",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Holy Bolt behaviour"
+    },
+    "final": {
+      "description": "Holy Bolt (Holy Bolt)",
+      "tables": {
+        "skills.txt": {
+          "Holy Bolt": {
+            "manashift": "5",
+            "lvlmana": "4",
+            "calc1": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20) * (100 + skill('Prayer'.blvl) * par7) / 100",
+            "calc2": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20) * (100 + skill('Prayer'.blvl) * par7) / 100",
+            "Param7": "15",
+            "Param8": "15",
+            "Param9": "25",
+            "*Param9 Description": "Damage synergy from Fist of the Heavens",
+            "EMinLev1": "5",
+            "EMinLev2": "16",
+            "EMinLev3": "56",
+            "EMinLev4": "60",
+            "EMinLev5": "68",
+            "EMaxLev1": "6",
+            "EMaxLev2": "18",
+            "EMaxLev3": "64",
+            "EMaxLev4": "68",
+            "EMaxLev5": "76",
+            "EDmgSymPerCalc": "skill('Sanctuary'.blvl)*par8+skill('Fist of the Heavens'.blvl)*par9"
+          }
+        },
+        "skilldesc.txt": {
+          "holy bolt": {
+            "desccalca2": "clc1",
+            "desccalcb2": "clc2",
+            "dsc3textb2": "skillname119",
+            "dsc3texta3": "Magdplev",
+            "dsc3textb3": "skillname121",
+            "dsc3calca3": "par9",
+            "dsc3line4": "76",
+            "dsc3texta4": "Healplev",
+            "dsc3textb4": "skillname99",
+            "dsc3calca4": "par7"
+          }
+        },
+        "missiles.txt": {
+          "holybolt": {
+            "Vel": "30",
+            "MaxVel": "30"
+          }
+        }
+      }
+    }
+  }
+}

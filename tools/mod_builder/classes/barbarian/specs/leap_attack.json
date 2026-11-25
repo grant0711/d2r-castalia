@@ -1,0 +1,60 @@
+{
+  "slug": "leap_attack",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Leap Attack behaviour"
+    },
+    "final": {
+      "description": "Leap Attack (Leap Attack)",
+      "tables": {
+        "skills.txt": {
+          "Leap Attack": {
+            "srvdofunc": "170",
+            "srvoverlay": "",
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "((clc3+50)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100-50",
+            "calc2": "90+((par7-90)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100",
+            "calc3": "(par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+skill('Leap'.blvl)*par8",
+            "*calc3 desc": "Max Damage % at Full Stamina",
+            "calc4": "((((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))>=33)?min(250,((par6*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100*(100+max(0,stat('target1'.accr)-1)/2))/100):0",
+            "*calc4 desc": "Landing Stun Length (100%->33% Stamina, 0 below 33%)",
+            "calc5": "429",
+            "*calc5 desc": "Skill ID to cast when leap ends",
+            "calc6": "12",
+            "*calc6 desc": "Level of cast skill ID",
+            "Param3": "150",
+            "Param4": "20",
+            "Param6": "35",
+            "*Param6 Description": "Landing Stun Length",
+            "DmgSymPerCalc": "((75+skill('Leap'.blvl)*par8)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100-75"
+          }
+        },
+        "skilldesc.txt": {
+          "leap attack": {
+            "dsc2texta1": "StrSkill9",
+            "dsc2textb1": "StrSkill20",
+            "dsc2calca1": "clc4",
+            "dsc2calcb1": "25"
+          }
+        },
+        "missiles.txt": {
+          "leapattack": {
+            "pCltHitFunc": "",
+            "dParam1": "0",
+            "GetHit": "1",
+            "ResultFlags": "4",
+            "ProgOverlay": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld143",
+          "leaps to attack target and stuns nearby enemies\nconsumes stamina"
+        ]
+      ]
+    }
+  }
+}

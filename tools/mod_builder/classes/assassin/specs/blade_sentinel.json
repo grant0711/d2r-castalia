@@ -1,0 +1,31 @@
+{
+  "slug": "blade_sentinel",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Blade Sentinel behaviour"
+    },
+    "final": {
+      "description": "Blade Sentinel (Blade Sentinel)",
+      "tables": {
+        "skills.txt": {
+          "Blade Sentinel": {
+            "minmana": "12",
+            "mana": "12",
+            "lvlmana": "1",
+            "Param8": "20",
+            "DmgSymPerCalc": "skill('Blade Shield'.blvl)*par8"
+          }
+        },
+        "skilldesc.txt": {
+          "blade sentinel": {
+            "dsc3textb2": "Skillname278",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": ""
+          }
+        }
+      }
+    }
+  }
+}

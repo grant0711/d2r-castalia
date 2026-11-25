@@ -1,0 +1,67 @@
+{
+  "slug": "holy_freeze",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Holy Freeze behaviour"
+    },
+    "final": {
+      "description": "Holy Freeze (Holy Freeze)",
+      "tables": {
+        "skills.txt": {
+          "Holy Freeze": {
+            "aurarangecalc": "((min(20,par1+(lvl-1)*3/4) + (((stat('target0'.accr)/1000)==3)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50):0))*clc6)/100",
+            "aurastatcalc1": "((0 - (dm34 + (((stat('target0'.accr)/1000)==3)?((max(0,stat('target1'.accr)-1)*15)/100):0)))*clc6)/100",
+            "aurastatcalc2": "((0 - (dm34 + (((stat('target0'.accr)/1000)==3)?((max(0,stat('target1'.accr)-1)*15)/100):0)))*clc6)/100",
+            "aurastatcalc3": "((-dm34)*clc6)/100",
+            "immediate": "1",
+            "minmana": "1",
+            "manashift": "7",
+            "mana": "2",
+            "lvlmana": "1",
+            "perdelay": "50 - (((stat('target0'.accr)/1000)==3)?((max(0,stat('goldlost'.accr)-1)*15)/75):0)",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)",
+            "Param4": "50",
+            "Param7": "12",
+            "Param8": "6",
+            "EMin": "9",
+            "EMinLev3": "5",
+            "EMinLev4": "6",
+            "EMinLev5": "8",
+            "EMax": "12",
+            "EMaxLev3": "5",
+            "EMaxLev4": "6",
+            "EMaxLev5": "8",
+            "EDmgSymPerCalc": "((100+(skill('Resist Cold'.blvl)*par8+skill('Salvation'.blvl)*par7))*clc6)/100-100"
+          }
+        },
+        "skilldesc.txt": {
+          "holy freeze": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "512",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "(((min(20,par1+(lvl-1)*3/4)+(((stat('target0'.accr)/1000)==3)?(((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*4)/50):0))*2)*clc6)/100",
+            "desccalcb2": "3",
+            "descline3": "74",
+            "desctexta3": "StrSkill77",
+            "desccalca3": "((dm34+(((stat('target0'.accr)/1000)==3)?((max(0,stat('target1'.accr)-1)*15)/100):0))*clc6)/100",
+            "desccalcb3": "",
+            "desctexta4": "StrSkill6",
+            "desccalca4": "enma",
+            "desccalcb4": "exma*((100+par6)/100)",
+            "descline5": "75",
+            "desctexta5": "StrSkillColdDamageToYourAttack",
+            "desccalca5": "edns*par5/256",
+            "desccalcb5": "edxs*par5/256"
+          }
+        }
+      }
+    }
+  }
+}

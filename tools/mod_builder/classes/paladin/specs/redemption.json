@@ -1,0 +1,47 @@
+{
+  "slug": "redemption",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Redemption behaviour"
+    },
+    "final": {
+      "description": "Redemption (Redemption)",
+      "tables": {
+        "skills.txt": {
+          "Redemption": {
+            "aurarangecalc": "((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "auraevent2": "kill",
+            "auraeventfunc2": "28",
+            "passivestat1": "item_healafterkill",
+            "passivecalc1": "21+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*75/310",
+            "passivestat2": "item_manaafterkill",
+            "passivecalc2": "(21+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*75/310)*2/3",
+            "immediate": "1",
+            "calc2": "0",
+            "calc3": "0",
+            "Param2": "1",
+            "Param3": "25"
+          }
+        },
+        "skilldesc.txt": {
+          "redemption": {
+            "desctexta1": "StrSkill109",
+            "desccalca1": "dm34",
+            "desctexta2": "ModitemHPaK",
+            "desccalca2": "21+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*75/310",
+            "descline3": "74",
+            "desctexta3": "ModStr5f",
+            "desccalca3": "(21+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*75/310)*2/3"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillxld124",
+          "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"
+        ]
+      ]
+    }
+  }
+}

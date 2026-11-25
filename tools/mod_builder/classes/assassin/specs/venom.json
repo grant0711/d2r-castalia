@@ -1,0 +1,22 @@
+{
+  "slug": "venom",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Venom behaviour"
+    },
+    "final": {
+      "description": "Venom (Venom)",
+      "tables": {
+        "skills.txt": {
+          "Venom": {
+            "auralencalc": "((ln12)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "minmana": "25",
+            "manashift": "7",
+            "mana": "50",
+            "lvlmana": "3"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "slug": "resist_fire",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Resist Fire behaviour"
+    },
+    "final": {
+      "description": "Resist Fire (Resist Fire)",
+      "tables": {
+        "skills.txt": {
+          "Resist Fire": {
+            "aurarangecalc": "((((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100)*clc6)/100",
+            "aurastatcalc1": "((clc1)*clc6)/100",
+            "aurastatcalc2": "((skill('Resist Fire'.blvl))*clc6)/100",
+            "manashift": "4",
+            "mana": "2",
+            "lvlmana": "1",
+            "perdelay": "10",
+            "calc1": "par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*87/310",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)",
+            "Param3": "33",
+            "Param4": "5"
+          }
+        },
+        "skilldesc.txt": {
+          "resist fire": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc*5",
+            "desccalcb1": "256",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "((ln12*2)*clc6)/100",
+            "desccalcb2": "3",
+            "descline3": "36",
+            "desctexta3": "StrSkillMaxResistFirePassive",
+            "desctextb3": "StrSkillMaxResistFirePassive",
+            "desccalcb3": "2",
+            "desctexta4": "StrSkillMaxResistFireActive",
+            "desccalca4": "(((skill('Resist Fire'.blvl) < 1) ? 1 : skill('Resist Fire'.blvl))*clc6)/100",
+            "descline5": "74",
+            "desctexta5": "StrSkill51",
+            "desccalca5": "((clc1)*clc6)/100"
+          }
+        }
+      }
+    }
+  }
+}

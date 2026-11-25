@@ -1,0 +1,78 @@
+{
+  "slug": "find_potion",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Find Potion behaviour"
+    },
+    "final": {
+      "description": "Second Wind (Find Potion)",
+      "tables": {
+        "skills.txt": {
+          "Find Potion": {
+            "srvstfunc": "",
+            "srvdofunc": "68",
+            "srvmissilea": "battlecommand",
+            "aurastate": "bar_second_wind",
+            "auratargetstate": "bar_second_wind",
+            "auralencalc": "2",
+            "aurastat1": "staminarecoverybonus",
+            "aurastatcalc1": "(clc1*15000*256)/max(256,stat('maxstamina'.accr))-100",
+            "aurastat2": "item_staminadrainpct",
+            "aurastatcalc2": "100",
+            "stsuccessonly": "",
+            "stsoundclass": "barbarian_shout_1",
+            "tgtsound": "",
+            "cltstfunc": "",
+            "cltdofunc": "25",
+            "cltmissilea": "battlecommand",
+            "range": "none",
+            "SearchEnemyNear": "",
+            "SelectProc": "",
+            "TargetCorpse": "",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "16",
+            "lvlmana": "1",
+            "calc1": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)",
+            "*calc1 desc": "Stamina Restored",
+            "Param1": "60",
+            "*Param1 Description": "Stamina Restored baseline",
+            "Param2": "18",
+            "*Param2 Description": "Stamina Restored per level",
+            "Param3": "",
+            "Param4": ""
+          }
+        },
+        "skilldesc.txt": {
+          "find potion": {
+            "desctexta1": "ModBarStamRestore",
+            "desccalca1": "clc1",
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61030,
+          "ModBarStamRestore",
+          "Stamina Restored: +%d"
+        ],
+        [
+          0,
+          "skillan131",
+          "Second Wind"
+        ],
+        [
+          0,
+          "skillld131",
+          "restores stamina to you and your party"
+        ]
+      ]
+    }
+  }
+}

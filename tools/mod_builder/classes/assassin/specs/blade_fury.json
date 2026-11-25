@@ -1,0 +1,45 @@
+{
+  "slug": "blade_fury",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Blade Fury behaviour"
+    },
+    "final": {
+      "description": "Blade Fury (Blade Fury)",
+      "tables": {
+        "skills.txt": {
+          "Blade Fury": {
+            "minmana": "3",
+            "manashift": "6",
+            "mana": "12",
+            "Param8": "20",
+            "DmgSymPerCalc": "skill('Inferno Sentry'.blvl)*par8"
+          }
+        },
+        "skilldesc.txt": {
+          "blade fury": {
+            "dsc3textb2": "Skillname273",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": ""
+          }
+        },
+        "missiles.txt": {
+          "bladefragment1": {
+            "Vel": "32",
+            "MaxVel": "32",
+            "Range": "30",
+            "Half2HSrc": ""
+          },
+          "bladefragment2": {
+            "Vel": "32",
+            "MaxVel": "32",
+            "Range": "30",
+            "Half2HSrc": ""
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "cloak_of_shadows",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Cloak of Shadows behaviour"
+    },
+    "final": {
+      "description": "Cloak of Shadows (Cloak of Shadows)",
+      "tables": {
+        "skills.txt": {
+          "Cloak of Shadows": {
+            "auralencalc": "((ln34)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurarangecalc": "((dm12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "minmana": "15",
+            "manashift": "7",
+            "mana": "30",
+            "lvlmana": "1"
+          }
+        }
+      }
+    }
+  }
+}

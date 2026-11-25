@@ -1110,11 +1110,7 @@ def build_missiles(cfg: dict) -> str:
     rows_by_name = {r["Missile"]: r for r in rows if r.get("Missile")}
     from mod_builder.skills import apply_skill_missile_updates
 
-    apply_skill_missile_updates(rows_by_name, rows)
-
-    from mod_builder.classes.sorceress import engine as sorc_engine
-
-    sorc_engine.apply_table_patches("missiles.txt", headers, rows)
+    apply_skill_missile_updates(rows_by_name, rows, headers)
     return write_excel_tsv("missiles.txt", headers, rows)
 
 

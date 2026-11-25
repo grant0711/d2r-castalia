@@ -1,0 +1,54 @@
+{
+  "slug": "double_throw",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Double Throw behaviour"
+    },
+    "final": {
+      "description": "Barrage (Double Throw)",
+      "tables": {
+        "skills.txt": {
+          "Double Throw": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "clc5+(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc6)/100",
+            "calc5": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Double Swing'.blvl)*par8",
+            "*calc5 desc": "Base Damage % at Full Stamina",
+            "calc6": "70+(lvl-1)*15+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc1):0)",
+            "*calc6 desc": "Max Exhaustion Damage % Bonus at Zero Stamina",
+            "Param1": "40",
+            "ToHitCalc": "20+(lvl-1)*10+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc4):0)"
+          }
+        },
+        "skilldesc.txt": {
+          "double throw": {
+            "ddam calc1": "clc1",
+            "desctexta1": "ModBarExhaustedBonus",
+            "desccalca1": "clc6",
+            "desctexta2": "StrSkillDamagePercent",
+            "desccalca2": "clc1",
+            "descline3": "74",
+            "desctexta3": "StrSkill22",
+            "desccalca3": "toht",
+            "dsc2line1": "",
+            "dsc2texta1": "",
+            "dsc2calca1": "",
+            "dsc2calcb1": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillan140",
+          "Barrage"
+        ],
+        [
+          0,
+          "skillld140",
+          "throws both equipped weapons\ndeals more damage as stamina is depleted"
+        ]
+      ]
+    }
+  }
+}

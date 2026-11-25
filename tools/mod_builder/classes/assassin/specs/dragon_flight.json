@@ -1,0 +1,28 @@
+{
+  "slug": "dragon_flight",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Dragon Flight behaviour"
+    },
+    "final": {
+      "description": "Dragon Flight (Dragon Flight)",
+      "tables": {
+        "skills.txt": {
+          "Dragon Flight": {
+            "aurarangecalc": "((par7)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "minmana": "18",
+            "mana": "18",
+            "calc1": "(ln12*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "Param1": "75",
+            "Param2": "20"
+          }
+        },
+        "skilldesc.txt": {
+          "dragon flight": {
+            "desccalca1": "clc1"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "slug": "holy_shield",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Holy Shield behaviour"
+    },
+    "final": {
+      "description": "Holy Shield (Holy Shield)",
+      "tables": {
+        "skills.txt": {
+          "Holy Shield": {
+            "auralencalc": "((ln12)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurastatcalc2": "skill('Defiance'.blvl)*par8",
+            "aurastat3": "normal_damage_reduction",
+            "aurastatcalc3": "clc2",
+            "aurastat4": "magic_damage_reduction",
+            "aurastatcalc4": "clc2",
+            "mana": "40",
+            "lvlmana": "2",
+            "calc1": "skill('Defiance'.blvl)*par8",
+            "calc2": "5+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*3/20",
+            "*calc2 desc": "Physical and Magic Damage Reduced",
+            "Param1": "625",
+            "Param2": "75",
+            "Param3": "0",
+            "Param4": "0",
+            "MinDam": "",
+            "MinLevDam1": "",
+            "MinLevDam2": "",
+            "MinLevDam3": "",
+            "MinLevDam4": "",
+            "MinLevDam5": "",
+            "MaxDam": "",
+            "MaxLevDam1": "",
+            "MaxLevDam2": "",
+            "MaxLevDam3": "",
+            "MaxLevDam4": "",
+            "MaxLevDam5": ""
+          }
+        },
+        "skilldesc.txt": {
+          "holy shield": {
+            "desctexta3": "ModActiveFlatPDR",
+            "desccalca3": "clc2",
+            "descline4": "74",
+            "desctexta4": "ModActiveFlatMDR",
+            "desccalca4": "clc2",
+            "desccalcb4": "",
+            "descline5": "74",
+            "desctexta5": "StrSkill21",
+            "desccalca5": "clc1"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61027,
+          "ModActiveFlatMDR",
+          "Magic Damage Reduced by %d"
+        ],
+        [
+          0,
+          "skillld117",
+          "enhances your shield with divine power, increasing blocking\nand reducing physical and magic damage taken"
+        ]
+      ]
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "slug": "blade_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Blade Mastery behaviour"
+    },
+    "final": {
+      "description": "One-Handed Mastery (Blade Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Blade Mastery": {
+            "passiveitype": "1hml",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "blade mastery": {
+            "desctexta1": "StrSkillDamagePercent",
+            "desccalca1": "madm",
+            "desctexta2": "StrSkill22",
+            "desccalca2": "math",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillname127",
+          "One-Handed Mastery"
+        ],
+        [
+          0,
+          "skillan127",
+          "One-Handed Mastery"
+        ],
+        [
+          0,
+          "skillld127",
+          "passive - improves one-handed melee fighting skill"
+        ]
+      ]
+    }
+  }
+}

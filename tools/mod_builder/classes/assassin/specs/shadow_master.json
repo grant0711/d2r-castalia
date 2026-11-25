@@ -1,0 +1,20 @@
+{
+  "slug": "shadow_master",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Shadow Master behaviour"
+    },
+    "final": {
+      "description": "Shadow Master (Shadow Master)",
+      "tables": {
+        "skills.txt": {
+          "Shadow Master": {
+            "minmana": "40",
+            "manashift": "8",
+            "mana": "40"
+          }
+        }
+      }
+    }
+  }
+}

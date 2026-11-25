@@ -1,0 +1,33 @@
+{
+  "slug": "zeal",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Zeal behaviour"
+    },
+    "final": {
+      "description": "Zeal (Zeal)",
+      "tables": {
+        "skills.txt": {
+          "Zeal": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "((max(2,(min(par5+lvl/6,par6)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200))+((max(0,stat('goldlost'.accr)-1)>=40)?1:0))",
+            "calc2": "(((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+skill('Sacrifice'.blvl)*par8)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200",
+            "Param3": "20",
+            "Param4": "11",
+            "Param8": "8",
+            "ToHit": "20",
+            "LevToHit": "12"
+          }
+        },
+        "skilldesc.txt": {
+          "zeal": {
+            "ddam calc1": "clc2",
+            "desccalca1": "clc2",
+            "desccalca3": "clc1"
+          }
+        }
+      }
+    }
+  }
+}

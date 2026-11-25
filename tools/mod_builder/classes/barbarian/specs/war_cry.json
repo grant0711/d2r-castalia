@@ -1,0 +1,142 @@
+{
+  "slug": "war_cry",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla War Cry behaviour"
+    },
+    "final": {
+      "description": "War Cry (War Cry)",
+      "tables": {
+        "skills.txt": {
+          "War Cry": {
+            "aurafilter": "98304",
+            "auratargetstate": "bar_warcry_debuff",
+            "auralencalc": "((par3+(lvl-1)*par4)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurastat1": "damageresist",
+            "aurastatcalc1": "-clc1",
+            "aurastat2": "magicresist",
+            "aurastatcalc2": "-clc1",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "32",
+            "lvlmana": "1",
+            "calc1": "ln56+skill('Battle Cry'.blvl)*par7",
+            "*calc1 desc": "Enemy Physical & Magic Resistance Reduced %",
+            "calc4": "min(250,((ln12)*(100+max(0,stat('target1'.accr)-1)/2))/100)",
+            "Param1": "35",
+            "Param2": "6",
+            "Param3": "200",
+            "*Param3 Description": "Debuff Duration baseline",
+            "Param4": "25",
+            "*Param4 Description": "Debuff Duration per level",
+            "Param5": "17",
+            "*Param5 Description": "Enemy Physical & Magic Resistance Reduced % baseline",
+            "Param6": "3",
+            "*Param6 Description": "Enemy Physical & Magic Resistance Reduced % per level",
+            "Param7": "1",
+            "*Param7 Description": "Resistance break synergy from Battle Cry",
+            "Param8": "",
+            "*Param8 Description": "",
+            "MinDam": "1",
+            "MinLevDam1": "",
+            "MinLevDam2": "",
+            "MinLevDam3": "",
+            "MinLevDam4": "",
+            "MinLevDam5": "",
+            "MaxDam": "2",
+            "MaxLevDam1": "",
+            "MaxLevDam2": "",
+            "MaxLevDam3": "",
+            "MaxLevDam4": "",
+            "MaxLevDam5": "",
+            "DmgSymPerCalc": ""
+          }
+        },
+        "skilldesc.txt": {
+          "war cry": {
+            "descdam": "",
+            "desctexta1": "StrSkillStunLengthSingular",
+            "desctextb1": "StrSkill48",
+            "desccalca1": "min(250,ln12)",
+            "desccalcb1": "25",
+            "descline2": "74",
+            "desctexta2": "ModBarWarCryPhysMagBreak",
+            "desctextb2": "",
+            "desccalca2": "-clc1",
+            "desccalcb2": "",
+            "descline3": "36",
+            "desctexta3": "StrSkillDurationSingular",
+            "desctextb3": "StrSkill20",
+            "desccalca3": "len",
+            "desccalcb3": "25",
+            "dsc2line1": "36",
+            "dsc2texta1": "StrSkill3",
+            "dsc2calca1": "usmc",
+            "dsc2calcb1": "256",
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25",
+            "dsc3texta2": "ModSynPhysMagBreakPerLev",
+            "dsc3textb2": "skillname146",
+            "dsc3calca2": "par7",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": "",
+            "dsc3line4": "",
+            "dsc3texta4": "",
+            "dsc3textb4": "",
+            "dsc3calca4": ""
+          }
+        },
+        "missiles.txt": {
+          "warcry": {
+            "pSrvDoFunc": "2",
+            "SrvCalc1": "1",
+            "SubMissile1": "grimwardsmall"
+          },
+          "grimwardsmall": {
+            "pCltHitFunc": "",
+            "pSrvDoFunc": "1",
+            "pSrvHitFunc": "21",
+            "Param1": "",
+            "Param2": "",
+            "Vel": "0",
+            "MaxVel": "0",
+            "Range": "2",
+            "CelFile": "null",
+            "CollideType": "3",
+            "LastCollide": "1",
+            "NextHit": "1",
+            "NextDelay": "4",
+            "Size": "2",
+            "AlwaysExplode": "",
+            "Skill": "War Cry",
+            "NumDirections": "1",
+            "CltHitSubMissile1": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61051,
+          "ModBarWarCryPhysMagBreak",
+          "Enemy Physical & Magic Resistance: %+d%%"
+        ],
+        [
+          61055,
+          "ModSynPhysMagBreakPerLev",
+          "%s: -%d%% Enemy Physical & Magic Resistance per Level"
+        ],
+        [
+          0,
+          "skillld154",
+          "stuns nearby enemies and lowers their\nphysical and magic resistance"
+        ]
+      ]
+    }
+  }
+}

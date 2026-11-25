@@ -1,0 +1,21 @@
+{
+  "slug": "dragon_tail",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Dragon Tail behaviour"
+    },
+    "final": {
+      "description": "Dragon Tail (Dragon Tail)",
+      "tables": {
+        "skills.txt": {
+          "Dragon Tail": {
+            "aurarangecalc": "((par3)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100",
+            "minmana": "10",
+            "Param1": "40",
+            "Param2": "12"
+          }
+        }
+      }
+    }
+  }
+}

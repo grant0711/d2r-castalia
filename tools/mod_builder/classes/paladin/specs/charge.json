@@ -1,0 +1,53 @@
+{
+  "slug": "charge",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Charge behaviour"
+    },
+    "final": {
+      "description": "Charge (Charge)",
+      "tables": {
+        "skills.txt": {
+          "Charge": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "(((par3+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par4/20)+(skill('Vigor'.blvl)+skill('Might'.blvl))*par8)*(100+clc5))/200",
+            "calc2": "(par1*(100+clc5))/200",
+            "calc5": "((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))",
+            "*calc5 desc": "Current Stamina %",
+            "calc6": "((100+max(0,stat('target1'.accr)-1)/2)*max(0,4-stat('shortparam1'.accr)))/4",
+            "*calc6 desc": "Cold Conduction x Stun Fatigue % multiplier (100/75/50/25/0)",
+            "Param3": "150",
+            "Param4": "32",
+            "Param6": "8",
+            "*Param6 Description": "Stun Duration synergy",
+            "Param8": "12",
+            "EType": "stun",
+            "ELen": "35",
+            "ELevLen1": "0",
+            "ELevLen2": "0",
+            "ELevLen3": "0",
+            "ELenSymPerCalc": "(clc5>=33)?((((100+skill('Smite'.blvl)*par6)*clc5)/100*clc6)/100-100):(0-100)"
+          }
+        },
+        "skilldesc.txt": {
+          "charge": {
+            "ddam calc1": "clc1",
+            "desccalca1": "clc1",
+            "descline3": "36",
+            "desctexta3": "StrSkillStunLengthSingular",
+            "desctextb3": "StrSkill48",
+            "desccalca3": "min(250,edln)",
+            "desccalcb3": "25",
+            "dsc3textb2": "skillname98",
+            "dsc3textb3": "skillname115",
+            "dsc3line4": "76",
+            "dsc3texta4": "Durateplev",
+            "dsc3textb4": "skillname97",
+            "dsc3calca4": "par6"
+          }
+        }
+      }
+    }
+  }
+}

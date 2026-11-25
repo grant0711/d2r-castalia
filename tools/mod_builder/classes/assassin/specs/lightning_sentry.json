@@ -1,0 +1,88 @@
+{
+  "slug": "lightning_sentry",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Lightning Sentry behaviour"
+    },
+    "final": {
+      "description": "Lightning Sentry (Lightning Sentry)",
+      "tables": {
+        "skills.txt": {
+          "Lightning Sentry": {
+            "srvstfunc": "39",
+            "aurastate": "progressive_lightning",
+            "auralencalc": "12",
+            "aurastat1": "item_kickdamage",
+            "aurastatcalc1": "max(stat('progressive_lightning'.accr), stat('item_kickdamage'.accr))",
+            "passivestat1": "",
+            "passivecalc1": "",
+            "passivestat2": "",
+            "passivecalc2": "",
+            "pettype": "ltngtrap",
+            "petmax": "1 + (((skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl)) >= 10) ? 1 : 0) + (((skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl)) >= 25) ? 1 : 0)",
+            "sumskill2": "Lightning Sentry",
+            "sumsk2calc": "lvl",
+            "sumskill3": "Claws of Thunder",
+            "sumsk3calc": "skill('Claws of Thunder'.blvl)",
+            "sumskill4": "Wake of Fire Sentry",
+            "sumsk4calc": "skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl)",
+            "sumskill5": "Ass Trap Charge Consume",
+            "sumsk5calc": "max(max(stat('progressive_lightning'.accr), stat('item_kickdamage'.accr)), ((stat('target0'.accr)/1000) == 2) ? 3 : 0)",
+            "minmana": "25",
+            "mana": "25",
+            "lvlmana": "2",
+            "calc1": "100 + 10*max(0,lvl-1) + 6*max(0,lvl-8) + 16*max(0,lvl-16) + 32*max(0,lvl-22)",
+            "*calc1 desc": "Base Lightning Damage Level Ramp (%)",
+            "calc3": "12*skill('Claws of Thunder'.blvl) + 6*skill('Wake of Fire Sentry'.blvl) + 6*skill('Death Sentry'.blvl)",
+            "*calc3 desc": "Total Synergy Bonus (%)",
+            "Param1": "7",
+            "*Param1 Description": "# of shots",
+            "EMax": "64",
+            "EMaxLev1": "0",
+            "EMaxLev2": "0",
+            "EMaxLev3": "0",
+            "EMaxLev4": "0",
+            "EMaxLev5": "0",
+            "EDmgSymPerCalc": "(clc1 * (100 + clc3)) / 100 - 100"
+          }
+        },
+        "skilldesc.txt": {
+          "lightning sentry": {
+            "desccalca1": "1",
+            "dsc2line3": "74",
+            "dsc2texta3": "ModLightningSentryMaxTraps",
+            "dsc2calca3": "1 + (((skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl)) >= 10) ? 1 : 0) + (((skill('Wake of Fire Sentry'.blvl) + skill('Death Sentry'.blvl)) >= 25) ? 1 : 0)",
+            "dsc2line4": "74",
+            "dsc2texta4": "ModLightningSentryChargedShots",
+            "dsc2calca4": "par1 + 4 + skill('Claws of Thunder'.blvl) / 5",
+            "dsc3textb2": "Skillname270",
+            "dsc3calca2": "12",
+            "dsc3textb3": "Skillname263",
+            "dsc3calca3": "6",
+            "dsc3line4": "76",
+            "dsc3texta4": "Ltngdplev",
+            "dsc3textb4": "Skillname277",
+            "dsc3calca4": "6"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "Skillld272",
+          "deploys a sentry that shoots piercing lightning bolts\nconsumes Electrocute charges to increase\nrange, duration, and blind enemies with searing flashes"
+        ],
+        [
+          61084,
+          "ModLightningSentryMaxTraps",
+          "Maximum Active Lightning Sentries: %d"
+        ],
+        [
+          61085,
+          "ModLightningSentryChargedShots",
+          "Charged Shots (2+ Orbs): %d"
+        ]
+      ]
+    }
+  }
+}

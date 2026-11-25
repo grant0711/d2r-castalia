@@ -1,0 +1,26 @@
+{
+  "slug": "dragon_claw",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Dragon Claw behaviour"
+    },
+    "final": {
+      "description": "Dragon Claw (Dragon Claw)",
+      "tables": {
+        "skills.txt": {
+          "Dragon Claw": {
+            "minmana": "0",
+            "mana": "0",
+            "calc1": "((ln12+skill('Claw Mastery'.blvl)*par7)*(100+((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/200"
+          }
+        },
+        "skilldesc.txt": {
+          "dragon claw": {
+            "ddam calc1": "clc1",
+            "desccalca1": "clc1"
+          }
+        }
+      }
+    }
+  }
+}

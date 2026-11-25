@@ -1,0 +1,124 @@
+{
+  "slug": "conviction",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Conviction behaviour"
+    },
+    "final": {
+      "description": "Conviction (Conviction)",
+      "tables": {
+        "skills.txt": {
+          "Conviction": {
+            "srvdofunc": "65",
+            "aurafilter": "73731",
+            "aurarangecalc": "((((ln12)*(100+((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000)*2)/3))/100)*clc6)/100",
+            "aurastat1": "passive_fire_mastery",
+            "aurastatcalc1": "(((min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)*2)/3)*clc6)/100",
+            "aurastat2": "passive_cold_mastery",
+            "aurastatcalc2": "(((min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)*2)/3)*clc6)/100",
+            "aurastat3": "passive_ltng_mastery",
+            "aurastatcalc3": "(((min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)*2)/3)*clc6)/100",
+            "aurastat4": "item_damagetargetac",
+            "aurastatcalc4": "((-clc2)*clc6)/100",
+            "aurastat5": "item_slow",
+            "aurastatcalc5": "((clc3)*clc6)/100",
+            "passivestat1": "passive_fire_mastery",
+            "passivecalc1": "((min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20))*clc6)/100",
+            "passivestat2": "passive_cold_mastery",
+            "passivecalc2": "((min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20))*clc6)/100",
+            "passivestat3": "passive_ltng_mastery",
+            "passivecalc3": "((min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20))*clc6)/100",
+            "immediate": "1",
+            "manashift": "4",
+            "mana": "4",
+            "lvlmana": "1",
+            "perdelay": "10",
+            "calc1": "min(lvl-1,4)+3*max(0,min(lvl-5,10))+max(0,min(lvl-15,5))+max(0,lvl-20)/2",
+            "*calc1 desc": "Logistic S-curve index (0 at Lvl 1 -> 4 at Lvl 5 -> 34 at Lvl 15 -> 39 at Lvl 20)",
+            "calc2": "60+clc1*18",
+            "*calc2 desc": "-Monster Defense Per Hit magnitude",
+            "calc3": "4+(clc1*4)/5",
+            "*calc3 desc": "Slows Target %",
+            "calc5": "((stat('mana'.accr)*100)/max(256,stat('maxmana'.accr)))",
+            "*calc5 desc": "Current Mana %",
+            "calc6": "min(100,min(50+clc5,min(33+(clc5*17)/10,clc5*5)))",
+            "*calc6 desc": "Aura Mana Devotion % (50-100%:100%, 25%:75%, 10%:50%, 0%:0%)"
+          }
+        },
+        "skilldesc.txt": {
+          "conviction": {
+            "desctexta1": "StrSkill34",
+            "desctextb1": "",
+            "desccalca1": "usmc*5",
+            "desccalcb1": "256",
+            "descline2": "36",
+            "desctexta2": "StrSkillRadiusSingular",
+            "desctextb2": "StrSkill18",
+            "desccalca2": "((ln12*2)*clc6)/100",
+            "desccalcb2": "3",
+            "desctexta3": "ModConvicDefPerHit",
+            "desccalca3": "((clc2)*clc6)/100",
+            "descline4": "74",
+            "desctexta4": "Cgslow",
+            "desccalca4": "((clc3)*clc6)/100",
+            "dsc2line1": "75",
+            "dsc2texta1": "ModConvicFireDmg",
+            "dsc2calca1": "((min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20))*clc6)/100",
+            "dsc2calcb1": "(((min(50,(skill('Resist Fire'.blvl)*(2+clc1*6/5))/20)*2)/3)*clc6)/100",
+            "dsc2line2": "75",
+            "dsc2texta2": "ModConvicColdDmg",
+            "dsc2calca2": "((min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20))*clc6)/100",
+            "dsc2calcb2": "(((min(50,(skill('Resist Cold'.blvl)*(2+clc1*6/5))/20)*2)/3)*clc6)/100",
+            "dsc2line3": "75",
+            "dsc2texta3": "ModConvicLtngDmg",
+            "dsc2calca3": "((min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20))*clc6)/100",
+            "dsc2calcb3": "(((min(50,(skill('Resist Lightning'.blvl)*(2+clc1*6/5))/20)*2)/3)*clc6)/100",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "skillname123",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Firedplev",
+            "dsc3textb2": "skillname100",
+            "dsc3calca2": "min(50,2+clc1*6/5)/20",
+            "dsc3line3": "76",
+            "dsc3texta3": "Colddplev",
+            "dsc3textb3": "skillname105",
+            "dsc3calca3": "min(50,2+clc1*6/5)/20",
+            "dsc3line4": "76",
+            "dsc3texta4": "Ltngdplev",
+            "dsc3textb4": "skillname110",
+            "dsc3calca4": "min(50,2+clc1*6/5)/20"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61028,
+          "ModConvicFireDmg",
+          "Your / Party Fire Damage: +%d%% / +%d%%"
+        ],
+        [
+          61029,
+          "ModConvicColdDmg",
+          "Your / Party Cold Damage: +%d%% / +%d%%"
+        ],
+        [
+          61100,
+          "ModConvicLtngDmg",
+          "Your / Party Lightning Damage: +%d%% / +%d%%"
+        ],
+        [
+          61101,
+          "ModConvicDefPerHit",
+          "-%d to Monster Defense Per Hit"
+        ],
+        [
+          0,
+          "skillld123",
+          "when active, aura empowers you and your party with\nfire, cold, and lightning damage based on points in each Resistance Aura\nwhile attacks slow enemies and shred monster defense per hit"
+        ]
+      ]
+    }
+  }
+}

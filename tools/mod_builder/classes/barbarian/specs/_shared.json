@@ -1,0 +1,266 @@
+{
+  "slug": "_shared",
+  "variants": {
+    "baseline": {
+      "description": "no shared overrides"
+    },
+    "final": {
+      "description": "Shared helper rows, cross-skill missiles, and strings for barbarian",
+      "tables": {
+        "skills.txt": {
+          "Bar Stamina Reflex": {
+            "_clone": "__blank__",
+            "srvdofunc": "30",
+            "aurafilter": "3",
+            "auratargetstate": "bar_stamina_reflex",
+            "auralencalc": "2",
+            "aurarangecalc": "(lvl==1)?6:5",
+            "auraevent1": "install",
+            "auraeventfunc1": "3",
+            "range": "none",
+            "monanim": "xx",
+            "ItemEffect": "1",
+            "reqlevel": "1",
+            "InGame": "1",
+            "HitShift": "3",
+            "EType": "stam",
+            "EMin": "12",
+            "EMinLev1": "4",
+            "EMinLev2": "-6",
+            "EMinLev3": "0",
+            "EMinLev4": "0",
+            "EMinLev5": "0",
+            "EMax": "12",
+            "EMaxLev1": "4",
+            "EMaxLev2": "-6",
+            "EMaxLev3": "0",
+            "EMaxLev4": "0",
+            "EMaxLev5": "0"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61031,
+          "ModBarStamOnHitKill",
+          "Stamina Restored on Hit or Kill: +%d"
+        ],
+        [
+          61032,
+          "ModBarStamCostJump",
+          "Stamina Cost: %d"
+        ],
+        [
+          61033,
+          "ModBarStamCostSwing",
+          "Stamina Cost: %d"
+        ],
+        [
+          61034,
+          "ModBarStamCostSpin",
+          "Stamina Cost per Strike: %d"
+        ],
+        [
+          61035,
+          "ModBarWellRestedBonus",
+          "Well-Rested Bonus: Up to +%d%% Damage at Full Stamina"
+        ],
+        [
+          61036,
+          "ModBarExhaustedBonus",
+          "Exhaustion Bonus: Up to +%d%% Damage at Zero Stamina"
+        ],
+        [
+          61042,
+          "ModBarBloodlustCurAR",
+          "Current Exhaustion Attack Rating Bonus: +%d%%"
+        ],
+        [
+          61045,
+          "ModBarShoutFBR",
+          "Faster Block Rate: +%d%%"
+        ],
+        [
+          61046,
+          "ModBarShockwaveConeDmg",
+          "Shockwave Cone Damage: %d-%d"
+        ],
+        [
+          61052,
+          "ModSynFlatPDRPerLev",
+          "%s: +%d Physical Damage Reduced per Level"
+        ],
+        [
+          61056,
+          "ModBarStamDegradePenalty",
+          "Exhaustion Penalty: Down to %d%% Damage at Zero Stamina"
+        ],
+        [
+          0,
+          "skillsd127",
+          "passive - improves one-handed melee skill"
+        ],
+        [
+          0,
+          "skillsd128",
+          "passive - improves two-handed melee skill"
+        ],
+        [
+          0,
+          "skillsd135",
+          "passive - improves thrown weapon skill"
+        ],
+        [
+          0,
+          "skillsd134",
+          "passive - chance to deal double damage"
+        ],
+        [
+          0,
+          "skillsd129",
+          "passive - increases attack speed"
+        ],
+        [
+          0,
+          "skillsd136",
+          "passive - reduces poison duration and raises max poison resist"
+        ],
+        [
+          0,
+          "skillname126",
+          "Strike"
+        ],
+        [
+          0,
+          "skillsd126",
+          "powerful blow that knocks back target"
+        ],
+        [
+          0,
+          "skillname139",
+          "Shield Slam"
+        ],
+        [
+          0,
+          "skillsd139",
+          "requires a shield - charges and stuns target"
+        ],
+        [
+          0,
+          "skillname144",
+          "Concentrate"
+        ],
+        [
+          0,
+          "skillsd144",
+          "uninterruptible attack that improves defense"
+        ],
+        [
+          0,
+          "skillname133",
+          "Flurry"
+        ],
+        [
+          0,
+          "skillsd133",
+          "attacks with two weapons - stronger while exhausted"
+        ],
+        [
+          0,
+          "skillname140",
+          "Barrage"
+        ],
+        [
+          0,
+          "skillsd140",
+          "throws two weapons - stronger while exhausted"
+        ],
+        [
+          0,
+          "skillname147",
+          "Frenzy"
+        ],
+        [
+          0,
+          "skillsd147",
+          "swings two weapons - stronger while exhausted"
+        ],
+        [
+          0,
+          "skillname152",
+          "Berserk"
+        ],
+        [
+          0,
+          "skillsd152",
+          "two-handed magic attack - stronger while exhausted"
+        ],
+        [
+          0,
+          "skillsd132",
+          "leaps and knocks back nearby enemies (consumes stamina)"
+        ],
+        [
+          0,
+          "skillsd143",
+          "leaps to attack and stun nearby enemies (consumes stamina)"
+        ],
+        [
+          0,
+          "skillsd151",
+          "whirling attack through enemies (consumes stamina)"
+        ],
+        [
+          0,
+          "skillname131",
+          "Second Wind"
+        ],
+        [
+          0,
+          "skillsd131",
+          "restores stamina"
+        ],
+        [
+          0,
+          "skillname138",
+          "Shout"
+        ],
+        [
+          0,
+          "skillsd138",
+          "reduces damage taken by you and your party"
+        ],
+        [
+          0,
+          "skillsd141",
+          "passive - improves hit recovery speed"
+        ],
+        [
+          0,
+          "skillsd142",
+          "increases maximum stamina for you and your party"
+        ],
+        [
+          0,
+          "skillsd149",
+          "increases maximum life for you and your party"
+        ],
+        [
+          0,
+          "skillsd150",
+          "boosts exhausted attacks, drains life"
+        ],
+        [
+          0,
+          "skillsd154",
+          "stuns nearby enemies and lowers their resistances"
+        ],
+        [
+          0,
+          "skillsd155",
+          "restores life"
+        ]
+      ]
+    }
+  }
+}

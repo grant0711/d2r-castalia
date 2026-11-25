@@ -1,0 +1,74 @@
+{
+  "slug": "battle_orders",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Battle Orders behaviour"
+    },
+    "final": {
+      "description": "Battle Orders (Battle Orders)",
+      "tables": {
+        "skills.txt": {
+          "Battle Orders": {
+            "auralencalc": "((ln12)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurastat1": "item_maxhp_percent",
+            "aurastat2": "",
+            "aurastatcalc2": "",
+            "aurastat3": "",
+            "aurastatcalc3": "",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "28",
+            "lvlmana": "1",
+            "Param1": "625",
+            "Param2": "125",
+            "Param8": "",
+            "*Param8 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "battle orders": {
+            "desctexta2": "StrSkill100",
+            "descline3": "36",
+            "desctexta3": "StrSkillRadiusSingular",
+            "desctextb3": "StrSkill18",
+            "desccalca3": "19*2",
+            "desccalcb3": "3",
+            "descline4": "",
+            "desctexta4": "",
+            "desccalca4": "",
+            "descline5": "",
+            "desctexta5": "",
+            "desctextb5": "",
+            "desccalca5": "",
+            "desccalcb5": "",
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25",
+            "dsc3line1": "",
+            "dsc3texta1": "",
+            "dsc3textb1": "",
+            "dsc3calca1": "",
+            "dsc3line2": "",
+            "dsc3texta2": "",
+            "dsc3textb2": "",
+            "dsc3calca2": "",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld149",
+          "increases maximum life for you and your party"
+        ]
+      ]
+    }
+  }
+}

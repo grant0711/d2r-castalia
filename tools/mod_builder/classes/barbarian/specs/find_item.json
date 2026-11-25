@@ -1,0 +1,104 @@
+{
+  "slug": "find_item",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Find Item behaviour"
+    },
+    "final": {
+      "description": "Enduring Cry (Find Item)",
+      "tables": {
+        "skills.txt": {
+          "Find Item": {
+            "srvstfunc": "",
+            "srvdofunc": "68",
+            "srvmissilea": "battleorders",
+            "aurastate": "bar_battle_trance",
+            "auratargetstate": "bar_battle_trance",
+            "auralencalc": "((ln34)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "aurastat1": "maxstamina",
+            "aurastatcalc1": "clc1*256",
+            "stsuccessonly": "",
+            "stsoundclass": "barbarian_battleorders_1",
+            "dosound": "",
+            "cltstfunc": "",
+            "cltdofunc": "25",
+            "cltmissilea": "battleorders",
+            "range": "none",
+            "SearchEnemyNear": "",
+            "SelectProc": "",
+            "TargetCorpse": "",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "10",
+            "lvlmana": "1",
+            "calc1": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Find Potion'.blvl)*par7",
+            "*calc1 desc": "Flat Max Stamina",
+            "Param1": "25",
+            "*Param1 Description": "Flat Max Stamina baseline",
+            "Param2": "12",
+            "*Param2 Description": "Flat Max Stamina per level",
+            "Param3": "625",
+            "*Param3 Description": "Duration baseline",
+            "Param4": "125",
+            "*Param4 Description": "Duration per level",
+            "Param7": "5",
+            "*Param7 Description": "Flat Max Stamina synergy from Second Wind",
+            "Param8": "",
+            "*Param8 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "find item": {
+            "desctexta1": "ModBarMaxStamFlat",
+            "desccalca1": "clc1",
+            "descline2": "36",
+            "desctexta2": "StrSkillDurationSingular",
+            "desctextb2": "StrSkill20",
+            "desccalca2": "len",
+            "desccalcb2": "25",
+            "descline3": "36",
+            "desctexta3": "StrSkillRadiusSingular",
+            "desctextb3": "StrSkill18",
+            "desccalca3": "19*2",
+            "desccalcb3": "3",
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25",
+            "dsc3texta2": "ModSynMaxStamPerLev",
+            "dsc3calca2": "par7"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61038,
+          "ModBarMaxStamFlat",
+          "Max Stamina: +%d"
+        ],
+        [
+          61053,
+          "ModSynMaxStamPerLev",
+          "%s: +%d Max Stamina per Level"
+        ],
+        [
+          0,
+          "skillname142",
+          "Enduring Cry"
+        ],
+        [
+          0,
+          "skillan142",
+          "Enduring Cry"
+        ],
+        [
+          0,
+          "skillld142",
+          "increases maximum stamina for you and your party"
+        ]
+      ]
+    }
+  }
+}

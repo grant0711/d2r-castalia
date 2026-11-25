@@ -42,16 +42,16 @@ If the user does not specify a character name (e.g., *"Create a lvl 55 paladin a
 
 ---
 
-## 2. Sorceress Skill Iteration (`bin/d2r-sorc`) & Mod Build (`bin/d2r-build-mod.py`)
-- **Sorceress Mechanics & Active Queue**: Read [`docs/classes/sorceress.md`](file:///home/grant/games/d2r/docs/classes/sorceress.md) first when resuming Sorceress skill development.
-- Query Sorceress skill slots, engine functions, or patterns directly from the CLI without grepping:
-  - `/home/grant/games/d2r/bin/d2r-sorc map`
-  - `/home/grant/games/d2r/bin/d2r-sorc funcs [query]`
-  - `/home/grant/games/d2r/bin/d2r-sorc patterns [slug]`
-  - `/home/grant/games/d2r/bin/d2r-sorc show <slug>`
+## 2. Unified Class Skill Iteration (`bin/d2r-class`) & Mod Build (`bin/d2r-build-mod.py`)
+- All reworked classes (`pal`, `bar`, `ass`, `sor` — and upcoming `ama`, `dru`, `nec`) follow the exact same declarative per-skill JSON spec pattern under `tools/mod_builder/classes/<class>/{registry.py, engine.py, state.json, specs/_shared.json, specs/<slug>.json}`.
+- Query any class's 30-slot map, engine functions, or skill diffs directly from the CLI without grepping:
+  - `/home/grant/games/d2r/bin/d2r-class <pal|bar|ass|sor> map [tree]`
+  - `/home/grant/games/d2r/bin/d2r-class <cls> show <slug>`
+  - `/home/grant/games/d2r/bin/d2r-class <cls> funcs [query]`
+  - `/home/grant/games/d2r/bin/d2r-class <cls> patterns [slug]`
 - Build & run invariant tests:
-  - `/home/grant/games/d2r/bin/d2r-sorc build`
-  - `/home/grant/games/d2r/bin/d2r-sorc test [slug]`
+  - `/home/grant/games/d2r/bin/d2r-class <cls> build`
+  - `/home/grant/games/d2r/bin/d2r-class <cls> test`
   - `python3 /home/grant/games/d2r/bin/d2r-build-mod.py [step...]`
 
 ---

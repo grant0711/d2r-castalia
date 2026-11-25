@@ -13,24 +13,17 @@ Delegates class-specific skill, missile, string, sprite, and animation builders 
 from typing import Dict, Tuple
 
 from mod_builder.classes.assassin import (
-    ASSASSIN_HD_MISSILE_PAIRS,
-    ASSASSIN_STRING_UPDATES,
     _build_assassin_state_machine,
     _build_asskillicon_pair,
     _build_asskilltree_pair,
     _build_chargeboltsentry_hd,
-    apply_assassin_missiles,
-    apply_assassin_skills_and_desc,
+    engine as ass_engine,
 )
 from mod_builder.classes.barbarian import (
-    BARBARIAN_STRING_UPDATES,
-    _apply_barbarian_skilldesc,
-    _apply_barbarian_skills,
     _build_barbarian_state_machine,
     _build_baskillicon_pair,
     _build_baskilltree_pair,
-    append_barbarian_helper_skills,
-    apply_barbarian_missiles,
+    engine as bar_engine,
 )
 from mod_builder.classes.common import (
     CUSTOM_MERC_SKILL_ICONS,
@@ -48,11 +41,8 @@ from mod_builder.classes.common import (
     scale_int,
 )
 from mod_builder.classes.paladin import (
-    PALADIN_STRING_UPDATES,
-    _apply_paladin_skilldesc,
-    _apply_paladin_skills,
     _build_submenu_skillicon_pair,
-    apply_paladin_missiles,
+    engine as pal_engine,
 )
 from mod_builder.classes.sorceress import (
     engine as sorc_engine,
@@ -69,13 +59,16 @@ from mod_builder.common import (
     write_strings_json,
 )
 
+CLASS_ENGINES = (pal_engine, bar_engine, ass_engine, sorc_engine)
 
-def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]], rows: list = None) -> None:
+
+def apply_skill_missile_updates(rows_by_name: Dict[str, Dict[str, str]], rows: list = None, headers: list = None) -> None:
     """Apply all class and environmental skill-related missile updates (called by weapons_armor.build_missiles)."""
-    apply_paladin_missiles(rows_by_name, rows)
+    pal_engine.apply_table_patches("missiles.txt", headers, rows)
     apply_env_and_boss_missiles(rows_by_name)
-    apply_barbarian_missiles(rows_by_name)
-    apply_assassin_missiles(rows_by_name, rows)
+    bar_engine.apply_table_patches("missiles.txt", headers, rows)
+    ass_engine.apply_table_patches("missiles.txt", headers, rows)
+    sorc_engine.apply_table_patches("missiles.txt", headers, rows)
 
 
 def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
@@ -106,11 +99,14 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
     d_headers, d_rows = read_excel_tsv("skilldesc.txt")
     by_desc = {r["skilldesc"]: r for r in d_rows if r.get("skilldesc")}
 
-    # 1. Paladin & Barbarian skill/skilldesc updates
-    _apply_paladin_skills(by_name)
-    _apply_paladin_skilldesc(by_desc)
-    _apply_barbarian_skills(by_name)
-    _apply_barbarian_skilldesc(by_desc)
+    # 1. Paladin & Barbarian declarative layout + per-skill JSON specs
+    pal_engine.apply_layout(by_name, by_desc)
+    pal_engine.apply_table_patches("skills.txt", s_headers, s_rows)
+    pal_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
+
+    bar_engine.apply_layout(by_name, by_desc)
+    bar_engine.apply_table_patches("skills.txt", s_headers, s_rows)
+    bar_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
 
     # 2. Environmental Trap Skills & Act Boss Signature Spells
     for t_skill in ("PoisonBallTrap", "CursedBallTrapRight", "CursedBallTrapLeft"):
@@ -141,11 +137,11 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
         if sdesc_key in by_desc:
             by_desc[sdesc_key]["HireableIconCel"] = str(frame_idx)
 
-    # 3. Barbarian Stamina helper rows & Assassin overhaul
-    append_barbarian_helper_skills(s_headers, s_rows, by_name)
-    apply_assassin_skills_and_desc(s_headers, s_rows, by_name, d_headers, d_rows, by_desc)
+    # 3. Assassin & Sorceress declarative layout + per-skill JSON specs
+    ass_engine.apply_layout(by_name, by_desc)
+    ass_engine.apply_table_patches("skills.txt", s_headers, s_rows)
+    ass_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
 
-    # 4. Sorceress 1:1 map layout + active experiment variants
     sorc_engine.apply_layout(by_name, by_desc)
     sorc_engine.apply_table_patches("skills.txt", s_headers, s_rows)
     sorc_engine.apply_table_patches("skilldesc.txt", d_headers, d_rows)
@@ -336,12 +332,9 @@ def build_skills_and_desc(cfg: dict) -> Tuple[str, str]:
 
 def build_skill_strings(cfg: dict) -> str:
     entries = read_strings_json("skills.json")
-    updates = (
-        list(PALADIN_STRING_UPDATES)
-        + list(BARBARIAN_STRING_UPDATES)
-        + list(ASSASSIN_STRING_UPDATES)
-        + sorc_engine.string_updates()
-    )
+    updates = []
+    for eng in CLASS_ENGINES:
+        updates.extend(eng.string_updates())
     entries = upsert_string_entries(entries, updates)
     return write_strings_json("skills.json", entries)
 
@@ -368,11 +361,10 @@ def build_skills_all(cfg: dict) -> str:
     p12 = build_pettype(cfg)
     p13 = _build_assassin_state_machine()
     p14 = _build_animdata()
-    p15 = update_mod_hd_missiles_json(
-        list(ASSASSIN_HD_MISSILE_PAIRS)
-        + [("foh_conduction_nova", "electric_nova")]
-        + sorc_engine.hd_missile_pairs()
-    )
+    hd_pairs = []
+    for eng in CLASS_ENGINES:
+        hd_pairs.extend(eng.hd_missile_pairs())
+    p15 = update_mod_hd_missiles_json(hd_pairs)
     p16 = _build_chargeboltsentry_hd()
     p17 = _build_asskilltree_pair()
     p18 = _build_asskillicon_pair()

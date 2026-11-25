@@ -1,0 +1,64 @@
+{
+  "slug": "pole_arm_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Pole Arm Mastery behaviour"
+    },
+    "final": {
+      "description": "Critical Strike (Pole Arm Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Pole Arm Mastery": {
+            "passiveitype": "weap",
+            "passivestat1": "passive_mastery_melee_crit",
+            "passivecalc1": "dm12",
+            "passivestat2": "passive_mastery_throw_crit",
+            "passivecalc2": "dm12",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "Param1": "8",
+            "*Param1 Description": "% chance for Critical Hit Min",
+            "Param2": "50",
+            "*Param2 Description": "% chance for Critical Hit Max",
+            "Param3": "",
+            "*Param3 Description": "",
+            "Param4": "",
+            "*Param4 Description": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "pole arm mastery": {
+            "desccalca1": "dm12",
+            "descline2": "",
+            "desctexta2": "",
+            "desccalca2": "",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillname134",
+          "Critical Strike"
+        ],
+        [
+          0,
+          "skillan134",
+          "Critical Strike"
+        ],
+        [
+          0,
+          "skillld134",
+          "passive - chance to deal double physical damage"
+        ]
+      ]
+    }
+  }
+}

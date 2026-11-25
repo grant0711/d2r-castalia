@@ -1,0 +1,28 @@
+{
+  "slug": "taunt",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Taunt behaviour"
+    },
+    "final": {
+      "description": "Taunt (Taunt)",
+      "tables": {
+        "skills.txt": {
+          "Taunt": {
+            "localdelay": "50",
+            "globaldelay": "50"
+          }
+        },
+        "skilldesc.txt": {
+          "taunt": {
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25"
+          }
+        }
+      }
+    }
+  }
+}

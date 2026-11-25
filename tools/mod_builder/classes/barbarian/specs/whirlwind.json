@@ -1,0 +1,72 @@
+{
+  "slug": "whirlwind",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Whirlwind behaviour"
+    },
+    "final": {
+      "description": "Whirlwind (Whirlwind)",
+      "tables": {
+        "skills.txt": {
+          "Whirlwind": {
+            "srvdofunc": "168",
+            "TargetableOnly": "",
+            "AttackNoMana": "",
+            "minmana": "0",
+            "mana": "0",
+            "lvlmana": "0",
+            "calc1": "(((par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+(skill('Leap'.blvl)+skill('Leap Attack'.blvl))*par8+50)*(((stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr)))))/100-50",
+            "calc2": "5",
+            "*calc2 desc": "Escalation 1 Skill Level",
+            "calc3": "100",
+            "*calc3 desc": "Chance to Cast Escalation 1 Skill",
+            "calc4": "0",
+            "*calc4 desc": "Escalation 2 Skill Level",
+            "calc5": "0",
+            "*calc5 desc": "Chance To Cast Escalation 2 Skill",
+            "calc6": "429",
+            "*calc6 desc": "Escalation 1 Skill Id",
+            "calc7": "0",
+            "*calc7desc": "Escalation 2 Skill Id",
+            "Param1": "80",
+            "Param2": "14",
+            "Param8": "8",
+            "*Param8 Description": "Damage % synergy from Leap and Leap Attack"
+          }
+        },
+        "skilldesc.txt": {
+          "whirlwind": {
+            "descline1": "74",
+            "desctexta1": "StrSkillDamagePercent",
+            "desccalca1": "clc1",
+            "desccalcb1": "",
+            "desctexta2": "StrSkill22",
+            "desccalca2": "toht",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": "",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "skillname151",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Damplev",
+            "dsc3textb2": "skillname132",
+            "dsc3calca2": "par8",
+            "dsc3line3": "76",
+            "dsc3texta3": "Damplev",
+            "dsc3textb3": "skillname143",
+            "dsc3calca3": "par8"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          0,
+          "skillld151",
+          "whirling dance of death\nconsumes stamina"
+        ]
+      ]
+    }
+  }
+}

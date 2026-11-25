@@ -1,0 +1,33 @@
+{
+  "slug": "battle_cry",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Battle Cry behaviour"
+    },
+    "final": {
+      "description": "Battle Cry (Battle Cry)",
+      "tables": {
+        "skills.txt": {
+          "Battle Cry": {
+            "auralencalc": "((ln12)*(100+max(0,stat('target1'.accr)-1)/2))/100",
+            "localdelay": "50",
+            "globaldelay": "50",
+            "manashift": "7",
+            "mana": "20",
+            "lvlmana": "1",
+            "Param2": "23"
+          }
+        },
+        "skilldesc.txt": {
+          "battle cry": {
+            "dsc2line2": "36",
+            "dsc2texta2": "StrSkillCastingDelaySingular",
+            "dsc2textb2": "StrSkillCastingDelayPlural",
+            "dsc2calca2": "50",
+            "dsc2calcb2": "25"
+          }
+        }
+      }
+    }
+  }
+}

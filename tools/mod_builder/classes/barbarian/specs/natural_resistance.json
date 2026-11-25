@@ -1,0 +1,11 @@
+{
+  "slug": "natural_resistance",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Natural Resistance behaviour"
+    },
+    "final": {
+      "description": "Natural Resistance (Natural Resistance)"
+    }
+  }
+}

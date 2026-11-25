@@ -1,0 +1,229 @@
+{
+  "slug": "_shared",
+  "variants": {
+    "baseline": {
+      "description": "no shared overrides"
+    },
+    "final": {
+      "description": "Shared helper rows, cross-skill missiles, and strings for paladin",
+      "tables": {
+        "missiles.txt": {
+          "foh_conduction_nova": {
+            "_clone": "__blank__",
+            "pCltDoFunc": "1",
+            "pSrvDoFunc": "1",
+            "Vel": "14",
+            "MaxVel": "14",
+            "Range": "((stat('target0'.accr)/1000) == 2) ? max(3, ((stat('target0'.accr)-(stat('target0'.accr)/1000)*1000) * 10) / 50) : 0",
+            "Red": "255",
+            "Green": "255",
+            "Blue": "255",
+            "InitSteps": "0",
+            "Activate": "0",
+            "LoopAnim": "0",
+            "CelFile": "ElectricNova",
+            "animrate": "1024",
+            "AnimLen": "13",
+            "AnimSpeed": "16",
+            "CollideType": "3",
+            "LastCollide": "1",
+            "ClientCol": "1",
+            "ClientSend": "1",
+            "NextHit": "1",
+            "NextDelay": "15",
+            "Size": "3",
+            "ReturnFire": "1",
+            "GetHit": "1",
+            "Trans": "1",
+            "ResultFlags": "4",
+            "HitShift": "8",
+            "ApplyMastery": "1",
+            "EType": "ltng",
+            "EMin": "15",
+            "MinELev1": "3",
+            "MinELev2": "7",
+            "MinELev3": "12",
+            "MinELev4": "15",
+            "MinELev5": "18",
+            "EMax": "70",
+            "MaxELev1": "11",
+            "MaxELev2": "30",
+            "MaxELev3": "54",
+            "MaxELev4": "62",
+            "MaxELev5": "70",
+            "EDmgSymPerCalc": "skill('Holy Shock'.blvl)*14",
+            "HitClass": "64",
+            "NumDirections": "16",
+            "TravelSound": "sorceress_nova",
+            "ProgOverlay": "lightning"
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61001,
+          "ModPassiveOpenWounds",
+          "Passive Bonus: +%d%% Chance of Open Wounds"
+        ],
+        [
+          61002,
+          "ModPassiveED",
+          "Passive Bonus: +%d%% Enhanced Damage"
+        ],
+        [
+          61003,
+          "ModPassiveFireSkillDmg",
+          "Passive Bonus: +%d%% Fire Skill Damage (1%% per 2 Base Levels)"
+        ],
+        [
+          61004,
+          "ModPassiveColdSkillDmg",
+          "Passive Bonus: +%d%% Cold Skill Damage (1%% per 2 Base Levels)"
+        ],
+        [
+          61005,
+          "ModPassiveLtngSkillDmg",
+          "Passive Bonus: +%d%% Lightning Skill Damage (1%% per 2 Base Levels)"
+        ],
+        [
+          61006,
+          "ModPassiveMagSkillDmg",
+          "Passive Bonus: +%d%% Magic Skill Damage (1%% per 2 Base Levels)"
+        ],
+        [
+          61007,
+          "ModPassiveThorns",
+          "Passive Bonus: Attacker Takes Damage of %d"
+        ],
+        [
+          61008,
+          "ModPassiveFHR",
+          "Passive Bonus: +%d%% Faster Hit Recovery"
+        ],
+        [
+          61009,
+          "ModPassiveIAS",
+          "Passive Bonus: +%d%% Increased Attack Speed (1%% per 2 Base Levels)"
+        ],
+        [
+          61010,
+          "ModPassiveElemPierce",
+          "Passive Bonus: -%d%% Enemy Elemental Resist (1%% per 4 Base Levels)"
+        ],
+        [
+          61011,
+          "ModPassiveLifeRegen",
+          "Passive Bonus: Replenish Life +%d"
+        ],
+        [
+          61012,
+          "ModPassiveFireRes",
+          "Passive Bonus: Fire Resist +%d%%"
+        ],
+        [
+          61013,
+          "ModPassiveColdRes",
+          "Passive Bonus: Cold Resist +%d%%"
+        ],
+        [
+          61014,
+          "ModPassiveLtngRes",
+          "Passive Bonus: Lightning Resist +%d%%"
+        ],
+        [
+          61015,
+          "ModPassiveAllRes",
+          "Passive Bonus: All Resistances +%d%%"
+        ],
+        [
+          61016,
+          "ModPassiveDefPct",
+          "Passive Bonus: +%d%% Enhanced Defense"
+        ],
+        [
+          61017,
+          "ModPassivePLR",
+          "Passive Bonus: Poison Length Reduced by %d%%"
+        ],
+        [
+          61018,
+          "ModPassiveFRW",
+          "Passive Bonus: +%d%% Faster Run/Walk (1%% per 2 Base Levels)"
+        ],
+        [
+          61019,
+          "ModPassiveStamRegen",
+          "Passive Bonus: Heal Stamina Plus %d%%"
+        ],
+        [
+          61020,
+          "ModPassiveManaRegen",
+          "Passive Bonus: Regenerate Mana +%d%%"
+        ],
+        [
+          61021,
+          "ModPassiveLAEK",
+          "Passive Bonus: +%d Life After Each Kill (1 per 2 Base Levels)"
+        ],
+        [
+          61022,
+          "ModActiveMagSkillDmg",
+          "Magic Skill Damage: +%d%%"
+        ],
+        [
+          61023,
+          "ModActiveFlatPDR",
+          "Physical Damage Reduced by %d"
+        ],
+        [
+          61024,
+          "ModActiveDmgToDemons",
+          "Damage to Demons: +%d%%"
+        ],
+        [
+          0,
+          "skillsd97",
+          "strikes with your shield, briefly stunning the target"
+        ],
+        [
+          0,
+          "skillsd124",
+          "aura - restores life and mana after each kill"
+        ],
+        [
+          0,
+          "skillld124",
+          "when active, aura restores life and mana after each kill\nwhile periodically redeeming nearby slain enemies"
+        ],
+        [
+          0,
+          "skillsd111",
+          "cleaving attacks add elemental damage"
+        ],
+        [
+          0,
+          "skillsd123",
+          "aura - empowers party elemental damage and crippling strikes"
+        ],
+        [
+          0,
+          "skillxld123",
+          "when active, aura empowers you and your party with\nfire, cold, and lightning damage based on points in each Resistance Aura\nwhile attacks slow enemies and shred monster defense per hit"
+        ],
+        [
+          0,
+          "skillsd104",
+          "aura - increases defense and reduces physical damage"
+        ],
+        [
+          0,
+          "skillsd115",
+          "aura - increases movement speed and hit recovery"
+        ]
+      ],
+      "hd_missiles": {
+        "foh_conduction_nova": "electric_nova"
+      }
+    }
+  }
+}

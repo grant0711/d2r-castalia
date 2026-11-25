@@ -1,0 +1,70 @@
+{
+  "slug": "mace_mastery",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Mace Mastery behaviour"
+    },
+    "final": {
+      "description": "Battle Fervor (Mace Mastery)",
+      "tables": {
+        "skills.txt": {
+          "Mace Mastery": {
+            "passiveitype": "",
+            "passivestat1": "item_fasterattackrate",
+            "passivecalc1": "dm12",
+            "passivestat2": "",
+            "passivecalc2": "",
+            "passivestat3": "",
+            "passivecalc3": "",
+            "Param1": "7",
+            "*Param1 Description": "Attack Speed % Min",
+            "Param2": "40",
+            "*Param2 Description": "Attack Speed % Max",
+            "Param3": "",
+            "*Param3 Description": "",
+            "Param4": "",
+            "*Param4 Description": "",
+            "Param5": "",
+            "*Param5 Description": "",
+            "Param6": "",
+            "*Param6 Description": ""
+          }
+        },
+        "skilldesc.txt": {
+          "mace mastery": {
+            "desctexta1": "ModBarAttackSpeedPassive",
+            "desccalca1": "dm12",
+            "descline2": "",
+            "desctexta2": "",
+            "desccalca2": "",
+            "descline3": "",
+            "desctexta3": "",
+            "desccalca3": ""
+          }
+        }
+      },
+      "string_entries": [
+        [
+          61047,
+          "ModBarAttackSpeedPassive",
+          "Attack Speed: +%d%%"
+        ],
+        [
+          0,
+          "skillname129",
+          "Battle Fervor"
+        ],
+        [
+          0,
+          "skillan129",
+          "Battle Fervor"
+        ],
+        [
+          0,
+          "skillld129",
+          "passive - increases attack speed"
+        ]
+      ]
+    }
+  }
+}

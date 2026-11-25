@@ -1,0 +1,76 @@
+{
+  "slug": "fist_of_the_heavens",
+  "variants": {
+    "baseline": {
+      "description": "layout only; vanilla Fist of the Heavens behaviour"
+    },
+    "final": {
+      "description": "Fist of the Heavens (Fist of the Heavens)",
+      "tables": {
+        "skills.txt": {
+          "Fist of the Heavens": {
+            "aurarangecalc": "10",
+            "localdelay": "35",
+            "mana": "40",
+            "lvlmana": "3",
+            "calc4": "par1+(lvl-1)/4+(((stat('target0'.accr)/1000)==2)?((max(0,stat('goldlost'.accr)-1)>=55)?2:((max(0,stat('goldlost'.accr)-1)>=25)?1:0)):0)",
+            "Param1": "3",
+            "Param8": "14",
+            "EMin": "60",
+            "EMinLev1": "10",
+            "EMinLev2": "28",
+            "EMinLev3": "50",
+            "EMinLev4": "60",
+            "EMinLev5": "70",
+            "EMax": "280",
+            "EMaxLev1": "45",
+            "EMaxLev2": "120",
+            "EMaxLev3": "215",
+            "EMaxLev4": "245",
+            "EMaxLev5": "275"
+          }
+        },
+        "skilldesc.txt": {
+          "fist of the heavens": {
+            "descline3": "74",
+            "desctexta3": "StrSkill27",
+            "desccalca3": "clc4",
+            "dsc2calca2": "35",
+            "dsc3calca2": "12",
+            "dsc3texta3": "Hbdplev",
+            "dsc3textb3": "skillname119",
+            "dsc3calca3": "12",
+            "dsc3line4": "76",
+            "dsc3texta4": "Ltngdplev",
+            "dsc3textb4": "skillname118",
+            "dsc3calca4": "par8"
+          }
+        },
+        "missiles.txt": {
+          "fistoftheheavensbolt": {
+            "pCltDoFunc": "3",
+            "pSrvDoFunc": "2",
+            "SrvCalc1": "7",
+            "CltCalc1": "7",
+            "Vel": "18",
+            "MaxVel": "18",
+            "EMin": "30",
+            "MinELev1": "3",
+            "MinELev3": "25",
+            "MinELev4": "30",
+            "MinELev5": "35",
+            "EMax": "40",
+            "MaxELev1": "4",
+            "MaxELev2": "12",
+            "MaxELev3": "28",
+            "MaxELev4": "34",
+            "MaxELev5": "40",
+            "EDmgSymPerCalc": "(skill('Holy Bolt'.blvl)+skill('Sanctuary'.blvl))*12",
+            "SubMissile1": "foh_conduction_nova",
+            "CltSubMissile1": "foh_conduction_nova"
+          }
+        }
+      }
+    }
+  }
+}

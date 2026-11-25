@@ -174,14 +174,14 @@ static auto BuildGuidePanelJson(const LaunchIntent& intent) -> std::string {
 	ss << R"json({
 	"type": "Panel", "name": "castalia-autohost/HostGuidePanel",
 	"fields": {
-		"anchor": { "x": 0.5, "y": 0.08 },
-		"priority": 9000
+		"anchor": { "x": 0.5, "y": 0.02 },
+		"priority": 999999
 	},
 	"children": [
 		{
 			"type": "ImageWidget", "name": "Frame",
 			"fields": {
-				"rect": { "x": -560, "y": 0, "width": 1120, "height": 340 },
+				"rect": { "x": -627, "y": 0 },
 				"filename": "Panel\\Modals\\Modal_No_Title_BG"
 			},
 			"children": [

@@ -61,8 +61,12 @@ This document provides a technical orientation for developers working on **Casta
 │   │   ├── FUNCTIONS.md                # Master lookup tables for skills.txt & missiles.txt functions
 │   │   └── STATS_AND_PITFALLS.md       # Stat ID / state group / automagic registry & verified C++ traps
 │   ├── systems/                        # Cross-class mod systems & plans
+│   │   ├── CAMPAIGN_PLAY.md            # Host-driven co-op campaigns & drop-in starter-kit design
 │   │   ├── COOP_ENCOUNTERS.md          # Dynamic Co-op Encounters & CSvBits save isolation plan
 │   │   ├── EXPEDITION_MODE.md          # Optional Expedition Mode plan
+│   │   ├── HOST_TOOLKIT.md             # Practical guide & templates for self-organizing Campaign Hosts
+│   │   ├── LAUNCHER_SPEC.md            # Technical spec for Castalia Desktop Launcher & Campaign Hub API
+│   │   ├── MOD_LANDSCAPE.md            # D2R Nexus Mods landscape, positioning & playtester strategy
 │   │   └── RELEASE_MANAGEMENT.md       # Versioning, packaging & multi-channel release pipeline plan
 │   └── site/                           # Auto-generated strategy guide & interactive skill calculator (index.html)
 ├── vanilla-reference/                  # Read-only pristine D2R extracted tables and sprites

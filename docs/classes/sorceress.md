@@ -1,8 +1,8 @@
 # Sorceress — Elemental Stances, Cross-Tree Passives & Spell Archetypes
 
 - **Status:** **24 / 30 Done** (Fire 10/10, Lightning 10/10, Cold 4/10; 6 Cold stubs remaining)
-- **Source Implementation:** [`tools/mod_builder/classes/sorceress/`](file:///home/grant/games/d2r/tools/mod_builder/classes/sorceress) (`registry.py`, `engine.py`, `patterns.py`, `tree.py`, `icons.py`, `statemachine.py`, `state.json`, `specs/*.json`)
-- **CLI Workflow:** [`bin/d2r-sorc`](file:///home/grant/games/d2r/bin/d2r-sorc) (`map`, `show`, `patterns`, `funcs`, `variant`, `set`, `use`, `build`, `test`, `compact`)
+- **Declarative Specs:** [`tools/mod_builder/classes/sorceress/`](file:///home/grant/games/d2r/tools/mod_builder/classes/sorceress) (`registry.py`, `engine.py`, `patterns.py`, `tree.py`, `icons.py`, `statemachine.py`, `state.json`, `specs/*.json`)
+- **CLI:** `./bin/d2r-class sor <map|show|patterns|funcs|variant|set|use|build|test|compact>`
 
 ---
 
@@ -96,3 +96,62 @@ Run `./bin/d2r-sorc patterns <slug>` before implementing any skill below:
 1. Populate Cold `prereqs` in [`registry.py`](file:///home/grant/games/d2r/tools/mod_builder/classes/sorceress/registry.py) (`tree.py` auto-draws `soskilltree.sprite` arrows).
 2. Audit Cold skill icons in [`icons.py`](file:///home/grant/games/d2r/tools/mod_builder/classes/sorceress/icons.py).
 3. Run `./bin/d2r-sorc compact --all`, `python3 ./bin/d2r-build-mod.py`, and `python3 -m unittest -v`.
+
+---
+
+<!-- AUTO-GENERATED-SPECS:START -->
+## Live Skill Matrix (`24 / 30 done` — Auto-Generated from JSON Specs & Compiled Tables)
+
+> **Do not hand-edit this section.** Generated automatically by `tools/mod_builder/classes/doc_gen.py` during `d2r-build-mod.py skills` from `tools/mod_builder/classes/sorceress/` and compiled `skills.txt`/`skills.json`.
+
+### Fire (Page 1)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.1 | 1 | **Cinder Lance** (`cinder_lance`) | `done` / `test_fizzle` | `fire` `Conduction` | Hurls a bolt of flame against a single target / Bolts explode on impact while Conflagration is active |
+| 2.1 | 8 | **Pyroclasm** (`pyroclasm`) | `done` / `test_fizzle` | `func -/154` `fire` `Conduction` | unleashes a ring of fiery bolts that knock enemies back |
+| 2.3 | 8 | **Backdraft** (`backdraft`) | `done` / `test_fizzle` | `func 14/28` `CD 2s` `state:backdraft_slow` `fire` `Conduction` | Ignites a fiery vortex that draws enemies inward / before detonating in a blast |
+| 3.2 | 16 | **Conflagration** (`conflagration`) | `done` / `final5` | `func -/18` `CD 3s` `state:sorc_stance_fire` `fire` | Stance / Wreathe yourself in flame, empowering fire spells, cast speed, / and mana recovery at the cost of physical vulnerability / Only one stance may be active at a time |
+| 3.3 | 16 | **Flashfire** (`flashfire`) | `done` / `final1` | `func -/23` `CD 8s` `req:sorc_stance_fire` `state:blaze` `fire` | Requires Conflagration to cast / Sprint forward, leaving a trail of flame |
+| 4.2 | 24 | **Expansion** (`kindling`) | `done` / `final2` | `passive` `fire` | Passive / increases the area of effect radius of all Sorceress spells |
+| 4.3 | 24 | **Skyfall** (`skyfall`) | `done` / `test_fizzle` | `func -/28` `CD 1.2s` `fire` `Conduction` | Calls down a meteor on your target, / leaving a crater of flame |
+| 5.1 | 32 | **Brimstone Lance** (`brimstone_lance`) | `done` / `test_fizzle` | `func -/1` `fire` `Conduction` | Hurls a heavy lance that pierces enemies / and leaves a fiery wake |
+| 5.3 | 32 | **Ignition** (`ignition`) | `done` / `final2` | `passive` `fire` | Passive / increases the rate at which you recover mana |
+| 6.2 | 40 | **Pyre Hydra** (`pyre_hydra`) | `done` / `test_fizzle` | `func 14/144` `fire` `Conduction` | Summons fire-spewing hydra heads / that bombard nearby enemies |
+
+### Lightning (Page 2)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.3 | 1 | **Static Lance** (`static_lance`) | `done` / `p1_static_lance` | `func -/1` `state:static_lance_frenzy` `ltng` `Conduction` | hurls a fast bolt of lightning whose velocity increases with level / overcharge: doubles range and erupts in a shock burst on impact |
+| 2.1 | 8 | **Pulse Ring** (`pulse_ring`) | `done` / `final1` | `func -/22` `state:pulse_ring_frenzy` `ltng` `Conduction` | unleashes an expanding ring of lightning around you / overcharge: greatly increased ring radius |
+| 2.2 | 8 | **Arc** (`conduction`) | `done` / `final2` | `passive` | Passive / increases the range of all Sorceress projectiles / and adds bonus chains or bolts |
+| 3.3 | 16 | **Sunderbolt** (`tesla_field`) | `done` / `final1` | `func -/80` `CD 2s` `state:terror` `ltng` `Conduction` | calls down a bolt of lightning onto an enemy, scattering surrounding foes while leaving a crackling field that shocks the target / overcharge: wider scatter reach and longer sho... |
+| 4.1 | 24 | **Stormcall** (`stormcall`) | `done` / `p9_consistent_nova_damage` | `func -/28` `CD 1.6s` `state:stormcall_frenzy` `ltng` `Conduction` | calls down a violent storm of lightning strikes across the target area / overcharge: wider storm area, longer duration, and faster strike rate |
+| 4.3 | 24 | **Spearbolt** (`spearbolt`) | `done` / `p13_snappy_shock_wake` | `func -/1` `state:spearbolt_frenzy` `ltng` `Conduction` | hurls a high-voltage spear of lightning that leaves a crackling wake and erupts into chaining lightning arcs on impact / overcharge: longer-lasting crackling wake and extra chai... |
+| 5.2 | 32 | **Overcharge** (`overcharge`) | `done` / `final5` | `func -/18` `CD 3s` `state:sorc_stance_light` `ltng` | Stance / become supercharged, boosting lightning damage, movement, hit recovery, / and block speed at the cost of reduced defense / melee attackers that hit you are shocked / on... |
+| 5.3 | 32 | **Phase Step** (`phase_step`) | `done` / `p10_scaling_frenzy` | `func -/166` `CD 1.52s` `req:sorc_stance_light` `state:phase_step_frenzy` `ltng` | requires Overcharge to cast / blink to a location, shocking monsters in your path |
+| 6.1 | 40 | **Conduction** (`afterglow`) | `done` / `final1` | `func -/25` `CD 1s` `req:sorc_stance_fire` `state:sorc_conduction` | conducts your active elemental stance onto a targeted ally or hireling / transfers matching elemental skill damage (up to +30%) / empowers matching elemental skills of allies wi... |
+| 6.3 | 40 | **Heaven's Wrath** (`heavens_wrath`) | `done` / `p6_stance_cancel` | `func 13/29` `CD 11s` `state:thunderstorm` `ltng` `Conduction` | summons a close-range storm that calls down chaining bolts of lightning on nearby enemies / overcharge: faster strikes, wider reach, longer burst, and extra chain jumps |
+
+### Cold (Page 3)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.2 | 1 | **Frost Dart** (`frost_dart`) | `stub` / `baseline` | `cold` | STUB: still behaves as vanilla Ice Bolt. / Design intent (line 1 (levelling)): / Fast long-range ice bolt that chills enemies and scales velocity/reach with level. In Cryostasis... |
+| 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | `stub` / `baseline` | `func -/22` `cold` | STUB: still behaves as vanilla Frost Nova. / Design intent (AoE 1 (levelling)): / Instant expanding frost ring around the caster that chills/freezes nearby enemies; ring radius... |
+| 3.1 | 16 | **Glacier Step** (`glacier_step`) | `done` / `p3_freeze_curve` | `func -/166` `CD 3s` `req:sorc_stance_cold` `frze` | requires Cryostasis to cast / blink across an icy path, freezing and damaging enemies along your wake and in a burst of ice spikes where you arrive |
+| 3.3 | 16 | **Permafrost** (`permafrost`) | `stub` / `baseline` | `cold` | STUB: still behaves as vanilla Ice Blast. / Design intent (combo (CC/AoE)): / Cursor ground freeze field that chills/slows and damages enemies inside it, with expanded radius an... |
+| 4.1 | 24 | **Cryostasis** (`cryostasis`) | `done` / `final5` | `func -/18` `CD 3s` `state:sorc_stance_cold` | Stance / encase yourself in frost, boosting cold damage and reducing physical damage taken and raising defense / at the cost of movement and cast speed / melee attackers that hi... |
+| 4.2 | 24 | **Equilibrium** (`equilibrium`) | `done` / `final1` | `passive` | Passive / restores mana after each enemy you kill |
+| 4.3 | 24 | **Stasis** (`brittle_touch`) | `done` / `final2` | `passive` | Passive / extends the duration of all lingering Sorceress / spell effects, wakes, storms, summons, and stances |
+| 5.1 | 32 | **Whiteout** (`whiteout`) | `stub` / `baseline` | `func -/28` `CD 1.8s` `cold` | STUB: still behaves as vanilla Blizzard. / Design intent (AoE 2 (power spike)): / Cursor snowstorm bombardment that chills and damages enemies in a growing radius, with expanded... |
+| 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | `stub` / `baseline` | `cold` | STUB: still behaves as vanilla Glacial Spike. / Design intent (line 2 (boss killer)): / Heavy all-piercing ice lance that deep-chills targets and leaves a freezing wake (persist... |
+| 6.2 | 40 | **Frozen Orb** (`frozen_orb`) | `stub` / `baseline` | `CD 1s` `cold` | STUB: still behaves as vanilla Frozen Orb. / Design intent (capstone): / Zero-cooldown Level 40 capstone: spinning orb travels forward firing a sweeping spiral of ice bolts befo... |
+
+### Shared Helpers (`specs/_shared.json` — variant `anim_v3`)
+
+- **Helper Skills (`skills.txt`):** `Blaze`, `Blizzard`, `Chain Lightning`, `Charged Bolt`, `Chilling Armor`, `Cold Mastery`, `Enchant`, `Energy Shield`, `Fire Ball`, `Fire Bolt`, `Fire Mastery`, `Fire Wall`, `Frost Nova`, `Frozen Armor`, `Frozen Orb`, `Glacial Spike`, `Hydra`, `Ice Blast`, `Ice Bolt`, `Inferno`, `Lightning`, `Lightning Mastery`, `Meteor`, `Nova`, `Shiver Armor`, `Static Field`, `Telekinesis`, `Teleport`, `Thunder Storm`, `Warmth`
+- **Shared States (`states.txt`):** `sorc_stance_cold`, `sorc_stance_fire`, `sorc_stance_light`
+
+<!-- AUTO-GENERATED-SPECS:END -->

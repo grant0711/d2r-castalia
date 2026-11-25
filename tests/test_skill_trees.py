@@ -33,6 +33,39 @@ class TestSkillTrees(unittest.TestCase):
         ):
             self.assertEqual(fn(), [], f"{name} registry check failed")
 
+    def test_class_docs_are_in_sync_with_specs(self):
+        """Every docs/classes/<cls>.md auto-generated spec block must match the live JSON specs & compiled tables."""
+        import os
+        import re
+        from mod_builder.classes.doc_gen import (
+            CLASSES,
+            END_MARKER,
+            ROOT,
+            START_MARKER,
+            _read_strings,
+            _read_tsv,
+            render_auto_section,
+        )
+        from mod_builder.common import MOD_EXCEL, MOD_STRINGS
+
+        skills_by_name = _read_tsv(os.path.join(MOD_EXCEL, "skills.txt"), "skill")
+        desc_by_name = _read_tsv(os.path.join(MOD_EXCEL, "skilldesc.txt"), "skilldesc")
+        strings_by_key = _read_strings(os.path.join(MOD_STRINGS, "skills.json"))
+        pat = re.compile(re.escape(START_MARKER) + r".*?" + re.escape(END_MARKER), re.DOTALL)
+
+        for cls_key in CLASSES:
+            doc_path = os.path.join(ROOT, "docs", "classes", f"{cls_key}.md")
+            with open(doc_path, encoding="utf-8") as f:
+                content = f.read()
+            m = pat.search(content)
+            self.assertIsNotNone(m, f"{doc_path} is missing {START_MARKER}..{END_MARKER}")
+            expected = render_auto_section(cls_key, skills_by_name, desc_by_name, strings_by_key)
+            self.assertEqual(
+                m.group(0),
+                expected,
+                f"{doc_path} is out of sync with specs! Run `python3 ./bin/d2r-build-mod.py skills` to sync.",
+            )
+
     def test_reworked_class_tree_grid_gates_and_prereq_dag(self):
         idx = get_indexed_tables()
         skills_by_name = idx["skills_by_name"]

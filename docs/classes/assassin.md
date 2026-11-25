@@ -1,9 +1,8 @@
-# Assassin Charge-Up, Finisher Release & Sentry Trap Reference
+# Assassin — 15m Charge-Up Orbs, Finisher Releases & Sentry Traps
 
-Source implementation:
-- [skills.py](file:///home/grant/games/d2r/tools/mod_builder/skills.py#L2871-L4098) (Missile chains & submissiles)
-- [skills.py](file:///home/grant/games/d2r/tools/mod_builder/skills.py#L4428-L5976) (Charge-Up skills, Sentry Traps, Finishing Moves, and `Omnislash`)
-- [monsters.py](file:///home/grant/games/d2r/tools/mod_builder/monsters.py#L861-L968) (Sentry pet `monstats.txt` & `monprop.txt` definitions)
+- **Declarative Specs:** [`tools/mod_builder/classes/assassin/`](file:///home/grant/games/d2r/tools/mod_builder/classes/assassin) (`registry.py`, `engine.py`, `state.json`, `specs/_shared.json`, `specs/*.json`, `sprites.py`)
+- **Sentry Pet Stats:** [`tools/mod_builder/monsters.py`](file:///home/grant/games/d2r/tools/mod_builder/monsters.py) (`monstats.txt` & `monprop.txt`)
+- **CLI:** `./bin/d2r-class ass <map|show|variant|set|use|build|check|test>`
 
 ---
 
@@ -107,3 +106,63 @@ Because `srvdofunc = 168` (`Talic's Whirlwind`, paired with `srvstfunc = 38`, `c
 
 ## 6. Follow-Up TODOs
 - [ ] **Finisher Release Radius & Progression Audit:** Audit all Assassin charge-up finisher release radii, projectile counts, and travel ranges (Charges 1 / 2 / 3 across `Flamestrike`, `Blades of Ice`, `Electrocute`, `Tiger Strike`, and `Cobra Strike` — both solo and Conduction-empowered) to ensure consistent visual/mechanical progression across tiers and prevent any release from becoming overpowered.
+
+---
+
+<!-- AUTO-GENERATED-SPECS:START -->
+## Live Skill Matrix (`30 / 30 done` — Auto-Generated from JSON Specs & Compiled Tables)
+
+> **Do not hand-edit this section.** Generated automatically by `tools/mod_builder/classes/doc_gen.py` during `d2r-build-mod.py skills` from `tools/mod_builder/classes/assassin/` and compiled `skills.txt`/`skills.json`.
+
+### Traps (Page 1)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.2 | 1 | **Caltrops** (`shock_field`) | `done` / `final` | `func -/43` `CD 0.6s` `Conduction` | throws a cluster of spiked caltrops onto the ground / that damage enemies walking over them |
+| 1.3 | 1 | **Blade Sentinel** (`blade_sentinel`) | `done` / `final` | `func -/44` `CD 1s` | set a spinning blade to patrol / between you and target point |
+| 2.2 | 8 | **Shrapnel Sentry** (`fire_trauma`) | `done` / `final` | `func 39/45` `state:progressive_damage` | deploys a sentry that fires spinning razor blades at enemies / consumes Tiger Strike charges to increase / shots, velocity, range, and open wounds |
+| 3.1 | 16 | **Fire Sentry** (`wake_of_fire_sentry`) | `done` / `final` | `func 39/45` `state:progressive_fire` `fire` | deploys a sentry that fires exploding fireballs / consumes Flamestrike charges to increase / shots, range, velocity, and stun on impact |
+| 3.3 | 16 | **Blade Fury** (`blade_fury`) | `done` / `final` | `func 26/48` | throw spinning blades / to slice up your enemies |
+| 4.1 | 24 | **Ice Sentry** (`death_sentry`) | `done` / `final` | `func 39/45` `state:progressive_cold` `cold` | deploys a sentry that fires freezing arctic blast streams / consumes Blades of Ice charges to increase / range, duration, and freeze enemies solid in place |
+| 5.1 | 32 | **Lightning Sentry** (`lightning_sentry`) | `done` / `final` | `func 39/45` `state:progressive_lightning` `ltng` | deploys a sentry that shoots piercing lightning bolts / consumes Electrocute charges to increase / range, duration, and blind enemies with searing flashes |
+| 5.3 | 32 | **Blade Shield** (`blade_shield`) | `done` / `final` | `func 28/54` `state:bladeshield` `Conduction` | spinning blades slice enemies / who stray too close |
+| 6.2 | 40 | **Soul Siphon Sentry** (`charged_bolt_sentry`) | `done` / `final` | `func 39/45` `state:progressive_steal` `mag` `Conduction` | deploys a sentry that fires piercing unholy bolts / dealing magic damage to enemies / consumes Cobra Strike charges to increase / shots, velocity, range, and apply small-radius... |
+| 6.3 | 40 | **Shuriken** (`inferno_sentry`) | `done` / `final` | `func -/26` `Conduction` | hurls a heavy razor-sharp shuriken that bounces / between nearby enemies, slicing through each / for heavy physical damage |
+
+### Shadow (Page 2)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.3 | 1 | **Lethality** (`claw_mastery`) | `done` / `final` | `passive` | Passive / improves your attack rating and damage / with all melee weapons |
+| 2.1 | 8 | **Cloak of Shadows** (`cloak_of_shadows`) | `done` / `final` | `func -/47` `state:cloak_of_shadows` `Conduction` | cast a shadow to blind nearby enemies / lowering their defenses for a period of time |
+| 2.2 | 8 | **Weapon Block** (`weapon_block`) | `done` / `final` | `passive` | passive - chance to block when / you are using dual claw class weapons |
+| 3.1 | 16 | **Shadow Bind** (`shadow_warrior`) | `done` / `final` | `func -/30` `state:ass_shadow_bind` `Conduction` | binds a target in tendrils of shadow / crippling its movement speed, attack speed, and accuracy / effective against unique monsters and bosses |
+| 3.3 | 16 | **Burst of Speed** (`quickness`) | `done` / `final` | `func -/18` `state:quickness` `Conduction` | increases attack and movement speed / for a period of time |
+| 4.1 | 24 | **Mind Blast** (`mind_blast`) | `done` / `final` | `func -/51` `stun` `Conduction` | using the power of your mind / stun a group of enemies / and convert the feeble-minded |
+| 5.2 | 32 | **Fade** (`fade`) | `done` / `final` | `func -/18` `state:fade` `Conduction` | raise all resistances and resist curses / for a period of time |
+| 5.3 | 32 | **Venom** (`venom`) | `done` / `final` | `func -/18` `state:venomclaws` `pois` `Conduction` | add poison damage to your weapons |
+| 6.1 | 40 | **Shadow Master** (`shadow_master`) | `done` / `final` | `func -/49` `CD 0.6s` `state:shadowwarrior` | summon a powerful shadow of yourself / to fight by your side |
+| 6.3 | 40 | **Flow** (`psychic_hammer`) | `done` / `final` | `passive` | Passive / gives a chance that using a finishing move / does not consume the orbs you are holding |
+
+### Martial (Page 3)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.2 | 1 | **Tiger Strike** (`tiger_strike`) | `done` / `final` | `func 23/34` `state:progressive_damage` `Conduction` | Charge-up Skill / builds up to 3 physical orbs that boost melee damage / release charges with a finishing move or cast Shrapnel Sentry |
+| 1.3 | 1 | **Dragon Talon** (`dragon_talon`) | `done` / `final` | `func 24/42` `finisher` `Conduction` | Finishing Move / kick your enemies out of your way / adds charged-up bonuses to the kick |
+| 2.1 | 8 | **Flamestrike** (`fists_of_fire`) | `done` / `final` | `func 23/34` `state:progressive_fire` `Conduction` | Charge-up Skill / builds up to 3 fire orbs that add fire damage to melee attacks / release charges with a finishing move or cast Fire Sentry |
+| 3.1 | 16 | **Blades of Ice** (`blades_of_ice`) | `done` / `final` | `func 23/34` `state:progressive_cold` | Charge-up Skill / builds up to 3 ice orbs that add cold damage to melee attacks / release charges with a finishing move or cast Ice Sentry |
+| 3.2 | 16 | **Dragon Claw** (`dragon_claw`) | `done` / `final` | `func 25/46` `finisher` | Finishing Move / slice and dice your enemies / with your dual claw class weapons / adds charged-up bonuses to both claw attacks |
+| 4.1 | 24 | **Electrocute** (`claws_of_thunder`) | `done` / `final` | `func 23/34` `state:progressive_lightning` `Conduction` | Charge-up Skill / builds up to 3 lightning orbs that add lightning damage to melee attacks / release charges with a finishing move or cast Lightning Sentry |
+| 4.3 | 24 | **Dragon Tail** (`dragon_tail`) | `done` / `final` | `func 27/50` `finisher` `fire` `Conduction` | Finishing Move / knock back your enemies with an explosive kick / adds charged-up bonuses to the kick |
+| 5.2 | 32 | **Cobra Strike** (`cobra_strike`) | `done` / `final` | `func 23/34` `state:progressive_steal` `Conduction` | Charge-up Skill / builds up to 3 soul orbs that shred monster defense per hit / release charges with a finishing move or cast Soul Siphon Sentry |
+| 5.3 | 32 | **Dragon Flight** (`dragon_flight`) | `done` / `final` | `func 12/52` `finisher` `Conduction` | Finishing Move / teleport to your enemies / and destroy them with a kick / adds charged-up bonuses to the kick |
+| 6.1 | 40 | **Omnislash** (`royal_strike`) | `done` / `final` | `func 38/168` `state:whirlwind` | Does not release orbs / spin through nearby enemies, striking with your weapon / and any held orb damage while slowing the movement / and attack speed of enemies in your wake |
+
+### Shared Helpers (`specs/_shared.json` — variant `final`)
+
+- **Helper Skills (`skills.txt`):** `Ass Cobra Hex 1`, `Ass Cobra Hex 2`, `Ass Cobra Hex 3`, `Ass Trap Charge Consume`, `Ass Whirl Shred`, `BoltSentry`, `VampireFireball`, `Wake Of Destruction Sentry`, `mon death sentry`, `mon inferno sentry`, `sentry lightning`
+- **Shared/Custom Missiles (`missiles.txt`):** `bladefragment3`, `bladefury1`, `bladefury2`, `cot_conduction_spark`, `fof_pyroclasm_ball`, `frozenhorror arcticblast1`, `frozenhorror arcticblast2`, `royalstrikemeteor`, `royalstrikemeteorcenter`, `royalstrikemeteorfire`, `sentrychargedbolt`, `sentrylightningbolt`, `sentrylightningbolt2`, `sentryspikeinair`, `sentryspikeonground`, `sucfireball`, `sucfireballexplode`, `vampirefireball`
+- **HD Missile Bindings (`missiles.json`):** `catapult cold ball`, `catapult cold ball on`, `catapult cold explosion`, `cot_conduction_spark`, `fof_pyroclasm_ball`, `frozenhorror_arcticblast_2`, `inferno sentry 1`, `inferno sentry 2`, `progressive radius damage`, `sentrychargedbolt`, `sentrylightningbolt_2`, `shock field on ground`, `unholybolt_2`, `unholybolt_3`, `unholybolt_4`
+
+<!-- AUTO-GENERATED-SPECS:END -->

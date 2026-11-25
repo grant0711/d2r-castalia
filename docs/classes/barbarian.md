@@ -1,9 +1,9 @@
-# Barbarian Stamina Pendulum: Co-opted Functions, Stamina Drain & Stamina-Coupled Damage
+# Barbarian — Stamina Pendulum, Ancients Escalation Hooks & Stun Fatigue
 
-Source implementation:
-- [skills.py](file:///home/grant/games/d2r/tools/mod_builder/skills.py#L1193-L2143) (Barbarian Stamina Spenders, Well-Rested skills, Exhaustion skills, and Stamina Control Warcries)
-- [skills.py](file:///home/grant/games/d2r/tools/mod_builder/skills.py#L2642-L2842) (Barbarian Leap/Warcry missiles)
-- [skills.py](file:///home/grant/games/d2r/tools/mod_builder/skills.py#L4289-L4426) (`Bar Stamina Reflex` `Id 433` and helper pulse skills)
+- **Declarative Specs:** [`tools/mod_builder/classes/barbarian/`](file:///home/grant/games/d2r/tools/mod_builder/classes/barbarian) (`registry.py`, `engine.py`, `state.json`, `specs/_shared.json`, `specs/*.json`, `sprites.py`)
+- **CLI:** `./bin/d2r-class bar <map|show|variant|set|use|build|check|test>`
+
+*(See the auto-generated Live Skill Matrix below for exact current cooldowns, durations, and in-game descriptions. Note: `Shield Slam` (`stun`) integrates global **Stun Fatigue** via `shortparam1`.)*
 
 ---
 
@@ -130,3 +130,61 @@ calc1 = clc5 + ((EXHAUST_PCT) * clc6) / 100
     BLOODLUST_CUR_AR  = ((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc4):0)
     ```
   - This allows an active Warcry buff (`Bloodlust`) to dynamically amplify **only** the four Exhaustion skills' damage and Attack Rating in direct proportion to missing Stamina (`EXHAUST_PCT`), without affecting Well-Rested or Stamina Spender skills.
+
+---
+
+<!-- AUTO-GENERATED-SPECS:START -->
+## Live Skill Matrix (`30 / 30 done` — Auto-Generated from JSON Specs & Compiled Tables)
+
+> **Do not hand-edit this section.** Generated automatically by `tools/mod_builder/classes/doc_gen.py` during `d2r-build-mod.py skills` from `tools/mod_builder/classes/barbarian/` and compiled `skills.txt`/`skills.json`.
+
+### Combat (Page 1)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.1 | 1 | **Strike** (`bash`) | `done` / `final` | `func 32/2` | powerful blow that knocks back target |
+| 1.3 | 1 | **Flurry** (`double_swing`) | `done` / `final` | `func 68/70` | rapidly attacks with two weapons / deals more damage as stamina is depleted |
+| 2.2 | 8 | **Leap** (`leap`) | `done` / `final` | `func 40/170` `Conduction` | leaps and knocks back nearby enemies / consumes stamina |
+| 3.1 | 16 | **Concentrate** (`concentrate`) | `done` / `final` | `func 32/2` `state:concentrate` | uninterruptible attack that improves defense |
+| 3.3 | 16 | **Barrage** (`double_throw`) | `done` / `final` | `func -/74` | throws both equipped weapons / deals more damage as stamina is depleted |
+| 4.2 | 24 | **Leap Attack** (`leap_attack`) | `done` / `final` | `func 41/170` `Conduction` | leaps to attack target and stuns nearby enemies / consumes stamina |
+| 5.1 | 32 | **Shield Slam** (`stun`) | `done` / `final` | `func 31/67` `stun` `StunFatigue` `Conduction` | requires a shield / charges and stuns target |
+| 5.3 | 32 | **Berserk** (`berserk`) | `done` / `final` | `func 39/2` `state:berserk` `mag` | requires a two-handed weapon / converts damage to magic and drops defense to zero / deals more damage as stamina is depleted |
+| 6.2 | 40 | **Whirlwind** (`whirlwind`) | `done` / `final` | `func 38/168` `state:whirlwind` | whirling dance of death / consumes stamina |
+| 6.3 | 40 | **Frenzy** (`frenzy`) | `done` / `final` | `func 67/9` `state:frenzy` `mag` `Conduction` | swings two weapons and increases speed on hit / deals more damage as stamina is depleted |
+
+### Masteries (Page 2)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.1 | 1 | **One-Handed Mastery** (`blade_mastery`) | `done` / `final` | `aura` `passive` | passive - improves one-handed melee fighting skill |
+| 1.2 | 1 | **Two-Handed Mastery** (`axe_mastery`) | `done` / `final` | `aura` `passive` | passive - improves two-handed melee fighting skill |
+| 1.3 | 1 | **Throwing Mastery** (`throwing_mastery`) | `done` / `final` | `passive` | passive - improves thrown weapon skill |
+| 2.1 | 8 | **Unflinching** (`increased_stamina`) | `done` / `final` | `passive` | passive - improves hit recovery speed |
+| 2.2 | 8 | **Critical Strike** (`pole_arm_mastery`) | `done` / `final` | `passive` | passive - chance to deal double physical damage |
+| 3.1 | 16 | **Increased Speed** (`increased_speed`) | `done` / `final` | `passive` | passive - increases walk and run speed |
+| 3.3 | 16 | **Iron Skin** (`iron_skin`) | `done` / `final` | `passive` | passive - improves defense |
+| 4.3 | 24 | **Venom Ward** (`spear_mastery`) | `done` / `final` | `passive` | passive - reduces poison duration and raises max poison resist |
+| 5.1 | 32 | **Battle Fervor** (`mace_mastery`) | `done` / `final` | `aura` `passive` | passive - increases attack speed |
+| 6.3 | 40 | **Natural Resistance** (`natural_resistance`) | `done` / `final` | `passive` | passive - increases natural resistances / to elemental and poison damage |
+
+### Warcries (Page 3)
+
+| r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
+| :---: | :---: | :--- | :--- | :--- | :--- |
+| 1.1 | 1 | **Shout** (`shout`) | `done` / `final` | `func -/68` `CD 2s` `state:shout` `Conduction` | reduces damage taken by you and your party |
+| 1.3 | 1 | **Enduring Cry** (`find_item`) | `done` / `final` | `func -/68` `CD 2s` `state:bar_battle_trance` `Conduction` | increases maximum stamina for you and your party |
+| 2.2 | 8 | **Taunt** (`taunt`) | `done` / `final` | `func -/71` `CD 2s` `state:taunt` | enrages a monster into relentlessly attacking |
+| 3.2 | 16 | **Howl** (`howl`) | `done` / `final` | `func -/22` `CD 2s` `state:terror` `Conduction` | sends nearby monsters / scrambling away in fear |
+| 3.3 | 16 | **Second Wind** (`find_potion`) | `done` / `final` | `func -/68` `CD 2s` `state:bar_second_wind` | restores stamina to you and your party |
+| 4.1 | 24 | **Battle Command** (`battle_command`) | `done` / `final` | `func -/68` `CD 2s` `state:battlecommand` | restores life to you and your party |
+| 4.2 | 24 | **Battle Cry** (`battle_cry`) | `done` / `final` | `func -/68` `CD 2s` `state:battlecry` `Conduction` | fearsome cry that decreases / enemies' defense and damage |
+| 5.1 | 32 | **Battle Orders** (`battle_orders`) | `done` / `final` | `func -/68` `CD 2s` `state:battleorders` `Conduction` | increases maximum life for you and your party |
+| 5.3 | 32 | **Bloodlust** (`grim_ward`) | `done` / `final` | `func -/18` `CD 2s` `state:bar_totem_debuff` `Conduction` | boosts exhausted attacks for you, but drains life |
+| 6.2 | 40 | **War Cry** (`war_cry`) | `done` / `final` | `func -/68` `CD 2s` `state:bar_warcry_debuff` `Conduction` | stuns nearby enemies and lowers their / physical and magic resistance |
+
+### Shared Helpers (`specs/_shared.json` — variant `final`)
+
+- **Helper Skills (`skills.txt`):** `Bar Stamina Reflex`
+
+<!-- AUTO-GENERATED-SPECS:END -->

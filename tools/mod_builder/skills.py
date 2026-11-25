@@ -372,4 +372,6 @@ def build_skills_all(cfg: dict) -> str:
     p20 = sorc_sm.build_sorceress_state_machine()
     # Must run LAST: every state machine above was generated from vanilla in the source skill-id space.
     p21 = f"{len(skill_order.remap_state_machines(run_started_at))} state machines skill-id remapped"
-    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}, {p20}, {p21}"
+    from mod_builder.classes.doc_gen import sync_class_docs
+    p22 = f"{len(sync_class_docs())} class docs synced"
+    return f"{p0}, {p1}, {p2}, {p3}, {p4}, {p5}, {p6}, {p7}, {p8}, {p9}, {p10}, {p11}, {p12}, {p13}, {p14}, {p15}, {p16}, {p17}, {p18}, {p19}, {p20}, {p21}, {p22}"

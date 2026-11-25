@@ -124,6 +124,17 @@ class TestCampaignHub(unittest.TestCase):
 
         # 2. Go live with Game ID -> public GET must NOT leak live_join_info
         self.hub.go_live(cid, "CST-4821")
+        intent_path = self.hub.write_launch_intent(self.hub.get_campaign(cid), is_host=True)
+        with open(intent_path, "r", encoding="utf-8") as f:
+            intent = json.load(f)
+        self.assertEqual(intent["mode"], "host")
+        self.assertEqual(intent["difficulty"], 1)  # a3nm -> Nightmare (1)
+        self.assertEqual(intent["max_players"], 2)
+        self.assertTrue(intent["unlisted"])
+        self.assertFalse(intent["lan_only"])
+        self.hub.write_launch_intent(None, False)
+        self.assertFalse(os.path.exists(intent_path))
+
         pub_list = self.hub.list_campaigns()
         self.assertEqual(len(pub_list), 1)
         self.assertIsNone(pub_list[0]["live_join_info"])

@@ -603,13 +603,43 @@ class CastaliaHub:
                     pass
             stop_event.wait(1.5)
 
+    def write_launch_intent(self, campaign: Optional[Dict[str, Any]], is_host: bool) -> Optional[str]:
+        """Write or clear mods/castalia/d2rloader/config/castalia_launch_intent.json for castalia-autohost.dll."""
+        intent_dir = os.path.join(self.config["d2r_game_dir"], "mods", "castalia", "d2rloader", "config")
+        intent_path = os.path.join(intent_dir, "castalia_launch_intent.json")
+        if campaign is None:
+            if os.path.isfile(intent_path):
+                os.remove(intent_path)
+            return None
+
+        wp = str(campaign.get("current_wp", "a1n")).lower()
+        diff_idx = 1 if wp.endswith("nm") else (2 if wp.endswith("h") else 0)
+        clean_title = re.sub(r"[^A-Za-z0-9]", "", str(campaign.get("title", "Castalia")))
+        game_name = f"Cas-{clean_title}"[:15]
+        payload = {
+            "mode": "host" if is_host else "join",
+            "campaign_id": str(campaign.get("id", "")),
+            "game_name": game_name,
+            "description": str(campaign.get("description", ""))[:120],
+            "password": "",
+            "difficulty": diff_idx,
+            "unlisted": True,
+            "lan_only": False,
+            "max_players": int(campaign.get("max_seats", 5)),
+            "level_diff_enabled": False,
+            "game_id": str(campaign.get("live_join_info") or ""),
+        }
+        os.makedirs(intent_dir, exist_ok=True)
+        self._save_json(intent_path, payload)
+        return intent_path
+
     def launch_session(self, target: str, dry_run: bool = False) -> Dict[str, Any]:
         """
         Full launch lifecycle:
-          1. If campaign: fetch snapshot, sync pinned mod version, copy live Game ID to clipboard
+          1. If campaign: fetch snapshot, sync pinned mod version, write castalia_launch_intent.json, copy Game ID
           2. Swap isolated save profile into live mods/castalia/
-          3. Launch D2RLoader (via bin/d2r-mod on Linux or D2RLoader.exe on Windows)
-          4. On exit: sync saves back, parse .d2s telemetry, update RSVP & auto-roll Host progress
+          3. Launch D2RLoader (via bin/d2r-mod --coop on Linux or D2RLoader.exe on Windows)
+          4. On exit: clear intent, sync saves back, parse .d2s telemetry, update RSVP & auto-roll Host progress
         """
         campaign = None
         is_host = False
@@ -625,11 +655,13 @@ class CastaliaHub:
         else:
             ver_status = "solo_current"
 
+        intent_path = self.write_launch_intent(campaign, is_host)
         pid = self.swap_to_profile(target)
         result: Dict[str, Any] = {
             "profile_id": pid,
             "version_status": ver_status,
             "copied_game_id": copied_game_id,
+            "launch_intent_path": intent_path,
             "dry_run": dry_run,
         }
         if dry_run:
@@ -648,7 +680,8 @@ class CastaliaHub:
         try:
             d2r_mod_bin = os.path.join(REPO_ROOT, "bin", "d2r-mod")
             if sys.platform != "win32" and os.path.isfile(d2r_mod_bin):
-                subprocess.run([d2r_mod_bin], check=False)
+                cmd = [d2r_mod_bin, "--coop"] if campaign else [d2r_mod_bin]
+                subprocess.run(cmd, check=False)
             else:
                 loader_exe = os.path.join(self.config["d2r_game_dir"], "D2RLoader.exe")
                 subprocess.run([loader_exe], cwd=self.config["d2r_game_dir"], check=False)
@@ -656,6 +689,7 @@ class CastaliaHub:
             stop_evt.set()
             if tail_thread:
                 tail_thread.join(timeout=2)
+            self.write_launch_intent(None, False)
             self.sync_back_active_profile()
 
         # Post-exit .d2s telemetry & Host auto-rollover

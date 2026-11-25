@@ -12,7 +12,7 @@ import unittest
 from typing import Dict, Tuple
 
 from tests.fixture import get_indexed_tables, read_mod_tsv
-from mod_builder.sorc.registry import check_registry
+from mod_builder.classes.sorceress.registry import check_registry
 
 
 class TestSkillTrees(unittest.TestCase):

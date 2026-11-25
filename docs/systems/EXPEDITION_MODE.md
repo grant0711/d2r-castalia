@@ -62,7 +62,7 @@ Expedition Mode commits strictly to **Pure Expedition** (zero field Waypoints â€
 
 ## 5. Synergy with Dynamic Co-Op Encounters
 
-Combined with [DYNAMIC_COOP_ENCOUNTERS_PLAN.md](file:///home/grant/games/d2r/docs/coop/DYNAMIC_COOP_ENCOUNTERS_PLAN.md), Expedition Mode turns Castalia co-op into a true party dungeon crawl:
+Combined with [COOP_ENCOUNTERS.md](file:///home/grant/games/d2r/docs/systems/COOP_ENCOUNTERS.md), Expedition Mode turns Castalia co-op into a true party dungeon crawl:
 - Every Act Boss is the climax of a real journey rather than a 45-second waypoint teleport farm.
 - `coop_bounty` (`+MF` / `+GF`) and `Picks + NoDrop` Champion/Unique scaling reward parties for surviving the full trek together.
 - Resource management (Mana, Stamina, Potions, Durability, Totems, Warcries, Auras) creates natural group pacing and memorable co-op call-outs.

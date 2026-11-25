@@ -236,7 +236,7 @@ def build_states(cfg: dict) -> str:
         existing_states.add(st_name)
         next_id += 1
 
-    from mod_builder.sorc import engine as sorc_engine
+    from mod_builder.classes.sorceress import engine as sorc_engine
 
     sorc_engine.apply_table_patches("states.txt", headers, rows)
     return write_excel_tsv("states.txt", headers, rows)
@@ -490,7 +490,7 @@ def _build_animdata() -> str:
             buckets[b_idx] = new_recs
 
         # Sorceress experiments: per-prefix playback speed overrides (e.g. a slower stance cast animation)
-        from mod_builder.sorc import engine as _sorc_engine
+        from mod_builder.classes.sorceress import engine as _sorc_engine
 
         for _prefix, _cfg in _sorc_engine.animdata_speeds().items():
             _pb = _prefix.encode("ascii")

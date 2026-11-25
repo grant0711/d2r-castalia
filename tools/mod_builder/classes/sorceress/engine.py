@@ -29,7 +29,7 @@ import os
 import re
 from typing import Dict, List, Tuple
 
-from mod_builder.sorc.registry import (
+from mod_builder.classes.sorceress.registry import (
     BY_SLUG, PAGE, SLOTS, check_registry, slot_level,
 )
 

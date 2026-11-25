@@ -1,5 +1,13 @@
 # Castalia (D2R Mod) — Agent Fast-Path CLI Rules
 
+## 0. Fast Context Orientation (Read Before Authoring Skills or Stats)
+- **Project Status & Next Queue**: [`docs/ROADMAP.md`](file:///home/grant/games/d2r/docs/ROADMAP.md)
+- **Repurposed Stat IDs, State/Automagic Groups & Verified D2R C++ Pitfalls**: [`docs/engine/STATS_AND_PITFALLS.md`](file:///home/grant/games/d2r/docs/engine/STATS_AND_PITFALLS.md) — **always check before claiming a stat ID, `states.txt` group, or `automagic.txt` group, or assuming a vanilla `srvdofunc`/`itemevent` behavior.**
+- **1-Variable Diagnostic Protocol**: [`docs/DIAGNOSTIC_PROTOCOL.md`](file:///home/grant/games/d2r/docs/DIAGNOSTIC_PROTOCOL.md) — when a skill/stat behaves unexpectedly in-game, never stack multiple speculative rewrites; isolate 1 variable at a time with a visible debug overlay and verify compiled TSV output.
+- **Per-Class Technical Docs**: [`docs/classes/`](file:///home/grant/games/d2r/docs/classes) (`paladin.md`, `barbarian.md`, `assassin.md`, `sorceress.md`, `amazon.md`).
+
+---
+
 ## 1. Instant Character Creation, Modification & Respec (`bin/d2r-char`)
 When the user asks to create, modify, reset, or list a character (e.g., *"Create a lvl 55 paladin at act3 nm"*), **DO NOT** inspect `char_manager.py`, grep the codebase, or reason from first principles. Run `/home/grant/games/d2r/bin/d2r-char` immediately in a single `run_command` call:
 
@@ -35,7 +43,7 @@ If the user does not specify a character name (e.g., *"Create a lvl 55 paladin a
 ---
 
 ## 2. Sorceress Skill Iteration (`bin/d2r-sorc`) & Mod Build (`bin/d2r-build-mod.py`)
-- **Session Handoff & Active Queue**: Read [`/home/grant/games/d2r/docs/sorc/HANDOFF.md`](file:///home/grant/games/d2r/docs/sorc/HANDOFF.md) and [`/home/grant/games/d2r/docs/sorc/STATUS.md`](file:///home/grant/games/d2r/docs/sorc/STATUS.md) first when resuming Sorceress skill development.
+- **Sorceress Mechanics & Active Queue**: Read [`docs/classes/sorceress.md`](file:///home/grant/games/d2r/docs/classes/sorceress.md) first when resuming Sorceress skill development.
 - Query Sorceress skill slots, engine functions, or patterns directly from the CLI without grepping:
   - `/home/grant/games/d2r/bin/d2r-sorc map`
   - `/home/grant/games/d2r/bin/d2r-sorc funcs [query]`

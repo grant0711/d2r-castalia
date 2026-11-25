@@ -1112,7 +1112,7 @@ def build_missiles(cfg: dict) -> str:
 
     apply_skill_missile_updates(rows_by_name, rows)
 
-    from mod_builder.sorc import engine as sorc_engine
+    from mod_builder.classes.sorceress import engine as sorc_engine
 
     sorc_engine.apply_table_patches("missiles.txt", headers, rows)
     return write_excel_tsv("missiles.txt", headers, rows)

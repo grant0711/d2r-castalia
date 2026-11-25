@@ -10,7 +10,7 @@ import json
 import os
 
 from mod_builder.common import MOD_ROOT, VANILLA_ROOT
-from mod_builder.sorc import engine
+from mod_builder.classes.sorceress import engine
 
 REL = "data/hd/character/player/sorceress/sorceress_state_machine.json"
 CLASSES = ["hth", "bow", "1hs", "1ht", "stf", "2hs", "2ht", "xbw", "1js", "1jt", "1ss", "1st", "ht1", "ht2"]

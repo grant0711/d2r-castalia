@@ -2,6 +2,8 @@
 
 This document provides a technical orientation for developers working on **Castalia** (`d2r-castalia`). Everything in the mod is generated deterministically from pristine vanilla tables (`vanilla-reference/`) into `castalia/data/` (`game/Diablo II Resurrected/mods/castalia/castalia.mpq/data/`), verified by an automated invariant suite (`tools/mod_builder/verify.py`), and published to the strategy guide website (`docs/site/index.html`).
 
+> **New Session Orientation:** Read [`docs/ROADMAP.md`](file:///home/grant/games/d2r/docs/ROADMAP.md) (what is shipped & what is next), [`docs/DIAGNOSTIC_PROTOCOL.md`](file:///home/grant/games/d2r/docs/DIAGNOSTIC_PROTOCOL.md) (1-variable debugging standard), and [`docs/engine/STATS_AND_PITFALLS.md`](file:///home/grant/games/d2r/docs/engine/STATS_AND_PITFALLS.md) (repurposed stat registry & verified D2R C++ traps) before making skill or stat changes.
+
 ---
 
 ## 1. Repository Layout
@@ -31,29 +33,35 @@ This document provides a technical orientation for developers working on **Casta
 │       │   ├── paladin/                # Paladin 30-skill overhaul (skills.py, sprites.py)
 │       │   ├── barbarian/              # Barbarian 30-skill Stamina Pendulum overhaul (skills.py, sprites.py)
 │       │   ├── assassin/               # Assassin 30-skill Charge-Up/Sentry/Blade overhaul (skills.py, sprites.py)
-│       │   └── sorceress/              # Bridges mod_builder.sorc (registry, engine, patterns, tree, icons, specs/)
-│       ├── sorc/                       # Sorceress declarative experiment engine & compacted specs/*.json
+│       │   └── sorceress/              # Sorceress 30-skill declarative engine (registry, engine, patterns, tree, icons, specs/)
 │       ├── affixes.py                  # Magic/Rare/Crafted affix pruning, levelreq calibration, itemstatcost.txt
-│       ├── cubemain.py                 # 7 Horadric Cube recipe families (~271,000 rows)
+│       ├── cubemain.py                 # 7 Horadric Cube recipe families (~394,000 rows)
 │       ├── gamble_npc.py               # Act-partitioned vendor inventory & gamble tables
 │       ├── gems_runes.py               # 7 Gem/Skull families & 33 Semantic Runes (gems.txt, item-runes.json)
 │       ├── itemratio.py                # Drop quality ratios (100% Magic+ equipment floor)
-│       ├── itemtypes_automagic.py      # Automagic pools, 10-slot mercenary equ=1, quiver magic/rare support
+│       ├── itemtypes_automagic.py      # Automagic pools (incl. Stun Fatigue/Reset 324/325), 10-slot merc equ=1, quivers
 │       ├── lockboxes.py                # 536 Unique/Set Lockbox item codes & key sprite generators
 │       ├── misc_items.py               # Potions, Preparation Elixirs, Keys, Maluses, Gem levelreqs (misc.txt)
 │       ├── monsters.py                 # 4 Monster Archetypes, resistance cap (99%), 10-slot merc AI & kits
 │       ├── treasureclass.py            # Treasure class hierarchy, Gem tier progression, Skeleton skull bias
 │       ├── unique_sets.py              # Locked Unique/Set/Boss Charm tables (tools/mod_builder/locked_tables/)
-│       └── weapons_armor.py            # Weapon/Armor base balance, repair costs, Circlet reqs, missiles.txt
+│       └── weapons_armor.py            # Weapon/Armor base balance, 5-Archetype shields, Circlet reqs, missiles.txt
 ├── docs/
+│   ├── ROADMAP.md                      # Single-page status dashboard (Shipped & Next-Phase Queue)
+│   ├── DIAGNOSTIC_PROTOCOL.md          # Mandatory 1-variable debugging & debug-overlay protocol
 │   ├── ARCHITECTURE.md                 # This developer handbook
-│   ├── engine_reference/               # Technical reference for D2R server/client functions & class mechanics
-│   │   ├── README.md                   # Master lookup tables for skills.txt & missiles.txt functions
-│   │   ├── paladin_auras_and_combat.md # Paladin Aura Mana Upkeep, Frontal Cleave Vengeance & Chain Hammer
-│   │   ├── barbarian_stamina_mechanics.md # Barbarian Stamina Pendulum & Ancients escalation hooks
-│   │   ├── assassin_charges_and_traps.md  # Assassin 15m Combo Orbs & srvstfunc=39 selective trap release
-│   │   └── sorceress_stances_and_spells.md # Sorceress group=13 Stances, Stance Markers, Fizzle & 7 Archetypes
-│   ├── sorc/                           # Sorceress status dashboard (STATUS.md) & per-skill experiment logs
+│   ├── classes/                        # One canonical technical reference per class
+│   │   ├── paladin.md                  # Paladin Aura Mana Devotion, Frontal Cleave Vengeance, Chain Hammer, Smite
+│   │   ├── barbarian.md                # Barbarian Stamina Pendulum & Ancients escalation hooks
+│   │   ├── assassin.md                 # Assassin 15m Combo Orbs & srvstfunc=39 selective trap release
+│   │   ├── sorceress.md                # Sorceress group=13 Stances, Cross-Tree Passives, Conduction & 7 Archetypes
+│   │   └── amazon.md                   # Amazon overhaul design plan
+│   ├── engine/                         # Cross-class D2R engine knowledge
+│   │   ├── FUNCTIONS.md                # Master lookup tables for skills.txt & missiles.txt functions
+│   │   └── STATS_AND_PITFALLS.md       # Stat ID / state group / automagic registry & verified C++ traps
+│   ├── systems/                        # Cross-class mod systems & plans
+│   │   ├── COOP_ENCOUNTERS.md          # Dynamic Co-op Encounters & CSvBits save isolation plan
+│   │   └── EXPEDITION_MODE.md          # Optional Expedition Mode plan
 │   └── site/                           # Auto-generated strategy guide & interactive skill calculator (index.html)
 ├── vanilla-reference/                  # Read-only pristine D2R extracted tables and sprites
 └── castalia/                           # Compiled mod output symlinked into D2R's mods/castalia/castalia.mpq
@@ -108,7 +116,7 @@ Before implementing or modifying a skill, query the indexed server/client functi
 ```
 
 ### Controlled Experiment Loop
-1. **Create or update a variant** in `tools/mod_builder/sorc/specs/<slug>.json` (or via `d2r-sorc variant` / `d2r-sorc set`).
+1. **Create or update a variant** in `tools/mod_builder/classes/sorceress/specs/<slug>.json` (or via `d2r-sorc variant` / `d2r-sorc set`).
 2. **Activate & build**:
    ```bash
    ./bin/d2r-sorc use <slug> <variant>
@@ -119,9 +127,8 @@ Before implementing or modifying a skill, query the indexed server/client functi
    ./bin/d2r-sorc test <slug>
    python3 -m unittest -v
    ```
-4. **Log observations & compact**:
+4. **Mark done & compact**:
    ```bash
-   ./bin/d2r-sorc log <slug> "Verified in game: ..."
    ./bin/d2r-sorc status <slug> done
    ./bin/d2r-sorc compact <slug>
    ```

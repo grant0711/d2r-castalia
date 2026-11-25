@@ -8,7 +8,7 @@ import os
 import subprocess
 
 from mod_builder.common import MOD_ROOT, VANILLA_ROOT
-from mod_builder.sorc.registry import BY_SLUG, FRAME, SLOTS
+from mod_builder.classes.sorceress.registry import BY_SLUG, FRAME, SLOTS
 
 W, H, FW = 2691, 1169, 897
 ROW_Y = [125, 304, 480, 661, 840, 1016]

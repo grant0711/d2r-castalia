@@ -9,9 +9,9 @@ import unittest
 
 from tests.calc_eval import eval_d2_expr, lint_d2_expression
 from tests.fixture import get_indexed_tables, read_mod_tsv
-from mod_builder.sorc.engine import active_variant, load_state
-from mod_builder.sorc.patterns import STANCE_MARKERS
-from mod_builder.sorc.registry import BY_SLUG, SLOTS
+from mod_builder.classes.sorceress.engine import active_variant, load_state
+from mod_builder.classes.sorceress.patterns import STANCE_MARKERS
+from mod_builder.classes.sorceress.registry import BY_SLUG, SLOTS
 
 
 class TestSkillSimulation(unittest.TestCase):

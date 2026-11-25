@@ -78,7 +78,7 @@ STATE_MACHINE_GLOB = "data/hd/character/**/*state_machine*.json"
 
 
 def source_tiers() -> Dict[str, List[List[int]]]:
-    from mod_builder.sorc.registry import SLOTS as _SORC_SLOTS
+    from mod_builder.classes.sorceress.registry import SLOTS as _SORC_SLOTS
 
     tiers = {"sor": [sorted(s["vid"] for s in _SORC_SLOTS if s["row"] == k) for k in range(1, 7)]}
     tiers.update({k: [list(t) for t in v] for k, v in _SOURCE_TIERS_STATIC.items()})
@@ -91,7 +91,7 @@ def source_tiers() -> Dict[str, List[List[int]]]:
 
 @lru_cache(maxsize=None)
 def _compute() -> Tuple[Dict[int, int], Dict[str, Tuple[Tuple[int, int], ...]], Dict[str, Tuple[Tuple[int, int], ...]]]:
-    from mod_builder.sorc.registry import SLOTS as _SORC_SLOTS
+    from mod_builder.classes.sorceress.registry import SLOTS as _SORC_SLOTS
 
     perm: Dict[int, int] = {}
     ranges: Dict[str, Tuple[Tuple[int, int], ...]] = {}

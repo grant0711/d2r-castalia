@@ -64,7 +64,8 @@ Running `./bin/d2r-build-mod.py`:
 2. Runs the full invariant verification suite (`tools/mod_builder/verify.py`).
 3. Rebuilds [`docs/site/index.html`](docs/site/index.html) (`tools/build_site.py`) directly from the compiled `.txt` and `.json` outputs in `castalia/data/`.
 
-### Developer & Session Handoff Documentation
+### Developer Documentation
+- **Roadmap & Class Status**: [`docs/ROADMAP.md`](docs/ROADMAP.md)
 - **Technical Architecture & CLI Reference**: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- **Sorceress Overhaul Handoff & Queue**: [`docs/sorc/HANDOFF.md`](docs/sorc/HANDOFF.md) & [`docs/sorc/STATUS.md`](docs/sorc/STATUS.md)
-- **Engine Function Reference**: [`docs/engine_reference/README.md`](docs/engine_reference/README.md)
+- **Per-Class Technical References**: [`docs/classes/`](docs/classes) (`paladin.md`, `barbarian.md`, `assassin.md`, `sorceress.md`, `amazon.md`)
+- **Engine Reference & Pitfalls**: [`docs/engine/FUNCTIONS.md`](docs/engine/FUNCTIONS.md) & [`docs/engine/STATS_AND_PITFALLS.md`](docs/engine/STATS_AND_PITFALLS.md)

@@ -1,28 +1,17 @@
-# D2R Engine Function & State Reference
+# D2R Engine Function Reference (`skills.txt` & `missiles.txt`)
 
-This directory documents server and client functions, state behaviors, missile controllers, and stat-wiring patterns verified through in-game experimentation in this mod.
+This document is the cross-class master lookup for server/client skill functions, progressive finisher release functions, and missile controllers **verified through in-game experimentation** in Castalia.
 
-## Contents
+> **Read First Before Authoring Any New Skill or Repurposing Any Stat:**
+> - **[STATS_AND_PITFALLS.md](file:///home/grant/games/d2r/docs/engine/STATS_AND_PITFALLS.md)** — Canonical registry of all repurposed vanilla Stat IDs, reserved `states.txt` groups (`1..13`), reserved `automagic.txt` groups (`304..325`), and **explicitly verified FALSE / broken D2R C++ behaviors**.
+> - **[DIAGNOSTIC_PROTOCOL.md](file:///home/grant/games/d2r/docs/DIAGNOSTIC_PROTOCOL.md)** — Mandatory 1-variable-at-a-time debugging protocol and temporary visible debug overlay technique.
 
-- **[paladin_auras_and_combat.md](file:///home/grant/games/d2r/docs/engine_reference/paladin_auras_and_combat.md)** — Complete technical reference for the **Paladin Aura Mana Upkeep, Frontal Cleave Vengeance, Bouncing Chain Hammer, and S-Curve Party Conviction** overhaul:
-  - How periodic `srvdofunc = 65` ticks drain Mana/sec on active auras while `Prayer`, `Meditation` (`-50%` weapon damage trade-off), and `Redemption` (`+LAEK/+MAEK`) act as 0-mana recovery stances.
-  - How `srvdofunc = 153` (`Param9 = 13`) turns `Vengeance` into a 156° frontal cleave with `+23%/lvl` single-element synergies from `Resist Fire / Cold / Lightning`.
-  - How `srvdofunc = 26` / `cltdofunc = 27` turns `Blessed Hammer` into a `1.0s` cooldown bouncing Chain Hammer with Knockback and Stun (`pSrvDmgFunc = 7`).
-- **[barbarian_stamina_mechanics.md](file:///home/grant/games/d2r/docs/engine_reference/barbarian_stamina_mechanics.md)** — Complete technical reference for the **Barbarian Stamina Pendulum, Co-opted Escalation Hooks, and Stamina-Coupled Damage**:
-  - How `Korlic's Leap Attack` (`srvdofunc = 170`) and `Talic's Whirlwind` (`srvdofunc = 168`) were co-opted on `Leap`, `Leap Attack`, and `Whirlwind` to cast a hidden Stamina-drain skill (`Bar Stamina Reflex` `Id 433`).
-  - How `srvdofunc = 30` + `auraevent1 = "install"` + `auraeventfunc1 = "3"` (`Shiver Armor` reflection) + `EType = "stam"` drains flat Stamina from the Barbarian in proportion to nearby enemies.
-  - How 2-frame `staminarecoverybonus` pulses normalized by `max(256, stat('maxstamina'.accr))` deliver exact flat Stamina refills (`Second Wind`).
-  - How 8-bit fixed-point `RESTED_PCT` and `EXHAUST_PCT` formulas couple Weapon `%ED`, Attack Rating, Defense, Jump Distance, Leap Speed, and Stun Duration to current or missing Stamina.
-- **[assassin_charges_and_traps.md](file:///home/grant/games/d2r/docs/engine_reference/assassin_charges_and_traps.md)** — Complete technical reference for the **Assassin Charge-Up, Melee Finisher, and Sentry Trap Release** architecture:
-  - How `srvstfunc` and `srvdofunc` interact across animation frames (`srvstfunc = 39` + `srvdofunc = 45` selective orb consumption).
-  - Which `srvdofunc` handlers can release progressive charges (`1, 42, 47, 50, 53`) vs. which ignore `finishing = 1` (`13` Zeal/Fend, `62/168` Whirlwind).
-  - Progressive Finisher Release functions (`srvprgfunc1..3` / `cltprgfunc1..3`) and their submissile parameters.
-  - Missile movement (`pSrvDoFunc` / `pCltDoFunc`), impact (`pSrvHitFunc` / `pCltHitFunc`), and damage (`pSrvDmgFunc`) functions used to build conditional multi-stage projectiles.
-  - State, stat, and `monstats.txt` / `monprop.txt` wiring for passing player state snapshots into summoned pets.
-- **[sorceress_stances_and_spells.md](file:///home/grant/games/d2r/docs/engine_reference/sorceress_stances_and_spells.md)** — Complete technical reference for the **Sorceress Elemental Stances, Stance Marker Stats, Cross-Stance Fizzle, and 7 Spell Archetypes**:
-  - How `srvdofunc = 18` + `states.txt` `group = 13` implements mutually exclusive Kiss-Curse Elemental Stances (*Conflagration*, *Cryostasis*, *Overcharge*) with `damagedinmelee` retaliation (`auraeventfunc1 = 2/3`).
-  - How dedicated stance marker stats (`skill_handofathena`, `skill_frenzy`, `skill_decrepify`) drive matching-stance spell empowerment and opposing-stance fizzle guards.
-  - The 7 reusable spell archetypes (`line 1`, `AoE 1`, `combo`, `utility`, `AoE 2`, `line 2`, `capstone`) and their server/client missile controllers (`1/1`, `154/99`, `22/25`, `14+28/17+28`, `28/28`, `166/104`, `14+144/17`).
+## Per-Class Technical Docs
+- **[docs/classes/paladin.md](file:///home/grant/games/d2r/docs/classes/paladin.md)** — Aura Mana Devotion, Frontal Cleave `Vengeance`, Bouncing Chain `Blessed Hammer`, S-Curve Party `Conviction`, `Smite` + `Stun Fatigue`.
+- **[docs/classes/barbarian.md](file:///home/grant/games/d2r/docs/classes/barbarian.md)** — Stamina Pendulum, co-opted Ancients hooks (`srvdofunc = 168 / 170`), `Second Wind` flat Stamina heal, `Shield Slam`.
+- **[docs/classes/assassin.md](file:///home/grant/games/d2r/docs/classes/assassin.md)** — 15m Charge-Up Orbs, `srvstfunc = 39` + `srvdofunc = 45` selective trap release, `Omnislash`.
+- **[docs/classes/sorceress.md](file:///home/grant/games/d2r/docs/classes/sorceress.md)** — `group = 13` Elemental Stances, Stance Markers, Cross-Stance Fizzle, Cross-Tree Passives, `Conduction`, 7 Spell Archetypes.
+- **[docs/classes/amazon.md](file:///home/grant/games/d2r/docs/classes/amazon.md)** — Amazon overhaul design blueprint.
 
 ---
 

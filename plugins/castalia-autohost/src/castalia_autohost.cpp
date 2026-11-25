@@ -158,12 +158,11 @@ static auto BuildGuidePanelJson(const LaunchIntent& intent) -> std::string {
 	if (intent.mode == "host") {
 		heading = "CASTALIA HOST GUIDE";
 		body =
-			"1. Uncheck 'LAN Only' (keep 'Unlisted' checked)\n"
+			"1. Uncheck 'LAN Only' AND uncheck 'Unlisted'\n"
 			"2. Click Game Name -> Ctrl+V:  " + intent.gameName + "\n"
 			"3. Difficulty: " + std::string(DifficultyName(intent.difficulty)) +
 			"   |   Max Players: " + std::to_string(intent.maxPlayers) + "\n"
-			"4. Leave Password & Level Diff blank -> Create Game\n"
-			"(Press ESC to dismiss this guide)";
+			"4. Leave Password & Level Diff blank -> Create Game";
 	} else {
 		heading = "CASTALIA JOIN GUIDE";
 		const std::string addr = intent.gameId.empty() ? "(check Launcher)" : intent.gameId;

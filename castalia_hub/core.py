@@ -687,7 +687,7 @@ class CastaliaHub:
             "description": str(campaign.get("description", ""))[:120],
             "password": "",
             "difficulty": diff_idx,
-            "unlisted": True,
+            "unlisted": False,
             "lan_only": False,
             "max_players": int(campaign.get("max_seats", 5)),
             "level_diff_enabled": False,

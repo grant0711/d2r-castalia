@@ -136,7 +136,7 @@ class TestCampaignHub(unittest.TestCase):
         self.assertLessEqual(len(intent["game_name"]), 15)
         self.assertEqual(intent["difficulty"], 1)  # a3nm -> Nightmare (1)
         self.assertEqual(intent["max_players"], 2)
-        self.assertTrue(intent["unlisted"])
+        self.assertFalse(intent["unlisted"])
         self.assertFalse(intent["lan_only"])
         self.hub.write_launch_intent(None, False)
         self.assertFalse(os.path.exists(intent_path))

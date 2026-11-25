@@ -24,7 +24,7 @@ static constexpr D2RL::PluginInfo PluginMetadata {
 	.version     = "0.1.0",
 	.author      = "Castalia",
 	.description = "Pre-populates D2RLoaderMultiplayerPanel from Castalia Launcher launch intent.",
-	.flags       = D2RL::PluginFlags::None,
+	.flags       = D2RL::PluginFlags::Client,
 };
 
 struct LaunchIntent {

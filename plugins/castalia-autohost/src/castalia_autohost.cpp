@@ -171,11 +171,11 @@ static auto BuildGuidePanelJson(const LaunchIntent& intent) -> std::string {
 			? ("   (Port " + std::to_string(intent.gamePort) + " auto-configured!)\n")
 			: "\n";
 		body =
-			"1. Click the 'Direct Join' tab at the top of Multiplayer\n"
-			"2. Click the IP / Host Address box -> Press Ctrl+V:\n"
+			"1. Click 'Browse Games' at the top\n"
+			"2. Click 'Direct Join' on the lower left\n"
+			"3. Paste Host Address (Ctrl+V):\n"
 			"   " + addr + portNote +
-			"3. Leave Password blank (unless Host set one) -> Click Join Game\n"
-			"(Press ESC to dismiss this guide)";
+			"4. Click Join Game";
 	}
 
 	std::ostringstream ss;

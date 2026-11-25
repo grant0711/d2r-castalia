@@ -59,12 +59,16 @@ class TestCampaignHub(unittest.TestCase):
         self.assertFalse(telem["hell_baal_cleared"])
         self.assertTrue(os.path.isfile(os.path.join(pdir, "Lyra.d2s")))
 
-        # Verify Level 1 fresh starting character generation (ready for Multiplayer immediately)
+        # Verify Level 1 fresh starting character generation (ready for Multiplayer immediately + 2,000 starter gold)
         lvl1_telem = generate_dropin_character(pdir, "FreshPal", "pal", 1, "a1n")
         self.assertEqual(lvl1_telem["char_level"], 1)
         self.assertEqual(lvl1_telem["char_wp"], "a1n")
+        self.assertEqual(lvl1_telem["starter_gold"], 2000)
         self.assertFalse(lvl1_telem["hell_baal_cleared"])
         self.assertTrue(os.path.isfile(os.path.join(pdir, "FreshPal.d2s")))
+        from mod_builder.char_manager import inspect_character_d2s
+        inspected = inspect_character_d2s(os.path.join(pdir, "FreshPal.d2s"))
+        self.assertEqual(inspected["inv_gold"], 2000)
 
         # Verify Hell Baal completion detection on an 'all' character
         baal_telem = generate_dropin_character(pdir, "Champion", "pal", 75, "all")

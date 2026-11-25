@@ -180,14 +180,20 @@ def generate_dropin_character(
     if os.path.exists(target_d2s):
         raise FileExistsError(f"Character '{clean}' already exists in {profile_dir}")
 
+    eff_level = max(1, min(99, int(level)))
+    inv_gold = 2000 if eff_level == 1 else 0
+    stash_gold = 0 if eff_level == 1 else None
+
     create_character_from_template(
         clean,
         class_code,
-        level=max(1, min(99, int(level))),
+        level=eff_level,
         wp_target=wp_code,
+        stash_gold=stash_gold,
+        inv_gold=inv_gold,
         save_dir=profile_dir,
     )
     telem = parse_d2s_telemetry(target_d2s)
-    telem["starter_tier"] = tier_template_for_level(int(level))
-    telem["starter_gold"] = default_gold_for_level(int(level))
+    telem["starter_tier"] = tier_template_for_level(eff_level)
+    telem["starter_gold"] = inv_gold if eff_level == 1 else default_gold_for_level(eff_level)
     return telem

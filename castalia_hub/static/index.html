@@ -178,13 +178,10 @@
     <input id="di-name" style="width:100%" maxlength="15" placeholder="Lyra">
     <label>Class</label>
     <select id="di-class" style="width:100%">
-      <option value="pal">Paladin (Cleric / Aura Support)</option>
-      <option value="bar">Barbarian (Frontline / Warcry Medic)</option>
-      <option value="ass">Assassin (Martial / Combo Orbs)</option>
-      <option value="sor">Sorceress (Elemental / Conduction)</option>
-      <option value="ama">Amazon</option>
-      <option value="dru">Druid</option>
-      <option value="nec">Necromancer</option>
+      <option value="pal">Paladin</option>
+      <option value="bar">Barbarian</option>
+      <option value="ass">Assassin</option>
+      <option value="sor">Sorceress</option>
     </select>
     <div class="row" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn ghost" onclick="closeModal('modal-dropin')">Cancel</button>
@@ -489,7 +486,7 @@ function openDropInModal(autoPrompt = false, soloMode = false) {
   if (soloMode) {
     document.getElementById("di-title").textContent = "Create Fresh Level 1 Solo Character";
     document.getElementById("di-banner").innerHTML =
-      `Creates a fresh <b>Level 1</b> character in <code>profiles/solo/</code> (Normal Act 1, 4x Minor Healing Potions) so you can launch straight into play.`;
+      `Creates a fresh <b>Level 1</b> character in <code>profiles/solo/</code> (Normal Act 1, 4x Minor Healing Potions + <b>2,000 Gold</b>) so you can buy starter gear and launch straight into play.`;
     document.getElementById("di-save-btn").textContent = "Create Character";
   } else {
     const c = STATE.activeCampaign;
@@ -499,7 +496,7 @@ function openDropInModal(autoPrompt = false, soloMode = false) {
       : "Generate Drop-In Starter-Kit Character";
     const note = autoPrompt ? `<div class="warn" style="margin-bottom:4px;">No character in this campaign profile yet — create one first so you can jump straight into Multiplayer!</div>` : "";
     const kit = isFresh
-      ? "Fresh Level 1 start (4x Minor Healing Potions) — ready immediately on Character Select for Multiplayer."
+      ? "Fresh Level 1 start (4x Minor Healing Potions + <b>2,000 Gold</b> to buy starter gear) — ready immediately on Character Select."
       : `Locked to Campaign Snapshot: <b>Level ${c.current_level} &middot; ${c.current_wp}</b> (tier-matched Starter Kit).`;
     document.getElementById("di-banner").innerHTML = `${note}${kit} &middot; Castalia <b>v${c.castalia_version}</b>`;
     document.getElementById("di-save-btn").textContent = "Create .d2s & RSVP";

@@ -601,6 +601,9 @@ class CastaliaHub:
         while not stop_event.is_set() and not published_id:
             if os.path.isfile(log_path):
                 try:
+                    cur_size = os.path.getsize(log_path)
+                    if cur_size < offset:
+                        offset = 0  # D2RLoader truncated/rotated d2rloader.log on startup
                     with open(log_path, "r", encoding="utf-8", errors="ignore") as f:
                         f.seek(offset)
                         chunk = f.read()

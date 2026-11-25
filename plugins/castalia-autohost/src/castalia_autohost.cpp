@@ -1,6 +1,8 @@
-// Castalia Auto-Host & Auto-Join Plugin (D2RLoader PluginSDK ABI 4, MIT)
-// Reads mods/castalia/d2rloader/config/castalia_launch_intent.json written by the
-// Castalia Launcher and pre-populates D2RLoaderMultiplayerPanel fields automatically.
+// Castalia Auto-Host & In-Game Host/Join Guide Plugin (D2RLoader PluginSDK ABI 4, MIT)
+// - Reads mods/castalia/d2rloader/config/castalia_launch_intent.json written by Castalia Launcher.
+// - On D2RLoader 1.3.2+ (WidgetService setters): auto-fills D2RLoaderMultiplayerPanel fields.
+// - On D2RLoader 1.3.1-beta: opens a clean in-game Castalia Host/Join Guide panel right inside
+//   fullscreen D2R when Multiplayer opens so players never have to alt-tab to see instructions.
 
 #include <D2RLPlugin/api.h>
 
@@ -21,9 +23,9 @@ static constexpr D2RL::PluginInfo PluginMetadata {
 	.abiVersion  = D2RL_PLUGIN_ABI_VERSION,
 	.id          = "castalia-autohost",
 	.name        = "Castalia Auto-Host",
-	.version     = "0.1.0",
+	.version     = "0.2.0",
 	.author      = "Castalia",
-	.description = "Pre-populates D2RLoaderMultiplayerPanel from Castalia Launcher launch intent.",
+	.description = "In-game Castalia Host/Join Guide & auto-fill for D2RLoaderMultiplayerPanel.",
 	.flags       = D2RL::PluginFlags::Client,
 };
 
@@ -41,16 +43,33 @@ struct LaunchIntent {
 	std::string gameId;
 };
 
-static const D2RL::PluginContext* gCtx     = nullptr;
-static const D2RL::WidgetService* gWidgets = nullptr;
-static const D2RL::ThreadService* gThreads = nullptr;
+static const D2RL::PluginContext*   gCtx       = nullptr;
+static const D2RL::WidgetService*   gWidgets   = nullptr;
+static const D2RL::ThreadService*   gThreads   = nullptr;
+static const D2RL::PanelService*    gPanels    = nullptr;
+static const D2RL::ResourceService* gResources = nullptr;
+
+static D2RL::Panels::RegistrationHandle    gGuidePanel    = D2RL::Panels::InvalidHandle;
+static D2RL::Resources::RegistrationHandle gGuideResource = D2RL::Resources::InvalidHandle;
+static std::string                         gGuideJson;
 
 static LaunchIntent      gIntent {};
 static std::atomic<bool> gRunning { false };
 static std::atomic<bool> gApplied { false };
 static std::thread       gWatcher;
 
-// Minimal JSON value extractors (flat launch_intent.json, zero external deps)
+static auto EscapeJson(const std::string& s) -> std::string {
+	std::string out;
+	out.reserve(s.size() + 8);
+	for (char c : s) {
+		if (c == '"' || c == '\\') out.push_back('\\');
+		else if (c == '\n') { out += "\\n"; continue; }
+		else if (c == '\r') continue;
+		out.push_back(c);
+	}
+	return out;
+}
+
 static auto ExtractJsonString(const std::string& json, const char* key) -> std::string {
 	const std::string needle = std::string("\"") + key + "\"";
 	auto pos = json.find(needle);
@@ -62,9 +81,7 @@ static auto ExtractJsonString(const std::string& json, const char* key) -> std::
 	++pos;
 	std::string out;
 	while (pos < json.size() && json[pos] != '"') {
-		if (json[pos] == '\\' && pos + 1 < json.size()) {
-			++pos;
-		}
+		if (json[pos] == '\\' && pos + 1 < json.size()) ++pos;
 		out.push_back(json[pos++]);
 	}
 	return out;
@@ -78,11 +95,7 @@ static auto ExtractJsonInt(const std::string& json, const char* key, int fallbac
 	if (pos == std::string::npos) return fallback;
 	++pos;
 	while (pos < json.size() && (json[pos] == ' ' || json[pos] == '\t')) ++pos;
-	try {
-		return std::stoi(json.substr(pos));
-	} catch (...) {
-		return fallback;
-	}
+	try { return std::stoi(json.substr(pos)); } catch (...) { return fallback; }
 }
 
 static auto ExtractJsonBool(const std::string& json, const char* key, bool fallback) -> bool {
@@ -130,6 +143,71 @@ static auto LoadLaunchIntent() -> LaunchIntent {
 	return intent;
 }
 
+static auto DifficultyName(int d) -> const char* {
+	if (d == 1) return "Nightmare";
+	if (d == 2) return "Hell";
+	return "Normal";
+}
+
+static auto BuildGuidePanelJson(const LaunchIntent& intent) -> std::string {
+	std::string heading;
+	std::string body;
+	if (intent.mode == "host") {
+		heading = "CASTALIA HOST GUIDE";
+		body =
+			"1. Uncheck 'LAN Only' (keep 'Unlisted' checked)\n"
+			"2. Click Game Name -> Ctrl+V:  " + intent.gameName + "\n"
+			"3. Difficulty: " + std::string(DifficultyName(intent.difficulty)) +
+			"   |   Max Players: " + std::to_string(intent.maxPlayers) + "\n"
+			"4. Leave Password & Level Diff blank -> Create Game\n"
+			"(Press ESC to dismiss this guide)";
+	} else {
+		heading = "CASTALIA JOIN GUIDE";
+		body =
+			"1. Click 'Direct Join' / 'Join by Game ID'\n"
+			"2. Press Ctrl+V to paste Game ID:  " + (intent.gameId.empty() ? "(check Launcher)" : intent.gameId) + "\n"
+			"3. Click Join Game\n"
+			"(Press ESC to dismiss this guide)";
+	}
+
+	std::ostringstream ss;
+	ss << R"json({
+	"type": "Panel", "name": "castalia-autohost/HostGuidePanel",
+	"fields": {
+		"anchor": { "x": 0.5, "y": 0.08 },
+		"priority": 9000
+	},
+	"children": [
+		{
+			"type": "ImageWidget", "name": "Frame",
+			"fields": {
+				"rect": { "x": -560, "y": 0, "width": 1120, "height": 340 },
+				"filename": "Panel\\Modals\\Modal_No_Title_BG"
+			},
+			"children": [
+				{
+					"type": "TextBoxWidget", "name": "Heading",
+					"fields": {
+						"rect": { "x": 60, "y": 32, "width": 1000, "height": 54 },
+						"text": ")json" << EscapeJson(heading) << R"json(",
+						"style": "$StyleSettingsTitle"
+					}
+				},
+				{
+					"type": "TextBoxWidget", "name": "Steps",
+					"fields": {
+						"rect": { "x": 60, "y": 96, "width": 1000, "height": 220 },
+						"text": ")json" << EscapeJson(body) << R"json(",
+						"style": "$StyleModalDialogDescription"
+					}
+				}
+			]
+		}
+	]
+})json";
+	return ss.str();
+}
+
 static auto FindFirstWidget(const D2RL::PluginContext* ctx, D2RL::Widgets::WidgetHandle panel, const std::vector<const char*>& names, const char** matchedName) noexcept -> D2RL::Widgets::WidgetHandle {
 	for (const char* name : names) {
 		D2RL::Widgets::WidgetHandle h = D2RL::Widgets::InvalidHandle;
@@ -171,8 +249,6 @@ static void TrySetDropdown(const D2RL::PluginContext* ctx, D2RL::Widgets::Widget
 	}
 }
 
-static void ProbeWidgetsOnUiThread(const D2RL::PluginContext* ctx, void*) noexcept;
-
 static void ApplyIntentOnUiThread(const D2RL::PluginContext* ctx, void*) noexcept {
 	if (ctx == nullptr || gWidgets == nullptr || !gIntent.loaded || gApplied.load()) return;
 
@@ -188,79 +264,38 @@ static void ApplyIntentOnUiThread(const D2RL::PluginContext* ctx, void*) noexcep
 		}
 	}
 
-	D2RL::LogInfoF(ctx, "[castalia-autohost] D2RLoaderMultiplayerPanel visible! Applying mode='%s'...", gIntent.mode.c_str());
-	ProbeWidgetsOnUiThread(ctx, nullptr);
+	const bool canAutoFill = D2RL::HasWidgetServiceField(gWidgets, D2RL::WidgetServiceSetInputTextFieldEnd);
+	D2RL::LogInfoF(ctx, "[castalia-autohost] D2RLoaderMultiplayerPanel open! mode='%s' canAutoFill=%d serviceSize=%u",
+		gIntent.mode.c_str(), canAutoFill ? 1 : 0, gWidgets->serviceSize);
 
-	if (gIntent.mode == "host") {
-		TrySetInput(ctx, mpPanel, "GameName",
-			{ "GameName", "GameNameInput", "GameNameTextBox", "HostGameName", "CreateGameName", "HostPanel/GameName", "HostGamePanel/GameName" },
-			gIntent.gameName);
-		TrySetInput(ctx, mpPanel, "Description",
-			{ "GameDescription", "Description", "DescriptionInput", "HostGameDescription", "HostPanel/GameDescription" },
-			gIntent.description);
-		TrySetInput(ctx, mpPanel, "Password",
-			{ "GamePassword", "Password", "PasswordInput", "HostGamePassword", "HostPanel/GamePassword" },
-			gIntent.password);
-		TrySetInput(ctx, mpPanel, "MaxPlayers",
-			{ "MaxPlayers", "MaxPlayersInput", "PlayerCount", "MaxPlayerCount", "HostPanel/MaxPlayers" },
-			std::to_string(gIntent.maxPlayers));
-		TrySetDropdown(ctx, mpPanel, "Difficulty",
-			{ "Difficulty", "DifficultyDropdown", "HostDifficulty", "GameDifficulty", "HostPanel/Difficulty" },
-			static_cast<uint32_t>(gIntent.difficulty < 0 ? 0 : gIntent.difficulty));
-		TrySetToggle(ctx, mpPanel, "Unlisted",
-			{ "Unlisted", "UnlistedToggle", "UnlistedCheckbox", "UnlistedGame", "HostPanel/Unlisted" },
-			gIntent.unlisted);
-		TrySetToggle(ctx, mpPanel, "LanOnly",
-			{ "LanOnly", "LanOnlyToggle", "LanOnlyCheckbox", "LocalOnly", "HostPanel/LanOnly" },
-			gIntent.lanOnly);
-		TrySetToggle(ctx, mpPanel, "LevelDiff",
-			{ "LevelDifference", "LevelDiffToggle", "MaxLevelDiff", "CharacterLevelDiff", "HostPanel/LevelDifference" },
-			gIntent.levelDiffEnabled);
-	} else if (gIntent.mode == "join") {
-		TrySetInput(ctx, mpPanel, "GameId",
-			{ "GameId", "GameIdInput", "DirectJoinInput", "JoinGameId", "JoinAddress", "DirectJoinPanel/GameId" },
-			gIntent.gameId);
+	if (canAutoFill) {
+		if (gIntent.mode == "host") {
+			TrySetToggle(ctx, mpPanel, "LanOnly", { "LanOnly", "LanOnlyToggle", "LanOnlyCheckbox", "LocalOnly" }, gIntent.lanOnly);
+			TrySetToggle(ctx, mpPanel, "Unlisted", { "Unlisted", "UnlistedToggle", "UnlistedCheckbox", "UnlistedGame" }, gIntent.unlisted);
+			TrySetInput(ctx, mpPanel, "GameName", { "GameName", "GameNameInput", "GameNameTextBox" }, gIntent.gameName);
+			TrySetInput(ctx, mpPanel, "Description", { "GameDescription", "Description", "DescriptionInput" }, gIntent.description);
+			TrySetInput(ctx, mpPanel, "Password", { "GamePassword", "Password", "PasswordInput" }, gIntent.password);
+			TrySetInput(ctx, mpPanel, "MaxPlayers", { "MaxPlayers", "MaxPlayersInput", "PlayerCount" }, std::to_string(gIntent.maxPlayers));
+			TrySetDropdown(ctx, mpPanel, "Difficulty", { "Difficulty", "DifficultyDropdown", "HostDifficulty" }, static_cast<uint32_t>(gIntent.difficulty < 0 ? 0 : gIntent.difficulty));
+			TrySetToggle(ctx, mpPanel, "LevelDiff", { "LevelDifference", "LevelDiffToggle", "MaxLevelDiff" }, gIntent.levelDiffEnabled);
+		} else if (gIntent.mode == "join") {
+			TrySetInput(ctx, mpPanel, "GameId", { "GameId", "GameIdInput", "DirectJoinInput", "JoinGameId" }, gIntent.gameId);
+		}
+	} else if (gPanels != nullptr && gGuidePanel != D2RL::Panels::InvalidHandle) {
+		const auto r = gPanels->openPanel(ctx, gGuidePanel);
+		D2RL::LogInfoF(ctx, "[castalia-autohost] Opened in-game Host/Join Guide panel -> %u", static_cast<unsigned>(r));
 	}
 
 	gApplied.store(true);
 }
 
-static void ProbeWidgetsOnUiThread(const D2RL::PluginContext* ctx, void*) noexcept {
-	if (ctx == nullptr || gWidgets == nullptr) return;
-	D2RL::Widgets::WidgetHandle mpPanel = D2RL::Widgets::InvalidHandle;
-	const auto pr = gWidgets->findPanel(ctx, "D2RLoaderMultiplayerPanel", &mpPanel);
-	D2RL::LogInfoF(ctx, "[castalia-probe] findPanel(D2RLoaderMultiplayerPanel) -> %u (handle=%llu)",
-		static_cast<unsigned>(pr), static_cast<unsigned long long>(mpPanel));
-	if (pr != D2RL::Widgets::Result::Success) return;
-
-	const char* probeNames[] = {
-		"GameName", "GameNameInput", "GameDescription", "Description", "GamePassword", "Password",
-		"Difficulty", "DifficultyDropdown", "MaxPlayers", "PlayerCount", "Unlisted", "UnlistedGame",
-		"LanOnly", "LevelDifference", "GameId", "DirectJoin", "HostGame", "HostButton", "JoinButton",
-		"BrowseGames", "HostPanel", "JoinPanel", "DirectJoinPanel", "CreateGameButton", "Tabs",
-	};
-	for (const char* n : probeNames) {
-		D2RL::Widgets::WidgetHandle h = D2RL::Widgets::InvalidHandle;
-		if (gWidgets->findWidget(ctx, mpPanel, n, &h) == D2RL::Widgets::Result::Success && h != D2RL::Widgets::InvalidHandle) {
-			D2RL::LogInfoF(ctx, "[castalia-probe]   FOUND widget: %s (handle=%llu)", n, static_cast<unsigned long long>(h));
-		}
+static auto CmdToggleGuide(D2R::Game::Client*, const D2RL::ConsoleCommandContext* cmd, void*) noexcept -> D2RL::ConsoleCommandResult {
+	if (cmd == nullptr || cmd->plugin == nullptr || gPanels == nullptr || gGuidePanel == D2RL::Panels::InvalidHandle) {
+		return D2RL::ConsoleCommandResult::Failed;
 	}
-}
-
-static auto CmdAutoHost(D2R::Game::Client*, const D2RL::ConsoleCommandContext* cmd, void*) noexcept -> D2RL::ConsoleCommandResult {
-	if (cmd == nullptr || cmd->plugin == nullptr || gThreads == nullptr) return D2RL::ConsoleCommandResult::Failed;
-	gIntent = LoadLaunchIntent();
-	gApplied.store(false);
-	gThreads->runOnUiThread(cmd->plugin, ApplyIntentOnUiThread, nullptr);
-	cmd->plugin->WriteConsoleMessage("[castalia-autohost] Queued launch intent apply on UI thread.");
-	return D2RL::ConsoleCommandResult::Handled;
-}
-
-static auto CmdProbe(D2R::Game::Client*, const D2RL::ConsoleCommandContext* cmd, void*) noexcept -> D2RL::ConsoleCommandResult {
-	if (cmd == nullptr || cmd->plugin == nullptr || gThreads == nullptr) return D2RL::ConsoleCommandResult::Failed;
-	gThreads->runOnUiThread(cmd->plugin, ProbeWidgetsOnUiThread, nullptr);
-	cmd->plugin->WriteConsoleMessage("[castalia-probe] Probed D2RLoaderMultiplayerPanel (see d2rloader.log).");
-	return D2RL::ConsoleCommandResult::Handled;
+	return gPanels->togglePanel(cmd->plugin, gGuidePanel) == D2RL::Panels::Result::Success
+		? D2RL::ConsoleCommandResult::Handled
+		: D2RL::ConsoleCommandResult::Failed;
 }
 
 static void WatcherLoop() {
@@ -294,27 +329,52 @@ D2RL_PLUGIN_EXPORT auto D2RLoaderLoadPlugin(const D2RL::PluginContext* context) 
 	}
 
 	gIntent = LoadLaunchIntent();
-	context->RegisterConsoleCommand("castalia_autohost", CmdAutoHost, "Re-read launch intent and populate D2RLoaderMultiplayerPanel.");
-	context->RegisterConsoleCommand("castalia_probe", CmdProbe, "Probe widget names inside D2RLoaderMultiplayerPanel.");
-
-	if (gIntent.loaded) {
-		D2RL::LogInfoF(context, "[castalia-autohost] Loaded launch intent: mode=%s game='%s' diff=%d max=%d",
-			gIntent.mode.c_str(), gIntent.gameName.c_str(), gIntent.difficulty, gIntent.maxPlayers);
-		gApplied.store(false);
-		gRunning.store(true);
-		gWatcher = std::thread(WatcherLoop);
-	} else {
+	if (!gIntent.loaded) {
 		context->LogInfo("[castalia-autohost] Loaded (no castalia_launch_intent.json present).");
+		return true;
 	}
+
+	// Register in-game Host/Join Guide panel (works on D2RLoader 1.3.1-beta immediately!)
+	if (context->QueryService(&gResources) == D2RL::ServiceQueryResult::Success &&
+		D2RL::HasResourceServiceField(gResources, D2RL::ResourceServiceRequiredSize) &&
+		context->QueryService(&gPanels) == D2RL::ServiceQueryResult::Success &&
+		D2RL::HasPanelServiceField(gPanels, D2RL::PanelServiceRequiredSize)) {
+		gGuideJson = BuildGuidePanelJson(gIntent);
+		const D2RL::Resources::ResourceRegistration res {
+			.structSize = D2RL::Resources::ResourceRegistrationSize,
+			.path       = "data/global/ui/layouts/castalia-autohost/HostGuidePanelhd.json",
+			.bytes      = gGuideJson.data(),
+			.byteCount  = gGuideJson.size(),
+		};
+		if (gResources->registerResource(context, &res, &gGuideResource) == D2RL::Resources::Result::Success) {
+			const D2RL::Panels::PanelRegistration reg {
+				.structSize = D2RL::Panels::PanelRegistrationSize,
+				.flags      = D2RL::Panels::PanelFlags::CloseOnEscape,
+				.localId    = "HostGuidePanel",
+			};
+			if (gPanels->registerPanel(context, &reg, &gGuidePanel) == D2RL::Panels::Result::Success) {
+				context->RegisterConsoleCommand("castalia_guide", CmdToggleGuide, "Toggle the in-game Castalia Host/Join Guide panel.");
+				context->LogInfo("[castalia-autohost] Registered in-game HostGuidePanel.");
+			}
+		}
+	}
+
+	D2RL::LogInfoF(context, "[castalia-autohost] Loaded launch intent: mode=%s game='%s' diff=%d max=%d",
+		gIntent.mode.c_str(), gIntent.gameName.c_str(), gIntent.difficulty, gIntent.maxPlayers);
+	gApplied.store(false);
+	gRunning.store(true);
+	gWatcher = std::thread(WatcherLoop);
 	return true;
 }
 
 D2RL_PLUGIN_EXPORT void D2RLoaderUnloadPlugin() noexcept {
 	gRunning.store(false);
-	if (gWatcher.joinable()) {
-		gWatcher.join();
-	}
-	gCtx     = nullptr;
-	gWidgets = nullptr;
-	gThreads = nullptr;
+	if (gWatcher.joinable()) gWatcher.join();
+	gCtx       = nullptr;
+	gWidgets   = nullptr;
+	gThreads   = nullptr;
+	gPanels    = nullptr;
+	gResources = nullptr;
+	gGuidePanel    = D2RL::Panels::InvalidHandle;
+	gGuideResource = D2RL::Resources::InvalidHandle;
 }

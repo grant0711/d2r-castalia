@@ -656,6 +656,10 @@ class CastaliaHub:
             ver_status = "solo_current"
 
         intent_path = self.write_launch_intent(campaign, is_host)
+        if campaign and is_host and intent_path:
+            intent_data = self._load_json(intent_path, {})
+            if intent_data.get("game_name"):
+                self.copy_to_clipboard(intent_data["game_name"])
         pid = self.swap_to_profile(target)
         result: Dict[str, Any] = {
             "profile_id": pid,

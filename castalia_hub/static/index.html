@@ -307,20 +307,40 @@ async function openCampaign(cid) {
   const [c, chars] = await Promise.all([api(`/local/campaigns/${cid}`), api(`/local/chars/${cid}`)]);
   STATE.activeCampaign = c;
 
+  const diffLabel = c.current_wp.endsWith("nm") ? "Nightmare" : (c.current_wp.endsWith("h") ? "Hell" : "Normal");
+  const suggestedGameName = ("Cas-" + c.title.replace(/[^A-Za-z0-9]/g, "")).slice(0, 15);
+
+  const hostCheatSheet = c.is_host ? `
+    <div style="margin-top:8px;padding:8px 10px;background:#0f0e0c;border:1px solid var(--border);font-size:11px;line-height:1.7;">
+      <b style="color:var(--gold);">In D2R: Click Multiplayer &#8594; Host Game and use these exact settings:</b><br>
+      &bull; <b>Game Name:</b> <code>${suggestedGameName}</code> <button class="btn ghost" style="padding:1px 6px;font-size:10px;" onclick="copyText('${suggestedGameName}')">Copy</button>
+      &nbsp;&bull; <b>Password:</b> <i>(leave blank if Unlisted)</i>
+      &nbsp;&bull; <b>Visibility:</b> <b>Unlisted</b> <i>(do NOT check LAN Only)</i><br>
+      &bull; <b>Difficulty:</b> <b>${diffLabel}</b>
+      &nbsp;&bull; <b>Max Players:</b> <b>${c.max_seats}</b>
+      &nbsp;&bull; <b>Level Difference:</b> <i>leave unchecked</i>
+    </div>` : "";
+
   const liveBanner = c.status === "live" && c.live_join_info ? `
-    <div class="card live space-between">
-      <div>
-        <div class="ok">&#128994; SESSION IS LIVE!</div>
-        <div>D2RLoader Game ID: <b style="font-size:15px;color:#fff;">${c.live_join_info}</b>
-          <button class="btn ghost" style="padding:3px 8px;margin-left:6px;" onclick="copyText('${c.live_join_info}')">Copy</button>
+    <div class="card live">
+      <div class="space-between">
+        <div>
+          <div class="ok">&#128994; SESSION IS LIVE!</div>
+          <div>D2RLoader Game ID: <b style="font-size:15px;color:#fff;">${c.live_join_info}</b>
+            <button class="btn ghost" style="padding:3px 8px;margin-left:6px;" onclick="copyText('${c.live_join_info}')">Copy</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);">Swaps Castalia v${c.castalia_version} + isolated profile <code>campaign-${c.id}</code></div>
         </div>
-        <div style="font-size:11px;color:var(--muted);">Swaps Castalia v${c.castalia_version} + isolated profile <code>campaign-${c.id}</code></div>
+        <button class="btn launch" onclick="launchTarget('${c.id}')">&#9654; SWAP PROFILE &amp; LAUNCH D2RLOADER</button>
       </div>
-      <button class="btn launch" onclick="launchTarget('${c.id}')">&#9654; SWAP PROFILE &amp; LAUNCH D2RLOADER</button>
+      ${hostCheatSheet}
     </div>` : `
-    <div class="card space-between">
-      <div style="font-size:12px;color:var(--muted);">Launch D2RLoader with isolated save profile <code>campaign-${c.id}</code> (v${c.castalia_version})</div>
-      <button class="btn launch" onclick="launchTarget('${c.id}')">&#9654; ${c.is_host ? 'HOST &amp; LAUNCH' : 'LAUNCH'} D2RLOADER</button>
+    <div class="card">
+      <div class="space-between">
+        <div style="font-size:12px;color:var(--muted);">Launch D2RLoader with isolated save profile <code>campaign-${c.id}</code> (v${c.castalia_version})</div>
+        <button class="btn launch" onclick="launchTarget('${c.id}')">&#9654; ${c.is_host ? 'HOST &amp; LAUNCH' : 'LAUNCH'} D2RLOADER</button>
+      </div>
+      ${hostCheatSheet}
     </div>`;
 
   const charRows = chars.length

@@ -56,10 +56,24 @@ async function syncDiscord(env, camp, confirmed) {
   const webhook = env.DISCORD_CAMPAIGN_WEBHOOK_URL;
   if (!webhook) return camp.discord_msg_id || null;
   const label = { live: "🟢 LIVE", recruiting: "🟡 Recruiting", active: "🔵 Active", completed: "🏆 Completed" }[camp.status] || camp.status;
-  const epoch = camp.next_session_utc ? Math.floor(new Date(camp.next_session_utc).getTime() / 1000) : null;
-  const nextField = epoch && !Number.isNaN(epoch)
-    ? `<t:${epoch}:F> (<t:${epoch}:R>)${camp.schedule_text ? `\n${camp.schedule_text}` : ""}`
-    : (camp.schedule_text || "TBD");
+  const startDt = camp.next_session_utc ? new Date(camp.next_session_utc) : null;
+  const epoch = startDt && !Number.isNaN(startDt.getTime()) ? Math.floor(startDt.getTime() / 1000) : null;
+  let nextField = camp.schedule_text || "TBD";
+  if (epoch) {
+    const endDt = new Date(startDt.getTime() + 2 * 3600 * 1000);
+    const gcalFmt = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+    const gcalUrl =
+      "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+      `&text=${encodeURIComponent(`Castalia Co-Op: ${camp.title}`)}` +
+      `&dates=${gcalFmt(startDt)}/${gcalFmt(endDt)}` +
+      `&details=${encodeURIComponent(`${camp.description || ""}\n\nJoin via Castalia Launcher (v${camp.castalia_version})\nDiscord: https://discord.gg/3mMNCnaze4`)}`;
+    const utcStr = startDt.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+    nextField =
+      `<t:${epoch}:F> (<t:${epoch}:R>)\n` +
+      `*(Shown in your local timezone · ${utcStr})*\n` +
+      (camp.schedule_text ? `${camp.schedule_text}\n` : "") +
+      `[📅 Add to Google Calendar](${gcalUrl})`;
+  }
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,
     description: (camp.description || "").slice(0, 1500),

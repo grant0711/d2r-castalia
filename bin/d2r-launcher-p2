@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Launch an isolated Player 2 Castalia Launcher instance (uses prefixes/mod + /tmp/castalia-player2)
+exec /home/grant/games/d2r/bin/d2r-launcher \
+  --port 8789 \
+  --data-dir /tmp/castalia-player2 \
+  --prefix mod \
+  --name Player2 \
+  "$@"

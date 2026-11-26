@@ -1012,23 +1012,20 @@ def build_site() -> str:
             f'<a name="class-{cls_code}"></a>'
             f'<div class="section-block">'
             f'<div class="section-title-bar">'
-            f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; CHARACTER BUILDER</h2>'
-            f'<div class="section-sub">{html.escape(cls_subtitle)} — Set Level &amp; Difficulty/Act, allocate skills (Left-Click +1, Right-Click -1, Shift ±5), and Download your ready-to-play .d2s save</div>'
+            f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; CALCULATOR</h2>'
+            f'<div class="section-sub">{html.escape(cls_subtitle)} — Set Level &amp; Difficulty/Act and allocate skills (Left-Click +1, Right-Click -1, Shift ±5)</div>'
             f'</div>'
             f'{class_lore_html.get(cls_code, "")}'
             f'<div class="calc-hud-bar" id="calc-hud-{cls_code}">'
             f'  <div class="calc-hud-row">'
-            f'    <label class="calc-stat-box" for="calc-name-{cls_code}">Name: <input type="text" class="calc-name-input" id="calc-name-{cls_code}" data-name-cls="{cls_code}" maxlength="15" value="" required placeholder="Unique name..." /></label>'
             f'    <label class="calc-stat-box" for="calc-clvl-{cls_code}">Level: <input type="number" class="calc-clvl-input" id="calc-clvl-{cls_code}" data-clvl-cls="{cls_code}" min="1" max="99" value="1" /></label>'
             f'    <label class="calc-stat-box" for="calc-wp-{cls_code}">Difficulty / Act: <select class="calc-wp-select" id="calc-wp-{cls_code}" data-wp-cls="{cls_code}">{wp_options_html}</select></label>'
             f'    <span class="calc-stat-box">Points Available: <b class="d2-bright-gold" id="calc-rem-{cls_code}">0</b> <span class="d2-dim">/ <span id="calc-maxpts-{cls_code}">0</span> <span id="calc-pts-breakdown-{cls_code}">(0 lvl + 0 quest)</span></span></span>'
             f'    <span class="calc-stat-box">Spent: <b class="d2-gold" id="calc-pts-{cls_code}">0</b></span>'
             f'  </div>'
             f'  <div class="calc-hud-row calc-hud-actions">'
-            f'    <span class="calc-msg" id="calc-msg-{cls_code}">Set Character Level &amp; Difficulty/Act to unlock skill points, then download your .d2s save</span>'
+            f'    <span class="calc-msg" id="calc-msg-{cls_code}">Set Character Level &amp; Difficulty/Act to plan your build (create characters directly in the Castalia Launcher)</span>'
             f'    <div class="calc-hud-right">'
-            f'      <button type="button" class="calc-download-btn" data-dl-cls="{cls_code}">&#11015; Download Character (.d2s)</button>'
-            f'      <button type="button" class="calc-reset-btn calc-copy-path-btn" title="Copy %USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\castalia">&#128203; Save Path</button>'
             f'      <button type="button" class="calc-reset-btn" data-reset-cls="{cls_code}">&#8634; Reset Skills</button>'
             f'    </div>'
             f'  </div>'
@@ -1769,60 +1766,26 @@ def build_site() -> str:
 <!-- TOP ARREAT SUMMIT BANNER -->
 <div class="top-banner">
   <h1>&#9876; THE CASTALIA COMPENDIUM &#9876;</h1>
-  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b> &middot; <span style="color:#f0d890;font-weight:bold;">v{mod_version}</span> &middot; <a href="https://github.com/grant0711/d2r-castalia/releases/latest" target="_blank" rel="noopener" style="color:#8cd0ff;text-decoration:underline;">Download Latest Release</a></div>
+  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b> &middot; <span style="color:#f0d890;font-weight:bold;">v{mod_version}</span> &middot; <a href="https://github.com/grant0711/d2r-castalia/releases/latest/download/castalia-launcher-win64.exe" target="_blank" rel="noopener" style="color:#f0d890;font-weight:bold;text-decoration:underline;">&#11015; Download Launcher (Win64)</a> &middot; <a href="https://github.com/grant0711/d2r-castalia/releases/latest" target="_blank" rel="noopener" style="color:#8cd0ff;text-decoration:underline;">All Releases</a> &middot; <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Join Co-Op Discord</a></div>
 </div>
 
 <!-- TOP ARREAT SUMMIT NAVIGATION TABS -->
 <div class="top-tab-bar" id="top-tab-bar">
   <a href="#overview" class="top-tab-btn active" data-tab="tab-overview">&#9876; Overview &amp; Cube</a>
+  <a href="#coop" class="top-tab-btn" data-tab="tab-coop">&#9876; Co-Op</a>
+  <a href="#gems-skulls" class="top-tab-btn" data-tab="tab-items">&#9874; Gems &amp; 33 Runes</a>
+  <a href="#monsters" class="top-tab-btn" data-tab="tab-world">Monsters &amp; Mercs</a>
   <a href="#class-pal" class="top-tab-btn" data-tab="tab-class-pal">Paladin</a>
   <a href="#class-bar" class="top-tab-btn" data-tab="tab-class-bar">Barbarian</a>
   <a href="#class-ass" class="top-tab-btn" data-tab="tab-class-ass">Assassin</a>
   <a href="#class-sor" class="top-tab-btn" data-tab="tab-class-sor">Sorceress</a>
-  <a href="#gems-skulls" class="top-tab-btn" data-tab="tab-items">&#9874; Gems &amp; 33 Runes</a>
-  <a href="#monsters" class="top-tab-btn" data-tab="tab-world">Monsters &amp; Mercs</a>
-  <a href="#coop" class="top-tab-btn" data-tab="tab-coop">&#9876; Co-Op Design</a>
+  <a href="#class-ama" class="top-tab-btn" data-tab="tab-class-ama" style="opacity:0.78;">Amazon <span style="font-size:10px;color:#998870;">(WIP)</span></a>
+  <a href="#class-dru" class="top-tab-btn" data-tab="tab-class-dru" style="opacity:0.78;">Druid <span style="font-size:10px;color:#998870;">(WIP)</span></a>
+  <a href="#class-nec" class="top-tab-btn" data-tab="tab-class-nec" style="opacity:0.78;">Necromancer <span style="font-size:10px;color:#998870;">(WIP)</span></a>
 </div>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr>
-  <!-- LEFT NAVIGATION SIDEBAR -->
-  <td valign="top" class="sidebar-cell">
-    <div class="nav-box">
-      <div class="nav-box-hdr">Getting Started</div>
-      <ul class="nav-list">
-        <li><a href="#overview" data-tab-link="tab-overview">Overview &amp; 7 Cube Recipes</a></li>
-        <li><a href="#philosophy" data-tab-link="tab-overview">Design Philosophy</a></li>
-      </ul>
-    </div>
-
-    <div class="nav-box">
-      <div class="nav-box-hdr">Class Calculators &amp; .d2s</div>
-      <ul class="nav-list">
-        <li><a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-gold">Paladin</b> (30 Skills)</a></li>
-        <li><a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-gold">Barbarian</b> (30 Skills)</a></li>
-        <li><a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-gold">Assassin</b> (30 Skills)</a></li>
-        <li><a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-gold">Sorceress</b> (30 Skills)</a></li>
-      </ul>
-    </div>
-
-    <div class="nav-box">
-      <div class="nav-box-hdr">Items &amp; World</div>
-      <ul class="nav-list">
-        <li><a href="#gems-skulls" data-tab-link="tab-items">7 Gem &amp; Skull Families</a></li>
-        <li><a href="#runes-33" data-tab-link="tab-items">The 33 Semantic Runes</a></li>
-        <li><a href="#monsters" data-tab-link="tab-world">4 Monster Archetypes</a></li>
-        <li><a href="#mercenaries" data-tab-link="tab-world">10-Slot Mercenaries</a></li>
-        <li><a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design &amp; Roadmap</b></a></li>
-      </ul>
-    </div>
-
-    <div class="nav-box" style="padding:8px; text-align:center;">
-      <img src="img/items/lockbox_gold.png" width="52" height="52" alt="Lockbox"><br>
-      <span class="d2-dim"><i>"A few honest rules, pieced together carefully, yield near-infinite room for creativity."</i></span>
-    </div>
-  </td>
-
   <!-- MAIN CONTENT AREA -->
   <td valign="top" class="content-cell">
 
@@ -1836,7 +1799,7 @@ def build_site() -> str:
       </div>
 
       <div class="quote-box">
-        <p style="margin:0;"><b>Castalia</b> is a grounded, tactical overhaul of <i>Diablo II: Resurrected</i> built for veteran players who want meaningful resource management, readable combat, and creative crafting rather than a solved power-fantasy. Designed as a cohesive journey from Act 1 Normal through Act 5 Hell &mdash; solo or co-op &mdash; you can plan a build and download a ready-to-play <code>.d2s</code> save directly from any class tab (<a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-bright-gold">Paladin</b></a>, <a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-bright-gold">Barbarian</b></a>, <a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-bright-gold">Assassin</b></a>, or <a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-bright-gold">Sorceress</b></a>), or explore party synergies on the <a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design</b></a> tab.</p>
+        <p style="margin:0;"><b>Castalia</b> is a grounded, tactical overhaul of <i>Diablo II: Resurrected</i> built for veteran players who want meaningful resource management, readable combat, and creative crafting rather than a solved power-fantasy. Designed as a cohesive journey from Act 1 Normal through Act 5 Hell &mdash; solo or co-op &mdash; you can plan a build in any class skill calculator (<a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-bright-gold">Paladin</b></a>, <a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-bright-gold">Barbarian</b></a>, <a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-bright-gold">Assassin</b></a>, or <a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-bright-gold">Sorceress</b></a>), or get started with the Castalia Launcher on the <a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op</b></a> tab.</p>
       </div>
 
       <a name="cube-recipes"></a>
@@ -2047,7 +2010,16 @@ def build_site() -> str:
         </tr>
       </table>
 
-      <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:0 0 14px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">REWORKED MONSTER RESISTANCES &amp; VULNERABILITIES (99% CAP &mdash; NO HARD IMMUNITIES)</div>
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Clean Baseline Curve:</b> Every monster starts at <b>10% Normal / 20% Nightmare / 30% Hell</b> across all 6 damage types (Physical, Magic, Fire, Lightning, Cold, Poison) instead of vanilla's arbitrary Hell immunity walls.</li>
+          <li style="margin-bottom:5px;"><b class="d2-gold">Readable Affinities Under Every Health Bar:</b> Monsters shift by <b>&minus;35%</b> (Vulnerable) or <b>+35%</b> (Resists, capped at <b>99%</b>) &mdash; roughly half carry both a weakness and a strength (e.g. <i>Vulnerable: Fire | Resists: Cold</i>), printed directly beneath their nameplate so you can read fights on sight.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Why No Sunder / Free Pierce:</b> Because monsters cap at <b>99%</b> rather than 100%+, you never hit a binary brick wall &mdash; but hitting a monster's vulnerability deals huge bonus damage, rewarding hybrid builds, 10-slot mercenaries, and mixed-element co-op parties. All 5 Act Bosses also carry distinct elemental weaknesses (e.g., Andariel weak to Fire; Duriel weak to Fire &amp; Lightning).</li>
+        </ul>
+      </div>
+
+      <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table" style="margin-bottom:14px;">
         <tr bgcolor="#261e14">
           <th colspan="2" align="left" class="table-banner">10-SLOT MERCENARY LOADOUTS &amp; SKILL KITS (All Mercs Equip Helm, Armor, Weap, Off-Hand, Gloves, Boots, Belt, Amulet &amp; 2 Rings)</th>
         </tr>
@@ -2068,126 +2040,57 @@ def build_site() -> str:
           <td><b>2H Vanguard:</b> <i>Stun + Battle Orders + Might / Concentration</i> &nbsp;|&nbsp; <b>1H Dual-Wield:</b> <i>Frenzy + Double Swing + Might / Fanaticism + Iron Skin</i>.</td>
         </tr>
       </table>
+
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">UPCOMING (WIP) &mdash; REBUILDING MONSTER SKILLS FOR CO-OP</div>
+        <p style="margin:0 0 8px 0;">In vanilla <i>Diablo II</i>, adding players only inflates monster HP (+50%/player) and NM/Hell physical damage (+6.25%/player), leaving monster speed, spells, and attack patterns frozen at P1. Next up for Castalia's monster pass:</p>
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Player-Count-Aware Monster Skills:</b> Act Bosses, Super Uniques, and iconic Hell monster families will read their own co-op scaled HP to unlock <b>extra sub-missiles, faster attack tempo, wider AoE/range, co-op elemental spell scaling, and &lt;50% HP boss enrage phases</b> as party size grows.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Co-Op Combat Bounty &amp; Drop Scaling:</b> Nearby teammates actively fighting together will earn a proximity <b>Magic Find &amp; Gold Find bounty</b> (rewarding combat gear over pure MF and preventing town leeching), alongside re-tuned Boss/Champion drops so 2&ndash;5 player runs scale Gems, Runes, and gear cleanly without changing solo P1 averages.</li>
+        </ul>
+      </div>
     </div>
     </div>
 
-    <!-- TAB 5: CO-OP DESIGN & ROADMAP -->
+    <!-- TAB 5: CO-OP DESIGN -->
     <div class="tab-panel" id="tab-coop">
     <a name="coop"></a>
     <a name="coop-conduction"></a>
     <a name="coop-trinity"></a>
-    <a name="coop-roadmap"></a>
-    <a name="coop-expedition"></a>
 
     <div class="section-block">
       <div class="section-title-bar">
-        <h2>CO-OP DESIGN &mdash; TRUE PARTY INTERDEPENDENCE</h2>
-        <div class="section-sub">Moving beyond &ldquo;four solo builds racing down a hallway&rdquo; into reactive, role-driven Diablo II co-op</div>
+        <h2>PLAYING CO-OP &mdash; CAMPAIGN LAUNCHER &amp; D2RLOADER</h2>
+        <div class="section-sub">No ladders or empty lobbies &mdash; scheduled, D&amp;D-style co-op campaigns that respect your time</div>
       </div>
       <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
-        <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">WHY CASTALIA CO-OP FEELS DIFFERENT</div>
-        <p style="margin:0 0 8px 0;">In vanilla <i>Diablo II</i>, co-op quickly collapses into a single Runeword carry teleporting ahead and deleting screens while teammates trail behind for XP. Castalia removes Runewords, Town Portals, and personal elemental/sunder pierce while enforcing real <b>Mana</b> and <b>Stamina</b> economies &mdash; giving fights the breathing room for true party roles, resource sharing, and cross-class combos.</p>
-        <p style="margin:0;"><b class="d2-bright-gold">Core Guardrail:</b> We <b>never</b> silently downgrade a player's skills when friends join. Your character stays 100% consistent and honest in solo or co-op &mdash; instead, co-op shines through <b>active cross-class synergies</b>, <b>distinct support roles</b>, and <b>escalating monster tactics &amp; rewards</b>.</p>
-      </div>
-    </div>
-
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>LIVE NOW &mdash; CONDUCTION &amp; CROSS-CLASS SYNERGIES</h2>
-        <div class="section-sub">A Sorceress's active stance and three independent cross-tree passives reshape how her teammates' skills behave</div>
-      </div>
-      <p style="margin:8px 0;font-size:13px;color:#d8cbb8;">When a Sorceress casts <b class="d2-gold">Conduction</b> on an ally or mercenary, she transfers her matching <b>Elemental Skill Damage</b> (up to <b class="d2-blue">+30%</b>) along with her three independent cross-tree passives &mdash; <b class="d2-gold">Expansion</b> (Radius), <b class="d2-gold">Stasis</b> (Duration &amp; Stun), and <b class="d2-gold">Arc</b> (Chains, Strikes &amp; Pulse Tempo). Even a Fire Sorceress who invests in Stasis passes full duration bonuses to her Barbarian or Paladin partner.</p>
-      <table class="data-tbl" width="100%" cellspacing="1" cellpadding="6">
-        <tr class="tbl-hdr">
-          <th width="14%">Class</th>
-          <th width="28%">Expansion (Radius / AoE)</th>
-          <th width="29%">Stasis (Duration / Stun)</th>
-          <th width="29%">Arc (Chains / Strikes / Tempo)</th>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><b class="d2-gold">Paladin</b></td>
-          <td>Up to <b class="d2-blue">+33%</b> radius on all non-elemental auras; <b class="d2-blue">+4</b> sub-tiles on <i>Blessed Hammer</i>, <i>Sanctuary</i> &amp; matching elemental auras; wider <i>Vengeance</i> cleave &amp; <i>FoH</i> nova.</td>
-          <td>Up to <b class="d2-blue">+50%</b> duration on <i>Holy Shield</i>, <i>Conversion</i>, and <i>Smite / Charge / Blessed Hammer</i> stuns; stronger <i>Holy Freeze</i> slow &amp; <i>Vengeance</i> chill.</td>
-          <td><b class="d2-blue">+1 to +2</b> <i>Blessed Hammer</i> jumps &amp; <i>FoH</i> radial bolts; <b class="d2-blue">+1</b> max <i>Zeal</i> strike; faster elemental aura pulses (<b class="d2-blue">50 &rarr; 35</b> frames).</td>
-        </tr>
-        <tr bgcolor="#18130e">
-          <td><b class="d2-gold">Barbarian</b></td>
-          <td>Up to <b class="d2-blue">+33%</b> knockback &amp; fear radius on <i>Leap</i> and <i>Howl</i>.</td>
-          <td>Up to <b class="d2-blue">+50%</b> duration on <i>Shout</i>, <i>Battle Orders</i>, <i>Enduring Cry</i>, <i>Bloodlust</i>, <i>Battle Cry</i>, <i>War Cry</i> (debuff &amp; stun), <i>Howl</i>, <i>Frenzy</i>, <i>Leap Attack</i> &amp; <i>Shield Slam</i> stuns.</td>
-          <td><span class="d2-dim">Barbarian combat warcries &amp; swings focus on Stasis &amp; Expansion windows.</span></td>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><b class="d2-gold">Assassin</b></td>
-          <td>Up to <b class="d2-blue">+33%</b> radius on <i>Cloak of Shadows</i>, <i>Mind Blast</i>, <i>Dragon Flight</i>, <i>Dragon Tail</i>; wider <i>Blade Shield</i>, <i>Shadow Bind</i>, <i>Shuriken</i> &amp; all 5 Charge-Up releases.</td>
-          <td>Up to <b class="d2-blue">+50%</b> duration on <i>Burst of Speed</i>, <i>Fade</i>, <i>Venom</i>, <i>Blade Shield</i>, <i>Cloak of Shadows</i>, <i>Shadow Bind</i>, <i>Mind Blast</i> stun &amp; charge holds; longer <i>Blades of Ice</i> chill.</td>
-          <td><b class="d2-blue">+1 to +2</b> <i>Shuriken</i> bounces, <i>Shock Web</i> spikes &amp; <i>Soul Siphon</i> shots; <b class="d2-blue">+1</b> <i>Dragon Talon</i> kick; faster <i>Claws of Thunder</i> discharges &amp; extra <i>Fists of Fire</i> fireballs.</td>
-        </tr>
-      </table>
-    </div>
-
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>THE 3-CLASS SUPPORT &amp; RESOURCE TRINITY</h2>
-        <div class="section-sub">Three mechanically distinct healers and resource anchors &mdash; no single mandatory support class</div>
-      </div>
-      <table class="data-tbl" width="100%" cellspacing="1" cellpadding="6" style="margin-top:8px;">
-        <tr class="tbl-hdr">
-          <th width="16%">Class</th>
-          <th width="22%">Support Identity</th>
-          <th width="21%">Health Restore</th>
-          <th width="21%">Stamina Restore</th>
-          <th width="20%">Mana Restore</th>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><b class="d2-gold">Paladin</b><br><span class="d2-green">Live</span></td>
-          <td>Sustained Aura &amp; Targeted Cleric <span class="d2-dim">(Aura Mana Devotion visibly shrinks aura radius as Mana drains)</span></td>
-          <td><b>Prayer</b> (steady aura) &amp; <b>Holy Bolt</b> (targeted burst)</td>
-          <td><b>Vigor</b> <span class="d2-dim">(planned tempered +11% &rarr; +75% Stamina Recovery)</span></td>
-          <td><b>Meditation</b> (0-Mana active party recovery stance)</td>
-        </tr>
-        <tr bgcolor="#18130e">
-          <td><b class="d2-gold">Barbarian</b><br><span class="d2-green">Live</span></td>
-          <td>Tactical Burst Warcry Medic <span class="d2-dim">(3.0s shared Warcry CD; War Cry shreds -75% Phys/Magic Res)</span></td>
-          <td><b>Battle Command</b> (instant party HP burst heal)</td>
-          <td><b>Second Wind</b> (instant party Stamina refill countering Stamina Fatigue) &amp; <b>Enduring Cry</b> (+Max Stamina)</td>
-          <td><span class="d2-dim">&mdash;</span></td>
-        </tr>
-        <tr bgcolor="#120e0a">
-          <td><b class="d2-gold">Druid</b><br><span class="d2-blue">Planned</span></td>
-          <td>Stationary, Targetable Resource Totems <span class="d2-dim">(high Mana, long CD, scaling HP/Res/Duration to plant &amp; defend)</span></td>
-          <td><b>Life Totem</b> (party <i>Life After Each Kill</i> aura)</td>
-          <td><span class="d2-dim">&mdash; (remains Paladin / Barbarian domain)</span></td>
-          <td><b>Mana Totem</b> (party <i>Mana After Each Kill</i> aura)</td>
-        </tr>
-      </table>
-    </div>
-
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>CO-OP ROADMAP &mdash; DYNAMIC ENCOUNTERS &amp; LOOT SCALING</h2>
-        <div class="section-sub">Making 2&ndash;8 player games tactically distinct and genuinely more rewarding</div>
-      </div>
-      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
-        <ul style="margin:0;padding-left:18px;">
-          <li style="margin-bottom:6px;"><b class="d2-gold">Tactical Monster Skill Scaling (Bypassing Static /players N):</b> Vanilla D2R only scales monster HP (+50%/player) and NM/Hell physical damage (+6.25%/player), leaving monster speed, elemental spells, and attack patterns frozen at P1. By fixing <code>minHP = maxHP</code> on monsters, Act Bosses, Super Uniques, and iconic Hell monster families can read their own <code>maxhp</code> and <code>hitpoints</code> to unlock <b>new secondary sub-missiles, faster speed/attack tempo, extended range/AoE, co-op elemental spell scaling, and &lt;50% HP boss enrage phases</b> as player count grows.</li>
-          <li style="margin-bottom:6px;"><b class="d2-gold">Co-Op Magic Find &amp; Gold Find Bounty (<code>coop_bounty</code>):</b> Broadly applied by Act Bosses, Super Uniques, and normal monsters when <code>maxhp</code> crosses co-op thresholds (P2+ / P4+). Nearby players actively fighting together receive a short-duration <b>+Magic Find &amp; +Gold Find</b> bounty &mdash; rewarding real combat gear over pure MF gear while preventing AFK town leeching.</li>
-          <li style="margin-bottom:6px;"><b class="d2-gold">Scaling Gems, Runes &amp; Boss Drops (<code>Picks + NoDrop</code>):</b> Because Magic Find does not affect Gems or Runes, Champions, Uniques, Chests, and Act Bosses will be re-tuned with higher <code>Picks</code> and calibrated <code>NoDrop</code> &mdash; preserving the <b>exact same solo P1 average</b> while scaling co-op drops up to <b>~2.7&times;</b> in 4-player games.</li>
-          <li style="margin-bottom:0;"><b class="d2-gold">Clean Co-Op Summon Readability:</b> Upcoming Druid and Necromancer reworks will favor leaner, tougher summon rosters (few Druid beasts + stationary Totems; slightly tighter Necromancer armies) with co-op survivability tuning so group arenas stay readable without body-blocking melee teammates.</li>
+        <p style="margin:0 0 8px 0;">Castalia has <b>no ladder</b> and no always-on server lobby to wander around in. Instead, co-op works like a <b>tabletop D&amp;D campaign</b>: a <b>Host</b> schedules a run and sets the seat cap, and players either join from Level 1 or <b>drop in</b> mid-campaign. You always know when a party is actually playing.</p>
+        <ul style="margin:0 0 12px 0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Joining / Dropping In:</b> Pick an open campaign in the launcher. For a fresh Act 1 run you start at Level 1 with 2,000 gold; for an in-progress campaign, the launcher generates a <b>level- and Act-matched Drop-In character</b> with starter gold, gems, and runes. Plan to log in <b>~15 minutes early</b> to vendor-shop and Cube-craft your starting kit, then jump straight into the session.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Hosting a Campaign:</b> Click <b>+ Create Campaign</b> with a clear time slot (e.g. <i>Fri 8 PM CT</i>) and seat limit (2&ndash;5 works best). Make sure your port or tunnel (such as <code>playit.gg</code>) is set once in <b>Settings</b>, then click <b>Play Campaign</b> at session time &mdash; the launcher handles your isolated saves, posts your session to <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Discord</a>, and displays your exact host settings inside D2RLoader.</li>
         </ul>
-      </div>
-    </div>
-
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>CO-OP ROADMAP &mdash; PURE &ldquo;EXPEDITION MODE&rdquo;</h2>
-        <div class="section-sub">Zero Field Waypoints + Zero Town Portals &mdash; every Act becomes a true party dungeon crawl</div>
-      </div>
-      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
-        <p style="margin:0 0 8px 0;">Alongside Castalia's existing <b>no-Town-Portal</b> design, an optional <b>Expedition Mode</b> removes all <b>34 field Waypoints</b> (retaining only the <b>5 Town Waypoints</b> for Act-to-Act travel). Stepping out of Town commits your party to a continuous expedition from Town to Act Boss:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px 0;">
+          <a href="https://github.com/grant0711/d2r-castalia/releases/latest/download/castalia-launcher-win64.exe" target="_blank" rel="noopener" style="display:inline-block;background:#3a2b14;border:1px solid #d4af37;color:#f5e1a4;font-weight:bold;padding:8px 16px;text-decoration:none;border-radius:3px;">&#11015; Download Castalia Launcher (Windows x64)</a>
+          <a href="https://d2rloader.net/" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#8cd0ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Install D2RLoader (Required) &#8599;</a>
+          <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#a8b4ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Join Co-Op Discord &#8599;</a>
+        </div>
+        <details style="margin:0 0 14px 0;border:1px solid #3a2e1f;background:#0f0c08;padding:8px 12px;border-radius:3px;">
+          <summary style="cursor:pointer;color:#d4af37;font-weight:bold;">Linux / Steam Deck Install Instructions (Proton / Wine)</summary>
+          <ol style="margin:8px 0 4px 18px;padding:0;line-height:1.6;">
+            <li><b>Install D2RLoader:</b> Download from <a href="https://d2rloader.net/" target="_blank" rel="noopener" style="color:#8cd0ff;">d2rloader.net</a> and extract into your <code>Diablo II Resurrected</code> folder.</li>
+            <li><b>Clone &amp; run the Launcher (Python 3.10+, zero pip packages required):</b><br><code>git clone https://github.com/grant0711/d2r-castalia.git &amp;&amp; cd d2r-castalia &amp;&amp; ./bin/d2r-launcher</code></li>
+            <li><b>Set paths once in Settings:</b> Point <b>D2R Game Directory</b> to your D2R install folder and <b>D2R Save Directory</b> to your Wine/Proton prefix's <code>.../Saved Games/Diablo II Resurrected/mods/castalia</code> folder. The launcher auto-downloads the pinned Castalia release and isolates your saves.</li>
+          </ol>
+        </details>
+        <div style="text-align:center;margin:0 0 12px 0;">
+          <a href="img/castalia_launcher.png" target="_blank" rel="noopener">
+            <img src="img/castalia_launcher.png" alt="Castalia Campaign Launcher" style="max-width:100%;height:auto;border:1px solid #5a4628;border-radius:3px;box-shadow:0 2px 12px rgba(0,0,0,0.65);">
+          </a>
+        </div>
         <ul style="margin:0;padding-left:18px;">
-          <li style="margin-bottom:5px;"><b class="d2-gold">Live Off the Land:</b> Increased monster potion drop weights and <b>Superchest windfalls</b> (pots/barrels are removed in Castalia), paired with on-the-go Horadric Cube crafting from found bases, Gems, and Runes.</li>
-          <li style="margin-bottom:5px;"><b class="d2-gold">Diegetic Survival Constraints:</b> Weapon durability is already doubled with <b>no</b> Cube repair recipes (broken gear forces a real haul-vs.-swap decision), quiver stacks remain at <b>255</b>, Identify scrolls stay intentionally scarce (identify vs. blind-craft tension), and Shrines/Wells keep standard density with tuned refresh timers.</li>
-          <li style="margin-bottom:0;"><b class="d2-gold">Expedition-Leg Resistance Cohesion:</b> Monster resistances/vulnerabilities along each continuous Act leg (e.g., Rocky Waste &rarr; Claw Viper Temple) will be audited for cohesion so builds can feasibly push a full expedition leg without hitting back-to-back contradictory immunity walls.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">One-Click Setup (<code>castalia-launcher-win64.exe</code>):</b> Auto-installs the pinned Castalia release with SHA-256 verification and launches D2RLoader with zero manual config editing.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Crash-Safe Isolated Saves:</b> Each campaign gets its own isolated save profile &mdash; your solo characters and <code>Settings.json</code> stay completely untouched.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">In-Game Guide &amp; Hall of Heroes:</b> The bundled <code>castalia-autohost.dll</code> plugin shows your host/join steps inside D2RLoader's Multiplayer screen, and completed sessions automatically update your party roster and Hall of Heroes.</li>
         </ul>
       </div>
     </div>
@@ -2196,6 +2099,62 @@ def build_site() -> str:
 
     <!-- TABS 5-8: INTERACTIVE CLASS SKILL TREES & COMPENDIUM -->
     {"".join(class_sections_html)}
+
+    <!-- WIP CLASS TABS: AMAZON, DRUID, NECROMANCER -->
+    <div class="tab-panel" id="tab-class-ama">
+      <a name="class-ama"></a>
+      <div class="section-block">
+        <div class="section-title-bar">
+          <h2>AMAZON &mdash; WORK IN PROGRESS (NEXT UP)</h2>
+          <div class="section-sub">Not yet enabled in the Alpha launcher &mdash; core design locked and next in the rework queue</div>
+        </div>
+        <div style="border:1px solid #4a3c28;background:#14100b;padding:14px 18px;margin:10px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+          <p style="margin:0 0 10px 0;">The Amazon is being rebuilt from the ground up as Castalia's <b>rhythmic duelist, skirmisher, and siege marksman</b>:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:6px;"><b class="d2-gold">Reactive Counter-Attacks (<code>Riposte</code> &amp; <code>Countershot</code>):</b> Being swung at in melee (even if you <i>Dodge</i> or block) opens a 3-second <b>Riposte</b> spear/javelin counter window; incoming missiles open a 3-second <b>Countershot</b> return-fire window.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Setup &rarr; Payoff Cadence (<code>Sighted</code>):</b> Tactical openers (<i>Inner Sight</i>, <i>Impale</i>, <i>Poison Javelin</i>, elemental arrows) light up a 4-second window empowering payoff volleys and flurries.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Bow vs. Crossbow Split:</b> Fast, Stamina-driven <b>Bows</b> for agile skirmishers vs. heavy <b>Crossbows</b> (<i>Siege Bolt</i>, <i>Ballista</i>) whose mechanical draw bypasses Stamina degradation &mdash; enabling a Heavy Armor Arbalest fighting behind <i>Valkyrie</i> and <i>Decoy</i>.</li>
+            <li style="margin-bottom:0;"><b class="d2-gold">Already Live Under the Hood:</b> 4-tier scaling Valkyrie equipment, resistance/elemental Quivers, and auto-replenishing Javelins.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-class-dru">
+      <a name="class-dru"></a>
+      <div class="section-block">
+        <div class="section-title-bar">
+          <h2>DRUID &mdash; WORK IN PROGRESS</h2>
+          <div class="section-sub">Not yet enabled in the Alpha launcher &mdash; planned after the Amazon overhaul</div>
+        </div>
+        <div style="border:1px solid #4a3c28;background:#14100b;padding:14px 18px;margin:10px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+          <p style="margin:0 0 10px 0;">The Druid overhaul focuses on <b>tactical field totems, high-impact companions, and grounded shapeshifting</b>:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:6px;"><b class="d2-gold">Stationary Party Resource Totems:</b> High-mana, targetable <b>Life Totem</b> (party <i>Life After Each Kill</i>) and <b>Mana Totem</b> (party <i>Mana After Each Kill</i>) that you plant and defend as battlefield anchors.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Leaner, Tougher Beast Roster:</b> Fewer, more durable animal companions tuned for co-op readability and Nightmare/Hell survivability without body-blocking melee teammates.</li>
+            <li style="margin-bottom:0;"><b class="d2-gold">Shapeshifting &amp; Elemental Rhythms:</b> Full 6-tier Castalia skill grid integrating Martial Stamina into Werewolf/Werebear forms and giving Fire/Wind spells deliberate, active casting loops.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-class-nec">
+      <a name="class-nec"></a>
+      <div class="section-block">
+        <div class="section-title-bar">
+          <h2>NECROMANCER &mdash; WORK IN PROGRESS</h2>
+          <div class="section-sub">Not yet enabled in the Alpha launcher &mdash; planned alongside the Druid overhaul</div>
+        </div>
+        <div style="border:1px solid #4a3c28;background:#14100b;padding:14px 18px;margin:10px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+          <p style="margin:0 0 10px 0;">The Necromancer is being reimagined around <b>deliberate dark tactics and clean co-op armies</b>:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:6px;"><b class="d2-gold">Quality-Over-Quantity Armies:</b> Tighter, tougher summon rosters tuned for Nightmare/Hell staying power and clean co-op screen readability rather than lagging walls of skeletons.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Tactical Curses &amp; Corpse Economy:</b> Rebalanced Curses (respecting Castalia's zero-free-immunity-breaker boundary) paired with intentional Bone, Poison, and Corpse-driven combat loops.</li>
+            <li style="margin-bottom:0;"><b class="d2-gold">Full 30-Skill Ground-Up Pass:</b> Rebuilt on the 6-tier level grid (<code>1 / 8 / 16 / 24 / 32 / 40</code>) with honest tooltips and active cross-tree synergies.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <div class="retro-footer">
       &#9876; <b>THE CASTALIA COMPENDIUM</b> &#9876; &nbsp;|&nbsp; Built for <i>Diablo II: Resurrected</i>
@@ -3382,6 +3341,9 @@ var D2_CALC_DATA = {calc_payload_json};
     "#class-bar": "tab-class-bar",
     "#class-ass": "tab-class-ass",
     "#class-sor": "tab-class-sor",
+    "#class-ama": "tab-class-ama",
+    "#class-dru": "tab-class-dru",
+    "#class-nec": "tab-class-nec",
     "#gems-skulls": "tab-items",
     "#runes-33": "tab-items",
     "#monsters": "tab-world",
@@ -3409,15 +3371,27 @@ var D2_CALC_DATA = {calc_payload_json};
 
   for (var tb = 0; tb < tabBtns.length; tb++) {{
     tabBtns[tb].addEventListener("click", function(e) {{
+      e.preventDefault();
       var tid = this.getAttribute("data-tab");
-      if (tid) activateTab(tid, false);
+      var href = this.getAttribute("href");
+      if (tid) activateTab(tid, true);
+      if (href && window.history && window.history.replaceState) {{
+        window.history.replaceState(null, "", href);
+      }}
     }});
   }}
 
   for (var tl = 0; tl < tabLinks.length; tl++) {{
-    tabLinks[tl].addEventListener("click", function() {{
+    tabLinks[tl].addEventListener("click", function(e) {{
       var tid = this.getAttribute("data-tab-link");
-      if (tid) activateTab(tid, true);
+      var href = this.getAttribute("href");
+      if (tid) {{
+        e.preventDefault();
+        activateTab(tid, true);
+        if (href && window.history && window.history.replaceState) {{
+          window.history.replaceState(null, "", href);
+        }}
+      }}
     }});
   }}
 

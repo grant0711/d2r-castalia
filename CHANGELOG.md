@@ -8,6 +8,12 @@ Versioning follows **Save-Aware SemVer** (`vMAJOR.MINOR.PATCH` — see [docs/sys
 
 ---
 
+## [v0.4.0] - 2026-11-26
+
+**Save Compatibility:** 🟡 Save-Compatible (Respec Recommended)
+
+First public Alpha release of Castalia! Includes the Castalia Campaign Launcher (Windows x64 & Linux), live Cloudflare Campaign Hub, castalia-autohost.dll D2RLoader plugin, 4 reworked classes (Paladin, Barbarian, Assassin, Sorceress), zero-Runeword Gem+Rune Cube crafting, and the updated Compendium.
+
 ## [v0.3.0] - 2026-11-25
 
 **Save Compatibility:** 🟢 Initial Versioned Baseline

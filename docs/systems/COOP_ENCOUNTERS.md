@@ -163,6 +163,33 @@ Because **Magic Find does not affect Gems or Runes**, and vanilla Champions/Uniq
   2. Update `STAT_BITS` in `tools/mod_builder/char_manager.py` and `tools/build_site.py`.
   3. Roll out cleanly before launching recurring community co-op campaigns (one-time migration/recreation of existing dev test saves).
 
+---
+
+## 9. D2RLoader Expanded Table Ceilings & Co-Op Design Headroom
+
+Because Castalia targets **D2RLoader**, we are no longer bound by vanilla D2R's cramped table ceilings when designing co-op enemy skills, boss phases, and optional dungeon encounters:
+
+### Verified D2RLoader Platform Limits
+| Table / System | Vanilla D2R Limit | D2RLoader Expanded Limit | Impact on Castalia |
+| :--- | :--- | :--- | :--- |
+| **`skills.txt`** | Tight (~380 rows) | **Up to 32,768 rows** + wider skill references | Every Act Boss, Super Unique, and Hell monster family can have dedicated, non-shared skill rows (no recycling player or generic monster skills). |
+| **`states.txt`** | Very tight (~255 rows) | **Up to 32,768 rows** | Dedicated visual telegraphs (`diablo_enrage_p2`, `mephisto_storm_charge`), clean `boss_phase_*` / `coop_t*` state flags (keeping calcs well under the 248-char limit), and non-colliding enemy debuffs. |
+| **`monstats.txt` / Super Uniques** | ~750 rows | **Up to 32,768 rows** | Bespoke mini-bosses for all **26 Optional Exploration Dungeons** + dedicated co-op "Combo Pack" variants. |
+| **Affixes / Sets / Uniques** | 511-candidate affix cap | **Up to 32,768 rows**; 511-candidate cap removed | Zero affix-pool truncation risk as itemization expands. |
+| **Base Items** (`weapons`/`armor`/`misc`) | Legacy tight cap | **98,304 combined rows** | Ample room for custom expedition/co-op items and Lockboxes. |
+| **Levels & Maps** (`levels.txt`) | Fixed act slots | **Up to 65,535 level IDs**, appended levels in any Act, larger outdoor maps | Long-term runway for custom Castalia expedition dungeons or co-op boss arenas. |
+| **Strings & Compilation** | Numeric ID collisions + slow TXT compile | **Namespaced strings** (`d2rloader/metadata.json` → `"namespace": "castalia"` → `castalia:...`) + **`D2RLCompiler 1.0.0`** validated BINs + faster large-table loads + improved Offline Reload | Eliminates Blizzard patch string collisions and slashes startup compile time for Castalia's ~394k-row `cubemain.txt`. |
+
+> [!IMPORTANT]
+> **Extended Save Format Tradeoff:** D2RLoader also offers an optional **Extended Save Format** (1 MiB save cap, wider stat/skill/affix IDs, incompatible with retail D2R). Keep the **default retail v105 `.d2s` format** unless/until we intentionally update `char_manager.py`, the Compendium browser `.d2s` builder, and the Castalia Launcher's Drop-In Starter-Kit & telemetry parser to match the extended format.
+
+### Creative Co-Op Design Patterns Unlocked by These Ceilings
+1. **Bespoke Role-Testing Boss & Family Kits (`skills.txt`):** Dedicated backline-pressuring volleys (testing frontline CC like `War Cry`, `Holy Freeze`, `Shadow Bind`) and sustained attrition zones (testing Paladin `Prayer`/`Salvation`, Barbarian `Battle Command`, and Druid `Life/Mana Totems`).
+2. **Readable Phase Telegraphs & Resource-Targeted Debuffs (`states.txt`):** Visible overlays for `<50%` HP boss enrages and co-op tiers, plus non-colliding enemy debuffs—e.g., *Fatigue Hex* (stamina drain/slow countered by Barbarian `Second Wind` / Paladin `Vigor`) and *Mana Siphon* (countered by Paladin `Meditation` / Druid `Mana Totem`).
+3. **26 Signature Dungeon Mini-Bosses (`monstats.txt`):** Custom-paletted, `minHP = maxHP` mini-bosses with bespoke skill loadouts and `coop_bounty` profiles to anchor Castalia's optional dungeons as D&D-style micro-adventure climaxes.
+4. **Two-Role "Combo Packs" for Voice-Chat Callouts:** Pairing slow, high-HP bruisers with fragile aura/hex casters using dedicated buff states so co-op parties naturally coordinate target priority (*"Focus the Hex-Weaver while frontline holds the Juggernaut!"*).
+
+
 
 
 

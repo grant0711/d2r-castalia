@@ -7,10 +7,11 @@ to game/Diablo II Resurrected/mods/<mod_name>/<mod_name>.mpq/.
 """
 import json
 import os
+import sys
 from typing import Dict, List, Tuple
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mod_config.json")
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+REPO_ROOT = getattr(sys, "_MEIPASS", os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 D2R_PLATFORM_ROOT = os.environ.get("D2R_PLATFORM_ROOT", REPO_ROOT)
 GAME_DIR = os.environ.get("D2R_GAME_DIR", os.path.join(D2R_PLATFORM_ROOT, "game/Diablo II Resurrected"))
 VANILLA_ROOT = os.environ.get("D2R_VANILLA_ROOT", os.path.join(D2R_PLATFORM_ROOT, "vanilla-reference"))

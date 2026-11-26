@@ -1,8 +1,8 @@
 {
   "mod_name": "castalia",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "save_schema": 1,
-  "save_compat": "compatible",
+  "save_compat": "respec",
   "d2r_patch": "95032",
   "austerity_level": 1.0,
   "economy": {
@@ -27,7 +27,7 @@
     "unique_packs_per_zone": 1,
     "normal_monster_hp_multiplier": 2.5,
     "normal_monster_dmg_multiplier": 1.45,
-    "normal_monster_ar_multiplier": 1.40,
+    "normal_monster_ar_multiplier": 1.4,
     "normal_monster_xp_multiplier": 3.84,
     "act_boss_xp_levels_granted": 1.8
   },

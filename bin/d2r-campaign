@@ -1,0 +1,263 @@
+#!/usr/bin/env python3
+"""
+bin/d2r-campaign — Tight, agent-friendly CLI for Castalia Campaigns & Save Profiles.
+Shares castalia_hub/core.py and ~/.local/share/castalia-hub with bin/d2r-launcher.
+"""
+import argparse
+import json
+import os
+import sys
+
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+from castalia_hub.core import CastaliaHub
+from castalia_hub.local_server import start_local_api_server
+
+
+def _out(data, as_json: bool, human_fn=None):
+    if as_json:
+        print(json.dumps(data, indent=2))
+    elif human_fn:
+        human_fn(data)
+    else:
+        print(json.dumps(data, indent=2))
+
+
+def main():
+    p = argparse.ArgumentParser(description="Castalia Campaign Hub CLI")
+    p.add_argument("--api", help="Override Campaign API URL")
+    p.add_argument("--data-dir", help="Override local hub data directory")
+    p.add_argument("--json", action="store_true", help="Output structured JSON (agent mode)")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    sub.add_parser("env", help="Show D2R, D2RLoader, and local version cache status")
+
+    p_list = sub.add_parser("list", help="List public campaigns")
+    p_list.add_argument("--ruleset", help="Filter by ruleset")
+    p_list.add_argument("--open", action="store_true", help="Only show campaigns with open seats")
+
+    p_show = sub.add_parser("show", help="Show campaign details & session roster")
+    p_show.add_argument("campaign_id")
+
+    p_ver = sub.add_parser("versions", help="List available GitHub Releases & local cache")
+    p_ver.add_argument("--cached", action="store_true")
+
+    p_chars = sub.add_parser("chars", help="List .d2s characters & builds in a profile")
+    p_chars.add_argument("target", help="<campaign_id> or 'solo'")
+
+    p_sw = sub.add_parser("switch", help="Swap active save profile into mods/castalia/")
+    p_sw.add_argument("target", help="<campaign_id> or 'solo'")
+
+    p_create = sub.add_parser("create", help="Create a new public campaign (Host)")
+    p_create.add_argument("--title", required=True)
+    p_create.add_argument("--description", default="")
+    p_create.add_argument("--ruleset", default="standard", choices=["standard", "expedition", "three_lives", "hardcore", "oneshot"])
+    p_create.add_argument("--version", default="0.3.0", help="Pinned Castalia version (any GitHub Release)")
+    p_create.add_argument("--level", type=int, default=1)
+    p_create.add_argument("--wp", default="a1n")
+    p_create.add_argument("--seats", type=int, default=5)
+    p_create.add_argument("--schedule", default="Weekly")
+    p_create.add_argument("--next", dest="next_utc", default=None, help="Next session ISO-8601 UTC timestamp")
+    p_create.add_argument("--recurrence-days", type=int, default=7)
+    p_create.add_argument("--host-name", default=None)
+
+    p_rsvp = sub.add_parser("rsvp", help="RSVP to a campaign (returning or --drop-in)")
+    p_rsvp.add_argument("campaign_id")
+    p_rsvp.add_argument("--char", dest="char_name", required=True, help="Character name")
+    p_rsvp.add_argument("--class", dest="char_class", help="Class code (pal|bar|ass|sor|ama|dru|nec), required for --drop-in")
+    p_rsvp.add_argument("--drop-in", action="store_true", help="Generate Starter-Kit .d2s at campaign's current Level & WP")
+    p_rsvp.add_argument("--player-name", default=None)
+
+    p_live = sub.add_parser("live", help="Mark campaign LIVE with D2RLoader Game ID (Host)")
+    p_live.add_argument("campaign_id")
+    p_live.add_argument("--game-id", required=True)
+
+    p_end = sub.add_parser("end-session", help="End live session & update progress (Host)")
+    p_end.add_argument("campaign_id")
+    p_end.add_argument("--level", type=int, default=None)
+    p_end.add_argument("--wp", default=None)
+    p_end.add_argument("--next", dest="next_utc", default=None)
+
+    p_upg = sub.add_parser("upgrade", help="Explicitly upgrade a campaign's pinned Castalia version (Host)")
+    p_upg.add_argument("campaign_id")
+    p_upg.add_argument("--version", required=True)
+
+    p_del = sub.add_parser("delete", help="Permanently delete a campaign you created (Host)")
+    p_del.add_argument("campaign_id")
+
+    p_comp = sub.add_parser("complete", help="Complete campaign & archive to Hall of Heroes (Host)")
+    p_comp.add_argument("campaign_id")
+    p_comp.add_argument("--summary", required=True)
+    p_comp.add_argument("--deaths", type=int, default=0)
+    p_comp.add_argument("--sessions", type=int, default=1)
+
+    p_launch = sub.add_parser("launch", help="Sync mod version, swap save profile, launch D2RLoader & sync telemetry")
+    p_launch.add_argument("target", help="<campaign_id> or 'solo'")
+    p_launch.add_argument("--dry-run", action="store_true", help="Swap profile & verify version without launching D2RLoader")
+
+    sub.add_parser("chronicles", help="List completed Hall of Heroes campaigns")
+
+    p_srv = sub.add_parser("serve", help="Run local SQLite Campaign Hub API server")
+    p_srv.add_argument("--host", default="127.0.0.1")
+    p_srv.add_argument("--port", type=int, default=8787)
+    p_srv.add_argument("--db", default=None)
+
+    args = p.parse_args()
+    hub = CastaliaHub(data_dir=args.data_dir, api_url=args.api)
+
+    if args.cmd == "serve":
+        db_path = args.db or os.path.join(hub.data_dir, "campaigns.db")
+        srv, _ = start_local_api_server(db_path, host=args.host, port=args.port)
+        print(f"[d2r-campaign] Local Campaign Hub API listening on http://{args.host}:{args.port} (db: {db_path})")
+        try:
+            srv.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        return
+
+    if args.cmd == "env":
+        _out(hub.detect_d2r_env(), args.json)
+        return
+
+    if args.cmd == "versions":
+        rels = hub.list_github_releases()
+        if args.cached:
+            rels = [r for r in rels if r.get("cached")]
+        _out(rels, args.json, lambda rs: print("\n".join(f"  v{r['version']:8s}  {'[cached]' if r['cached'] else '[remote]'}  {r['published_at']}" for r in rs) or "(none)"))
+        return
+
+    if args.cmd == "chars":
+        chars = hub.list_profile_chars(args.target)
+        _out(
+            chars,
+            args.json,
+            lambda cs: print("\n".join(f"  {c['char_name']:15s} Lvl {c.get('char_level', '?'):>2} {c.get('class_name', '?'):11s} {c.get('char_wp', '?'):5s} ({c.get('build_summary', '')})" for c in cs) or "(no characters in profile)"),
+        )
+        return
+
+    if args.cmd == "switch":
+        pid = hub.swap_to_profile(args.target)
+        _out({"switched_to": pid}, args.json, lambda d: print(f"Switched live save directory to profile: {d['switched_to']}"))
+        return
+
+    if args.cmd == "list":
+        camps = hub.list_campaigns(ruleset=args.ruleset, open_only=args.open)
+        def _fmt_list(cs):
+            if not cs:
+                print("(no active campaigns)")
+                return
+            for c in cs:
+                badge = "LIVE" if c["status"] == "live" else c["status"].upper()
+                print(f"[{badge:10s}] {c['id']:26s} | {c['title']} (v{c['castalia_version']}) | Lvl {c['current_level']} {c['current_wp']} | {c['confirmed_seats']}/{c['max_seats']} seats | {c['schedule_text']}")
+        _out(camps, args.json, _fmt_list)
+        return
+
+    if args.cmd == "show":
+        c = hub.get_campaign(args.campaign_id)
+        def _fmt_show(d):
+            print(f"{d['title']} [{d['id']}] — v{d['castalia_version']} ({d['ruleset']}, {d['status']})")
+            print(f"  Host: {d['host_name']} | Progress: Lvl {d['current_level']} {d['current_wp']} | Schedule: {d['schedule_text']}")
+            if d.get("live_join_info"):
+                print(f"  LIVE Game ID: {d['live_join_info']}")
+            print(f"  Roster ({d.get('confirmed_seats', 0)}/{d['max_seats']}):")
+            for r in d.get("rsvps", []):
+                b = f" ({r['build_summary']})" if r.get("build_summary") else ""
+                print(f"    - {r['player_name']}: Lvl {r['char_level']} {r['char_class']} {r['char_name']}{b} [{r['join_mode']}/{r['status']}]")
+        _out(c, args.json, _fmt_show)
+        return
+
+    if args.cmd == "create":
+        payload = {
+            "title": args.title,
+            "description": args.description,
+            "ruleset": args.ruleset,
+            "castalia_version": args.version,
+            "current_level": args.level,
+            "current_wp": args.wp,
+            "max_seats": args.seats,
+            "schedule_text": args.schedule,
+            "next_session_utc": args.next_utc,
+            "recurrence_days": args.recurrence_days,
+        }
+        if args.host_name:
+            payload["host_name"] = args.host_name
+        res = hub.create_campaign(payload)
+        _out(res, args.json, lambda r: print(f"Created campaign '{r['campaign']['title']}' -> id={r['campaign']['id']} (host_token saved locally)"))
+        return
+
+    if args.cmd == "rsvp":
+        camp = hub.get_campaign(args.campaign_id)
+        if args.drop_in:
+            if not args.char_class:
+                sys.exit("ERROR: --class is required with --drop-in")
+            telem = hub.create_dropin_char(args.campaign_id, args.char_name, args.char_class, camp["current_level"], camp["current_wp"])
+            res = hub.rsvp_campaign(
+                args.campaign_id,
+                char_name=telem["char_name"],
+                char_class=telem["char_class"],
+                join_mode="drop_in",
+                char_level=telem["char_level"],
+                char_wp=telem["char_wp"],
+                build_summary=telem["build_summary"],
+                player_name=args.player_name,
+            )
+            res["generated_char"] = telem
+        else:
+            chars = hub.list_profile_chars(args.campaign_id)
+            match = next((x for x in chars if x["char_name"].lower() == args.char_name.lower()), None)
+            cls_code = args.char_class or (match["char_class"] if match else "pal")
+            lvl = match["char_level"] if match else camp["current_level"]
+            wp = match["char_wp"] if match else camp["current_wp"]
+            bs = match["build_summary"] if match else ""
+            res = hub.rsvp_campaign(
+                args.campaign_id,
+                char_name=args.char_name,
+                char_class=cls_code,
+                join_mode="returning",
+                char_level=lvl,
+                char_wp=wp,
+                build_summary=bs,
+                player_name=args.player_name,
+            )
+        _out(res, args.json, lambda r: print(f"RSVPed {r['rsvp']['char_name']} ({r['rsvp']['join_mode']}) -> status={r['rsvp']['status']}"))
+        return
+
+    if args.cmd == "live":
+        res = hub.go_live(args.campaign_id, args.game_id)
+        _out(res, args.json, lambda d: print(f"Campaign '{d['id']}' is now LIVE (Game ID: {d['live_join_info']})"))
+        return
+
+    if args.cmd == "end-session":
+        res = hub.end_session(args.campaign_id, current_level=args.level, current_wp=args.wp, next_session_utc=args.next_utc)
+        _out(res, args.json, lambda d: print(f"Session ended -> now Lvl {d['current_level']} {d['current_wp']} (next: {d.get('next_session_utc')})"))
+        return
+
+    if args.cmd == "upgrade":
+        res = hub.update_campaign(args.campaign_id, {"castalia_version": args.version})
+        _out(res, args.json, lambda d: print(f"Upgraded campaign '{d['id']}' pinned version -> v{d['castalia_version']}"))
+        return
+
+    if args.cmd == "delete":
+        res = hub.delete_campaign(args.campaign_id)
+        _out(res, args.json, lambda d: print(f"Deleted campaign '{d['deleted']}'"))
+        return
+
+    if args.cmd == "complete":
+        res = hub.complete_campaign(args.campaign_id, summary=args.summary, death_count=args.deaths, sessions_played=args.sessions)
+        _out(res, args.json, lambda d: print(f"Archived '{d['campaign_id']}' to Hall of Heroes ({d['id']})"))
+        return
+
+    if args.cmd == "launch":
+        res = hub.launch_session(args.target, dry_run=args.dry_run)
+        _out(res, args.json)
+        return
+
+    if args.cmd == "chronicles":
+        ch = hub.list_chronicles()
+        _out(ch, args.json, lambda items: print("\n".join(f"  🏆 {x['title']} (v{x['castalia_version']}, {x['sessions_played']} sessions, {x['death_count']} deaths) — {x['summary']}" for x in items) or "(no completed campaigns yet)"))
+
+
+if __name__ == "__main__":
+    main()

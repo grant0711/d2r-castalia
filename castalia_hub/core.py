@@ -101,6 +101,8 @@ class CastaliaHub:
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
             f.write("\n")
+        if os.name != "nt" and os.path.basename(path) == "tokens.json":
+            os.chmod(tmp, 0o600)
         os.replace(tmp, path)
 
     def get_config(self) -> Dict[str, Any]:
@@ -220,7 +222,10 @@ class CastaliaHub:
     # ── Crash-Safe Per-Campaign Save Profile Swapper ─────────────────────────
 
     def profile_id_for(self, target: str) -> str:
-        return "solo" if target == "solo" else (target if target.startswith("campaign-") else f"campaign-{target}")
+        safe = re.sub(r"[^A-Za-z0-9_-]", "", str(target or "").strip())
+        if not safe or safe == "solo":
+            return "solo"
+        return safe if safe.startswith("campaign-") else f"campaign-{safe}"
 
     def profile_dir_for(self, target: str) -> str:
         pid = self.profile_id_for(target)
@@ -246,13 +251,16 @@ class CastaliaHub:
         return copied
 
     def recover_if_dirty(self) -> Optional[str]:
-        """If active_profile.json exists (previous crash), sync live saves back to that profile."""
+        """If active_profile.json exists (previous crash), sync live saves back and restore game_port."""
         if not os.path.isfile(self.active_profile_path):
             return None
         state = self._load_json(self.active_profile_path, {})
         pid = state.get("profile_id")
         if pid:
             self._sync_live_to_profile(pid)
+        prev_port = state.get("prev_game_port")
+        if isinstance(prev_port, int) and prev_port > 0:
+            self.set_d2rloader_game_port(prev_port)
         os.remove(self.active_profile_path)
         return pid
 
@@ -434,8 +442,13 @@ class CastaliaHub:
                     os.remove(tmp_zip)
                     raise RuntimeError(f"SHA-256 mismatch for castalia-{tag}.zip!")
             os.makedirs(cache_dir, exist_ok=True)
+            real_cache = os.path.realpath(cache_dir)
             with zipfile.ZipFile(tmp_zip, "r") as zf:
-                zf.extractall(cache_dir)
+                for member in zf.infolist():
+                    dest = os.path.realpath(os.path.join(real_cache, member.filename))
+                    if not (dest == real_cache or dest.startswith(real_cache + os.sep)):
+                        raise RuntimeError(f"Unsafe zip entry detected in castalia-{tag}.zip: {member.filename}")
+                zf.extractall(real_cache)
             os.remove(tmp_zip)
 
         # Swap into game mod directory
@@ -668,12 +681,13 @@ class CastaliaHub:
                         except Exception:
                             pass
                     elif not published_fallback and LISTENER_READY_RE.search(chunk):
-                        addr = self.config.get("host_connect_address") or self._detect_public_ipv4() or "127.0.0.1"
-                        try:
-                            self.go_live(campaign_id, addr)
-                            published_fallback = True
-                        except Exception:
-                            pass
+                        addr = (self.config.get("host_connect_address") or "").strip()
+                        if addr:
+                            try:
+                                self.go_live(campaign_id, addr)
+                                published_fallback = True
+                            except Exception:
+                                pass
                 except Exception:
                     pass
             stop_event.wait(1.5)
@@ -771,6 +785,10 @@ class CastaliaHub:
             if intent_data.get("game_name"):
                 self.copy_to_clipboard(intent_data["game_name"])
         pid = self.swap_to_profile(target)
+        if prev_game_port is not None and os.path.isfile(self.active_profile_path):
+            ap = self._load_json(self.active_profile_path, {})
+            ap["prev_game_port"] = prev_game_port
+            self._save_json(self.active_profile_path, ap)
         result: Dict[str, Any] = {
             "profile_id": pid,
             "version_status": ver_status,

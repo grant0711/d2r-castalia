@@ -273,6 +273,50 @@ class TestCampaignHub(unittest.TestCase):
         r3 = self.hub.rsvp_campaign(c1, char_name="thor", char_class="pal")
         self.assertEqual(r3["rsvp"]["char_name"], "thor")
 
+    def test_security_guards_path_sanitization_and_ui_csrf(self):
+        import re as _re
+        import urllib.error
+        import urllib.request
+        from castalia_hub.ui_server import start_ui_server
+
+        # Path traversal neutralization in profile_id_for
+        self.assertEqual(self.hub.profile_id_for("../../etc/passwd"), "campaign-etcpasswd")
+        self.assertEqual(self.hub.profile_id_for("solo"), "solo")
+
+        # UI server requires per-session X-Castalia-Token & blocks bad Origin
+        ui_srv = start_ui_server(self.hub, host="127.0.0.1", port=0)
+        port = ui_srv.server_address[1]
+        t = threading.Thread(target=ui_srv.serve_forever, daemon=True)
+        t.start()
+        try:
+            base = f"http://127.0.0.1:{port}"
+            # Missing token -> 403
+            with self.assertRaises(urllib.error.HTTPError) as ctx:
+                urllib.request.urlopen(f"{base}/local/state")
+            self.assertEqual(ctx.exception.code, 403)
+
+            # Fetch HTML to get injected session token
+            html_body = urllib.request.urlopen(f"{base}/").read().decode("utf-8")
+            m = _re.search(r'name="castalia-token"\s+content="([0-9a-f]+)"', html_body)
+            self.assertIsNotNone(m)
+            tok = m.group(1)
+
+            # Valid token -> 200
+            req = urllib.request.Request(f"{base}/local/state", headers={"X-Castalia-Token": tok})
+            st = json.loads(urllib.request.urlopen(req).read().decode("utf-8"))
+            self.assertIn("config", st)
+
+            # Bad Origin -> 403 even with token
+            bad_req = urllib.request.Request(
+                f"{base}/local/state",
+                headers={"X-Castalia-Token": tok, "Origin": "https://evil.example"},
+            )
+            with self.assertRaises(urllib.error.HTTPError) as ctx2:
+                urllib.request.urlopen(bad_req)
+            self.assertEqual(ctx2.exception.code, 403)
+        finally:
+            ui_srv.shutdown()
+
 
 if __name__ == "__main__":
     unittest.main()

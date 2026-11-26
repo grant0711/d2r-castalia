@@ -2,8 +2,10 @@
 castalia_hub/ui_server.py — Local HTTP bridge serving the Castalia Launcher desktop UI
 and exposing castalia_hub.core methods as clean /local/* JSON endpoints.
 """
+import hmac
 import json
 import os
+import secrets
 import sys
 import threading
 import urllib.parse
@@ -20,25 +22,54 @@ STATIC_DIR = os.path.join(
 
 
 def make_ui_handler(hub: CastaliaHub):
+    session_token = secrets.token_hex(24)
+
     class UIHandler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             if os.environ.get("CASTALIA_UI_QUIET") != "1":
                 super().log_message(fmt, *args)
+
+        def _send_security_headers(self):
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.send_header(
+                "Content-Security-Policy",
+                "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'",
+            )
+
+        def _check_local_auth(self) -> bool:
+            host = (self.headers.get("Host") or "").split(":")[0].lower()
+            if host not in ("127.0.0.1", "localhost"):
+                self._send_json(403, {"error": "forbidden_host"})
+                return False
+            origin = self.headers.get("Origin") or ""
+            if origin and not (origin.startswith("http://127.0.0.1") or origin.startswith("http://localhost")):
+                self._send_json(403, {"error": "forbidden_origin"})
+                return False
+            tok = self.headers.get("X-Castalia-Token") or ""
+            if not hmac.compare_digest(tok, session_token):
+                self._send_json(403, {"error": "invalid_session_token"})
+                return False
+            return True
 
         def _send_json(self, code: int, payload: Any):
             raw = json.dumps(payload).encode("utf-8")
             self.send_response(code)
             self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(raw)))
+            self._send_security_headers()
             self.end_headers()
             self.wfile.write(raw)
 
         def _send_html(self, path: str):
-            with open(path, "rb") as f:
-                raw = f.read()
+            with open(path, "r", encoding="utf-8") as f:
+                html = f.read().replace("__CASTALIA_TOKEN__", session_token)
+            raw = html.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(raw)))
+            self._send_security_headers()
             self.end_headers()
             self.wfile.write(raw)
 
@@ -52,7 +83,12 @@ def make_ui_handler(hub: CastaliaHub):
             qs = urllib.parse.parse_qs(parsed.query)
             try:
                 if p in ("/", "/index.html"):
+                    host = (self.headers.get("Host") or "").split(":")[0].lower()
+                    if host not in ("127.0.0.1", "localhost"):
+                        return self._send_json(403, {"error": "forbidden_host"})
                     return self._send_html(os.path.join(STATIC_DIR, "index.html"))
+                if not self._check_local_auth():
+                    return
                 if p == "/local/state":
                     return self._send_json(200, {
                         "config": hub.get_config(),
@@ -80,6 +116,8 @@ def make_ui_handler(hub: CastaliaHub):
                 self._send_json(400, {"error": str(e)})
 
         def do_POST(self):
+            if not self._check_local_auth():
+                return
             parsed = urllib.parse.urlparse(self.path)
             p = parsed.path
             try:

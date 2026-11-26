@@ -72,7 +72,7 @@ async function syncDiscord(env, camp, confirmed) {
   const resp = await fetch(url, {
     method: camp.discord_msg_id ? "PATCH" : "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ embeds: [embed] }),
+    body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } }),
   });
   if (!resp.ok) return camp.discord_msg_id || null;
   const data = await resp.json().catch(() => ({}));
@@ -93,16 +93,25 @@ export default {
         const ruleset = url.searchParams.get("ruleset");
         const openOnly = url.searchParams.get("open_seats") === "true";
         const { results } = await env.DB.prepare(
-          "SELECT * FROM campaigns WHERE status IN ('recruiting','active','live') ORDER BY updated_at DESC"
+          "SELECT * FROM campaigns WHERE status IN ('recruiting','active','live') ORDER BY updated_at DESC LIMIT 50"
         ).all();
+        const filtered = ruleset ? results.filter((r) => r.ruleset === ruleset) : results;
+        const rsvpsByCamp = new Map();
+        if (filtered.length > 0) {
+          const placeholders = filtered.map(() => "?").join(",");
+          const allRsvps = (
+            await env.DB.prepare(
+              `SELECT * FROM rsvps WHERE status != 'cancelled' AND campaign_id IN (${placeholders}) ORDER BY created_at ASC`
+            ).bind(...filtered.map((r) => r.id)).all()
+          ).results;
+          for (const rv of allRsvps) {
+            if (!rsvpsByCamp.has(rv.campaign_id)) rsvpsByCamp.set(rv.campaign_id, []);
+            rsvpsByCamp.get(rv.campaign_id).push(sanitizeRsvp(rv));
+          }
+        }
         const out = [];
-        for (const r of results) {
-          if (ruleset && r.ruleset !== ruleset) continue;
-          const rsvps = (
-            await env.DB.prepare("SELECT * FROM rsvps WHERE campaign_id = ? AND status != 'cancelled' ORDER BY created_at ASC")
-              .bind(r.id).all()
-          ).results.map(sanitizeRsvp);
-          const item = sanitizeCampaign(r, false, rsvps);
+        for (const r of filtered) {
+          const item = sanitizeCampaign(r, false, rsvpsByCamp.get(r.id) || []);
           if (openOnly && item.confirmed_seats >= item.max_seats) continue;
           out.push(item);
         }
@@ -111,6 +120,12 @@ export default {
 
       // POST /api/campaigns
       if (parts.length === 2 && parts[0] === "api" && parts[1] === "campaigns" && req.method === "POST") {
+        const activeCount = await env.DB.prepare(
+          "SELECT COUNT(*) AS cnt FROM campaigns WHERE status IN ('recruiting','active','live')"
+        ).first();
+        if (activeCount && activeCount.cnt >= 50) {
+          return jsonResp({ error: "Active campaign limit reached (50). Please wait for an existing campaign to complete." }, 429);
+        }
         const body = await req.json();
         const cid = slugify(body.title);
         const hostToken = randHex(24);
@@ -123,18 +138,18 @@ export default {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
         ).bind(
           cid,
-          (body.host_name || "Host").trim(),
+          String(body.host_name || "Host").trim().slice(0, 32),
           tokenHash,
-          (body.title || "Untitled Campaign").trim(),
-          (body.description || "").trim(),
-          (body.ruleset || "standard").trim(),
-          String(body.castalia_version || "0.3.0").replace(/^v/, ""),
-          Number(body.current_level || 1),
-          (body.current_wp || "a1n").trim(),
+          String(body.title || "Untitled Campaign").trim().slice(0, 80),
+          String(body.description || "").trim().slice(0, 400),
+          String(body.ruleset || "standard").trim().slice(0, 24),
+          String(body.castalia_version || "0.3.0").replace(/^v/, "").slice(0, 16),
+          Math.max(1, Math.min(99, Number(body.current_level || 1))),
+          String(body.current_wp || "a1n").trim().slice(0, 12),
           Math.max(2, Math.min(8, Number(body.max_seats || 5))),
-          (body.schedule_text || "Weekly").trim(),
-          body.recurrence_days ?? 7,
-          body.next_session_utc || null,
+          String(body.schedule_text || "Weekly").trim().slice(0, 60),
+          Math.max(0, Math.min(365, Number(body.recurrence_days ?? 7))),
+          body.next_session_utc ? String(body.next_session_utc).slice(0, 40) : null,
           now,
           now
         ).run();
@@ -199,10 +214,12 @@ export default {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
           ).bind(
             rid, cid, row.next_session_utc || now,
-            (body.player_name || "Player").trim(), await sha256Hex(rsvpToken),
-            body.join_mode || "returning", charName,
-            (body.char_class || "pal").toLowerCase(), Number(body.char_level || row.current_level),
-            body.char_wp || row.current_wp, body.build_summary || "", status, now
+            String(body.player_name || "Player").trim().slice(0, 32), await sha256Hex(rsvpToken),
+            String(body.join_mode || "returning").slice(0, 16), charName,
+            String(body.char_class || "pal").toLowerCase().slice(0, 8),
+            Math.max(1, Math.min(99, Number(body.char_level || row.current_level))),
+            String(body.char_wp || row.current_wp).slice(0, 12),
+            String(body.build_summary || "").slice(0, 80), status, now
           ).run();
           const rrow = await env.DB.prepare("SELECT * FROM rsvps WHERE id = ?").bind(rid).first();
           return jsonResp({ rsvp: sanitizeRsvp(rrow), rsvp_token: rsvpToken }, 201);

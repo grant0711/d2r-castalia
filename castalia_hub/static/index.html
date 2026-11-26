@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="castalia-token" content="__CASTALIA_TOKEN__">
 <title>Castalia Launcher &amp; Campaign Hub</title>
 <style>
   :root {
@@ -183,12 +184,26 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let STATE = { config: {}, env: {}, versions: [], currentTab: "campaigns", activeCampaign: null };
+const SESSION_TOKEN = document.querySelector('meta[name="castalia-token"]')?.getAttribute("content") || "";
+let STATE = { config: {}, env: {}, versions: [], currentTab: "campaigns", activeCampaign: null, activeChars: [] };
+
+function esc(v) {
+  return String(v == null ? "" : v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 async function api(path, opts = {}) {
   const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
     ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Castalia-Token": SESSION_TOKEN,
+      ...(opts.headers || {}),
+    },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   const data = await res.json();
@@ -221,8 +236,8 @@ async function refreshState() {
   const e = STATE.env;
   document.getElementById("status-box").innerHTML =
     `<div>D2RLoader: ${e.d2rloader_found ? '<span class="ok">Ready &#10003;</span>' : '<span class="warn">Missing</span>'}</div>` +
-    `<div>Installed: <b>v${e.installed_mod_version || "none"}</b></div>` +
-    `<div>Name: <b>${STATE.config.display_name || "Wanderer"}</b></div>`;
+    `<div>Installed: <b>v${esc(e.installed_mod_version || "none")}</b></div>` +
+    `<div>Name: <b>${esc(STATE.config.display_name || "Wanderer")}</b></div>`;
 }
 
 function showTab(tab) {
@@ -262,66 +277,71 @@ async function loadCampaignList() {
       <div class="card ${c.status === 'live' ? 'live' : ''}">
         <div class="space-between">
           <div>
-            ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${c.status.toUpperCase()}</span>`}
-            <b class="serif" style="font-size:16px;color:var(--gold);">${c.title}</b>
-            <span class="pill">v${c.castalia_version}</span>
+            ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${esc(String(c.status || "").toUpperCase())}</span>`}
+            <b class="serif" style="font-size:16px;color:var(--gold);">${esc(c.title)}</b>
+            <span class="pill">v${esc(c.castalia_version)}</span>
           </div>
-          <button class="btn primary" onclick="openCampaign('${c.id}')">View / Join</button>
+          <button class="btn primary" data-cid="${esc(c.id)}" onclick="openCampaign(this.dataset.cid)">View / Join</button>
         </div>
-        <div style="margin:6px 0;color:var(--muted);">${c.description || ""}</div>
+        <div style="margin:6px 0;color:var(--muted);">${esc(c.description || "")}</div>
         <div style="font-size:12px;">
-          Host: <b>${c.host_name}</b> &middot;
-          Progress: <b>Lvl ${c.current_level} (${c.current_wp})</b> &middot;
-          Seats: <b>${c.confirmed_seats}/${c.max_seats}</b> &middot;
-          Schedule: <b>${c.schedule_text}</b> (Next: ${fmtLocalTime(c.next_session_utc)})
+          Host: <b>${esc(c.host_name)}</b> &middot;
+          Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot;
+          Seats: <b>${Number(c.confirmed_seats) || 0}/${Number(c.max_seats) || 5}</b> &middot;
+          Schedule: <b>${esc(c.schedule_text)}</b> (Next: ${esc(fmtLocalTime(c.next_session_utc))})
         </div>
       </div>`).join("");
   } catch (e) {
-    listEl.innerHTML = `<div class="card" style="border-color:var(--red);">Error: ${e.message}</div>`;
+    listEl.innerHTML = `<div class="card" style="border-color:var(--red);">Error: ${esc(e.message)}</div>`;
   }
 }
 
 async function openCampaign(cid) {
   const main = document.getElementById("main");
   main.innerHTML = `<div class="card">Loading campaign...</div>`;
-  const [c, chars] = await Promise.all([api(`/local/campaigns/${cid}`), api(`/local/chars/${cid}`)]);
+  const [c, chars] = await Promise.all([api(`/local/campaigns/${encodeURIComponent(cid)}`), api(`/local/chars/${encodeURIComponent(cid)}`)]);
   STATE.activeCampaign = c;
+  STATE.activeChars = chars;
 
   const liveBanner = c.status === "live" && c.live_join_info ? `
     <div class="card live space-between">
       <div>
         <div class="ok">&#128994; SESSION IS LIVE!</div>
-        <div>Join Address: <b style="font-size:14px;color:#fff;">${c.live_join_info}</b>
-          <button class="btn ghost" style="padding:3px 8px;margin-left:6px;" onclick="copyText('${c.live_join_info}')">Copy</button>
+        <div>Join Address: <b style="font-size:14px;color:#fff;">${esc(c.live_join_info)}</b>
+          <button class="btn ghost" style="padding:3px 8px;margin-left:6px;" onclick="copyText(STATE.activeCampaign.live_join_info)">Copy</button>
         </div>
       </div>
-      <button class="btn launch" onclick="launchTarget('${c.id}')">&#9654; Play Campaign</button>
+      <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
     </div>` : `
     <div class="card" style="display:flex;justify-content:flex-end;">
-      <button class="btn launch" onclick="launchTarget('${c.id}')">&#9654; Play Campaign</button>
+      <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
     </div>`;
 
   const charRows = chars.length
-    ? chars.map(ch => `
+    ? chars.map((ch, idx) => `
         <div class="space-between" style="padding:5px 0;border-bottom:1px solid #262015;">
-          <div><b>${ch.char_name}</b> &mdash; Lvl ${ch.char_level} ${ch.class_name} (${ch.char_wp}) <span style="color:var(--gold-dim);">[${ch.build_summary}]</span></div>
-          <button class="btn ghost" onclick="rsvpExisting('${c.id}','${ch.char_name}','${ch.char_class}',${ch.char_level},'${ch.char_wp}','${(ch.build_summary||'').replace(/'/g,"")}')">RSVP with Char</button>
+          <div><b>${esc(ch.char_name)}</b> &mdash; Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)} (${esc(ch.char_wp)}) <span style="color:var(--gold-dim);">[${esc(ch.build_summary)}]</span></div>
+          <button class="btn ghost" onclick="rsvpExistingIdx(${idx})">RSVP with Char</button>
         </div>`).join("")
     : `<div style="color:var(--muted);font-size:12px;">No characters in this campaign's isolated save profile yet.</div>`;
 
   const rosterRows = (c.rsvps || []).map((r, i) => `
     <tr>
-      <td>${i + 1}</td><td><b>${r.player_name}</b></td><td>${r.char_name}</td>
-      <td>Lvl ${r.char_level} ${r.char_class.toUpperCase()} (${r.char_wp})</td>
-      <td>${r.build_summary || "—"}</td><td><span class="pill">${r.join_mode}</span> <span class="pill">${r.status}</span></td>
+      <td>${i + 1}</td><td><b>${esc(r.player_name)}</b></td><td>${esc(r.char_name)}</td>
+      <td>Lvl ${Number(r.char_level) || 1} ${esc(String(r.char_class || "").toUpperCase())} (${esc(r.char_wp)})</td>
+      <td>${esc(r.build_summary || "—")}</td>
+      <td>
+        <span class="pill">${esc(r.join_mode)}</span> <span class="pill">${esc(r.status)}</span>
+        ${c.is_host ? `<button class="btn danger" style="padding:2px 6px;font-size:11px;margin-left:6px;" data-rid="${esc(r.id)}" onclick="kickRsvp(STATE.activeCampaign.id, this.dataset.rid)">Kick</button>` : ""}
+      </td>
     </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
 
   const hostBar = c.is_host ? `
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
       <div class="row">
-        <button class="btn" onclick="promptComplete('${c.id}')">Complete &#8594; Hall of Heroes</button>
-        <button class="btn danger" onclick="promptDelete('${c.id}', '${c.title.replace(/'/g, "")}')">Delete Campaign</button>
+        <button class="btn" onclick="promptComplete(STATE.activeCampaign.id)">Complete &#8594; Hall of Heroes</button>
+        <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
       </div>
     </div>` : "";
 
@@ -329,24 +349,24 @@ async function openCampaign(cid) {
     <div class="space-between" style="margin-bottom:10px;">
       <div class="row">
         <button class="btn ghost" onclick="showTab('campaigns')">&#8592; Back</button>
-        <h2>${c.title}</h2>
-        <span class="pill">v${c.castalia_version}</span>
+        <h2>${esc(c.title)}</h2>
+        <span class="pill">v${esc(c.castalia_version)}</span>
       </div>
-      <div style="font-size:12px;">Progress: <b>Lvl ${c.current_level} (${c.current_wp})</b> &middot; Next: <b>${fmtLocalTime(c.next_session_utc)}</b></div>
+      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b></div>
     </div>
     ${liveBanner}
     <div class="card">
       <div class="space-between" style="margin-bottom:6px;">
         <h3>Your Character (Isolated Campaign Profile)</h3>
         <div class="row">
-          <button class="btn primary" onclick="openDropInModal(false, false)">+ ${c.current_level === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${c.current_level}, ${c.current_wp})`}</button>
-          ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp('${c.id}')">Cancel RSVP</button>` : ""}
+          <button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>
+          ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp(STATE.activeCampaign.id)">Cancel RSVP</button>` : ""}
         </div>
       </div>
       ${charRows}
     </div>
     <div class="card">
-      <h3>Session Roster (${c.confirmed_seats}/${c.max_seats} Confirmed)</h3>
+      <h3>Session Roster (${Number(c.confirmed_seats) || 0}/${Number(c.max_seats) || 5} Confirmed)</h3>
       <table><thead><tr><th>#</th><th>Player</th><th>Character</th><th>Progress</th><th>Auto-Parsed Build</th><th>Status</th></tr></thead>
       <tbody>${rosterRows}</tbody></table>
     </div>
@@ -356,7 +376,7 @@ async function openCampaign(cid) {
 async function renderSolo() {
   const main = document.getElementById("main");
   const chars = await api("/local/chars/solo");
-  const rows = chars.map(ch => `<tr><td><b>${ch.char_name}</b></td><td>Lvl ${ch.char_level} ${ch.class_name}</td><td>${ch.char_wp}</td><td>${ch.build_summary}</td></tr>`).join("")
+  const rows = chars.map(ch => `<tr><td><b>${esc(ch.char_name)}</b></td><td>Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)}</td><td>${esc(ch.char_wp)}</td><td>${esc(ch.build_summary)}</td></tr>`).join("")
     || `<tr><td colspan="4" style="color:var(--muted);">No solo characters yet.</td></tr>`;
   main.innerHTML = `
     <div class="space-between" style="margin-bottom:12px;">
@@ -377,9 +397,9 @@ async function renderHoH() {
   const items = await api("/local/chronicles");
   main.innerHTML = `<h2 style="margin-bottom:12px;">&#127942; Hall of Heroes</h2>` + (items.length ? items.map(x => `
     <div class="card">
-      <div class="space-between"><b class="serif" style="font-size:16px;color:var(--gold);">${x.title}</b><span class="pill">v${x.castalia_version} &middot; ${x.ruleset}</span></div>
-      <div style="margin:6px 0;">${x.summary}</div>
-      <div style="font-size:11px;color:var(--muted);">Sessions: ${x.sessions_played} &middot; Deaths: ${x.death_count} &middot; Cleared: ${fmtLocalTime(x.completed_at)}</div>
+      <div class="space-between"><b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b><span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span></div>
+      <div style="margin:6px 0;">${esc(x.summary)}</div>
+      <div style="font-size:11px;color:var(--muted);">Sessions: ${Number(x.sessions_played) || 0} &middot; Deaths: ${Number(x.death_count) || 0} &middot; Cleared: ${esc(fmtLocalTime(x.completed_at))}</div>
     </div>`).join("") : `<div class="card">No completed Hell Baal campaigns recorded yet.</div>`);
 }
 
@@ -389,17 +409,17 @@ async function renderSettings() {
   document.getElementById("main").innerHTML = `
     <h2 style="margin-bottom:12px;">Settings &amp; Environment</h2>
     <div class="card">
-      <label>Display Name</label><input id="s-name" style="width:100%" value="${c.display_name || ''}">
-      <label>Campaign Hub API URL</label><input id="s-api" style="width:100%" value="${c.api_url || ''}">
-      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label><input id="s-hostaddr" style="width:100%" placeholder="147.185.221.21:14322 (optional)" value="${c.host_connect_address || ''}">
-      <label>Diablo II: Resurrected Install Dir</label><input id="s-gdir" style="width:100%" value="${c.d2r_game_dir || ''}">
-      <label>D2R Castalia Save Dir</label><input id="s-sdir" style="width:100%" value="${c.d2r_save_dir || ''}">
+      <label>Display Name</label><input id="s-name" style="width:100%" value="${esc(c.display_name || '')}">
+      <label>Campaign Hub API URL</label><input id="s-api" style="width:100%" value="${esc(c.api_url || '')}">
+      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label><input id="s-hostaddr" style="width:100%" placeholder="147.185.221.21:14322 (optional)" value="${esc(c.host_connect_address || '')}">
+      <label>Diablo II: Resurrected Install Dir</label><input id="s-gdir" style="width:100%" value="${esc(c.d2r_game_dir || '')}">
+      <label>D2R Castalia Save Dir</label><input id="s-sdir" style="width:100%" value="${esc(c.d2r_save_dir || '')}">
       <div style="margin-top:10px;"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
     </div>
     <div class="card">
       <h3>D2RLoader Detection</h3>
       <div style="margin-top:6px;">D2RLoader.exe: ${e.d2rloader_found ? '<span class="ok">Detected &#10003;</span>' : '<span class="warn">Not Found — <a href="https://d2rloader.net" target="_blank">Download D2RLoader &#8599;</a></span>'}</div>
-      <div>Cached Versions: ${(e.cached_versions || []).join(", ") || "(none)"}</div>
+      <div>Cached Versions: ${esc((e.cached_versions || []).join(", ") || "(none)")}</div>
     </div>
     <div class="card">
       <h3>Host &amp; RSVP Token Backup</h3>
@@ -412,7 +432,7 @@ async function renderSettings() {
 
 function openCreateModal() {
   const sel = document.getElementById("c-version");
-  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${v.version}">v${v.version} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.3.0">v0.3.0</option>`;
+  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.3.0">v0.3.0</option>`;
   openModal("modal-create");
 }
 
@@ -513,9 +533,33 @@ async function submitDropIn(andLaunch = false) {
   openCampaign(c.id);
 }
 
-async function rsvpExisting(cid, name, cls, lvl, wp, bs) {
-  await api("/local/rsvp", { method: "POST", body: { campaign_id: cid, char_name: name, char_class: cls, join_mode: "returning", char_level: lvl, char_wp: wp, build_summary: bs } });
-  toast(`RSVPed with ${name}!`);
+async function rsvpExistingIdx(idx) {
+  const ch = (STATE.activeChars || [])[idx];
+  const c = STATE.activeCampaign;
+  if (!ch || !c) return;
+  try {
+    await api("/local/rsvp", {
+      method: "POST",
+      body: {
+        campaign_id: c.id,
+        char_name: ch.char_name,
+        char_class: ch.char_class,
+        join_mode: "returning",
+        char_level: ch.char_level,
+        char_wp: ch.char_wp,
+        build_summary: ch.build_summary || "",
+      },
+    });
+    toast(`RSVPed with ${ch.char_name}!`);
+    openCampaign(c.id);
+  } catch (e) {
+    toast(e.message);
+  }
+}
+async function kickRsvp(cid, rid) {
+  if (!confirm("Remove this player from the campaign roster?")) return;
+  await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid, rsvp_id: rid } });
+  toast("Player removed from roster.");
   openCampaign(cid);
 }
 async function cancelRsvp(cid) { await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid } }); toast("RSVP cancelled."); openCampaign(cid); }

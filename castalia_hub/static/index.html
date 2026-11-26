@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="castalia-token" content="__CASTALIA_TOKEN__">
+<title>Castalia Launcher &amp; Campaign Hub</title>
+<style>
+  :root {
+    --bg: #0c0c0e;
+    --panel: #151412;
+    --panel2: #1c1a16;
+    --border: #4a3b22;
+    --border-hi: #c89b3c;
+    --gold: #f0d890;
+    --gold-dim: #b89448;
+    --text: #ddd6c5;
+    --muted: #9a907d;
+    --green: #4ec970;
+    --red: #d9534f;
+    --blue: #7bc4ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: Verdana, Geneva, sans-serif; font-size: 13px;
+    display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  h1, h2, h3, .serif { font-family: "Palatino Linotype", Georgia, serif; color: var(--gold); margin: 0; }
+
+  .topbar {
+    background: linear-gradient(180deg, #211a10 0%, #110e0a 100%);
+    border-bottom: 2px solid var(--border-hi);
+    padding: 10px 18px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar h1 { font-size: 19px; letter-spacing: 1px; }
+  .shell { display: flex; flex: 1; min-height: 0; }
+
+  .sidebar {
+    width: 220px; background: var(--panel); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; justify-content: space-between; padding: 12px 10px;
+  }
+  .nav-btn {
+    display: block; width: 100%; text-align: left; padding: 9px 12px; margin-bottom: 5px;
+    background: transparent; border: 1px solid transparent; color: var(--text);
+    font-family: "Palatino Linotype", Georgia, serif; font-size: 14px; cursor: pointer;
+  }
+  .nav-btn:hover { background: var(--panel2); border-color: var(--border); }
+  .nav-btn.active { background: #261e11; border-color: var(--border-hi); color: var(--gold); font-weight: bold; }
+
+  .status-box {
+    border-top: 1px solid var(--border); padding-top: 10px; font-size: 11px; color: var(--muted); line-height: 1.6;
+  }
+  .ok { color: var(--green); font-weight: bold; }
+  .warn { color: #e8b048; font-weight: bold; }
+
+  .main { flex: 1; overflow-y: auto; padding: 18px 22px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .space-between { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 12px;
+  }
+  .card.live { border-color: var(--green); background: #121c14; }
+  .pill {
+    display: inline-block; padding: 2px 8px; font-size: 11px; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--gold); margin-right: 4px;
+  }
+  .pill.live { border-color: var(--green); color: var(--green); font-weight: bold; }
+
+  .btn {
+    background: #2b2112; border: 1px solid var(--border-hi); color: var(--gold);
+    padding: 7px 14px; font-size: 12px; font-weight: bold; cursor: pointer;
+  }
+  .btn:hover { background: #3c2e19; }
+  .btn.primary { background: #4a3513; color: #fff4d2; }
+  .btn.launch { background: #1c4a27; border-color: var(--green); color: #e2ffe8; font-size: 13px; padding: 9px 18px; }
+  .btn.launch:hover { background: #256134; }
+  .btn.danger { background: #3b1717; border-color: var(--red); color: #ffd4d4; }
+  .btn.ghost { background: transparent; border-color: var(--border); color: var(--text); font-weight: normal; }
+
+  input, select, textarea {
+    background: #0d0c0a; border: 1px solid var(--border); color: var(--text);
+    padding: 6px 8px; font-family: inherit; font-size: 12px;
+  }
+  label { display: block; font-size: 11px; color: var(--gold-dim); margin: 8px 0 3px; text-transform: uppercase; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { border-bottom: 1px solid #2b2419; padding: 7px 8px; text-align: left; font-size: 12px; }
+  th { color: var(--gold-dim); font-size: 11px; text-transform: uppercase; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+    display: none; align-items: center; justify-content: center; z-index: 50;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    width: 540px; max-width: 94vw; max-height: 90vh; overflow-y: auto;
+    background: var(--panel); border: 2px solid var(--border-hi); padding: 18px 20px;
+  }
+  .toast {
+    position: fixed; bottom: 16px; right: 18px; background: #241c10; border: 1px solid var(--border-hi);
+    color: var(--gold); padding: 10px 14px; font-size: 12px; display: none; z-index: 80;
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>&#9876; CASTALIA LAUNCHER &amp; CAMPAIGN HUB</h1>
+  <div class="row">
+    <a href="https://grant0711.github.io/d2r-castalia/" target="_blank" rel="noopener" style="font-size:12px;">Compendium &#8599;</a>
+    <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="font-size:12px;">Discord &#8599;</a>
+    <button class="btn primary" onclick="openCreateModal()">+ Create Campaign</button>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="sidebar">
+    <div>
+      <button class="nav-btn active" id="nav-campaigns" onclick="showTab('campaigns')">Campaigns</button>
+      <button class="nav-btn" id="nav-solo" onclick="showTab('solo')">Solo Play</button>
+      <button class="nav-btn" id="nav-hoh" onclick="showTab('hoh')">Hall of Heroes</button>
+      <button class="nav-btn" id="nav-settings" onclick="showTab('settings')">Settings</button>
+    </div>
+    <div class="status-box" id="status-box">Loading environment...</div>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+
+<!-- CREATE CAMPAIGN MODAL -->
+<div class="modal-backdrop" id="modal-create">
+  <div class="modal">
+    <div class="space-between"><h3>Create New Campaign</h3><button class="btn ghost" onclick="closeModal('modal-create')">X</button></div>
+    <label>Title</label>
+    <input id="c-title" style="width:100%" placeholder="Thursday Night Pilgrimage">
+    <label>Description</label>
+    <textarea id="c-desc" rows="2" style="width:100%" placeholder="Grounded 4-player push Normal -> Hell. Drop-ins welcome!"></textarea>
+    <label>Pinned Castalia Version</label>
+    <select id="c-version" style="width:100%"></select>
+    <div class="row">
+      <div style="flex:1"><label>Start Level</label><input id="c-level" type="number" min="1" max="99" value="1" style="width:100%"></div>
+      <div style="flex:1"><label>Start Act / WP</label>
+        <select id="c-wp" style="width:100%">
+          <option value="a1n">Normal Act 1 (a1n)</option><option value="a2n">Normal Act 2 (a2n)</option><option value="a3n">Normal Act 3 (a3n)</option><option value="a4n">Normal Act 4 (a4n)</option><option value="a5n">Normal Act 5 (a5n)</option>
+          <option value="a1nm">Nightmare Act 1 (a1nm)</option><option value="a2nm">Nightmare Act 2 (a2nm)</option><option value="a3nm">Nightmare Act 3 (a3nm)</option><option value="a4nm">Nightmare Act 4 (a4nm)</option><option value="a5nm">Nightmare Act 5 (a5nm)</option>
+          <option value="a1h">Hell Act 1 (a1h)</option><option value="a2h">Hell Act 2 (a2h)</option><option value="a3h">Hell Act 3 (a3h)</option><option value="a4h">Hell Act 4 (a4h)</option><option value="a5h">Hell Act 5 (a5h)</option>
+        </select>
+      </div>
+      <div style="flex:1"><label>Max Seats</label><input id="c-seats" type="number" min="2" max="8" value="5" style="width:100%"></div>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Schedule Text</label><input id="c-sched" style="width:100%" value="Thursdays 8:00–10:00 PM"></div>
+      <div style="flex:1"><label>Next Session (Local)</label><input id="c-next" type="datetime-local" style="width:100%"></div>
+    </div>
+    <div class="row" style="justify-content:flex-end; margin-top:14px;">
+      <button class="btn ghost" onclick="closeModal('modal-create')">Cancel</button>
+      <button class="btn primary" onclick="submitCreateCampaign()">Create Campaign &amp; Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE / DROP-IN CHARACTER MODAL -->
+<div class="modal-backdrop" id="modal-dropin">
+  <div class="modal">
+    <div class="space-between"><h3 id="di-title">Create Campaign Character</h3><button class="btn ghost" onclick="closeModal('modal-dropin')">X</button></div>
+    <div id="di-banner" class="card" style="margin-top:10px; font-size:12px;"></div>
+    <label>Character Name (max 15 letters/numbers)</label>
+    <input id="di-name" style="width:100%" maxlength="15" placeholder="Lyra">
+    <label>Class</label>
+    <select id="di-class" style="width:100%">
+      <option value="pal">Paladin</option>
+      <option value="bar">Barbarian</option>
+      <option value="ass">Assassin</option>
+      <option value="sor">Sorceress</option>
+    </select>
+    <div class="row" style="justify-content:flex-end; margin-top:14px;">
+      <button class="btn ghost" onclick="closeModal('modal-dropin')">Cancel</button>
+      <button class="btn" id="di-save-btn" onclick="submitDropIn(false)">Create Character</button>
+      <button class="btn launch" id="di-launch-btn" onclick="submitDropIn(true)">Create &amp; Launch D2RLoader</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SESSION_TOKEN = document.querySelector('meta[name="castalia-token"]')?.getAttribute("content") || "";
+let STATE = { config: {}, env: {}, versions: [], currentTab: "campaigns", activeCampaign: null, activeChars: [] };
+
+function esc(v) {
+  return String(v == null ? "" : v)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Castalia-Token": SESSION_TOKEN,
+      ...(opts.headers || {}),
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+  return data;
+}
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.display = "block";
+  clearTimeout(window._t);
+  window._t = setTimeout(() => { el.style.display = "none"; }, 3600);
+}
+
+function fmtLocalTime(iso) {
+  if (!iso) return "TBD";
+  try { return new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); }
+  catch { return iso; }
+}
+
+function openModal(id) { document.getElementById(id).classList.add("open"); }
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+async function refreshState() {
+  const s = await api("/local/state");
+  STATE.config = s.config;
+  STATE.env = s.env;
+  STATE.versions = await api("/local/versions");
+  const e = STATE.env;
+  document.getElementById("status-box").innerHTML =
+    `<div>D2RLoader: ${e.d2rloader_found ? '<span class="ok">Ready &#10003;</span>' : '<span class="warn">Missing</span>'}</div>` +
+    `<div>Installed: <b>v${esc(e.installed_mod_version || "none")}</b></div>` +
+    `<div>Name: <b>${esc(STATE.config.display_name || "Wanderer")}</b></div>`;
+}
+
+function showTab(tab) {
+  STATE.currentTab = tab;
+  STATE.activeCampaign = null;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  const btn = document.getElementById("nav-" + tab);
+  if (btn) btn.classList.add("active");
+  if (tab === "campaigns") renderCampaigns();
+  else if (tab === "solo") renderSolo();
+  else if (tab === "hoh") renderHoH();
+  else if (tab === "settings") renderSettings();
+}
+
+async function renderCampaigns() {
+  const main = document.getElementById("main");
+  main.innerHTML = `<div class="space-between" style="margin-bottom:12px;">
+    <h2>Active Campaigns</h2>
+    <div class="row">
+      <label style="margin:0;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="f-open" onchange="loadCampaignList()"> Open Seats Only</label>
+      <button class="btn ghost" onclick="loadCampaignList()">Refresh</button>
+    </div>
+  </div><div id="camp-list">Loading...</div>`;
+  await loadCampaignList();
+}
+
+async function loadCampaignList() {
+  const open = document.getElementById("f-open")?.checked ? "true" : "false";
+  const listEl = document.getElementById("camp-list");
+  try {
+    const camps = await api(`/local/campaigns?open_seats=${open}`);
+    if (!camps.length) {
+      listEl.innerHTML = `<div class="card">No active campaigns yet. Click <b>+ Create Campaign</b> to host the first one!</div>`;
+      return;
+    }
+    listEl.innerHTML = camps.map(c => `
+      <div class="card ${c.status === 'live' ? 'live' : ''}">
+        <div class="space-between">
+          <div>
+            ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${esc(String(c.status || "").toUpperCase())}</span>`}
+            <b class="serif" style="font-size:16px;color:var(--gold);">${esc(c.title)}</b>
+            <span class="pill">v${esc(c.castalia_version)}</span>
+          </div>
+          <button class="btn primary" data-cid="${esc(c.id)}" onclick="openCampaign(this.dataset.cid)">View / Join</button>
+        </div>
+        <div style="margin:6px 0;color:var(--muted);">${esc(c.description || "")}</div>
+        <div style="font-size:12px;">
+          Host: <b>${esc(c.host_name)}</b> &middot;
+          Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot;
+          Seats: <b>${Number(c.confirmed_seats) || 0}/${Number(c.max_seats) || 5}</b> &middot;
+          Schedule: <b>${esc(c.schedule_text)}</b> (Next: ${esc(fmtLocalTime(c.next_session_utc))})
+        </div>
+      </div>`).join("");
+  } catch (e) {
+    listEl.innerHTML = `<div class="card" style="border-color:var(--red);">Error: ${esc(e.message)}</div>`;
+  }
+}
+
+async function openCampaign(cid) {
+  const main = document.getElementById("main");
+  main.innerHTML = `<div class="card">Loading campaign...</div>`;
+  const [c, chars] = await Promise.all([api(`/local/campaigns/${encodeURIComponent(cid)}`), api(`/local/chars/${encodeURIComponent(cid)}`)]);
+  STATE.activeCampaign = c;
+  STATE.activeChars = chars;
+
+  const liveBanner = c.status === "live" && c.live_join_info ? `
+    <div class="card live space-between">
+      <div>
+        <div class="ok">&#128994; SESSION IS LIVE!</div>
+        <div>Join Address: <b style="font-size:14px;color:#fff;">${esc(c.live_join_info)}</b>
+          <button class="btn ghost" style="padding:3px 8px;margin-left:6px;" onclick="copyText(STATE.activeCampaign.live_join_info)">Copy</button>
+        </div>
+      </div>
+      <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
+    </div>` : `
+    <div class="card" style="display:flex;justify-content:flex-end;">
+      <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
+    </div>`;
+
+  const charRows = chars.length
+    ? chars.map((ch, idx) => `
+        <div class="space-between" style="padding:5px 0;border-bottom:1px solid #262015;">
+          <div><b>${esc(ch.char_name)}</b> &mdash; Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)} (${esc(ch.char_wp)}) <span style="color:var(--gold-dim);">[${esc(ch.build_summary)}]</span></div>
+          <button class="btn ghost" onclick="rsvpExistingIdx(${idx})">RSVP with Char</button>
+        </div>`).join("")
+    : `<div style="color:var(--muted);font-size:12px;">No characters in this campaign's isolated save profile yet.</div>`;
+
+  const rosterRows = (c.rsvps || []).map((r, i) => `
+    <tr>
+      <td>${i + 1}</td><td><b>${esc(r.player_name)}</b></td><td>${esc(r.char_name)}</td>
+      <td>Lvl ${Number(r.char_level) || 1} ${esc(String(r.char_class || "").toUpperCase())} (${esc(r.char_wp)})</td>
+      <td>${esc(r.build_summary || "—")}</td>
+      <td>
+        <span class="pill">${esc(r.join_mode)}</span> <span class="pill">${esc(r.status)}</span>
+        ${c.is_host ? `<button class="btn danger" style="padding:2px 6px;font-size:11px;margin-left:6px;" data-rid="${esc(r.id)}" onclick="kickRsvp(STATE.activeCampaign.id, this.dataset.rid)">Kick</button>` : ""}
+      </td>
+    </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
+
+  const hostBar = c.is_host ? `
+    <div class="card">
+      <h3 style="margin-bottom:8px;">Host Controls</h3>
+      <div class="row">
+        <button class="btn" onclick="promptComplete(STATE.activeCampaign.id)">Complete &#8594; Hall of Heroes</button>
+        <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
+      </div>
+    </div>` : "";
+
+  main.innerHTML = `
+    <div class="space-between" style="margin-bottom:10px;">
+      <div class="row">
+        <button class="btn ghost" onclick="showTab('campaigns')">&#8592; Back</button>
+        <h2>${esc(c.title)}</h2>
+        <span class="pill">v${esc(c.castalia_version)}</span>
+      </div>
+      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b></div>
+    </div>
+    ${liveBanner}
+    <div class="card">
+      <div class="space-between" style="margin-bottom:6px;">
+        <h3>Your Character (Isolated Campaign Profile)</h3>
+        <div class="row">
+          <button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>
+          ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp(STATE.activeCampaign.id)">Cancel RSVP</button>` : ""}
+        </div>
+      </div>
+      ${charRows}
+    </div>
+    <div class="card">
+      <h3>Session Roster (${Number(c.confirmed_seats) || 0}/${Number(c.max_seats) || 5} Confirmed)</h3>
+      <table><thead><tr><th>#</th><th>Player</th><th>Character</th><th>Progress</th><th>Auto-Parsed Build</th><th>Status</th></tr></thead>
+      <tbody>${rosterRows}</tbody></table>
+    </div>
+    ${hostBar}`;
+}
+
+async function renderSolo() {
+  const main = document.getElementById("main");
+  const chars = await api("/local/chars/solo");
+  const rows = chars.map(ch => `<tr><td><b>${esc(ch.char_name)}</b></td><td>Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)}</td><td>${esc(ch.char_wp)}</td><td>${esc(ch.build_summary)}</td></tr>`).join("")
+    || `<tr><td colspan="4" style="color:var(--muted);">No solo characters yet.</td></tr>`;
+  main.innerHTML = `
+    <div class="space-between" style="margin-bottom:12px;">
+      <h2>Solo Play (Isolated Profile)</h2>
+      <div class="row">
+        <button class="btn primary" onclick="openDropInModal(false, true)">+ New Level 1 Character</button>
+        <button class="btn launch" onclick="launchTarget('solo')">&#9654; LAUNCH SOLO (D2RLOADER)</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Characters in <code>profiles/solo/</code> are completely isolated from your co-op campaigns.</div>
+      <table><thead><tr><th>Name</th><th>Class &amp; Level</th><th>Act / WP</th><th>Build</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+async function renderHoH() {
+  const main = document.getElementById("main");
+  const items = await api("/local/chronicles");
+  main.innerHTML = `<h2 style="margin-bottom:12px;">&#127942; Hall of Heroes</h2>` + (items.length ? items.map(x => `
+    <div class="card">
+      <div class="space-between"><b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b><span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span></div>
+      <div style="margin:6px 0;">${esc(x.summary)}</div>
+      <div style="font-size:11px;color:var(--muted);">Sessions: ${Number(x.sessions_played) || 0} &middot; Deaths: ${Number(x.death_count) || 0} &middot; Cleared: ${esc(fmtLocalTime(x.completed_at))}</div>
+    </div>`).join("") : `<div class="card">No completed Hell Baal campaigns recorded yet.</div>`);
+}
+
+async function renderSettings() {
+  await refreshState();
+  const c = STATE.config, e = STATE.env;
+  document.getElementById("main").innerHTML = `
+    <h2 style="margin-bottom:12px;">Settings &amp; Environment</h2>
+    <div class="card">
+      <label>Display Name</label><input id="s-name" style="width:100%" value="${esc(c.display_name || '')}">
+      <label>Campaign Hub API URL</label><input id="s-api" style="width:100%" value="${esc(c.api_url || '')}">
+      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label><input id="s-hostaddr" style="width:100%" placeholder="147.185.221.21:14322 (optional)" value="${esc(c.host_connect_address || '')}">
+      <label>Diablo II: Resurrected Install Dir</label><input id="s-gdir" style="width:100%" value="${esc(c.d2r_game_dir || '')}">
+      <label>D2R Castalia Save Dir</label><input id="s-sdir" style="width:100%" value="${esc(c.d2r_save_dir || '')}">
+      <div style="margin-top:10px;"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
+    </div>
+    <div class="card">
+      <h3>D2RLoader Detection</h3>
+      <div style="margin-top:6px;">D2RLoader.exe: ${e.d2rloader_found ? '<span class="ok">Detected &#10003;</span>' : '<span class="warn">Not Found — <a href="https://d2rloader.net" target="_blank">Download D2RLoader &#8599;</a></span>'}</div>
+      <div>Cached Versions: ${esc((e.cached_versions || []).join(", ") || "(none)")}</div>
+    </div>
+    <div class="card">
+      <h3>Host &amp; RSVP Token Backup</h3>
+      <div class="row" style="margin-top:8px;">
+        <button class="btn" onclick="exportTokens()">Copy tokens.json to Clipboard</button>
+        <button class="btn ghost" onclick="importTokens()">Import tokens.json</button>
+      </div>
+    </div>`;
+}
+
+function openCreateModal() {
+  const sel = document.getElementById("c-version");
+  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.3.0">v0.3.0</option>`;
+  openModal("modal-create");
+}
+
+async function submitCreateCampaign() {
+  const nextVal = document.getElementById("c-next").value;
+  const res = await api("/local/campaigns", {
+    method: "POST",
+    body: {
+      title: document.getElementById("c-title").value,
+      description: document.getElementById("c-desc").value,
+      ruleset: "standard",
+      castalia_version: document.getElementById("c-version").value,
+      current_level: Number(document.getElementById("c-level").value || 1),
+      current_wp: document.getElementById("c-wp").value,
+      max_seats: Number(document.getElementById("c-seats").value || 5),
+      schedule_text: document.getElementById("c-sched").value,
+      next_session_utc: nextVal ? new Date(nextVal).toISOString() : null,
+    },
+  });
+  closeModal("modal-create");
+  toast("Campaign created!");
+  openCampaign(res.campaign.id);
+}
+
+let DROPIN_CTX = { solo: false };
+
+function openDropInModal(autoPrompt = false, soloMode = false) {
+  DROPIN_CTX = { solo: soloMode };
+  if (soloMode) {
+    document.getElementById("di-title").textContent = "Create Fresh Level 1 Solo Character";
+    document.getElementById("di-banner").innerHTML =
+      `Creates a fresh <b>Level 1</b> character in <code>profiles/solo/</code> (Normal Act 1, 4x Minor Healing Potions + <b>2,000 Gold</b>) so you can buy starter gear and launch straight into play.`;
+    document.getElementById("di-save-btn").textContent = "Create Character";
+    document.getElementById("di-launch-btn").textContent = "Play Solo";
+  } else {
+    const c = STATE.activeCampaign;
+    const isFresh = Number(c.current_level) <= 1;
+    document.getElementById("di-title").textContent = isFresh
+      ? "Create Fresh Level 1 Campaign Character"
+      : "Generate Drop-In Starter-Kit Character";
+    const note = autoPrompt ? `<div class="warn" style="margin-bottom:4px;">No character in this campaign profile yet — create one first so you can jump straight into Multiplayer!</div>` : "";
+    const kit = isFresh
+      ? "Fresh Level 1 start (4x Minor Healing Potions + <b>2,000 Gold</b> to buy starter gear) — ready immediately on Character Select."
+      : `Locked to Campaign Snapshot: <b>Level ${c.current_level} &middot; ${c.current_wp}</b> (tier-matched Starter Kit).`;
+    document.getElementById("di-banner").innerHTML = `${note}${kit} &middot; Castalia <b>v${c.castalia_version}</b>`;
+    document.getElementById("di-save-btn").textContent = "Create .d2s & RSVP";
+    document.getElementById("di-launch-btn").textContent = c.is_host ? "Start Campaign" : "Join Campaign";
+  }
+  document.getElementById("di-name").value = "";
+  openModal("modal-dropin");
+}
+
+async function submitDropIn(andLaunch = false) {
+  const name = document.getElementById("di-name").value.trim();
+  const cls = document.getElementById("di-class").value;
+  if (!name) return toast("Enter a character name.");
+
+  if (DROPIN_CTX.solo) {
+    const telem = await api("/local/dropin", {
+      method: "POST",
+      body: { target: "solo", char_name: name, char_class: cls, level: 1, wp_code: "a1n" },
+    });
+    closeModal("modal-dropin");
+    toast(`Created Level 1 ${telem.char_name}.d2s!`);
+    if (andLaunch) await doLaunch("solo");
+    renderSolo();
+    return;
+  }
+
+  const c = STATE.activeCampaign;
+  const cleanName = name.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 15);
+  if (!cleanName) return toast("Use letters, numbers, _ or - for your character name.");
+  const taken = (c.rsvps || []).some(
+    r => r.status !== "cancelled" && String(r.char_name || "").toLowerCase() === cleanName.toLowerCase()
+  );
+  if (taken) {
+    return toast(`'${cleanName}' is already taken in this campaign — pick a unique name so D2RLoader lets you join.`);
+  }
+  const telem = await api("/local/dropin", {
+    method: "POST",
+    body: { target: c.id, char_name: cleanName, char_class: cls, level: c.current_level, wp_code: c.current_wp },
+  });
+  await api("/local/rsvp", {
+    method: "POST",
+    body: {
+      campaign_id: c.id,
+      char_name: telem.char_name,
+      char_class: telem.char_class,
+      join_mode: Number(c.current_level) <= 1 ? "returning" : "drop_in",
+      char_level: telem.char_level,
+      char_wp: telem.char_wp,
+      build_summary: telem.build_summary,
+    },
+  });
+  closeModal("modal-dropin");
+  toast(`Created ${telem.char_name}.d2s & RSVPed!`);
+  if (andLaunch) await doLaunch(c.id);
+  openCampaign(c.id);
+}
+
+async function rsvpExistingIdx(idx) {
+  const ch = (STATE.activeChars || [])[idx];
+  const c = STATE.activeCampaign;
+  if (!ch || !c) return;
+  try {
+    await api("/local/rsvp", {
+      method: "POST",
+      body: {
+        campaign_id: c.id,
+        char_name: ch.char_name,
+        char_class: ch.char_class,
+        join_mode: "returning",
+        char_level: ch.char_level,
+        char_wp: ch.char_wp,
+        build_summary: ch.build_summary || "",
+      },
+    });
+    toast(`RSVPed with ${ch.char_name}!`);
+    openCampaign(c.id);
+  } catch (e) {
+    toast(e.message);
+  }
+}
+async function kickRsvp(cid, rid) {
+  if (!confirm("Remove this player from the campaign roster?")) return;
+  await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid, rsvp_id: rid } });
+  toast("Player removed from roster.");
+  openCampaign(cid);
+}
+async function cancelRsvp(cid) { await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid } }); toast("RSVP cancelled."); openCampaign(cid); }
+async function copyText(t) { await api("/local/clipboard", { method: "POST", body: { text: t } }); toast("Copied to clipboard!"); }
+async function doLaunch(t) { await api("/local/launch", { method: "POST", body: { target: t } }); toast("Synced profile & launched D2RLoader!"); }
+async function launchTarget(t) {
+  const chars = await api(`/local/chars/${t}`);
+  if (!chars.length) {
+    openDropInModal(true, t === "solo");
+    return;
+  }
+  await doLaunch(t);
+}
+async function promptGoLive(cid) { const g = prompt("Enter D2RLoader Game ID (or leave blank to auto-detect on launch):"); if (g !== null) { await api("/local/live", { method: "POST", body: { campaign_id: cid, game_id: g } }); toast("Campaign is LIVE!"); openCampaign(cid); } }
+async function promptEndSession(cid, lvl, wp) { const nl = prompt("New Campaign Level:", String(lvl)); const nw = prompt("New Act/WP (e.g. a3nm):", wp); if (nl && nw) { await api("/local/end-session", { method: "POST", body: { campaign_id: cid, current_level: Number(nl), current_wp: nw } }); toast("Session ended & rolled forward!"); openCampaign(cid); } }
+async function promptUpgrade(cid) { const v = prompt("Upgrade pinned Castalia version to (e.g. 0.4.2):"); if (v) { await api("/local/upgrade", { method: "POST", body: { campaign_id: cid, version: v } }); toast("Upgraded pinned version!"); openCampaign(cid); } }
+async function promptComplete(cid) { const s = prompt("Hall of Heroes summary:"); const d = prompt("Total party deaths:", "0"); if (s) { await api("/local/complete", { method: "POST", body: { campaign_id: cid, summary: s, death_count: Number(d || 0) } }); toast("Archived to Hall of Heroes!"); showTab("hoh"); } }
+async function promptDelete(cid, title) { if (confirm(`Permanently delete campaign "${title}"? (Local character saves in your profile folder are kept.)`)) { await api("/local/delete", { method: "POST", body: { campaign_id: cid } }); toast("Campaign deleted."); showTab("campaigns"); } }
+async function saveSettings() {
+  await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });
+  await refreshState(); toast("Settings saved!");
+}
+async function exportTokens() { const r = await api("/local/tokens/export"); await copyText(r.tokens_json); }
+async function importTokens() { const raw = prompt("Paste exported tokens.json:"); if (raw) { const r = await api("/local/tokens/import", { method: "POST", body: { tokens_json: raw } }); toast(`Imported ${r.imported} campaign tokens!`); } }
+
+(async () => { await refreshState(); showTab("campaigns"); })();
+</script>
+</body>
+</html>

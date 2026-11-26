@@ -208,6 +208,13 @@ def package_release_zip(version: str):
                 rel = os.path.relpath(full, real_castalia)
                 zf.write(full, f"{prefix}/{rel}")
 
+        # Bundle castalia-autohost.dll D2RLoader plugin if installed next to castalia.mpq
+        plugin_dll = os.path.join(
+            os.path.dirname(real_castalia), "d2rloader", "plugins", "castalia-autohost.dll"
+        )
+        if os.path.isfile(plugin_dll):
+            zf.write(plugin_dll, "mods/castalia/d2rloader/plugins/castalia-autohost.dll")
+
         zf.writestr("README-INSTALL.txt", INSTALL_README.format(tag=tag))
         if os.path.isfile(CHANGELOG_PATH):
             zf.write(CHANGELOG_PATH, "CHANGELOG.md")

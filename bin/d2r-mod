@@ -7,10 +7,15 @@ source "/home/grant/games/d2r/bin/d2r-common.sh"
 
 MOD_NAME="${D2R_MOD_NAME:-castalia}"
 DIRECT_MODE=0
+COOP_MODE=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --direct)
             DIRECT_MODE=1
+            shift
+            ;;
+        --coop)
+            COOP_MODE=1
             shift
             ;;
         --mod)
@@ -24,7 +29,8 @@ while [ $# -gt 0 ]; do
 done
 
 ensure_proton
-export WINEPREFIX="${D2R_ROOT}/prefixes/acct1"
+PREFIX_NAME="${D2R_PREFIX:-acct1}"
+export WINEPREFIX="${D2R_ROOT}/prefixes/${PREFIX_NAME}"
 link_shared_game_dir "${WINEPREFIX}"
 
 # Ensure mods/<MOD_NAME> save directory has Settings.json if not already present
@@ -35,7 +41,11 @@ if [ -f "${SAVED_BASE}/Settings.json" ] && [ ! -f "${SAVED_MOD}/Settings.json" ]
     cp -a "${SAVED_BASE}/Settings.json" "${SAVED_MOD}/"
 fi
 
-export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
+if [ "${COOP_MODE}" = "0" ]; then
+    export LD_PRELOAD="${D2R_ROOT}/runtime/libd2r_offline.so${LD_PRELOAD:+:$LD_PRELOAD}"
+else
+    echo "[d2r-mod] Co-Op mode enabled: outbound network active for D2RLoader TCP/IP & Game IDs."
+fi
 cd "${GAME_DIR}"
 
 if [ "${DIRECT_MODE}" = "1" ]; then

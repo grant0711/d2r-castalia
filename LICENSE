@@ -1,0 +1,32 @@
+MIT License
+
+Copyright (c) 2026 Grant (grant0711) and Castalia Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Third-Party & Fan-Mod Notice:
+The MIT License above applies exclusively to original Castalia source code,
+declarative mod specifications, tooling, launcher, Worker API, D2RLoader
+plugins, and documentation authored in this repository. Diablo II: Resurrected
+and all associated game assets, trademarks, and original data tables are the
+property of Blizzard Entertainment, Inc. Castalia is an unofficial,
+non-commercial fan modification and requires a legitimate copy of
+Diablo II: Resurrected.

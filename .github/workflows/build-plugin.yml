@@ -1,0 +1,27 @@
+name: Build Castalia Auto-Host D2RLoader Plugin
+
+on:
+  push:
+    paths:
+      - "plugins/castalia-autohost/**"
+      - ".github/workflows/build-plugin.yml"
+  workflow_dispatch:
+
+jobs:
+  build-windows-x64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure CMake (MSVC x64)
+        run: cmake -S plugins/castalia-autohost -B build -A x64
+
+      - name: Build castalia-autohost.dll (Release)
+        run: cmake --build build --config Release --target castalia-autohost
+
+      - name: Upload castalia-autohost.dll artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: castalia-autohost-win64
+          path: build/Release/castalia-autohost.dll

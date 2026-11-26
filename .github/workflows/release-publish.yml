@@ -83,7 +83,7 @@ jobs:
           update_mod_version: "true"
 
       - name: Post announcement to Discord Webhook
-        if: steps.meta.outputs.should_publish == 'true' && secrets.DISCORD_WEBHOOK_URL != ''
+        if: steps.meta.outputs.should_publish == 'true'
         env:
           WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TAG: ${{ steps.meta.outputs.tag }}
@@ -91,7 +91,12 @@ jobs:
           NEXUS_MOD_ID: ${{ vars.NEXUSMODS_MOD_ID }}
         run: |
           python3 - <<'PY'
-          import json, os, urllib.request
+          import json, os, sys, urllib.request
+
+          webhook = (os.environ.get("WEBHOOK_URL") or "").strip()
+          if not webhook:
+              print("[publish] DISCORD_WEBHOOK_URL not configured; skipping Discord post.")
+              sys.exit(0)
 
           with open("release_notes.md", "r", encoding="utf-8") as f:
               body = f.read().strip()

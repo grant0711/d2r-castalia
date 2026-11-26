@@ -831,10 +831,54 @@ class CastaliaHub:
         self._save_json(intent_path, payload)
         return intent_path
 
+    @staticmethod
+    def _parse_semver(ver: str) -> Optional[Tuple[int, int, int]]:
+        m = re.match(r"^v?(\d+)\.(\d+)\.(\d+)$", str(ver or "").strip())
+        if not m:
+            return None
+        return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+
+    def _auto_bump_campaign_version(self, campaign: Dict[str, Any]) -> Optional[str]:
+        """
+        If a newer published GitHub release exists within the same MAJOR.MINOR line
+        (e.g. 0.4.1 -> 0.4.2, but NOT 0.4.x -> 0.5.0 or 1.0.0), automatically bump the
+        campaign's pinned castalia_version so Host and joining guests stay in sync.
+        """
+        cur_ver = str(campaign.get("castalia_version") or "").lstrip("v")
+        cur_tuple = self._parse_semver(cur_ver)
+        if not cur_tuple:
+            return None
+        try:
+            rels = self.list_github_releases()
+        except Exception:
+            return None
+        best_tuple = cur_tuple
+        best_ver: Optional[str] = None
+        for rel in rels:
+            # Only auto-bump to published releases that guests can actually download
+            if not rel.get("zip_url"):
+                continue
+            rv = str(rel.get("version") or "").lstrip("v")
+            rt = self._parse_semver(rv)
+            if not rt:
+                continue
+            if rt[0] == cur_tuple[0] and rt[1] == cur_tuple[1] and rt > best_tuple:
+                best_tuple = rt
+                best_ver = rv
+        if not best_ver:
+            return None
+        try:
+            self.update_campaign(campaign["id"], {"castalia_version": best_ver})
+            campaign["castalia_version"] = best_ver
+            return best_ver
+        except Exception:
+            return None
+
     def launch_session(self, target: str, dry_run: bool = False) -> Dict[str, Any]:
         """
         Full launch lifecycle:
-          1. If campaign: fetch snapshot, sync pinned mod version, write castalia_launch_intent.json,
+          1. If campaign: fetch snapshot, auto-bump patch version (same MAJOR.MINOR) for Host,
+             sync pinned mod version, write castalia_launch_intent.json,
              auto-configure d2rloader.toml game_port for custom playit.gg ports, copy host/Game ID to clipboard
           2. Swap isolated save profile into live mods/castalia/
           3. Launch D2RLoader (via bin/d2r-mod --coop on Linux or D2RLoader.exe on Windows)
@@ -848,6 +892,8 @@ class CastaliaHub:
         if target != "solo":
             campaign = self.get_campaign(target)
             is_host = bool(campaign.get("is_host"))
+            if is_host and not dry_run:
+                self._auto_bump_campaign_version(campaign)
             ver_status = self.ensure_version_installed(campaign["castalia_version"])
             if campaign.get("live_join_info") and not is_host:
                 join_host, join_port = self.parse_host_port(str(campaign["live_join_info"]))

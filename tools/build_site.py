@@ -2080,19 +2080,23 @@ def build_site() -> str:
     <div class="section-block">
       <div class="section-title-bar">
         <h2>PLAYING CO-OP &mdash; CAMPAIGN LAUNCHER &amp; D2RLOADER</h2>
-        <div class="section-sub">Scheduled small-party campaigns with isolated saves, drop-in characters, and automatic progress tracking</div>
+        <div class="section-sub">No ladders or empty lobbies &mdash; scheduled, D&amp;D-style co-op campaigns that respect your time</div>
       </div>
       <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <p style="margin:0 0 8px 0;">Castalia has <b>no ladder</b> and no always-on server lobby to wander around in. Instead, co-op works like a <b>tabletop D&amp;D campaign</b>: a <b>Host</b> schedules a run and sets the seat cap, and players either join from Level 1 or <b>drop in</b> mid-campaign. You always know when a party is actually playing.</p>
+        <ul style="margin:0 0 12px 0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Joining / Dropping In:</b> Pick an open campaign in the launcher. For a fresh Act 1 run you start at Level 1 with 2,000 gold; for an in-progress campaign, the launcher generates a <b>level- and Act-matched Drop-In character</b> with starter gold, gems, and runes. Plan to log in <b>~15 minutes early</b> to vendor-shop and Cube-craft your starting kit, then jump straight into the session.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Hosting a Campaign:</b> Click <b>+ Create Campaign</b> with a clear time slot (e.g. <i>Fri 8 PM CT</i>) and seat limit (2&ndash;5 works best). Make sure your port or tunnel (such as <code>playit.gg</code>) is set once in <b>Settings</b>, then click <b>Play Campaign</b> at session time &mdash; the launcher handles your isolated saves, posts your session to <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Discord</a>, and displays your exact host settings inside D2RLoader.</li>
+        </ul>
         <div style="text-align:center;margin:0 0 12px 0;">
           <a href="img/castalia_launcher.png" target="_blank" rel="noopener">
             <img src="img/castalia_launcher.png" alt="Castalia Campaign Launcher" style="max-width:100%;height:auto;border:1px solid #5a4628;border-radius:3px;box-shadow:0 2px 12px rgba(0,0,0,0.65);">
           </a>
         </div>
         <ul style="margin:0;padding-left:18px;">
-          <li style="margin-bottom:6px;"><b class="d2-gold">Castalia Launcher (<code>castalia-launcher-win64.exe</code>):</b> Browse open and <b>LIVE</b> campaigns, auto-install the pinned Castalia release with SHA-256 verification, and launch D2RLoader with zero manual config editing.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">One-Click Setup (<code>castalia-launcher-win64.exe</code>):</b> Auto-installs the pinned Castalia release with SHA-256 verification and launches D2RLoader with zero manual config editing.</li>
           <li style="margin-bottom:6px;"><b class="d2-gold">Crash-Safe Isolated Saves:</b> Each campaign gets its own isolated save profile &mdash; your solo characters and <code>Settings.json</code> stay completely untouched.</li>
-          <li style="margin-bottom:6px;"><b class="d2-gold">Instant Fresh &amp; Drop-In Characters:</b> Create a fresh Level 1 character (with 2,000 starter gold) or generate a level-matched drop-in starter character for an in-progress campaign, with unique character-name checks per campaign.</li>
-          <li style="margin-bottom:0;"><b class="d2-gold">In-Game Host/Join Guide &amp; Hall of Heroes:</b> The bundled <code>castalia-autohost.dll</code> plugin displays your session settings inside D2RLoader's Multiplayer screen, while completed sessions automatically update your party roster and <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Discord</a> campaign board.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">In-Game Guide &amp; Hall of Heroes:</b> The bundled <code>castalia-autohost.dll</code> plugin shows your host/join steps inside D2RLoader's Multiplayer screen, and completed sessions automatically update your party roster and Hall of Heroes.</li>
         </ul>
       </div>
     </div>

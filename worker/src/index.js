@@ -56,8 +56,9 @@ async function syncDiscord(env, camp, confirmed) {
   const webhook = env.DISCORD_CAMPAIGN_WEBHOOK_URL;
   if (!webhook) return camp.discord_msg_id || null;
   const label = { live: "🟢 LIVE", recruiting: "🟡 Recruiting", active: "🔵 Active", completed: "🏆 Completed" }[camp.status] || camp.status;
-  const nextField = camp.next_session_utc
-    ? `<t:${Math.floor(new Date(camp.next_session_utc).getTime() / 1000)}:F>`
+  const epoch = camp.next_session_utc ? Math.floor(new Date(camp.next_session_utc).getTime() / 1000) : null;
+  const nextField = epoch && !Number.isNaN(epoch)
+    ? `<t:${epoch}:F> (<t:${epoch}:R>)${camp.schedule_text ? `\n${camp.schedule_text}` : ""}`
     : (camp.schedule_text || "TBD");
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,

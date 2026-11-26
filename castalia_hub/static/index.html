@@ -446,9 +446,18 @@ async function renderSettings() {
     </div>`;
 }
 
+function _defaultNextSessionLocal() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(20, 0, 0, 0);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 function openCreateModal() {
   const sel = document.getElementById("c-version");
-  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.3.0">v0.3.0</option>`;
+  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.4.0">v0.4.0</option>`;
+  const nextEl = document.getElementById("c-next");
+  if (nextEl && !nextEl.value) nextEl.value = _defaultNextSessionLocal();
   openModal("modal-create");
 }
 
@@ -602,9 +611,11 @@ function openScheduleModal() {
     if (!isNaN(d.getTime())) {
       const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
       document.getElementById("es-next").value = local;
+    } else {
+      document.getElementById("es-next").value = _defaultNextSessionLocal();
     }
   } else {
-    document.getElementById("es-next").value = "";
+    document.getElementById("es-next").value = _defaultNextSessionLocal();
   }
   openModal("modal-schedule");
 }
@@ -613,7 +624,11 @@ async function submitScheduleUpdate() {
   const c = STATE.activeCampaign;
   if (!c) return;
   const sched = document.getElementById("es-sched").value.trim();
-  const nextVal = document.getElementById("es-next").value;
+  const nextEl = document.getElementById("es-next");
+  if (nextEl.validity && nextEl.validity.badInput) {
+    return toast("Please complete both date and time (including AM/PM).");
+  }
+  const nextVal = nextEl.value;
   const body = { campaign_id: c.id };
   if (sched) body.schedule_text = sched;
   if (nextVal) body.next_session_utc = new Date(nextVal).toISOString();

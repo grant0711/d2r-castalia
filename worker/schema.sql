@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   current_level     INTEGER NOT NULL DEFAULT 1,
   current_wp        TEXT NOT NULL DEFAULT 'a1n',
   has_cube          INTEGER NOT NULL DEFAULT 0,
+  host_progress_b64 TEXT,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,

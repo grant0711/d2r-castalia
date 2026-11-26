@@ -138,6 +138,7 @@ def make_ui_handler(hub: CastaliaHub):
                         int(body["level"]),
                         body["wp_code"],
                         has_cube=body.get("has_cube"),
+                        host_progress_b64=body.get("host_progress_b64"),
                     )
                     return self._send_json(201, telem)
                 if p == "/local/rsvp":

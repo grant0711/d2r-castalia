@@ -314,9 +314,10 @@ export default {
           const hasCube = body.has_cube !== undefined
             ? (body.has_cube ? 1 : 0)
             : (["start", "a1n", "a2n"].includes(nextWp.toLowerCase()) ? Number(row.has_cube || 0) : 1);
+          const hostProg = body.host_progress_b64 ? String(body.host_progress_b64).slice(0, 600) : (row.host_progress_b64 || null);
           await env.DB.prepare(
-            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
-          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, nextUtc, now, cid).run();
+            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
+          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, nextUtc, now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, false);
           await syncDiscordWithCount(env, camp, cid);

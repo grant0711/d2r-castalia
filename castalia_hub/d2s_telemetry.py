@@ -2,6 +2,7 @@
 .d2s telemetry parser and Drop-In Starter-Kit generator for Castalia Campaign Hub.
 Reuses tools/mod_builder/char_manager.py so binary D2R v105 parsing/writing stays 100% in sync.
 """
+import base64
 import json
 import os
 import struct
@@ -18,6 +19,7 @@ from mod_builder.char_manager import (  # noqa: E402
     ID_TO_SHORT_CODE,
     create_character_from_template,
     default_gold_for_level,
+    extract_host_progress_snapshot,
     inspect_character_d2s,
     locate_sections,
     tier_template_for_level,
@@ -163,6 +165,7 @@ def parse_d2s_telemetry(d2s_path: str) -> Dict[str, object]:
     else:
         build_summary = "Unallocated"
 
+    snap = extract_host_progress_snapshot(raw)
     return {
         "path": d2s_path,
         "char_name": str(info["name"]),
@@ -180,6 +183,7 @@ def parse_d2s_telemetry(d2s_path: str) -> Dict[str, object]:
         "top_skills": top_skills,
         "hell_baal_cleared": _detect_hell_baal_cleared(raw),
         "has_cube": _detect_horadric_cube(raw, str(info["wp_code"])),
+        "host_progress_b64": base64.b64encode(snap).decode("ascii") if snap else None,
         "mtime": os.path.getmtime(d2s_path),
     }
 
@@ -191,6 +195,7 @@ def generate_dropin_character(
     level: int,
     wp_code: str,
     has_cube: Optional[bool] = None,
+    host_progress_b64: Optional[str] = None,
 ) -> Dict[str, object]:
     """Generate a Drop-In Starter-Kit .d2s character directly into a campaign profile folder."""
     clean = "".join(c for c in char_name.strip() if c.isalnum() or c in "_-")[:15]
@@ -230,11 +235,21 @@ def generate_dropin_character(
         inv_gold = 0
         stash_gold = None
 
+    host_progress_bytes = None
+    if host_progress_b64 and eff_level > 1:
+        try:
+            decoded = base64.b64decode(host_progress_b64)
+            if len(decoded) == 383:
+                host_progress_bytes = decoded
+        except Exception:
+            host_progress_bytes = None
+
     create_character_from_template(
         clean,
         class_code,
         level=eff_level,
         wp_target=wp_code,
+        host_progress_bytes=host_progress_bytes,
         stash_gold=stash_gold,
         inv_gold=inv_gold,
         template_name=template_name,

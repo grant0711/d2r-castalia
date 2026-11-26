@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   current_level     INTEGER NOT NULL DEFAULT 1,
   current_wp        TEXT NOT NULL DEFAULT 'a1n',
   has_cube          INTEGER NOT NULL DEFAULT 0,
+  host_progress_b64 TEXT,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -309,13 +310,18 @@ class CampaignDB:
                 has_cube = 1 if body["has_cube"] else 0
             else:
                 has_cube = int(row["has_cube"]) if new_wp.lower() in ("start", "a1n", "a2n") else 1
+            host_prog = body.get("host_progress_b64")
+            if host_prog is None:
+                host_prog = row["host_progress_b64"]
+            else:
+                host_prog = str(host_prog)[:600]
             next_utc = body.get("next_session_utc") or _advance_iso_days(row["next_session_utc"], row["recurrence_days"])
             conn.execute(
                 """UPDATE campaigns
                    SET status = 'active', live_join_info = NULL,
-                       current_level = ?, current_wp = ?, has_cube = ?, next_session_utc = ?, updated_at = ?
+                       current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, next_session_utc = ?, updated_at = ?
                    WHERE id = ?""",
-                (new_lvl, new_wp, has_cube, next_utc, _now_iso(), cid),
+                (new_lvl, new_wp, has_cube, host_prog, next_utc, _now_iso(), cid),
             )
             updated = conn.execute("SELECT * FROM campaigns WHERE id = ?", (cid,)).fetchone()
             rsvps = [

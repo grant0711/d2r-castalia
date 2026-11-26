@@ -610,6 +610,7 @@ async function submitDropIn(andLaunch = false) {
       level: c.current_level,
       wp_code: c.current_wp,
       has_cube: Boolean(c.has_cube),
+      host_progress_b64: c.host_progress_b64 || null,
     },
   });
   await api("/local/rsvp", {

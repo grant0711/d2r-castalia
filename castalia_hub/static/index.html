@@ -150,7 +150,10 @@
     </div>
     <div class="row">
       <div style="flex:1"><label>Schedule Text</label><input id="c-sched" style="width:100%" value="Thursdays 8:00–10:00 PM"></div>
-      <div style="flex:1"><label>Next Session (Local)</label><input id="c-next" type="datetime-local" style="width:100%"></div>
+    </div>
+    <div class="row">
+      <div style="flex:2"><label>Next Session Date &amp; Time</label><input id="c-next" type="datetime-local" style="width:100%"></div>
+      <div style="flex:1"><label>Timezone (GMT)</label><select id="c-tz" style="width:100%"></select></div>
     </div>
     <div class="row" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn ghost" onclick="closeModal('modal-create')">Cancel</button>
@@ -187,8 +190,10 @@
     <div class="space-between"><h3>Update Next Session</h3><button class="btn ghost" onclick="closeModal('modal-schedule')">X</button></div>
     <label>Schedule Label</label>
     <input id="es-sched" style="width:100%" placeholder="Fri 8 PM CT">
-    <label>Next Session Date &amp; Time (Local)</label>
-    <input id="es-next" type="datetime-local" style="width:100%">
+    <div class="row">
+      <div style="flex:2"><label>Next Session Date &amp; Time</label><input id="es-next" type="datetime-local" style="width:100%"></div>
+      <div style="flex:1"><label>Timezone (GMT)</label><select id="es-tz" style="width:100%"></select></div>
+    </div>
     <div class="row" style="margin-top:14px;justify-content:flex-end;">
       <button class="btn ghost" onclick="closeModal('modal-schedule')">Cancel</button>
       <button class="btn primary" onclick="submitScheduleUpdate()">Save &amp; Update Discord</button>
@@ -446,6 +451,51 @@ async function renderSettings() {
     </div>`;
 }
 
+const TZ_LABELS = {
+  "-8": "GMT-8 (US Pacific / PST)",
+  "-7": "GMT-7 (US Mountain / PDT)",
+  "-6": "GMT-6 (US Central / CST)",
+  "-5": "GMT-5 (US Eastern / CDT)",
+  "-4": "GMT-4 (EDT / Atlantic)",
+  "0": "GMT+0 (UTC / London)",
+  "1": "GMT+1 (CET / Berlin)",
+  "2": "GMT+2 (EET / CEST)",
+  "8": "GMT+8 (SGT / CST Asia)",
+  "9": "GMT+9 (JST / KST)",
+};
+
+function _populateTzSelect(id) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const saved = localStorage.getItem("castalia_tz_offset");
+  const detected = String(-Math.round(new Date().getTimezoneOffset() / 60));
+  const chosen = saved !== null ? saved : detected;
+  let opts = "";
+  for (let h = -12; h <= 14; h++) {
+    const key = String(h);
+    const label = TZ_LABELS[key] || `GMT${h >= 0 ? "+" : ""}${h}`;
+    opts += `<option value="${key}"${key === chosen ? " selected" : ""}>${label}</option>`;
+  }
+  sel.innerHTML = opts;
+}
+
+function _localInputToUtcIso(dtLocal, tzOffsetHours) {
+  if (!dtLocal) return null;
+  const h = Number(tzOffsetHours || 0);
+  const sign = h >= 0 ? "+" : "-";
+  const absH = String(Math.abs(h)).padStart(2, "0");
+  const isoWithTz = `${dtLocal}:00${sign}${absH}:00`;
+  const d = new Date(isoWithTz);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function _utcIsoToTzInput(utcIso, tzOffsetHours) {
+  const d = new Date(utcIso);
+  if (isNaN(d.getTime())) return _defaultNextSessionLocal();
+  const shifted = new Date(d.getTime() + Number(tzOffsetHours || 0) * 3600000);
+  return shifted.toISOString().slice(0, 16);
+}
+
 function _defaultNextSessionLocal() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
@@ -456,6 +506,7 @@ function _defaultNextSessionLocal() {
 function openCreateModal() {
   const sel = document.getElementById("c-version");
   sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.4.0">v0.4.0</option>`;
+  _populateTzSelect("c-tz");
   const nextEl = document.getElementById("c-next");
   if (nextEl && !nextEl.value) nextEl.value = _defaultNextSessionLocal();
   openModal("modal-create");
@@ -463,6 +514,8 @@ function openCreateModal() {
 
 async function submitCreateCampaign() {
   const nextVal = document.getElementById("c-next").value;
+  const tzVal = document.getElementById("c-tz").value;
+  localStorage.setItem("castalia_tz_offset", tzVal);
   const res = await api("/local/campaigns", {
     method: "POST",
     body: {
@@ -474,7 +527,7 @@ async function submitCreateCampaign() {
       current_wp: document.getElementById("c-wp").value,
       max_seats: Number(document.getElementById("c-seats").value || 5),
       schedule_text: document.getElementById("c-sched").value,
-      next_session_utc: nextVal ? new Date(nextVal).toISOString() : null,
+      next_session_utc: _localInputToUtcIso(nextVal, tzVal),
     },
   });
   closeModal("modal-create");
@@ -606,14 +659,10 @@ function openScheduleModal() {
   const c = STATE.activeCampaign;
   if (!c) return;
   document.getElementById("es-sched").value = c.schedule_text || "";
+  _populateTzSelect("es-tz");
+  const tzVal = document.getElementById("es-tz").value;
   if (c.next_session_utc) {
-    const d = new Date(c.next_session_utc);
-    if (!isNaN(d.getTime())) {
-      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      document.getElementById("es-next").value = local;
-    } else {
-      document.getElementById("es-next").value = _defaultNextSessionLocal();
-    }
+    document.getElementById("es-next").value = _utcIsoToTzInput(c.next_session_utc, tzVal);
   } else {
     document.getElementById("es-next").value = _defaultNextSessionLocal();
   }
@@ -629,9 +678,12 @@ async function submitScheduleUpdate() {
     return toast("Please complete both date and time (including AM/PM).");
   }
   const nextVal = nextEl.value;
+  const tzVal = document.getElementById("es-tz").value;
+  localStorage.setItem("castalia_tz_offset", tzVal);
   const body = { campaign_id: c.id };
   if (sched) body.schedule_text = sched;
-  if (nextVal) body.next_session_utc = new Date(nextVal).toISOString();
+  const utcIso = _localInputToUtcIso(nextVal, tzVal);
+  if (utcIso) body.next_session_utc = utcIso;
   await api("/local/schedule", { method: "POST", body });
   closeModal("modal-schedule");
   toast("Updated session schedule & Discord post!");

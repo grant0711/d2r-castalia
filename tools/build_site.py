@@ -2010,7 +2010,16 @@ def build_site() -> str:
         </tr>
       </table>
 
-      <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table">
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:0 0 14px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">REWORKED MONSTER RESISTANCES &amp; VULNERABILITIES (99% CAP &mdash; NO HARD IMMUNITIES)</div>
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Clean Baseline Curve:</b> Every monster starts at <b>10% Normal / 20% Nightmare / 30% Hell</b> across all 6 damage types (Physical, Magic, Fire, Lightning, Cold, Poison) instead of vanilla's arbitrary Hell immunity walls.</li>
+          <li style="margin-bottom:5px;"><b class="d2-gold">Readable Affinities Under Every Health Bar:</b> Monsters shift by <b>&minus;35%</b> (Vulnerable) or <b>+35%</b> (Resists, capped at <b>99%</b>) &mdash; roughly half carry both a weakness and a strength (e.g. <i>Vulnerable: Fire | Resists: Cold</i>), printed directly beneath their nameplate so you can read fights on sight.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Why No Sunder / Free Pierce:</b> Because monsters cap at <b>99%</b> rather than 100%+, you never hit a binary brick wall &mdash; but hitting a monster's vulnerability deals huge bonus damage, rewarding hybrid builds, 10-slot mercenaries, and mixed-element co-op parties. All 5 Act Bosses also carry distinct elemental weaknesses (e.g., Andariel weak to Fire; Duriel weak to Fire &amp; Lightning).</li>
+        </ul>
+      </div>
+
+      <table width="100%" border="1" cellpadding="6" cellspacing="0" bordercolor="#5c4b32" class="arreat-table" style="margin-bottom:14px;">
         <tr bgcolor="#261e14">
           <th colspan="2" align="left" class="table-banner">10-SLOT MERCENARY LOADOUTS &amp; SKILL KITS (All Mercs Equip Helm, Armor, Weap, Off-Hand, Gloves, Boots, Belt, Amulet &amp; 2 Rings)</th>
         </tr>
@@ -2031,6 +2040,15 @@ def build_site() -> str:
           <td><b>2H Vanguard:</b> <i>Stun + Battle Orders + Might / Concentration</i> &nbsp;|&nbsp; <b>1H Dual-Wield:</b> <i>Frenzy + Double Swing + Might / Fanaticism + Iron Skin</i>.</td>
         </tr>
       </table>
+
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">UPCOMING (WIP) &mdash; REBUILDING MONSTER SKILLS FOR CO-OP</div>
+        <p style="margin:0 0 8px 0;">In vanilla <i>Diablo II</i>, adding players only inflates monster HP (+50%/player) and NM/Hell physical damage (+6.25%/player), leaving monster speed, spells, and attack patterns frozen at P1. Next up for Castalia's monster pass:</p>
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:5px;"><b class="d2-gold">Player-Count-Aware Monster Skills:</b> Act Bosses, Super Uniques, and iconic Hell monster families will read their own co-op scaled HP to unlock <b>extra sub-missiles, faster attack tempo, wider AoE/range, co-op elemental spell scaling, and &lt;50% HP boss enrage phases</b> as party size grows.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Co-Op Combat Bounty &amp; Drop Scaling:</b> Nearby teammates actively fighting together will earn a proximity <b>Magic Find &amp; Gold Find bounty</b> (rewarding combat gear over pure MF and preventing town leeching), alongside re-tuned Boss/Champion drops so 2&ndash;5 player runs scale Gems, Runes, and gear cleanly without changing solo P1 averages.</li>
+        </ul>
+      </div>
     </div>
     </div>
 

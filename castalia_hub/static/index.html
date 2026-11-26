@@ -181,6 +181,21 @@
   </div>
 </div>
 
+<!-- EDIT SCHEDULE MODAL -->
+<div class="modal-backdrop" id="modal-schedule">
+  <div class="modal">
+    <div class="space-between"><h3>Update Next Session</h3><button class="btn ghost" onclick="closeModal('modal-schedule')">X</button></div>
+    <label>Schedule Label</label>
+    <input id="es-sched" style="width:100%" placeholder="Fri 8 PM CT">
+    <label>Next Session Date &amp; Time (Local)</label>
+    <input id="es-next" type="datetime-local" style="width:100%">
+    <div class="row" style="margin-top:14px;justify-content:flex-end;">
+      <button class="btn ghost" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn primary" onclick="submitScheduleUpdate()">Save &amp; Update Discord</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -340,6 +355,7 @@ async function openCampaign(cid) {
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
       <div class="row">
+        <button class="btn" onclick="openScheduleModal()">Edit Schedule</button>
         <button class="btn" onclick="promptComplete(STATE.activeCampaign.id)">Complete &#8594; Hall of Heroes</button>
         <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
       </div>
@@ -577,6 +593,36 @@ async function promptGoLive(cid) { const g = prompt("Enter D2RLoader Game ID (or
 async function promptEndSession(cid, lvl, wp) { const nl = prompt("New Campaign Level:", String(lvl)); const nw = prompt("New Act/WP (e.g. a3nm):", wp); if (nl && nw) { await api("/local/end-session", { method: "POST", body: { campaign_id: cid, current_level: Number(nl), current_wp: nw } }); toast("Session ended & rolled forward!"); openCampaign(cid); } }
 async function promptUpgrade(cid) { const v = prompt("Upgrade pinned Castalia version to (e.g. 0.4.2):"); if (v) { await api("/local/upgrade", { method: "POST", body: { campaign_id: cid, version: v } }); toast("Upgraded pinned version!"); openCampaign(cid); } }
 async function promptComplete(cid) { const s = prompt("Hall of Heroes summary:"); const d = prompt("Total party deaths:", "0"); if (s) { await api("/local/complete", { method: "POST", body: { campaign_id: cid, summary: s, death_count: Number(d || 0) } }); toast("Archived to Hall of Heroes!"); showTab("hoh"); } }
+function openScheduleModal() {
+  const c = STATE.activeCampaign;
+  if (!c) return;
+  document.getElementById("es-sched").value = c.schedule_text || "";
+  if (c.next_session_utc) {
+    const d = new Date(c.next_session_utc);
+    if (!isNaN(d.getTime())) {
+      const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      document.getElementById("es-next").value = local;
+    }
+  } else {
+    document.getElementById("es-next").value = "";
+  }
+  openModal("modal-schedule");
+}
+
+async function submitScheduleUpdate() {
+  const c = STATE.activeCampaign;
+  if (!c) return;
+  const sched = document.getElementById("es-sched").value.trim();
+  const nextVal = document.getElementById("es-next").value;
+  const body = { campaign_id: c.id };
+  if (sched) body.schedule_text = sched;
+  if (nextVal) body.next_session_utc = new Date(nextVal).toISOString();
+  await api("/local/schedule", { method: "POST", body });
+  closeModal("modal-schedule");
+  toast("Updated session schedule & Discord post!");
+  openCampaign(c.id);
+}
+
 async function promptDelete(cid, title) { if (confirm(`Permanently delete campaign "${title}"? (Local character saves in your profile folder are kept.)`)) { await api("/local/delete", { method: "POST", body: { campaign_id: cid } }); toast("Campaign deleted."); showTab("campaigns"); } }
 async function saveSettings() {
   await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });

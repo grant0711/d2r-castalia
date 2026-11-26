@@ -56,16 +56,18 @@ async function syncDiscord(env, camp, confirmed) {
   const webhook = env.DISCORD_CAMPAIGN_WEBHOOK_URL;
   if (!webhook) return camp.discord_msg_id || null;
   const label = { live: "🟢 LIVE", recruiting: "🟡 Recruiting", active: "🔵 Active", completed: "🏆 Completed" }[camp.status] || camp.status;
+  const nextField = camp.next_session_utc
+    ? `<t:${Math.floor(new Date(camp.next_session_utc).getTime() / 1000)}:F>`
+    : (camp.schedule_text || "TBD");
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,
     description: (camp.description || "").slice(0, 1500),
     color: camp.status === "live" ? 0x43b581 : 0xc89b3c,
     fields: [
       { name: "Host", value: camp.host_name, inline: true },
-      { name: "Ruleset", value: camp.ruleset, inline: true },
       { name: "Seats", value: `${confirmed}/${camp.max_seats}`, inline: true },
       { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\``, inline: true },
-      { name: "Schedule", value: camp.schedule_text, inline: true },
+      { name: "Next Session", value: nextField, inline: false },
     ],
   };
   const url = camp.discord_msg_id ? `${webhook}/messages/${camp.discord_msg_id}` : `${webhook}?wait=true`;
@@ -306,7 +308,12 @@ export default {
           vals.push(now, cid);
           await env.DB.prepare(`UPDATE campaigns SET ${sets.join(", ")} WHERE id = ?`).bind(...vals).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
-          return jsonResp(sanitizeCampaign(updated, true));
+          const cntRow = await env.DB.prepare(
+            "SELECT COUNT(*) AS cnt FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'"
+          ).bind(cid).first();
+          const camp = sanitizeCampaign(updated, true);
+          await syncDiscord(env, camp, cntRow ? cntRow.cnt : 0);
+          return jsonResp(camp);
         }
 
         if (parts.length === 3 && req.method === "DELETE") {

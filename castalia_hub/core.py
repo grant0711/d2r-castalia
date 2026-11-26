@@ -801,7 +801,7 @@ class CastaliaHub:
                 if not os.path.isfile(loader_exe):
                     raise RuntimeError(
                         f"D2RLoader.exe not found in '{self.config['d2r_game_dir']}'. "
-                        "Install D2RLoader (https://github.com/D2RLoader/D2RLoader/releases) into your D2R folder "
+                        "Install D2RLoader (https://d2rloader.net/) into your D2R folder "
                         "or update your D2R Game Directory in Settings."
                     )
                 subprocess.run(

@@ -2087,7 +2087,7 @@ def build_site() -> str:
         </ul>
         <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px 0;">
           <a href="https://github.com/grant0711/d2r-castalia/releases/latest/download/castalia-launcher-win64.exe" target="_blank" rel="noopener" style="display:inline-block;background:#3a2b14;border:1px solid #d4af37;color:#f5e1a4;font-weight:bold;padding:8px 16px;text-decoration:none;border-radius:3px;">&#11015; Download Castalia Launcher (Windows x64)</a>
-          <a href="https://github.com/D2RLoader/D2RLoader/releases" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#8cd0ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Install D2RLoader (Required) &#8599;</a>
+          <a href="https://d2rloader.net/" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#8cd0ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Install D2RLoader (Required) &#8599;</a>
           <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#a8b4ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Join Co-Op Discord &#8599;</a>
         </div>
         <div style="text-align:center;margin:0 0 12px 0;">

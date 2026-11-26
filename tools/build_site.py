@@ -1779,6 +1779,9 @@ def build_site() -> str:
   <a href="#class-bar" class="top-tab-btn" data-tab="tab-class-bar">Barbarian</a>
   <a href="#class-ass" class="top-tab-btn" data-tab="tab-class-ass">Assassin</a>
   <a href="#class-sor" class="top-tab-btn" data-tab="tab-class-sor">Sorceress</a>
+  <a href="#class-ama" class="top-tab-btn" data-tab="tab-class-ama" style="opacity:0.78;">Amazon <span style="font-size:10px;color:#998870;">(WIP)</span></a>
+  <a href="#class-dru" class="top-tab-btn" data-tab="tab-class-dru" style="opacity:0.78;">Druid <span style="font-size:10px;color:#998870;">(WIP)</span></a>
+  <a href="#class-nec" class="top-tab-btn" data-tab="tab-class-nec" style="opacity:0.78;">Necromancer <span style="font-size:10px;color:#998870;">(WIP)</span></a>
 </div>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -2078,6 +2081,62 @@ def build_site() -> str:
 
     <!-- TABS 5-8: INTERACTIVE CLASS SKILL TREES & COMPENDIUM -->
     {"".join(class_sections_html)}
+
+    <!-- WIP CLASS TABS: AMAZON, DRUID, NECROMANCER -->
+    <div class="tab-panel" id="tab-class-ama">
+      <a name="class-ama"></a>
+      <div class="section-block">
+        <div class="section-title-bar">
+          <h2>AMAZON &mdash; WORK IN PROGRESS (NEXT UP)</h2>
+          <div class="section-sub">Not yet enabled in the Alpha launcher &mdash; core design locked and next in the rework queue</div>
+        </div>
+        <div style="border:1px solid #4a3c28;background:#14100b;padding:14px 18px;margin:10px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+          <p style="margin:0 0 10px 0;">The Amazon is being rebuilt from the ground up as Castalia's <b>rhythmic duelist, skirmisher, and siege marksman</b>:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:6px;"><b class="d2-gold">Reactive Counter-Attacks (<code>Riposte</code> &amp; <code>Countershot</code>):</b> Being swung at in melee (even if you <i>Dodge</i> or block) opens a 3-second <b>Riposte</b> spear/javelin counter window; incoming missiles open a 3-second <b>Countershot</b> return-fire window.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Setup &rarr; Payoff Cadence (<code>Sighted</code>):</b> Tactical openers (<i>Inner Sight</i>, <i>Impale</i>, <i>Poison Javelin</i>, elemental arrows) light up a 4-second window empowering payoff volleys and flurries.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Bow vs. Crossbow Split:</b> Fast, Stamina-driven <b>Bows</b> for agile skirmishers vs. heavy <b>Crossbows</b> (<i>Siege Bolt</i>, <i>Ballista</i>) whose mechanical draw bypasses Stamina degradation &mdash; enabling a Heavy Armor Arbalest fighting behind <i>Valkyrie</i> and <i>Decoy</i>.</li>
+            <li style="margin-bottom:0;"><b class="d2-gold">Already Live Under the Hood:</b> 4-tier scaling Valkyrie equipment, resistance/elemental Quivers, and auto-replenishing Javelins.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-class-dru">
+      <a name="class-dru"></a>
+      <div class="section-block">
+        <div class="section-title-bar">
+          <h2>DRUID &mdash; WORK IN PROGRESS</h2>
+          <div class="section-sub">Not yet enabled in the Alpha launcher &mdash; planned after the Amazon overhaul</div>
+        </div>
+        <div style="border:1px solid #4a3c28;background:#14100b;padding:14px 18px;margin:10px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+          <p style="margin:0 0 10px 0;">The Druid overhaul focuses on <b>tactical field totems, high-impact companions, and grounded shapeshifting</b>:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:6px;"><b class="d2-gold">Stationary Party Resource Totems:</b> High-mana, targetable <b>Life Totem</b> (party <i>Life After Each Kill</i>) and <b>Mana Totem</b> (party <i>Mana After Each Kill</i>) that you plant and defend as battlefield anchors.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Leaner, Tougher Beast Roster:</b> Fewer, more durable animal companions tuned for co-op readability and Nightmare/Hell survivability without body-blocking melee teammates.</li>
+            <li style="margin-bottom:0;"><b class="d2-gold">Shapeshifting &amp; Elemental Rhythms:</b> Full 6-tier Castalia skill grid integrating Martial Stamina into Werewolf/Werebear forms and giving Fire/Wind spells deliberate, active casting loops.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-class-nec">
+      <a name="class-nec"></a>
+      <div class="section-block">
+        <div class="section-title-bar">
+          <h2>NECROMANCER &mdash; WORK IN PROGRESS</h2>
+          <div class="section-sub">Not yet enabled in the Alpha launcher &mdash; planned alongside the Druid overhaul</div>
+        </div>
+        <div style="border:1px solid #4a3c28;background:#14100b;padding:14px 18px;margin:10px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+          <p style="margin:0 0 10px 0;">The Necromancer is being reimagined around <b>deliberate dark tactics and clean co-op armies</b>:</p>
+          <ul style="margin:0;padding-left:18px;">
+            <li style="margin-bottom:6px;"><b class="d2-gold">Quality-Over-Quantity Armies:</b> Tighter, tougher summon rosters tuned for Nightmare/Hell staying power and clean co-op screen readability rather than lagging walls of skeletons.</li>
+            <li style="margin-bottom:6px;"><b class="d2-gold">Tactical Curses &amp; Corpse Economy:</b> Rebalanced Curses (respecting Castalia's zero-free-immunity-breaker boundary) paired with intentional Bone, Poison, and Corpse-driven combat loops.</li>
+            <li style="margin-bottom:0;"><b class="d2-gold">Full 30-Skill Ground-Up Pass:</b> Rebuilt on the 6-tier level grid (<code>1 / 8 / 16 / 24 / 32 / 40</code>) with honest tooltips and active cross-tree synergies.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <div class="retro-footer">
       &#9876; <b>THE CASTALIA COMPENDIUM</b> &#9876; &nbsp;|&nbsp; Built for <i>Diablo II: Resurrected</i>
@@ -3264,6 +3323,9 @@ var D2_CALC_DATA = {calc_payload_json};
     "#class-bar": "tab-class-bar",
     "#class-ass": "tab-class-ass",
     "#class-sor": "tab-class-sor",
+    "#class-ama": "tab-class-ama",
+    "#class-dru": "tab-class-dru",
+    "#class-nec": "tab-class-nec",
     "#gems-skulls": "tab-items",
     "#runes-33": "tab-items",
     "#monsters": "tab-world",

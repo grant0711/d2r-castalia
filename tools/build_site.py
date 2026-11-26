@@ -1012,23 +1012,20 @@ def build_site() -> str:
             f'<a name="class-{cls_code}"></a>'
             f'<div class="section-block">'
             f'<div class="section-title-bar">'
-            f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; CHARACTER BUILDER</h2>'
-            f'<div class="section-sub">{html.escape(cls_subtitle)} — Set Level &amp; Difficulty/Act, allocate skills (Left-Click +1, Right-Click -1, Shift ±5), and Download your ready-to-play .d2s save</div>'
+            f'<h2>{html.escape(cls_title.upper())} SKILL TREES &amp; CALCULATOR</h2>'
+            f'<div class="section-sub">{html.escape(cls_subtitle)} — Set Level &amp; Difficulty/Act and allocate skills (Left-Click +1, Right-Click -1, Shift ±5)</div>'
             f'</div>'
             f'{class_lore_html.get(cls_code, "")}'
             f'<div class="calc-hud-bar" id="calc-hud-{cls_code}">'
             f'  <div class="calc-hud-row">'
-            f'    <label class="calc-stat-box" for="calc-name-{cls_code}">Name: <input type="text" class="calc-name-input" id="calc-name-{cls_code}" data-name-cls="{cls_code}" maxlength="15" value="" required placeholder="Unique name..." /></label>'
             f'    <label class="calc-stat-box" for="calc-clvl-{cls_code}">Level: <input type="number" class="calc-clvl-input" id="calc-clvl-{cls_code}" data-clvl-cls="{cls_code}" min="1" max="99" value="1" /></label>'
             f'    <label class="calc-stat-box" for="calc-wp-{cls_code}">Difficulty / Act: <select class="calc-wp-select" id="calc-wp-{cls_code}" data-wp-cls="{cls_code}">{wp_options_html}</select></label>'
             f'    <span class="calc-stat-box">Points Available: <b class="d2-bright-gold" id="calc-rem-{cls_code}">0</b> <span class="d2-dim">/ <span id="calc-maxpts-{cls_code}">0</span> <span id="calc-pts-breakdown-{cls_code}">(0 lvl + 0 quest)</span></span></span>'
             f'    <span class="calc-stat-box">Spent: <b class="d2-gold" id="calc-pts-{cls_code}">0</b></span>'
             f'  </div>'
             f'  <div class="calc-hud-row calc-hud-actions">'
-            f'    <span class="calc-msg" id="calc-msg-{cls_code}">Set Character Level &amp; Difficulty/Act to unlock skill points, then download your .d2s save</span>'
+            f'    <span class="calc-msg" id="calc-msg-{cls_code}">Set Character Level &amp; Difficulty/Act to plan your build (create characters directly in the Castalia Launcher)</span>'
             f'    <div class="calc-hud-right">'
-            f'      <button type="button" class="calc-download-btn" data-dl-cls="{cls_code}">&#11015; Download Character (.d2s)</button>'
-            f'      <button type="button" class="calc-reset-btn calc-copy-path-btn" title="Copy %USERPROFILE%\\Saved Games\\Diablo II Resurrected\\mods\\castalia">&#128203; Save Path</button>'
             f'      <button type="button" class="calc-reset-btn" data-reset-cls="{cls_code}">&#8634; Reset Skills</button>'
             f'    </div>'
             f'  </div>'
@@ -1798,7 +1795,7 @@ def build_site() -> str:
     </div>
 
     <div class="nav-box">
-      <div class="nav-box-hdr">Class Calculators &amp; .d2s</div>
+      <div class="nav-box-hdr">Class Skill Calculators</div>
       <ul class="nav-list">
         <li><a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-gold">Paladin</b> (30 Skills)</a></li>
         <li><a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-gold">Barbarian</b> (30 Skills)</a></li>
@@ -1836,7 +1833,7 @@ def build_site() -> str:
       </div>
 
       <div class="quote-box">
-        <p style="margin:0;"><b>Castalia</b> is a grounded, tactical overhaul of <i>Diablo II: Resurrected</i> built for veteran players who want meaningful resource management, readable combat, and creative crafting rather than a solved power-fantasy. Designed as a cohesive journey from Act 1 Normal through Act 5 Hell &mdash; solo or co-op &mdash; you can plan a build and download a ready-to-play <code>.d2s</code> save directly from any class tab (<a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-bright-gold">Paladin</b></a>, <a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-bright-gold">Barbarian</b></a>, <a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-bright-gold">Assassin</b></a>, or <a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-bright-gold">Sorceress</b></a>), or explore party synergies on the <a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design</b></a> tab.</p>
+        <p style="margin:0;"><b>Castalia</b> is a grounded, tactical overhaul of <i>Diablo II: Resurrected</i> built for veteran players who want meaningful resource management, readable combat, and creative crafting rather than a solved power-fantasy. Designed as a cohesive journey from Act 1 Normal through Act 5 Hell &mdash; solo or co-op &mdash; you can plan a build in any class skill calculator (<a href="#class-pal" data-tab-link="tab-class-pal"><b class="d2-bright-gold">Paladin</b></a>, <a href="#class-bar" data-tab-link="tab-class-bar"><b class="d2-bright-gold">Barbarian</b></a>, <a href="#class-ass" data-tab-link="tab-class-ass"><b class="d2-bright-gold">Assassin</b></a>, or <a href="#class-sor" data-tab-link="tab-class-sor"><b class="d2-bright-gold">Sorceress</b></a>), or get started with the Castalia Launcher on the <a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design</b></a> tab.</p>
       </div>
 
       <a name="cube-recipes"></a>

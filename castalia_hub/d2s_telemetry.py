@@ -181,8 +181,22 @@ def generate_dropin_character(
         raise FileExistsError(f"Character '{clean}' already exists in {profile_dir}")
 
     eff_level = max(1, min(99, int(level)))
-    inv_gold = 2000 if eff_level == 1 else 0
-    stash_gold = 0 if eff_level == 1 else None
+    is_act1_normal = str(wp_code or "a1n").strip().lower() in ("start", "a1n")
+
+    if eff_level == 1:
+        template_name = "default"
+        inv_gold = 2000
+        stash_gold = 0
+    elif is_act1_normal:
+        # Party is still in Act 1 Normal (no Horadric Cube yet): use default.d2s (no Cube)
+        # and anchor Act 1 drop-in gold to 10,000 at Level 15 (matching real playtest economy).
+        template_name = "default"
+        inv_gold = 0
+        stash_gold = min(10000, 2000 + (eff_level - 1) * 572)
+    else:
+        template_name = None  # auto-pick tier template matching level (includes Horadric Cube)
+        inv_gold = 0
+        stash_gold = None
 
     create_character_from_template(
         clean,
@@ -191,9 +205,10 @@ def generate_dropin_character(
         wp_target=wp_code,
         stash_gold=stash_gold,
         inv_gold=inv_gold,
+        template_name=template_name,
         save_dir=profile_dir,
     )
     telem = parse_d2s_telemetry(target_d2s)
-    telem["starter_tier"] = tier_template_for_level(eff_level)
-    telem["starter_gold"] = inv_gold if eff_level == 1 else default_gold_for_level(eff_level)
+    telem["starter_tier"] = template_name or tier_template_for_level(eff_level)
+    telem["starter_gold"] = inv_gold if eff_level == 1 else (stash_gold if stash_gold is not None else default_gold_for_level(eff_level))
     return telem

@@ -114,6 +114,25 @@ def _detect_hell_baal_cleared(raw: bytearray) -> bool:
     return bool(word & 0x0001)
 
 
+def _detect_horadric_cube(raw: bytearray, wp_code: str) -> bool:
+    """
+    Return True if the character has obtained the Horadric Cube:
+      - Past Act 2 Normal (a3n+, NM, Hell), OR
+      - Normal Act 2 Quest 2 (The Horadric Staff, word 10) has Bit 0 (complete), Bit 3 (Cube found), or Bit 4 set.
+    """
+    wp = str(wp_code or "a1n").strip().lower()
+    if wp not in ("start", "a1n", "a2n"):
+        return True
+    woo_idx = raw.find(b"Woo!")
+    if woo_idx < 0:
+        return False
+    q2_off = woo_idx + 10 + (10 * 2)  # Normal difficulty, quest word 10 (Horadric Staff)
+    if q2_off + 2 > len(raw):
+        return False
+    word = struct.unpack_from("<H", raw, q2_off)[0]
+    return bool(word & 0x0019)
+
+
 def parse_d2s_telemetry(d2s_path: str) -> Dict[str, object]:
     """
     Parse a D2R v105 .d2s save and return campaign telemetry:
@@ -160,6 +179,7 @@ def parse_d2s_telemetry(d2s_path: str) -> Dict[str, object]:
         "build_summary": build_summary,
         "top_skills": top_skills,
         "hell_baal_cleared": _detect_hell_baal_cleared(raw),
+        "has_cube": _detect_horadric_cube(raw, str(info["wp_code"])),
         "mtime": os.path.getmtime(d2s_path),
     }
 
@@ -170,6 +190,7 @@ def generate_dropin_character(
     class_code: str,
     level: int,
     wp_code: str,
+    has_cube: Optional[bool] = None,
 ) -> Dict[str, object]:
     """Generate a Drop-In Starter-Kit .d2s character directly into a campaign profile folder."""
     clean = "".join(c for c in char_name.strip() if c.isalnum() or c in "_-")[:15]
@@ -181,7 +202,13 @@ def generate_dropin_character(
         raise FileExistsError(f"Character '{clean}' already exists in {profile_dir}")
 
     eff_level = max(1, min(99, int(level)))
-    is_act1_normal = str(wp_code or "a1n").strip().lower() in ("start", "a1n")
+    wp_norm = str(wp_code or "a1n").strip().lower()
+    is_act1_normal = wp_norm in ("start", "a1n")
+    # Only grant a Cube-bearing starter template if the host actually has the Horadric Cube
+    # (automatically True past a2n; strictly False in a1n; gated on host telemetry in a2n).
+    allow_cube = False if is_act1_normal else (
+        bool(has_cube) if has_cube is not None else (wp_norm != "a2n")
+    )
 
     if eff_level == 1:
         template_name = "default"
@@ -193,6 +220,11 @@ def generate_dropin_character(
         template_name = "default"
         inv_gold = 0
         stash_gold = min(10000, 2000 + (eff_level - 1) * 572)
+    elif not allow_cube:
+        # Party reached Act 2 Normal but host has not found the Horadric Cube yet: no Cube!
+        template_name = "default"
+        inv_gold = 0
+        stash_gold = min(15000, 2000 + (eff_level - 1) * 650)
     else:
         template_name = None  # auto-pick tier template matching level (includes Horadric Cube)
         inv_gold = 0

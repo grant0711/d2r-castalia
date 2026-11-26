@@ -603,7 +603,14 @@ async function submitDropIn(andLaunch = false) {
   }
   const telem = await api("/local/dropin", {
     method: "POST",
-    body: { target: c.id, char_name: cleanName, char_class: cls, level: c.current_level, wp_code: c.current_wp },
+    body: {
+      target: c.id,
+      char_name: cleanName,
+      char_class: cls,
+      level: c.current_level,
+      wp_code: c.current_wp,
+      has_cube: Boolean(c.has_cube),
+    },
   });
   await api("/local/rsvp", {
     method: "POST",

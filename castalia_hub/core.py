@@ -345,9 +345,10 @@ class CastaliaHub:
         class_code: str,
         level: int,
         wp_code: str,
+        has_cube: Optional[bool] = None,
     ) -> Dict[str, Any]:
         pdir = self.profile_dir_for(target)
-        return generate_dropin_character(pdir, char_name, class_code, level, wp_code)
+        return generate_dropin_character(pdir, char_name, class_code, level, wp_code, has_cube=has_cube)
 
     # ── Multi-Version Mod Cache (GitHub Releases + SHA-256) ──────────────────
 
@@ -549,6 +550,7 @@ class CastaliaHub:
         current_level: Optional[int] = None,
         current_wp: Optional[str] = None,
         next_session_utc: Optional[str] = None,
+        has_cube: Optional[bool] = None,
     ) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
@@ -560,6 +562,8 @@ class CastaliaHub:
             body["current_wp"] = current_wp
         if next_session_utc is not None:
             body["next_session_utc"] = next_session_utc
+        if has_cube is not None:
+            body["has_cube"] = bool(has_cube)
         return self._api("POST", f"/api/campaigns/{campaign_id}/end-session", body=body, token=tok)
 
     def rsvp_campaign(
@@ -851,6 +855,7 @@ class CastaliaHub:
                         target,
                         current_level=int(latest_char["char_level"]),
                         current_wp=str(latest_char["char_wp"]),
+                        has_cube=bool(latest_char.get("has_cube", False)),
                     )
                     result["host_rollover"] = rolled
                 except Exception as e:

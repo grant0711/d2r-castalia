@@ -14,6 +14,68 @@ import threading
 import webbrowser
 
 REPO_ROOT = getattr(sys, "_MEIPASS", os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
+def _maybe_exec_origin_release() -> None:
+    """
+    On Linux dev checkouts, sync a dedicated detached git worktree to `origin/release`
+    and exec its bin/d2r-launcher so local `master` work never leaks into live sessions.
+    Pass `--dev` (or set CASTALIA_LAUNCHER_DEV=1) to run directly from the current checkout.
+    """
+    if getattr(sys, "frozen", False) or os.name == "nt":
+        return
+    if os.environ.get("CASTALIA_RELEASE_WORKTREE") == "1":
+        return
+    if "--dev" in sys.argv[1:] or os.environ.get("CASTALIA_LAUNCHER_DEV") == "1":
+        return
+    if not os.path.isdir(os.path.join(REPO_ROOT, ".git")):
+        return
+
+    worktree_dir = os.path.expanduser("~/.local/share/castalia-hub/release-worktree")
+    try:
+        subprocess.run(
+            ["git", "-C", REPO_ROOT, "fetch", "--quiet", "origin", "release"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
+        ref = subprocess.run(
+            ["git", "-C", REPO_ROOT, "rev-parse", "--short", "origin/release"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if ref.returncode != 0:
+            return
+        short_sha = ref.stdout.strip()
+        os.makedirs(os.path.dirname(worktree_dir), exist_ok=True)
+        if not os.path.exists(os.path.join(worktree_dir, ".git")):
+            subprocess.run(
+                ["git", "-C", REPO_ROOT, "worktree", "add", "--force", "--detach", worktree_dir, "origin/release"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=15,
+            )
+        else:
+            subprocess.run(
+                ["git", "-C", worktree_dir, "checkout", "--detach", "--force", "origin/release"],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=15,
+            )
+        target_script = os.path.join(worktree_dir, "bin", "d2r-launcher")
+        if os.path.isfile(target_script):
+            print(f"[d2r-launcher] Synced to origin/release ({short_sha}) -> {worktree_dir} (pass --dev for local checkout)")
+            os.environ["CASTALIA_RELEASE_WORKTREE"] = "1"
+            os.execv(sys.executable, [sys.executable, target_script, *sys.argv[1:]])
+    except Exception as exc:
+        print(f"[d2r-launcher] Warning: could not sync origin/release ({exc}); running local checkout.")
+
+
+_maybe_exec_origin_release()
+
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
@@ -36,6 +98,7 @@ def main():
     p.add_argument("--prefix", help="Override Wine/Proton prefix name (e.g. mod, acct2)")
     p.add_argument("--name", help="Set initial display name for this launcher instance")
     p.add_argument("--no-browser", action="store_true", help="Do not auto-open browser window")
+    p.add_argument("--dev", action="store_true", help="Run directly from local checkout instead of origin/release worktree")
     args = p.parse_args()
 
     if args.prefix:

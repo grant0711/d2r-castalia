@@ -35,7 +35,7 @@ jobs:
             --paths . `
             --paths tools `
             --add-data "castalia_hub\static;castalia_hub\static" `
-            --add-data "tools\mod_builder\mod_config.json;tools\mod_builder" `
+            --add-data "tools\mod_builder\mod_config.json;mod_builder" `
             --add-data "tools\char_templates;tools\char_templates" `
             --add-data "vanilla-reference\data\global\excel\charstats.txt;vanilla-reference\data\global\excel" `
             --add-data "vanilla-reference\data\global\excel\experience.txt;vanilla-reference\data\global\excel" `

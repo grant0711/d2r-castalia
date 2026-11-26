@@ -3328,15 +3328,27 @@ var D2_CALC_DATA = {calc_payload_json};
 
   for (var tb = 0; tb < tabBtns.length; tb++) {{
     tabBtns[tb].addEventListener("click", function(e) {{
+      e.preventDefault();
       var tid = this.getAttribute("data-tab");
-      if (tid) activateTab(tid, false);
+      var href = this.getAttribute("href");
+      if (tid) activateTab(tid, true);
+      if (href && window.history && window.history.replaceState) {{
+        window.history.replaceState(null, "", href);
+      }}
     }});
   }}
 
   for (var tl = 0; tl < tabLinks.length; tl++) {{
-    tabLinks[tl].addEventListener("click", function() {{
+    tabLinks[tl].addEventListener("click", function(e) {{
       var tid = this.getAttribute("data-tab-link");
-      if (tid) activateTab(tid, true);
+      var href = this.getAttribute("href");
+      if (tid) {{
+        e.preventDefault();
+        activateTab(tid, true);
+        if (href && window.history && window.history.replaceState) {{
+          window.history.replaceState(null, "", href);
+        }}
+      }}
     }});
   }}
 

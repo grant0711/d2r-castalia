@@ -1,10 +1,10 @@
 {
-  "version": "0.4.1",
-  "tag": "v0.4.1",
+  "version": "0.4.2",
+  "tag": "v0.4.2",
   "released_at": "2026-11-26",
   "save_schema": 1,
   "save_compat": "compatible",
   "d2r_patch": "95032",
-  "download_url": "https://github.com/grant0711/d2r-castalia/releases/download/v0.4.1/castalia-v0.4.1.zip",
-  "sha256": "2d1329ab120e84a2878147d90cf2a6829a20a198c5bf348072cd4d1424b3f508"
+  "download_url": "https://github.com/grant0711/d2r-castalia/releases/download/v0.4.2/castalia-v0.4.2.zip",
+  "sha256": "367e1c72cb1c39d0f17470d274944d4a4f51c3bf3ab79a8878583e5aa2ad1d77"
 }

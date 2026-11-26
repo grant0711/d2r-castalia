@@ -8,6 +8,12 @@ Versioning follows **Save-Aware SemVer** (`vMAJOR.MINOR.PATCH` — see [docs/sys
 
 ---
 
+## [v0.4.2] - 2026-11-26
+
+**Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)
+
+Playtest #1 fixes & Drop-In co-op polish: fixed early Act 1 Blood Moor/Cold Plains white & cracked drops (itemratio.txt), calibrated Act 1 Drop-In gold to 10,000g at Lv 15, gated Horadric Cube on Host possession, added exact Host quest & waypoint cloning onto new Drop-In saves, added auto-bump of campaign version on Host launch for same-minor patch releases, auto-restore of solo saves on campaign exit, and automatic stale playit tunnel refresh on Go Live.
+
 ## [v0.4.1] - 2026-11-26
 
 **Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)

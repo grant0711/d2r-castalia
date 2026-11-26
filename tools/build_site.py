@@ -1813,7 +1813,7 @@ def build_site() -> str:
         <li><a href="#runes-33" data-tab-link="tab-items">The 33 Semantic Runes</a></li>
         <li><a href="#monsters" data-tab-link="tab-world">4 Monster Archetypes</a></li>
         <li><a href="#mercenaries" data-tab-link="tab-world">10-Slot Mercenaries</a></li>
-        <li><a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design &amp; Roadmap</b></a></li>
+        <li><a href="#coop" data-tab-link="tab-coop"><b class="d2-bright-gold">Co-Op Design</b></a></li>
       </ul>
     </div>
 
@@ -2071,13 +2071,11 @@ def build_site() -> str:
     </div>
     </div>
 
-    <!-- TAB 5: CO-OP DESIGN & ROADMAP -->
+    <!-- TAB 5: CO-OP DESIGN -->
     <div class="tab-panel" id="tab-coop">
     <a name="coop"></a>
     <a name="coop-conduction"></a>
     <a name="coop-trinity"></a>
-    <a name="coop-roadmap"></a>
-    <a name="coop-expedition"></a>
 
     <div class="section-block">
       <div class="section-title-bar">
@@ -2087,13 +2085,28 @@ def build_site() -> str:
       <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
         <div style="color:#d4af37;font-weight:bold;letter-spacing:0.5px;margin-bottom:6px;">WHY CASTALIA CO-OP FEELS DIFFERENT</div>
         <p style="margin:0 0 8px 0;">In vanilla <i>Diablo II</i>, co-op quickly collapses into a single Runeword carry teleporting ahead and deleting screens while teammates trail behind for XP. Castalia removes Runewords, Town Portals, and personal elemental/sunder pierce while enforcing real <b>Mana</b> and <b>Stamina</b> economies &mdash; giving fights the breathing room for true party roles, resource sharing, and cross-class combos.</p>
-        <p style="margin:0;"><b class="d2-bright-gold">Core Guardrail:</b> We <b>never</b> silently downgrade a player's skills when friends join. Your character stays 100% consistent and honest in solo or co-op &mdash; instead, co-op shines through <b>active cross-class synergies</b>, <b>distinct support roles</b>, and <b>escalating monster tactics &amp; rewards</b>.</p>
+        <p style="margin:0;"><b class="d2-bright-gold">Core Guardrail:</b> We <b>never</b> silently downgrade a player's skills when friends join. Your character stays 100% consistent and honest in solo or co-op &mdash; instead, co-op shines through <b>active cross-class synergies</b> and <b>distinct party support roles</b>.</p>
       </div>
     </div>
 
     <div class="section-block">
       <div class="section-title-bar">
-        <h2>LIVE NOW &mdash; CONDUCTION &amp; CROSS-CLASS SYNERGIES</h2>
+        <h2>PLAYING CO-OP &mdash; CAMPAIGN LAUNCHER &amp; D2RLOADER</h2>
+        <div class="section-sub">Scheduled small-party campaigns with isolated saves, drop-in characters, and automatic progress tracking</div>
+      </div>
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <ul style="margin:0;padding-left:18px;">
+          <li style="margin-bottom:6px;"><b class="d2-gold">Castalia Launcher (<code>castalia-launcher-win64.exe</code>):</b> Browse open and <b>LIVE</b> campaigns, auto-install the pinned Castalia release with SHA-256 verification, and launch D2RLoader with zero manual config editing.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Crash-Safe Isolated Saves:</b> Each campaign gets its own isolated save profile &mdash; your solo characters and <code>Settings.json</code> stay completely untouched.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Instant Fresh &amp; Drop-In Characters:</b> Create a fresh Level 1 character (with 2,000 starter gold) or generate a level-matched drop-in starter character for an in-progress campaign, with unique character-name checks per campaign.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">In-Game Host/Join Guide &amp; Hall of Heroes:</b> The bundled <code>castalia-autohost.dll</code> plugin displays your session settings inside D2RLoader's Multiplayer screen, while completed sessions automatically update your party roster and <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Discord</a> campaign board.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>CONDUCTION &amp; CROSS-CLASS SYNERGIES</h2>
         <div class="section-sub">A Sorceress's active stance and three independent cross-tree passives reshape how her teammates' skills behave</div>
       </div>
       <p style="margin:8px 0;font-size:13px;color:#d8cbb8;">When a Sorceress casts <b class="d2-gold">Conduction</b> on an ally or mercenary, she transfers her matching <b>Elemental Skill Damage</b> (up to <b class="d2-blue">+30%</b>) along with her three independent cross-tree passives &mdash; <b class="d2-gold">Expansion</b> (Radius), <b class="d2-gold">Stasis</b> (Duration &amp; Stun), and <b class="d2-gold">Arc</b> (Chains, Strikes &amp; Pulse Tempo). Even a Fire Sorceress who invests in Stasis passes full duration bonuses to her Barbarian or Paladin partner.</p>
@@ -2127,69 +2140,32 @@ def build_site() -> str:
 
     <div class="section-block">
       <div class="section-title-bar">
-        <h2>THE 3-CLASS SUPPORT &amp; RESOURCE TRINITY</h2>
-        <div class="section-sub">Three mechanically distinct healers and resource anchors &mdash; no single mandatory support class</div>
+        <h2>PARTY SUPPORT &amp; RESOURCE ROLES</h2>
+        <div class="section-sub">Distinct healers and resource anchors across the current Alpha roster</div>
       </div>
       <table class="data-tbl" width="100%" cellspacing="1" cellpadding="6" style="margin-top:8px;">
         <tr class="tbl-hdr">
           <th width="16%">Class</th>
-          <th width="22%">Support Identity</th>
-          <th width="21%">Health Restore</th>
-          <th width="21%">Stamina Restore</th>
+          <th width="24%">Support Identity</th>
+          <th width="20%">Health Restore</th>
+          <th width="20%">Stamina Restore</th>
           <th width="20%">Mana Restore</th>
         </tr>
         <tr bgcolor="#120e0a">
-          <td><b class="d2-gold">Paladin</b><br><span class="d2-green">Live</span></td>
+          <td><b class="d2-gold">Paladin</b></td>
           <td>Sustained Aura &amp; Targeted Cleric <span class="d2-dim">(Aura Mana Devotion visibly shrinks aura radius as Mana drains)</span></td>
           <td><b>Prayer</b> (steady aura) &amp; <b>Holy Bolt</b> (targeted burst)</td>
-          <td><b>Vigor</b> <span class="d2-dim">(planned tempered +11% &rarr; +75% Stamina Recovery)</span></td>
+          <td><b>Vigor</b> (party run/walk &amp; Stamina recovery aura)</td>
           <td><b>Meditation</b> (0-Mana active party recovery stance)</td>
         </tr>
         <tr bgcolor="#18130e">
-          <td><b class="d2-gold">Barbarian</b><br><span class="d2-green">Live</span></td>
+          <td><b class="d2-gold">Barbarian</b></td>
           <td>Tactical Burst Warcry Medic <span class="d2-dim">(3.0s shared Warcry CD; War Cry shreds -75% Phys/Magic Res)</span></td>
           <td><b>Battle Command</b> (instant party HP burst heal)</td>
           <td><b>Second Wind</b> (instant party Stamina refill countering Stamina Fatigue) &amp; <b>Enduring Cry</b> (+Max Stamina)</td>
           <td><span class="d2-dim">&mdash;</span></td>
         </tr>
-        <tr bgcolor="#120e0a">
-          <td><b class="d2-gold">Druid</b><br><span class="d2-blue">Planned</span></td>
-          <td>Stationary, Targetable Resource Totems <span class="d2-dim">(high Mana, long CD, scaling HP/Res/Duration to plant &amp; defend)</span></td>
-          <td><b>Life Totem</b> (party <i>Life After Each Kill</i> aura)</td>
-          <td><span class="d2-dim">&mdash; (remains Paladin / Barbarian domain)</span></td>
-          <td><b>Mana Totem</b> (party <i>Mana After Each Kill</i> aura)</td>
-        </tr>
       </table>
-    </div>
-
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>CO-OP ROADMAP &mdash; DYNAMIC ENCOUNTERS &amp; LOOT SCALING</h2>
-        <div class="section-sub">Making 2&ndash;8 player games tactically distinct and genuinely more rewarding</div>
-      </div>
-      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
-        <ul style="margin:0;padding-left:18px;">
-          <li style="margin-bottom:6px;"><b class="d2-gold">Tactical Monster Skill Scaling (Bypassing Static /players N):</b> Vanilla D2R only scales monster HP (+50%/player) and NM/Hell physical damage (+6.25%/player), leaving monster speed, elemental spells, and attack patterns frozen at P1. By fixing <code>minHP = maxHP</code> on monsters, Act Bosses, Super Uniques, and iconic Hell monster families can read their own <code>maxhp</code> and <code>hitpoints</code> to unlock <b>new secondary sub-missiles, faster speed/attack tempo, extended range/AoE, co-op elemental spell scaling, and &lt;50% HP boss enrage phases</b> as player count grows.</li>
-          <li style="margin-bottom:6px;"><b class="d2-gold">Co-Op Magic Find &amp; Gold Find Bounty (<code>coop_bounty</code>):</b> Broadly applied by Act Bosses, Super Uniques, and normal monsters when <code>maxhp</code> crosses co-op thresholds (P2+ / P4+). Nearby players actively fighting together receive a short-duration <b>+Magic Find &amp; +Gold Find</b> bounty &mdash; rewarding real combat gear over pure MF gear while preventing AFK town leeching.</li>
-          <li style="margin-bottom:6px;"><b class="d2-gold">Scaling Gems, Runes &amp; Boss Drops (<code>Picks + NoDrop</code>):</b> Because Magic Find does not affect Gems or Runes, Champions, Uniques, Chests, and Act Bosses will be re-tuned with higher <code>Picks</code> and calibrated <code>NoDrop</code> &mdash; preserving the <b>exact same solo P1 average</b> while scaling co-op drops up to <b>~2.7&times;</b> in 4-player games.</li>
-          <li style="margin-bottom:0;"><b class="d2-gold">Clean Co-Op Summon Readability:</b> Upcoming Druid and Necromancer reworks will favor leaner, tougher summon rosters (few Druid beasts + stationary Totems; slightly tighter Necromancer armies) with co-op survivability tuning so group arenas stay readable without body-blocking melee teammates.</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="section-block">
-      <div class="section-title-bar">
-        <h2>CO-OP ROADMAP &mdash; PURE &ldquo;EXPEDITION MODE&rdquo;</h2>
-        <div class="section-sub">Zero Field Waypoints + Zero Town Portals &mdash; every Act becomes a true party dungeon crawl</div>
-      </div>
-      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
-        <p style="margin:0 0 8px 0;">Alongside Castalia's existing <b>no-Town-Portal</b> design, an optional <b>Expedition Mode</b> removes all <b>34 field Waypoints</b> (retaining only the <b>5 Town Waypoints</b> for Act-to-Act travel). Stepping out of Town commits your party to a continuous expedition from Town to Act Boss:</p>
-        <ul style="margin:0;padding-left:18px;">
-          <li style="margin-bottom:5px;"><b class="d2-gold">Live Off the Land:</b> Increased monster potion drop weights and <b>Superchest windfalls</b> (pots/barrels are removed in Castalia), paired with on-the-go Horadric Cube crafting from found bases, Gems, and Runes.</li>
-          <li style="margin-bottom:5px;"><b class="d2-gold">Diegetic Survival Constraints:</b> Weapon durability is already doubled with <b>no</b> Cube repair recipes (broken gear forces a real haul-vs.-swap decision), quiver stacks remain at <b>255</b>, Identify scrolls stay intentionally scarce (identify vs. blind-craft tension), and Shrines/Wells keep standard density with tuned refresh timers.</li>
-          <li style="margin-bottom:0;"><b class="d2-gold">Expedition-Leg Resistance Cohesion:</b> Monster resistances/vulnerabilities along each continuous Act leg (e.g., Rocky Waste &rarr; Claw Viper Temple) will be audited for cohesion so builds can feasibly push a full expedition leg without hitting back-to-back contradictory immunity walls.</li>
-        </ul>
-      </div>
     </div>
 
     </div>

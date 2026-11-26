@@ -311,6 +311,21 @@ class CastaliaHub:
         )
         return pid
 
+    def _restore_solo_to_live(self) -> int:
+        """Restore profiles/solo/ into the live D2R save dir (without writing an active lockfile)."""
+        live_dir = self.config["d2r_save_dir"]
+        solo_dir = self.profile_dir_for("solo")
+        os.makedirs(live_dir, exist_ok=True)
+        for fn in os.listdir(live_dir):
+            if _is_save_file(fn):
+                os.remove(os.path.join(live_dir, fn))
+        copied = 0
+        for fn in os.listdir(solo_dir):
+            if _is_save_file(fn):
+                shutil.copy2(os.path.join(solo_dir, fn), os.path.join(live_dir, fn))
+                copied += 1
+        return copied
+
     def sync_back_active_profile(self) -> Optional[str]:
         """Sync live saves back to the active profile and clear active_profile.json."""
         if not os.path.isfile(self.active_profile_path):
@@ -851,6 +866,8 @@ class CastaliaHub:
                 self.set_d2rloader_game_port(prev_game_port)
             self.write_launch_intent(None, False)
             self.sync_back_active_profile()
+            if target != "solo":
+                self._restore_solo_to_live()
 
         # Post-exit .d2s telemetry & Host auto-rollover
         chars = self.list_profile_chars(target)

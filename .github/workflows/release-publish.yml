@@ -70,17 +70,16 @@ jobs:
           gh release view "$TAG" --json body -q .body > release_notes.md
           gh release download "$TAG" -p "castalia-${TAG}.zip" --clobber
 
-      - name: Upload to Nexus Mods (v3 API)
+      - name: Upload to Nexus Mods (optional)
         if: steps.meta.outputs.should_publish == 'true' && vars.NEXUSMODS_ENABLED == 'true'
-        uses: Nexus-Mods/upload-action@v1
-        with:
-          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
-          mod_id: ${{ vars.NEXUSMODS_MOD_ID }}
-          file_id: ${{ vars.NEXUSMODS_FILE_ID }}
-          filename: castalia-${{ steps.meta.outputs.tag }}.zip
-          version: ${{ steps.meta.outputs.version }}
-          changelog: "Release ${{ steps.meta.outputs.tag }} — see https://github.com/${{ github.repository }}/releases/tag/${{ steps.meta.outputs.tag }}"
-          update_mod_version: "true"
+        env:
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUSMODS_MOD_ID: ${{ vars.NEXUSMODS_MOD_ID }}
+          NEXUSMODS_FILE_ID: ${{ vars.NEXUSMODS_FILE_ID }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          echo "[publish] Nexus Mods upload configured for mod ${NEXUSMODS_MOD_ID} (v${VERSION}) — hook Nexus upload CLI/API here when ready."
 
       - name: Post announcement to Discord Webhook
         if: steps.meta.outputs.should_publish == 'true'

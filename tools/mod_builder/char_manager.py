@@ -503,6 +503,39 @@ def describe_wp_progress(raw: bytes) -> str:
     return " ".join(parts)
 
 
+def extract_host_progress_snapshot(raw: bytes) -> Optional[bytes]:
+    """
+    Extract a compact 383-byte snapshot of a host character's exact quest & waypoint state:
+      - byte 0:        raw[0x15] (D2R v105 difficulty progression byte)
+      - bytes 1..4:    raw[0x98:0x9B] (Normal/NM/Hell active act & difficulty flags, offsets 152..154)
+      - bytes 4..302:  Woo! quest section (298 bytes)
+      - bytes 302..383: WS waypoint section (81 bytes)
+    """
+    woo = raw.find(b"Woo!")
+    ws = raw.find(b"WS", woo if woo >= 0 else 0)
+    if woo < 0 or ws < 0 or ws - woo != 298 or ws + 81 > len(raw):
+        return None
+    return bytes([raw[0x15]]) + bytes(raw[0x98:0x9B]) + bytes(raw[woo : woo + 298]) + bytes(raw[ws : ws + 81])
+
+
+def apply_host_progress_snapshot(raw: bytearray, snapshot: bytes) -> None:
+    """Overlay a 383-byte host quest & waypoint snapshot onto a freshly created Drop-In .d2s."""
+    if not snapshot or len(snapshot) != 383:
+        raise ValueError(f"Invalid host_progress_bytes length: {len(snapshot) if snapshot else 0} (expected 383)")
+    woo_blob = snapshot[4:302]
+    ws_blob = snapshot[302:383]
+    if not woo_blob.startswith(b"Woo!") or not ws_blob.startswith(b"WS"):
+        raise ValueError("Invalid host_progress_bytes headers (missing Woo! or WS)")
+    woo = raw.find(b"Woo!")
+    ws = raw.find(b"WS", woo if woo >= 0 else 0)
+    if woo < 0 or ws < 0 or ws - woo != 298 or ws + 81 > len(raw):
+        raise ValueError("Target .d2s missing standard 298-byte Woo! / 81-byte WS layout")
+    raw[0x15] = snapshot[0]
+    raw[0x98:0x9B] = snapshot[1:4]
+    raw[woo : woo + 298] = woo_blob
+    raw[ws : ws + 81] = ws_blob
+
+
 def configure_character_d2s(
     d2s_path: str,
     *,
@@ -510,6 +543,7 @@ def configure_character_d2s(
     class_id: Optional[int] = None,
     level: Optional[int] = None,
     wp_target: Optional[str] = None,
+    host_progress_bytes: Optional[bytes] = None,
     reset_skills: bool = True,
     reset_stats: bool = True,
     stash_gold: Optional[int] = None,
@@ -541,7 +575,9 @@ def configure_character_d2s(
         stats[12] = eff_level
         stats[13] = exp_for_level(class_row_name, eff_level)
 
-    if wp_target is not None:
+    if host_progress_bytes is not None:
+        apply_host_progress_snapshot(raw, host_progress_bytes)
+    elif wp_target is not None:
         apply_waypoints_and_quests(raw, wp_target)
 
     q_skill_pts, q_stat_pts, q_life_bonus = compute_completed_quest_bonuses(raw)
@@ -688,6 +724,7 @@ def create_character_from_template(
     *,
     level: int = 1,
     wp_target: str = "start",
+    host_progress_bytes: Optional[bytes] = None,
     stash_gold: Optional[int] = None,
     inv_gold: int = 0,
     template_name: Optional[str] = None,
@@ -735,6 +772,7 @@ def create_character_from_template(
         class_id=cls_id,
         level=level,
         wp_target=wp_target,
+        host_progress_bytes=host_progress_bytes,
         reset_skills=True,
         reset_stats=True,
         stash_gold=eff_stash_gold,

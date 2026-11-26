@@ -311,6 +311,21 @@ class CastaliaHub:
         )
         return pid
 
+    def _restore_solo_to_live(self) -> int:
+        """Restore profiles/solo/ into the live D2R save dir (without writing an active lockfile)."""
+        live_dir = self.config["d2r_save_dir"]
+        solo_dir = self.profile_dir_for("solo")
+        os.makedirs(live_dir, exist_ok=True)
+        for fn in os.listdir(live_dir):
+            if _is_save_file(fn):
+                os.remove(os.path.join(live_dir, fn))
+        copied = 0
+        for fn in os.listdir(solo_dir):
+            if _is_save_file(fn):
+                shutil.copy2(os.path.join(solo_dir, fn), os.path.join(live_dir, fn))
+                copied += 1
+        return copied
+
     def sync_back_active_profile(self) -> Optional[str]:
         """Sync live saves back to the active profile and clear active_profile.json."""
         if not os.path.isfile(self.active_profile_path):
@@ -345,9 +360,19 @@ class CastaliaHub:
         class_code: str,
         level: int,
         wp_code: str,
+        has_cube: Optional[bool] = None,
+        host_progress_b64: Optional[str] = None,
     ) -> Dict[str, Any]:
         pdir = self.profile_dir_for(target)
-        return generate_dropin_character(pdir, char_name, class_code, level, wp_code)
+        return generate_dropin_character(
+            pdir,
+            char_name,
+            class_code,
+            level,
+            wp_code,
+            has_cube=has_cube,
+            host_progress_b64=host_progress_b64,
+        )
 
     # ── Multi-Version Mod Cache (GitHub Releases + SHA-256) ──────────────────
 
@@ -537,10 +562,58 @@ class CastaliaHub:
             self._save_json(self.tokens_path, tokens)
         return res
 
+    @staticmethod
+    def _refresh_playit_tunnel_if_stale(max_age_seconds: int = 1800) -> None:
+        """
+        On Linux hosts running castalia-playit.service, restart the tunnel daemon before
+        publishing Go Live if it has been running longer than `max_age_seconds`.
+        Prevents overnight/sleep-stale playit control sessions from silently accepting
+        client TCP handshakes without forwarding them to 127.0.0.1:4000.
+        """
+        if os.name == "nt":
+            return
+        try:
+            active = subprocess.run(
+                ["systemctl", "--user", "is-active", "--quiet", "castalia-playit.service"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+            )
+            if active.returncode != 0:
+                return
+            prop = subprocess.run(
+                ["systemctl", "--user", "show", "-p", "ActiveEnterTimestamp", "--value", "castalia-playit.service"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+            ts_str = (prop.stdout or "").strip()
+            stale = True
+            if ts_str:
+                try:
+                    # Format: "Thu 2026-11-26 18:16:02 UTC"
+                    parts = ts_str.split()
+                    if len(parts) >= 3:
+                        dt = datetime.strptime(f"{parts[1]} {parts[2]}", "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                        age = (datetime.now(timezone.utc) - dt).total_seconds()
+                        stale = age > max_age_seconds
+                except Exception:
+                    stale = True
+            if stale:
+                subprocess.run(
+                    ["systemctl", "--user", "restart", "castalia-playit.service"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=8,
+                )
+        except Exception:
+            pass
+
     def go_live(self, campaign_id: str, game_id: str) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
             raise RuntimeError(f"No local host_token found for campaign '{campaign_id}'")
+        self._refresh_playit_tunnel_if_stale()
         return self._api("POST", f"/api/campaigns/{campaign_id}/go-live", body={"live_join_info": game_id}, token=tok)
 
     def end_session(
@@ -549,6 +622,8 @@ class CastaliaHub:
         current_level: Optional[int] = None,
         current_wp: Optional[str] = None,
         next_session_utc: Optional[str] = None,
+        has_cube: Optional[bool] = None,
+        host_progress_b64: Optional[str] = None,
     ) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
@@ -560,6 +635,10 @@ class CastaliaHub:
             body["current_wp"] = current_wp
         if next_session_utc is not None:
             body["next_session_utc"] = next_session_utc
+        if has_cube is not None:
+            body["has_cube"] = bool(has_cube)
+        if host_progress_b64:
+            body["host_progress_b64"] = str(host_progress_b64)
         return self._api("POST", f"/api/campaigns/{campaign_id}/end-session", body=body, token=tok)
 
     def rsvp_campaign(
@@ -752,10 +831,54 @@ class CastaliaHub:
         self._save_json(intent_path, payload)
         return intent_path
 
+    @staticmethod
+    def _parse_semver(ver: str) -> Optional[Tuple[int, int, int]]:
+        m = re.match(r"^v?(\d+)\.(\d+)\.(\d+)$", str(ver or "").strip())
+        if not m:
+            return None
+        return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+
+    def _auto_bump_campaign_version(self, campaign: Dict[str, Any]) -> Optional[str]:
+        """
+        If a newer published GitHub release exists within the same MAJOR.MINOR line
+        (e.g. 0.4.1 -> 0.4.2, but NOT 0.4.x -> 0.5.0 or 1.0.0), automatically bump the
+        campaign's pinned castalia_version so Host and joining guests stay in sync.
+        """
+        cur_ver = str(campaign.get("castalia_version") or "").lstrip("v")
+        cur_tuple = self._parse_semver(cur_ver)
+        if not cur_tuple:
+            return None
+        try:
+            rels = self.list_github_releases()
+        except Exception:
+            return None
+        best_tuple = cur_tuple
+        best_ver: Optional[str] = None
+        for rel in rels:
+            # Only auto-bump to published releases that guests can actually download
+            if not rel.get("zip_url"):
+                continue
+            rv = str(rel.get("version") or "").lstrip("v")
+            rt = self._parse_semver(rv)
+            if not rt:
+                continue
+            if rt[0] == cur_tuple[0] and rt[1] == cur_tuple[1] and rt > best_tuple:
+                best_tuple = rt
+                best_ver = rv
+        if not best_ver:
+            return None
+        try:
+            self.update_campaign(campaign["id"], {"castalia_version": best_ver})
+            campaign["castalia_version"] = best_ver
+            return best_ver
+        except Exception:
+            return None
+
     def launch_session(self, target: str, dry_run: bool = False) -> Dict[str, Any]:
         """
         Full launch lifecycle:
-          1. If campaign: fetch snapshot, sync pinned mod version, write castalia_launch_intent.json,
+          1. If campaign: fetch snapshot, auto-bump patch version (same MAJOR.MINOR) for Host,
+             sync pinned mod version, write castalia_launch_intent.json,
              auto-configure d2rloader.toml game_port for custom playit.gg ports, copy host/Game ID to clipboard
           2. Swap isolated save profile into live mods/castalia/
           3. Launch D2RLoader (via bin/d2r-mod --coop on Linux or D2RLoader.exe on Windows)
@@ -769,6 +892,8 @@ class CastaliaHub:
         if target != "solo":
             campaign = self.get_campaign(target)
             is_host = bool(campaign.get("is_host"))
+            if is_host and not dry_run:
+                self._auto_bump_campaign_version(campaign)
             ver_status = self.ensure_version_installed(campaign["castalia_version"])
             if campaign.get("live_join_info") and not is_host:
                 join_host, join_port = self.parse_host_port(str(campaign["live_join_info"]))
@@ -812,7 +937,7 @@ class CastaliaHub:
         try:
             d2r_mod_bin = os.path.join(REPO_ROOT, "bin", "d2r-mod")
             if sys.platform != "win32" and os.path.isfile(d2r_mod_bin):
-                cmd = [d2r_mod_bin, "--coop"] if campaign else [d2r_mod_bin]
+                cmd = ["bash", d2r_mod_bin, "--coop"] if campaign else ["bash", d2r_mod_bin]
                 subprocess.run(cmd, check=False)
             else:
                 loader_exe = os.path.join(self.config["d2r_game_dir"], "D2RLoader.exe")
@@ -835,6 +960,8 @@ class CastaliaHub:
                 self.set_d2rloader_game_port(prev_game_port)
             self.write_launch_intent(None, False)
             self.sync_back_active_profile()
+            if target != "solo":
+                self._restore_solo_to_live()
 
         # Post-exit .d2s telemetry & Host auto-rollover
         chars = self.list_profile_chars(target)
@@ -851,6 +978,8 @@ class CastaliaHub:
                         target,
                         current_level=int(latest_char["char_level"]),
                         current_wp=str(latest_char["char_wp"]),
+                        has_cube=bool(latest_char.get("has_cube", False)),
+                        host_progress_b64=latest_char.get("host_progress_b64"),
                     )
                     result["host_rollover"] = rolled
                 except Exception as e:

@@ -2085,11 +2085,19 @@ def build_site() -> str:
           <li style="margin-bottom:5px;"><b class="d2-gold">Joining / Dropping In:</b> Pick an open campaign in the launcher. For a fresh Act 1 run you start at Level 1 with 2,000 gold; for an in-progress campaign, the launcher generates a <b>level- and Act-matched Drop-In character</b> with starter gold, gems, and runes. Plan to log in <b>~15 minutes early</b> to vendor-shop and Cube-craft your starting kit, then jump straight into the session.</li>
           <li style="margin-bottom:0;"><b class="d2-gold">Hosting a Campaign:</b> Click <b>+ Create Campaign</b> with a clear time slot (e.g. <i>Fri 8 PM CT</i>) and seat limit (2&ndash;5 works best). Make sure your port or tunnel (such as <code>playit.gg</code>) is set once in <b>Settings</b>, then click <b>Play Campaign</b> at session time &mdash; the launcher handles your isolated saves, posts your session to <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Discord</a>, and displays your exact host settings inside D2RLoader.</li>
         </ul>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 14px 0;">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px 0;">
           <a href="https://github.com/grant0711/d2r-castalia/releases/latest/download/castalia-launcher-win64.exe" target="_blank" rel="noopener" style="display:inline-block;background:#3a2b14;border:1px solid #d4af37;color:#f5e1a4;font-weight:bold;padding:8px 16px;text-decoration:none;border-radius:3px;">&#11015; Download Castalia Launcher (Windows x64)</a>
           <a href="https://d2rloader.net/" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#8cd0ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Install D2RLoader (Required) &#8599;</a>
           <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="display:inline-block;background:#1a1510;border:1px solid #5a4628;color:#a8b4ff;padding:8px 14px;text-decoration:none;border-radius:3px;">Join Co-Op Discord &#8599;</a>
         </div>
+        <details style="margin:0 0 14px 0;border:1px solid #3a2e1f;background:#0f0c08;padding:8px 12px;border-radius:3px;">
+          <summary style="cursor:pointer;color:#d4af37;font-weight:bold;">Linux / Steam Deck Install Instructions (Proton / Wine)</summary>
+          <ol style="margin:8px 0 4px 18px;padding:0;line-height:1.6;">
+            <li><b>Install D2RLoader:</b> Download from <a href="https://d2rloader.net/" target="_blank" rel="noopener" style="color:#8cd0ff;">d2rloader.net</a> and extract into your <code>Diablo II Resurrected</code> folder.</li>
+            <li><b>Clone &amp; run the Launcher (Python 3.10+, zero pip packages required):</b><br><code>git clone https://github.com/grant0711/d2r-castalia.git &amp;&amp; cd d2r-castalia &amp;&amp; ./bin/d2r-launcher</code></li>
+            <li><b>Set paths once in Settings:</b> Point <b>D2R Game Directory</b> to your D2R install folder and <b>D2R Save Directory</b> to your Wine/Proton prefix's <code>.../Saved Games/Diablo II Resurrected/mods/castalia</code> folder. The launcher auto-downloads the pinned Castalia release and isolates your saves.</li>
+          </ol>
+        </details>
         <div style="text-align:center;margin:0 0 12px 0;">
           <a href="img/castalia_launcher.png" target="_blank" rel="noopener">
             <img src="img/castalia_launcher.png" alt="Castalia Campaign Launcher" style="max-width:100%;height:auto;border:1px solid #5a4628;border-radius:3px;box-shadow:0 2px 12px rgba(0,0,0,0.65);">

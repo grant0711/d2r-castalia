@@ -96,6 +96,13 @@ async function syncDiscord(env, camp, confirmed) {
   return data.id || camp.discord_msg_id || null;
 }
 
+async function syncDiscordWithCount(env, camp, cid) {
+  const cntRow = await env.DB.prepare(
+    "SELECT COUNT(*) AS cnt FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'"
+  ).bind(cid).first();
+  return syncDiscord(env, camp, cntRow ? cntRow.cnt : 0);
+}
+
 export default {
   async fetch(req, env) {
     if (req.method === "OPTIONS") return jsonResp({ ok: true });
@@ -239,6 +246,7 @@ export default {
             String(body.build_summary || "").slice(0, 80), status, now
           ).run();
           const rrow = await env.DB.prepare("SELECT * FROM rsvps WHERE id = ?").bind(rid).first();
+          await syncDiscordWithCount(env, sanitizeCampaign(row, false), cid);
           return jsonResp({ rsvp: sanitizeRsvp(rrow), rsvp_token: rsvpToken }, 201);
         }
 
@@ -277,6 +285,7 @@ export default {
           if (!rrow) return jsonResp({ error: "not_found" }, 404);
           if (!isHost && bearerHash !== rrow.rsvp_token_hash) return jsonResp({ error: "forbidden" }, 403);
           await env.DB.prepare("UPDATE rsvps SET status = 'cancelled' WHERE id = ?").bind(rid).run();
+          await syncDiscordWithCount(env, sanitizeCampaign(row, false), cid);
           return jsonResp({ cancelled: rid });
         }
 
@@ -289,7 +298,7 @@ export default {
             .bind((body.live_join_info || "").trim(), now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, true);
-          await syncDiscord(env, camp, 0);
+          await syncDiscordWithCount(env, camp, cid);
           return jsonResp(camp);
         }
 
@@ -305,7 +314,9 @@ export default {
             "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
           ).bind(Number(body.current_level ?? row.current_level), body.current_wp || row.current_wp, nextUtc, now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
-          return jsonResp(sanitizeCampaign(updated, false));
+          const camp = sanitizeCampaign(updated, false);
+          await syncDiscordWithCount(env, camp, cid);
+          return jsonResp(camp);
         }
 
         if (parts.length === 3 && req.method === "PATCH") {
@@ -348,6 +359,8 @@ export default {
           await env.DB.prepare(
             "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
           ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
+          const completedRow = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
+          await syncDiscordWithCount(env, sanitizeCampaign(completedRow, false), cid);
           return jsonResp({ id: chid, campaign_id: cid, party_roster: rsvps });
         }
       }

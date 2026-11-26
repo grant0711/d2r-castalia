@@ -8,6 +8,12 @@ Versioning follows **Save-Aware SemVer** (`vMAJOR.MINOR.PATCH` — see [docs/sys
 
 ---
 
+## [v0.4.1] - 2026-11-26
+
+**Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)
+
+Launcher UX & scheduling polish: added Host Edit Schedule modal with explicit GMT+/- timezone selector, pre-filled default session timestamps, live Discord embed updates with localized countdowns, and 1-click Add to Google Calendar links.
+
 ## [v0.4.0] - 2026-11-26
 
 **Save Compatibility:** 🟡 Save-Compatible (Respec Recommended)

@@ -150,7 +150,10 @@
     </div>
     <div class="row">
       <div style="flex:1"><label>Schedule Text</label><input id="c-sched" style="width:100%" value="Thursdays 8:00–10:00 PM"></div>
-      <div style="flex:1"><label>Next Session (Local)</label><input id="c-next" type="datetime-local" style="width:100%"></div>
+    </div>
+    <div class="row">
+      <div style="flex:2"><label>Next Session Date &amp; Time</label><input id="c-next" type="datetime-local" style="width:100%"></div>
+      <div style="flex:1"><label>Timezone (GMT)</label><select id="c-tz" style="width:100%"></select></div>
     </div>
     <div class="row" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn ghost" onclick="closeModal('modal-create')">Cancel</button>
@@ -177,6 +180,23 @@
       <button class="btn ghost" onclick="closeModal('modal-dropin')">Cancel</button>
       <button class="btn" id="di-save-btn" onclick="submitDropIn(false)">Create Character</button>
       <button class="btn launch" id="di-launch-btn" onclick="submitDropIn(true)">Create &amp; Launch D2RLoader</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SCHEDULE MODAL -->
+<div class="modal-backdrop" id="modal-schedule">
+  <div class="modal">
+    <div class="space-between"><h3>Update Next Session</h3><button class="btn ghost" onclick="closeModal('modal-schedule')">X</button></div>
+    <label>Schedule Label</label>
+    <input id="es-sched" style="width:100%" placeholder="Fri 8 PM CT">
+    <div class="row">
+      <div style="flex:2"><label>Next Session Date &amp; Time</label><input id="es-next" type="datetime-local" style="width:100%"></div>
+      <div style="flex:1"><label>Timezone (GMT)</label><select id="es-tz" style="width:100%"></select></div>
+    </div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end;">
+      <button class="btn ghost" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn primary" onclick="submitScheduleUpdate()">Save &amp; Update Discord</button>
     </div>
   </div>
 </div>
@@ -221,8 +241,20 @@ function toast(msg) {
 
 function fmtLocalTime(iso) {
   if (!iso) return "TBD";
-  try { return new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }); }
+  try { return new Date(iso).toLocaleString([], { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" }); }
   catch { return iso; }
+}
+
+function buildGcalUrl(c) {
+  if (!c || !c.next_session_utc) return null;
+  const startDt = new Date(c.next_session_utc);
+  if (isNaN(startDt.getTime())) return null;
+  const endDt = new Date(startDt.getTime() + 2 * 3600 * 1000);
+  const fmt = d => d.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+    `&text=${encodeURIComponent(`Castalia Co-Op: ${c.title || "Campaign"}`)}` +
+    `&dates=${fmt(startDt)}/${fmt(endDt)}` +
+    `&details=${encodeURIComponent(`${c.description || ""}\n\nJoin via Castalia Launcher (v${c.castalia_version || "0.4.0"})\nDiscord: https://discord.gg/3mMNCnaze4`)}`;
 }
 
 function openModal(id) { document.getElementById(id).classList.add("open"); }
@@ -340,6 +372,7 @@ async function openCampaign(cid) {
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
       <div class="row">
+        <button class="btn" onclick="openScheduleModal()">Edit Schedule</button>
         <button class="btn" onclick="promptComplete(STATE.activeCampaign.id)">Complete &#8594; Hall of Heroes</button>
         <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
       </div>
@@ -352,7 +385,7 @@ async function openCampaign(cid) {
         <h2>${esc(c.title)}</h2>
         <span class="pill">v${esc(c.castalia_version)}</span>
       </div>
-      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b></div>
+      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
     </div>
     ${liveBanner}
     <div class="card">
@@ -430,14 +463,71 @@ async function renderSettings() {
     </div>`;
 }
 
+const TZ_LABELS = {
+  "-8": "GMT-8 (US Pacific / PST)",
+  "-7": "GMT-7 (US Mountain / PDT)",
+  "-6": "GMT-6 (US Central / CST)",
+  "-5": "GMT-5 (US Eastern / CDT)",
+  "-4": "GMT-4 (EDT / Atlantic)",
+  "0": "GMT+0 (UTC / London)",
+  "1": "GMT+1 (CET / Berlin)",
+  "2": "GMT+2 (EET / CEST)",
+  "8": "GMT+8 (SGT / CST Asia)",
+  "9": "GMT+9 (JST / KST)",
+};
+
+function _populateTzSelect(id) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const saved = localStorage.getItem("castalia_tz_offset");
+  const detected = String(-Math.round(new Date().getTimezoneOffset() / 60));
+  const chosen = saved !== null ? saved : detected;
+  let opts = "";
+  for (let h = -12; h <= 14; h++) {
+    const key = String(h);
+    const label = TZ_LABELS[key] || `GMT${h >= 0 ? "+" : ""}${h}`;
+    opts += `<option value="${key}"${key === chosen ? " selected" : ""}>${label}</option>`;
+  }
+  sel.innerHTML = opts;
+}
+
+function _localInputToUtcIso(dtLocal, tzOffsetHours) {
+  if (!dtLocal) return null;
+  const h = Number(tzOffsetHours || 0);
+  const sign = h >= 0 ? "+" : "-";
+  const absH = String(Math.abs(h)).padStart(2, "0");
+  const isoWithTz = `${dtLocal}:00${sign}${absH}:00`;
+  const d = new Date(isoWithTz);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function _utcIsoToTzInput(utcIso, tzOffsetHours) {
+  const d = new Date(utcIso);
+  if (isNaN(d.getTime())) return _defaultNextSessionLocal();
+  const shifted = new Date(d.getTime() + Number(tzOffsetHours || 0) * 3600000);
+  return shifted.toISOString().slice(0, 16);
+}
+
+function _defaultNextSessionLocal() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(20, 0, 0, 0);
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
 function openCreateModal() {
   const sel = document.getElementById("c-version");
-  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.3.0">v0.3.0</option>`;
+  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.4.0">v0.4.0</option>`;
+  _populateTzSelect("c-tz");
+  const nextEl = document.getElementById("c-next");
+  if (nextEl && !nextEl.value) nextEl.value = _defaultNextSessionLocal();
   openModal("modal-create");
 }
 
 async function submitCreateCampaign() {
   const nextVal = document.getElementById("c-next").value;
+  const tzVal = document.getElementById("c-tz").value;
+  localStorage.setItem("castalia_tz_offset", tzVal);
   const res = await api("/local/campaigns", {
     method: "POST",
     body: {
@@ -449,7 +539,7 @@ async function submitCreateCampaign() {
       current_wp: document.getElementById("c-wp").value,
       max_seats: Number(document.getElementById("c-seats").value || 5),
       schedule_text: document.getElementById("c-sched").value,
-      next_session_utc: nextVal ? new Date(nextVal).toISOString() : null,
+      next_session_utc: _localInputToUtcIso(nextVal, tzVal),
     },
   });
   closeModal("modal-create");
@@ -577,6 +667,41 @@ async function promptGoLive(cid) { const g = prompt("Enter D2RLoader Game ID (or
 async function promptEndSession(cid, lvl, wp) { const nl = prompt("New Campaign Level:", String(lvl)); const nw = prompt("New Act/WP (e.g. a3nm):", wp); if (nl && nw) { await api("/local/end-session", { method: "POST", body: { campaign_id: cid, current_level: Number(nl), current_wp: nw } }); toast("Session ended & rolled forward!"); openCampaign(cid); } }
 async function promptUpgrade(cid) { const v = prompt("Upgrade pinned Castalia version to (e.g. 0.4.2):"); if (v) { await api("/local/upgrade", { method: "POST", body: { campaign_id: cid, version: v } }); toast("Upgraded pinned version!"); openCampaign(cid); } }
 async function promptComplete(cid) { const s = prompt("Hall of Heroes summary:"); const d = prompt("Total party deaths:", "0"); if (s) { await api("/local/complete", { method: "POST", body: { campaign_id: cid, summary: s, death_count: Number(d || 0) } }); toast("Archived to Hall of Heroes!"); showTab("hoh"); } }
+function openScheduleModal() {
+  const c = STATE.activeCampaign;
+  if (!c) return;
+  document.getElementById("es-sched").value = c.schedule_text || "";
+  _populateTzSelect("es-tz");
+  const tzVal = document.getElementById("es-tz").value;
+  if (c.next_session_utc) {
+    document.getElementById("es-next").value = _utcIsoToTzInput(c.next_session_utc, tzVal);
+  } else {
+    document.getElementById("es-next").value = _defaultNextSessionLocal();
+  }
+  openModal("modal-schedule");
+}
+
+async function submitScheduleUpdate() {
+  const c = STATE.activeCampaign;
+  if (!c) return;
+  const sched = document.getElementById("es-sched").value.trim();
+  const nextEl = document.getElementById("es-next");
+  if (nextEl.validity && nextEl.validity.badInput) {
+    return toast("Please complete both date and time (including AM/PM).");
+  }
+  const nextVal = nextEl.value;
+  const tzVal = document.getElementById("es-tz").value;
+  localStorage.setItem("castalia_tz_offset", tzVal);
+  const body = { campaign_id: c.id };
+  if (sched) body.schedule_text = sched;
+  const utcIso = _localInputToUtcIso(nextVal, tzVal);
+  if (utcIso) body.next_session_utc = utcIso;
+  await api("/local/schedule", { method: "POST", body });
+  closeModal("modal-schedule");
+  toast("Updated session schedule & Discord post!");
+  openCampaign(c.id);
+}
+
 async function promptDelete(cid, title) { if (confirm(`Permanently delete campaign "${title}"? (Local character saves in your profile folder are kept.)`)) { await api("/local/delete", { method: "POST", body: { campaign_id: cid } }); toast("Campaign deleted."); showTab("campaigns"); } }
 async function saveSettings() {
   await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });

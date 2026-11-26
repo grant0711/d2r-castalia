@@ -162,6 +162,13 @@ def make_ui_handler(hub: CastaliaHub):
                     ))
                 if p == "/local/upgrade":
                     return self._send_json(200, hub.update_campaign(body["campaign_id"], {"castalia_version": body["version"]}))
+                if p == "/local/schedule":
+                    updates: Dict[str, Any] = {}
+                    if body.get("schedule_text") is not None:
+                        updates["schedule_text"] = str(body["schedule_text"]).strip()[:60]
+                    if body.get("next_session_utc") is not None:
+                        updates["next_session_utc"] = str(body["next_session_utc"]).strip()[:40]
+                    return self._send_json(200, hub.update_campaign(body["campaign_id"], updates))
                 if p == "/local/delete":
                     return self._send_json(200, hub.delete_campaign(body["campaign_id"]))
                 if p == "/local/complete":

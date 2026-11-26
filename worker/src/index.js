@@ -56,16 +56,33 @@ async function syncDiscord(env, camp, confirmed) {
   const webhook = env.DISCORD_CAMPAIGN_WEBHOOK_URL;
   if (!webhook) return camp.discord_msg_id || null;
   const label = { live: "🟢 LIVE", recruiting: "🟡 Recruiting", active: "🔵 Active", completed: "🏆 Completed" }[camp.status] || camp.status;
+  const startDt = camp.next_session_utc ? new Date(camp.next_session_utc) : null;
+  const epoch = startDt && !Number.isNaN(startDt.getTime()) ? Math.floor(startDt.getTime() / 1000) : null;
+  let nextField = camp.schedule_text || "TBD";
+  if (epoch) {
+    const endDt = new Date(startDt.getTime() + 2 * 3600 * 1000);
+    const gcalFmt = (d) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
+    const gcalUrl =
+      "https://calendar.google.com/calendar/render?action=TEMPLATE" +
+      `&text=${encodeURIComponent(`Castalia Co-Op: ${camp.title}`)}` +
+      `&dates=${gcalFmt(startDt)}/${gcalFmt(endDt)}` +
+      `&details=${encodeURIComponent(`${camp.description || ""}\n\nJoin via Castalia Launcher (v${camp.castalia_version})\nDiscord: https://discord.gg/3mMNCnaze4`)}`;
+    const utcStr = startDt.toISOString().slice(0, 16).replace("T", " ") + " UTC";
+    nextField =
+      `<t:${epoch}:F> (<t:${epoch}:R>)\n` +
+      `*(Shown in your local timezone · ${utcStr})*\n` +
+      (camp.schedule_text ? `${camp.schedule_text}\n` : "") +
+      `[📅 Add to Google Calendar](${gcalUrl})`;
+  }
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,
     description: (camp.description || "").slice(0, 1500),
     color: camp.status === "live" ? 0x43b581 : 0xc89b3c,
     fields: [
       { name: "Host", value: camp.host_name, inline: true },
-      { name: "Ruleset", value: camp.ruleset, inline: true },
       { name: "Seats", value: `${confirmed}/${camp.max_seats}`, inline: true },
       { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\``, inline: true },
-      { name: "Schedule", value: camp.schedule_text, inline: true },
+      { name: "Next Session", value: nextField, inline: false },
     ],
   };
   const url = camp.discord_msg_id ? `${webhook}/messages/${camp.discord_msg_id}` : `${webhook}?wait=true`;
@@ -306,7 +323,12 @@ export default {
           vals.push(now, cid);
           await env.DB.prepare(`UPDATE campaigns SET ${sets.join(", ")} WHERE id = ?`).bind(...vals).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
-          return jsonResp(sanitizeCampaign(updated, true));
+          const cntRow = await env.DB.prepare(
+            "SELECT COUNT(*) AS cnt FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'"
+          ).bind(cid).first();
+          const camp = sanitizeCampaign(updated, true);
+          await syncDiscord(env, camp, cntRow ? cntRow.cnt : 0);
+          return jsonResp(camp);
         }
 
         if (parts.length === 3 && req.method === "DELETE") {

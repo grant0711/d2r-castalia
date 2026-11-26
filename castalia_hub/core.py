@@ -812,7 +812,7 @@ class CastaliaHub:
         try:
             d2r_mod_bin = os.path.join(REPO_ROOT, "bin", "d2r-mod")
             if sys.platform != "win32" and os.path.isfile(d2r_mod_bin):
-                cmd = [d2r_mod_bin, "--coop"] if campaign else [d2r_mod_bin]
+                cmd = ["bash", d2r_mod_bin, "--coop"] if campaign else ["bash", d2r_mod_bin]
                 subprocess.run(cmd, check=False)
             else:
                 loader_exe = os.path.join(self.config["d2r_game_dir"], "D2RLoader.exe")

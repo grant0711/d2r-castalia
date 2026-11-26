@@ -562,10 +562,58 @@ class CastaliaHub:
             self._save_json(self.tokens_path, tokens)
         return res
 
+    @staticmethod
+    def _refresh_playit_tunnel_if_stale(max_age_seconds: int = 1800) -> None:
+        """
+        On Linux hosts running castalia-playit.service, restart the tunnel daemon before
+        publishing Go Live if it has been running longer than `max_age_seconds`.
+        Prevents overnight/sleep-stale playit control sessions from silently accepting
+        client TCP handshakes without forwarding them to 127.0.0.1:4000.
+        """
+        if os.name == "nt":
+            return
+        try:
+            active = subprocess.run(
+                ["systemctl", "--user", "is-active", "--quiet", "castalia-playit.service"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+            )
+            if active.returncode != 0:
+                return
+            prop = subprocess.run(
+                ["systemctl", "--user", "show", "-p", "ActiveEnterTimestamp", "--value", "castalia-playit.service"],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+            ts_str = (prop.stdout or "").strip()
+            stale = True
+            if ts_str:
+                try:
+                    # Format: "Thu 2026-11-26 18:16:02 UTC"
+                    parts = ts_str.split()
+                    if len(parts) >= 3:
+                        dt = datetime.strptime(f"{parts[1]} {parts[2]}", "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+                        age = (datetime.now(timezone.utc) - dt).total_seconds()
+                        stale = age > max_age_seconds
+                except Exception:
+                    stale = True
+            if stale:
+                subprocess.run(
+                    ["systemctl", "--user", "restart", "castalia-playit.service"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    timeout=8,
+                )
+        except Exception:
+            pass
+
     def go_live(self, campaign_id: str, game_id: str) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
             raise RuntimeError(f"No local host_token found for campaign '{campaign_id}'")
+        self._refresh_playit_tunnel_if_stale()
         return self._api("POST", f"/api/campaigns/{campaign_id}/go-live", body={"live_join_info": game_id}, token=tok)
 
     def end_session(

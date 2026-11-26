@@ -507,7 +507,7 @@ def extract_host_progress_snapshot(raw: bytes) -> Optional[bytes]:
     """
     Extract a compact 383-byte snapshot of a host character's exact quest & waypoint state:
       - byte 0:        raw[0x15] (D2R v105 difficulty progression byte)
-      - bytes 1..4:    raw[0xA8:0xAB] (Normal/NM/Hell active act & difficulty flags)
+      - bytes 1..4:    raw[0x98:0x9B] (Normal/NM/Hell active act & difficulty flags, offsets 152..154)
       - bytes 4..302:  Woo! quest section (298 bytes)
       - bytes 302..383: WS waypoint section (81 bytes)
     """
@@ -515,7 +515,7 @@ def extract_host_progress_snapshot(raw: bytes) -> Optional[bytes]:
     ws = raw.find(b"WS", woo if woo >= 0 else 0)
     if woo < 0 or ws < 0 or ws - woo != 298 or ws + 81 > len(raw):
         return None
-    return bytes([raw[0x15]]) + bytes(raw[0xA8:0xAB]) + bytes(raw[woo : woo + 298]) + bytes(raw[ws : ws + 81])
+    return bytes([raw[0x15]]) + bytes(raw[0x98:0x9B]) + bytes(raw[woo : woo + 298]) + bytes(raw[ws : ws + 81])
 
 
 def apply_host_progress_snapshot(raw: bytearray, snapshot: bytes) -> None:
@@ -531,7 +531,7 @@ def apply_host_progress_snapshot(raw: bytearray, snapshot: bytes) -> None:
     if woo < 0 or ws < 0 or ws - woo != 298 or ws + 81 > len(raw):
         raise ValueError("Target .d2s missing standard 298-byte Woo! / 81-byte WS layout")
     raw[0x15] = snapshot[0]
-    raw[0xA8:0xAB] = snapshot[1:4]
+    raw[0x98:0x9B] = snapshot[1:4]
     raw[woo : woo + 298] = woo_blob
     raw[ws : ws + 81] = ws_blob
 

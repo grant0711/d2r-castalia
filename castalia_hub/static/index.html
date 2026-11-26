@@ -482,9 +482,17 @@ async function submitDropIn(andLaunch = false) {
   }
 
   const c = STATE.activeCampaign;
+  const cleanName = name.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 15);
+  if (!cleanName) return toast("Use letters, numbers, _ or - for your character name.");
+  const taken = (c.rsvps || []).some(
+    r => r.status !== "cancelled" && String(r.char_name || "").toLowerCase() === cleanName.toLowerCase()
+  );
+  if (taken) {
+    return toast(`'${cleanName}' is already taken in this campaign — pick a unique name so D2RLoader lets you join.`);
+  }
   const telem = await api("/local/dropin", {
     method: "POST",
-    body: { target: c.id, char_name: name, char_class: cls, level: c.current_level, wp_code: c.current_wp },
+    body: { target: c.id, char_name: cleanName, char_class: cls, level: c.current_level, wp_code: c.current_wp },
   });
   await api("/local/rsvp", {
     method: "POST",

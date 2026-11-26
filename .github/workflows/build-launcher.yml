@@ -1,0 +1,57 @@
+name: Build Castalia Launcher (Windows x64)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, release, feat/campaign-launcher]
+    paths:
+      - "castalia_hub/**"
+      - "bin/d2r-launcher"
+      - "tools/mod_builder/char_manager.py"
+      - "tools/mod_builder/common.py"
+      - "tools/mod_builder/mod_config.json"
+      - "tools/char_templates/**"
+      - ".github/workflows/build-launcher.yml"
+
+jobs:
+  build-win64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: python -m pip install --upgrade pip pyinstaller
+
+      - name: Build castalia-launcher-win64.exe
+        shell: pwsh
+        run: |
+          python -m PyInstaller `
+            --onefile `
+            --name castalia-launcher-win64 `
+            --paths . `
+            --paths tools `
+            --add-data "castalia_hub\static;castalia_hub\static" `
+            --add-data "tools\mod_builder\mod_config.json;tools\mod_builder" `
+            --add-data "tools\char_templates;tools\char_templates" `
+            --add-data "vanilla-reference\data\global\excel\charstats.txt;vanilla-reference\data\global\excel" `
+            --add-data "vanilla-reference\data\global\excel\experience.txt;vanilla-reference\data\global\excel" `
+            --hidden-import mod_builder.char_manager `
+            --hidden-import mod_builder.common `
+            bin/d2r-launcher
+
+      - name: Smoke-test castalia-launcher-win64.exe
+        shell: pwsh
+        run: |
+          .\dist\castalia-launcher-win64.exe --help
+          Get-Item .\dist\castalia-launcher-win64.exe | Format-List Name, Length
+
+      - name: Upload castalia-launcher-win64.exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: castalia-launcher-win64
+          path: dist/castalia-launcher-win64.exe
+          if-no-files-found: error

@@ -25,10 +25,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from castalia_hub.d2s_telemetry import generate_dropin_character, parse_d2s_telemetry
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+REPO_ROOT = getattr(sys, "_MEIPASS", os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 GITHUB_REPO = "grant0711/d2r-castalia"
-DEFAULT_DATA_DIR = os.path.expanduser("~/.local/share/castalia-hub")
-DEFAULT_API_URL = os.environ.get("CASTALIA_API_URL", "http://127.0.0.1:8787")
+DEFAULT_DATA_DIR = (
+    os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "CastaliaHub")
+    if sys.platform == "win32"
+    else os.path.expanduser("~/.local/share/castalia-hub")
+)
+DEFAULT_API_URL = os.environ.get("CASTALIA_API_URL", "https://castalia-campaign-hub.d2rcastalia.workers.dev")
 
 # Save extensions swapped per campaign profile (Settings.json stays global & untouched!)
 SAVE_EXTS = (".d2s", ".d2i", ".key", ".ctl", ".map", ".ma0", ".ma1", ".ma2", ".ma3", ".ma4")
@@ -140,11 +144,21 @@ class CastaliaHub:
 
     @staticmethod
     def _auto_detect_d2r_game_dir() -> str:
-        candidates = [
-            os.path.join(REPO_ROOT, "game", "Diablo II Resurrected"),
-            os.path.expanduser("~/games/d2r/game/Diablo II Resurrected"),
-            r"C:\Program Files (x86)\Diablo II Resurrected",
-        ]
+        if sys.platform == "win32":
+            candidates = [
+                r"C:\Program Files (x86)\Diablo II Resurrected",
+                r"C:\Program Files\Diablo II Resurrected",
+                r"C:\Program Files (x86)\Steam\steamapps\common\Diablo II Resurrected",
+                r"D:\Program Files (x86)\Diablo II Resurrected",
+                r"D:\SteamLibrary\steamapps\common\Diablo II Resurrected",
+                r"E:\SteamLibrary\steamapps\common\Diablo II Resurrected",
+            ]
+        else:
+            candidates = [
+                os.path.join(REPO_ROOT, "game", "Diablo II Resurrected"),
+                os.path.expanduser("~/games/d2r/game/Diablo II Resurrected"),
+                r"C:\Program Files (x86)\Diablo II Resurrected",
+            ]
         for c in candidates:
             if os.path.isdir(c):
                 return c
@@ -152,6 +166,15 @@ class CastaliaHub:
 
     @staticmethod
     def _auto_detect_d2r_save_dir() -> str:
+        if sys.platform == "win32":
+            win_save = os.path.join(
+                os.path.expanduser("~"),
+                "Saved Games",
+                "Diablo II Resurrected",
+                "mods",
+                "castalia",
+            )
+            return win_save
         prefix = os.environ.get("D2R_PREFIX", "acct1")
         candidates = [
             os.path.join(
@@ -420,6 +443,15 @@ class CastaliaHub:
             shutil.rmtree(mod_mpq)
         os.makedirs(os.path.dirname(mod_mpq), exist_ok=True)
         shutil.copytree(cache_mpq, mod_mpq)
+        # Also sync bundled D2RLoader plugins (e.g. castalia-autohost.dll) if included in the release zip
+        cache_plugins = os.path.join(cache_dir, "mods", "castalia", "d2rloader", "plugins")
+        if os.path.isdir(cache_plugins):
+            dst_plugins = os.path.join(game_dir, "mods", "castalia", "d2rloader", "plugins")
+            os.makedirs(dst_plugins, exist_ok=True)
+            for fn in os.listdir(cache_plugins):
+                src_p = os.path.join(cache_plugins, fn)
+                if os.path.isfile(src_p):
+                    shutil.copy2(src_p, os.path.join(dst_plugins, fn))
         return f"swapped:{ver}"
 
     # ── Campaign Hub REST API Client ─────────────────────────────────────────
@@ -584,10 +616,18 @@ class CastaliaHub:
     def copy_to_clipboard(text: str) -> bool:
         if not text:
             return False
-        for cmd in (["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"], ["wl-copy"], ["clip"]):
+        cmds = (
+            [["clip"]]
+            if sys.platform == "win32"
+            else [["xclip", "-selection", "clipboard"], ["xsel", "--clipboard", "--input"], ["wl-copy"], ["clip"]]
+        )
+        kwargs: Dict[str, Any] = {"input": text, "text": True, "check": True}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        for cmd in cmds:
             if shutil.which(cmd[0]):
                 try:
-                    subprocess.run(cmd, input=text, text=True, check=True)
+                    subprocess.run(cmd, **kwargs)
                     return True
                 except Exception:
                     continue
@@ -758,7 +798,17 @@ class CastaliaHub:
                 subprocess.run(cmd, check=False)
             else:
                 loader_exe = os.path.join(self.config["d2r_game_dir"], "D2RLoader.exe")
-                subprocess.run([loader_exe], cwd=self.config["d2r_game_dir"], check=False)
+                if not os.path.isfile(loader_exe):
+                    raise RuntimeError(
+                        f"D2RLoader.exe not found in '{self.config['d2r_game_dir']}'. "
+                        "Install D2RLoader (https://github.com/D2RLoader/D2RLoader/releases) into your D2R folder "
+                        "or update your D2R Game Directory in Settings."
+                    )
+                subprocess.run(
+                    [loader_exe, "-mod", "castalia", "-txt"],
+                    cwd=self.config["d2r_game_dir"],
+                    check=False,
+                )
         finally:
             stop_evt.set()
             if tail_thread:

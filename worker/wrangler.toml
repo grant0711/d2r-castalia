@@ -5,4 +5,4 @@ compatibility_date = "2026-11-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "castalia-campaigns"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "5f52232a-08e0-42e8-af16-7409765b09f7"

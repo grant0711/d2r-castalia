@@ -251,6 +251,28 @@ class TestCampaignHub(unittest.TestCase):
         items = json.loads(res2.stdout)
         self.assertTrue(any(x["id"] == cid for x in items))
 
+    def test_unique_char_name_per_campaign(self):
+        c1 = self.hub.create_campaign({"title": "Unique Name Test 1", "castalia_version": "0.3.0"})["campaign"]["id"]
+        c2 = self.hub.create_campaign({"title": "Unique Name Test 2", "castalia_version": "0.3.0"})["campaign"]["id"]
+
+        r1 = self.hub.rsvp_campaign(c1, char_name="Thor", char_class="bar")
+        self.assertEqual(r1["rsvp"]["char_name"], "Thor")
+
+        # Duplicate name (case-insensitive) in the same campaign must fail with 409
+        with self.assertRaises(RuntimeError) as ctx:
+            self.hub.rsvp_campaign(c1, char_name="thor", char_class="pal")
+        self.assertIn("409", str(ctx.exception))
+        self.assertIn("already taken", str(ctx.exception))
+
+        # Same name in a different campaign is allowed
+        r2 = self.hub.rsvp_campaign(c2, char_name="Thor", char_class="bar")
+        self.assertEqual(r2["rsvp"]["char_name"], "Thor")
+
+        # Cancelling frees the name in c1
+        self.hub.cancel_rsvp(c1)
+        r3 = self.hub.rsvp_campaign(c1, char_name="thor", char_class="pal")
+        self.assertEqual(r3["rsvp"]["char_name"], "thor")
+
 
 if __name__ == "__main__":
     unittest.main()

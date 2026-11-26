@@ -177,6 +177,15 @@ export default {
 
         if (parts.length === 4 && parts[3] === "rsvp" && req.method === "POST") {
           const body = await req.json();
+          const charName = (body.char_name || "Hero").trim().slice(0, 15);
+          const dup = await env.DB.prepare(
+            "SELECT id FROM rsvps WHERE campaign_id = ? AND status != 'cancelled' AND LOWER(char_name) = LOWER(?)"
+          ).bind(cid, charName).first();
+          if (dup) {
+            return jsonResp({
+              error: `Character name '${charName}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games). Pick a different name.`,
+            }, 409);
+          }
           const rid = `rsvp-${randHex(4)}`;
           const rsvpToken = randHex(24);
           const countRow = await env.DB.prepare(
@@ -191,7 +200,7 @@ export default {
           ).bind(
             rid, cid, row.next_session_utc || now,
             (body.player_name || "Player").trim(), await sha256Hex(rsvpToken),
-            body.join_mode || "returning", (body.char_name || "Hero").slice(0, 15),
+            body.join_mode || "returning", charName,
             (body.char_class || "pal").toLowerCase(), Number(body.char_level || row.current_level),
             body.char_wp || row.current_wp, body.build_summary || "", status, now
           ).run();
@@ -205,10 +214,19 @@ export default {
           if (!rrow) return jsonResp({ error: "not_found" }, 404);
           if (!isHost && bearerHash !== rrow.rsvp_token_hash) return jsonResp({ error: "forbidden" }, 403);
           const body = await req.json();
+          const newName = (body.char_name || rrow.char_name).trim().slice(0, 15);
+          const dup = await env.DB.prepare(
+            "SELECT id FROM rsvps WHERE campaign_id = ? AND status != 'cancelled' AND id != ? AND LOWER(char_name) = LOWER(?)"
+          ).bind(cid, rid, newName).first();
+          if (dup) {
+            return jsonResp({
+              error: `Character name '${newName}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games).`,
+            }, 409);
+          }
           await env.DB.prepare(
             "UPDATE rsvps SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ? WHERE id = ?"
           ).bind(
-            (body.char_name || rrow.char_name).slice(0, 15),
+            newName,
             (body.char_class || rrow.char_class).toLowerCase(),
             Number(body.char_level ?? rrow.char_level),
             body.char_wp || rrow.char_wp,

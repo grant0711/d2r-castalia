@@ -4,6 +4,7 @@ and exposing castalia_hub.core methods as clean /local/* JSON endpoints.
 """
 import json
 import os
+import sys
 import threading
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -11,7 +12,11 @@ from typing import Any, Dict
 
 from castalia_hub.core import CastaliaHub
 
-STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+STATIC_DIR = os.path.join(
+    getattr(sys, "_MEIPASS", os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))),
+    "castalia_hub",
+    "static",
+)
 
 
 def make_ui_handler(hub: CastaliaHub):

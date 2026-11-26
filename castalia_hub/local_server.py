@@ -329,6 +329,15 @@ class CampaignDB:
             row = conn.execute("SELECT * FROM campaigns WHERE id = ?", (cid,)).fetchone()
             if not row:
                 raise KeyError(f"Campaign '{cid}' not found")
+            char_name = str(body.get("char_name") or "Hero").strip()[:15]
+            dup = conn.execute(
+                "SELECT id FROM rsvps WHERE campaign_id = ? AND status != 'cancelled' AND LOWER(char_name) = LOWER(?)",
+                (cid, char_name),
+            ).fetchone()
+            if dup:
+                raise FileExistsError(
+                    f"Character name '{char_name}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games). Pick a different name."
+                )
             confirmed = conn.execute(
                 "SELECT COUNT(*) FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'", (cid,)
             ).fetchone()[0]
@@ -346,7 +355,7 @@ class CampaignDB:
                     str(body.get("player_name") or "Player").strip(),
                     _hash_token(tok),
                     str(body.get("join_mode") or "returning"),
-                    str(body.get("char_name") or "Hero").strip()[:15],
+                    char_name,
                     str(body.get("char_class") or "pal").strip().lower(),
                     int(body.get("char_level", row["current_level"])),
                     str(body.get("char_wp") or row["current_wp"]),
@@ -366,12 +375,21 @@ class CampaignDB:
                 raise KeyError("Campaign or RSVP not found")
             if not bearer or _hash_token(bearer) not in (rrow["rsvp_token_hash"], crow["host_token_hash"]):
                 raise PermissionError("Invalid rsvp_token or host_token")
+            new_name = str(body.get("char_name") or rrow["char_name"]).strip()[:15]
+            dup = conn.execute(
+                "SELECT id FROM rsvps WHERE campaign_id = ? AND status != 'cancelled' AND id != ? AND LOWER(char_name) = LOWER(?)",
+                (cid, rid, new_name),
+            ).fetchone()
+            if dup:
+                raise FileExistsError(
+                    f"Character name '{new_name}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games)."
+                )
             conn.execute(
                 """UPDATE rsvps
                    SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?
                    WHERE id = ?""",
                 (
-                    str(body.get("char_name") or rrow["char_name"])[:15],
+                    new_name,
                     str(body.get("char_class") or rrow["char_class"]).lower(),
                     int(body.get("char_level", rrow["char_level"])),
                     str(body.get("char_wp") or rrow["char_wp"]),
@@ -539,6 +557,8 @@ def make_handler(db: CampaignDB):
                 self._send(403, {"error": str(e)})
             except KeyError as e:
                 self._send(404, {"error": str(e)})
+            except FileExistsError as e:
+                self._send(409, {"error": str(e)})
             except Exception as e:
                 self._send(400, {"error": str(e)})
 

@@ -2,8 +2,10 @@
 
 An opinionated overhaul of **Diablo II: Resurrected** built around a simple conviction: **a game world should feel like an intact, believable place to inhabit—and a few clear, honest rules, when pieced together carefully, can create near-infinite room for player creativity.**
 
-> **Full Strategy Guide, Character Generator & Interactive Skill Compendium:**
-> For complete interactive skill trees, live **Level 1 $\rightarrow$ 20 calculations**, synergies, Gem & Skull tables, all 33 Semantic Runes, and the browser-based **`.d2s` Character Generator**, visit **[https://grant0711.github.io/d2r-castalia/](https://grant0711.github.io/d2r-castalia/)** (or open **[`docs/site/index.html`](docs/site/index.html)** locally).
+> **Download, Co-Op Discord & Interactive Skill Compendium:**
+> - **Latest Release & Launcher:** **[GitHub Releases](https://github.com/grant0711/d2r-castalia/releases/latest)**
+> - **Co-Op Campaigns & Playtests:** **[Join the Castalia Discord](https://discord.gg/3mMNCnaze4)**
+> - **Strategy Guide & Skill Trees:** **[https://grant0711.github.io/d2r-castalia/](https://grant0711.github.io/d2r-castalia/)** (or open **[`docs/site/index.html`](docs/site/index.html)** locally)
 
 ---
 

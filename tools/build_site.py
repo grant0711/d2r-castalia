@@ -1769,7 +1769,7 @@ def build_site() -> str:
 <!-- TOP ARREAT SUMMIT BANNER -->
 <div class="top-banner">
   <h1>&#9876; THE CASTALIA COMPENDIUM &#9876;</h1>
-  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b> &middot; <span style="color:#f0d890;font-weight:bold;">v{mod_version}</span> &middot; <a href="https://github.com/grant0711/d2r-castalia/releases/latest" target="_blank" rel="noopener" style="color:#8cd0ff;text-decoration:underline;">Download Latest Release</a></div>
+  <div class="subtitle">Official Strategy Guide &amp; Horadric Grimoire for <b>Diablo II: Resurrected — Castalia</b> &middot; <span style="color:#f0d890;font-weight:bold;">v{mod_version}</span> &middot; <a href="https://github.com/grant0711/d2r-castalia/releases/latest" target="_blank" rel="noopener" style="color:#8cd0ff;text-decoration:underline;">Download Latest Release</a> &middot; <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;text-decoration:underline;">Join Co-Op Discord</a></div>
 </div>
 
 <!-- TOP ARREAT SUMMIT NAVIGATION TABS -->

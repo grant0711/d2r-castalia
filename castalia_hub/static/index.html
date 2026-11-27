@@ -409,8 +409,9 @@ async function openCampaign(cid) {
         <button class="btn ghost" onclick="showTab('campaigns')">&#8592; Back</button>
         <h2>${esc(c.title)}</h2>
         <span class="pill">v${esc(c.castalia_version)}</span>
+        <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
       </div>
-      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
+      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Elapsed: <b>&#9201; ${esc(fmtDuration(c.total_play_seconds))}</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
     </div>
     ${liveBanner}
     <div class="card">

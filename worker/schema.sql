@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   has_cube          INTEGER NOT NULL DEFAULT 0,
   host_progress_b64 TEXT,
   shared_stash      INTEGER NOT NULL DEFAULT 0,
+  campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,

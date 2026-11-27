@@ -115,9 +115,10 @@ class TestCampaignHub(unittest.TestCase):
             "title": "Thursday Pilgrimage",
             "description": "Grounded co-op run",
             "ruleset": "standard",
+            "campaign_mode": "pilgrimage",
             "castalia_version": "0.3.0",
-            "current_level": 48,
-            "current_wp": "a3nm",
+            "current_level": 1,
+            "current_wp": "a1n",
             "max_seats": 2,
             "schedule_text": "Thu 8 PM EST",
             "next_session_utc": "2026-11-26T20:00:00Z",
@@ -125,6 +126,7 @@ class TestCampaignHub(unittest.TestCase):
         })
         cid = created["campaign"]["id"]
         self.assertEqual(created["campaign"]["castalia_version"], "0.3.0")
+        self.hub.end_session(cid, current_level=48, current_wp="a3nm", next_session_utc="2026-11-26T20:00:00Z")
 
         # 2. Go live with Game ID -> public GET must NOT leak live_join_info
         self.hub.go_live(cid, "CST-4821")

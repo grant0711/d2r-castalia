@@ -116,6 +116,59 @@ class TestSharedStashAndTimer(unittest.TestCase):
         self.assertEqual(hoh[0]["total_play_seconds"], 5445)
         self.assertFalse(bool(hoh[0]["shared_stash"]))
 
+    def test_pilgrimage_vs_open_party_enforcement(self):
+        import shutil
+        solo_dir = os.path.join(self.hub.profiles_dir, "solo")
+        os.makedirs(solo_dir, exist_ok=True)
+        from mod_builder import char_manager as cm
+        solo_d2s = os.path.join(solo_dir, "ExistingHero.d2s")
+        shutil.copy2(os.path.join(REPO_ROOT, "tools", "char_templates", "default.d2s"), solo_d2s)
+        cm.configure_character_d2s(solo_d2s, char_name="ExistingHero", class_id=3, level=45, wp_target="a1nm")
+
+        # 1. Pilgrimage mode: forces Level 1 / a1n, blocks imports, locks Host to 1 char
+        p_res = self.hub.create_campaign({
+            "title": "Pure Pilgrimage",
+            "campaign_mode": "pilgrimage",
+            "current_level": 50,
+            "current_wp": "a3nm",
+            "castalia_version": "0.4.3",
+        })
+        pcid = p_res["campaign"]["id"]
+        self.assertEqual(p_res["campaign"]["campaign_mode"], "pilgrimage")
+        self.assertEqual(p_res["campaign"]["current_level"], 1)
+        self.assertEqual(p_res["campaign"]["current_wp"], "a1n")
+
+        # Cannot flip campaign_mode via PATCH
+        patched = self.hub.update_campaign(pcid, {"campaign_mode": "open"})
+        self.assertEqual(patched["campaign_mode"], "pilgrimage")
+
+        # Importing existing char into Pilgrimage must raise ValueError
+        with self.assertRaises(ValueError):
+            self.hub.import_char_to_campaign(pcid, solo_d2s, respec=False)
+
+        # Host can create their first Level 1 char, then CANNOT create a 2nd/substitute char
+        self.hub.create_dropin_char(pcid, "OrigPal", "pal", 1, "a1n")
+        with self.assertRaises(ValueError):
+            self.hub.create_dropin_char(pcid, "SubBarb", "bar", 1, "a1n")
+
+        # 2. Open Party mode: allows Start Level > 1, allows imports, untimed, blocks Hall of Heroes
+        o_res = self.hub.create_campaign({
+            "title": "NM Farming Party",
+            "campaign_mode": "open",
+            "current_level": 45,
+            "current_wp": "a1nm",
+            "castalia_version": "0.4.3",
+        })
+        ocid = o_res["campaign"]["id"]
+        self.assertEqual(o_res["campaign"]["campaign_mode"], "open")
+        self.assertEqual(o_res["campaign"]["current_level"], 45)
+        imp = self.hub.import_char_to_campaign(ocid, solo_d2s, respec=False)
+        self.assertEqual(imp["char_name"], "ExistingHero")
+        ended_open = self.hub.end_session(ocid, current_level=46, current_wp="a1nm", session_seconds=1800)
+        self.assertEqual(ended_open["total_play_seconds"], 0, "Open Party must not accumulate HoH timer")
+        with self.assertRaises(Exception):
+            self.hub.complete_campaign(ocid, summary="Should fail", death_count=0, sessions_played=1)
+
 
 if __name__ == "__main__":
     unittest.main()

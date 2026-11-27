@@ -74,9 +74,11 @@ async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
       (camp.schedule_text ? `${camp.schedule_text}\n` : "") +
       `[📅 Add to Google Calendar](${gcalUrl})`;
   }
+  const isPilgrimage = (camp.campaign_mode || "pilgrimage") === "pilgrimage";
+  const modeLabel = isPilgrimage ? "🏆 Pilgrimage" : "⚔️ Open Party";
   const stashLabel = camp.shared_stash ? "📦 Global Shared Stash" : "🔒 Isolated Stash";
   const playSec = Number(camp.total_play_seconds || 0);
-  const playStr = playSec >= 60 ? ` · ⏱ ${Math.floor(playSec / 3600)}h ${Math.floor((playSec % 3600) / 60)}m` : "";
+  const playStr = isPilgrimage && playSec >= 60 ? ` · ⏱ ${Math.floor(playSec / 3600)}h ${Math.floor((playSec % 3600) / 60)}m` : "";
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,
     description: (camp.description || "").slice(0, 1500),
@@ -85,7 +87,7 @@ async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
       { name: "Host", value: camp.host_name, inline: true },
       { name: "Seats", value: `${confirmed}/${camp.max_seats}`, inline: true },
       { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\`${playStr}`, inline: true },
-      { name: "Ruleset", value: `${camp.ruleset} · ${stashLabel}`, inline: false },
+      { name: "Ruleset", value: `${modeLabel} · ${camp.ruleset} · ${stashLabel}`, inline: false },
       { name: "Next Session", value: nextField, inline: false },
     ],
   };
@@ -168,12 +170,20 @@ export default {
         const cid = slugify(body.title);
         const hostToken = randHex(24);
         const tokenHash = await sha256Hex(hostToken);
+        const rawMode = String(body.campaign_mode || "").trim().toLowerCase();
+        const reqLvl = Math.max(1, Math.min(99, Number(body.current_level || 1)));
+        const reqWp = String(body.current_wp || "a1n").trim().slice(0, 12);
+        const mode = (rawMode === "pilgrimage" || rawMode === "open")
+          ? rawMode
+          : ((reqLvl > 1 || reqWp.toLowerCase() !== "a1n") ? "open" : "pilgrimage");
+        const startLvl = mode === "pilgrimage" ? 1 : reqLvl;
+        const startWp = mode === "pilgrimage" ? "a1n" : reqWp;
         await env.DB.prepare(
           `INSERT INTO campaigns (
             id, host_name, host_token_hash, title, description, ruleset,
-            castalia_version, current_level, current_wp, shared_stash, max_seats,
+            castalia_version, current_level, current_wp, shared_stash, campaign_mode, max_seats,
             schedule_text, recurrence_days, next_session_utc, status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
         ).bind(
           cid,
           String(body.host_name || "Host").trim().slice(0, 32),
@@ -182,9 +192,10 @@ export default {
           String(body.description || "").trim().slice(0, 400),
           String(body.ruleset || "standard").trim().slice(0, 24),
           String(body.castalia_version || "0.3.0").replace(/^v/, "").slice(0, 16),
-          Math.max(1, Math.min(99, Number(body.current_level || 1))),
-          String(body.current_wp || "a1n").trim().slice(0, 12),
+          startLvl,
+          startWp,
           body.shared_stash ? 1 : 0,
+          mode,
           Math.max(2, Math.min(8, Number(body.max_seats || 5))),
           String(body.schedule_text || "Weekly").trim().slice(0, 60),
           Math.max(0, Math.min(365, Number(body.recurrence_days ?? 7))),
@@ -328,7 +339,8 @@ export default {
             ? (body.has_cube ? 1 : 0)
             : (["start", "a1n", "a2n"].includes(nextWp.toLowerCase()) ? Number(row.has_cube || 0) : 1);
           const hostProg = body.host_progress_b64 ? String(body.host_progress_b64).slice(0, 600) : (row.host_progress_b64 || null);
-          const addSec = Math.max(0, Math.min(86400, Math.floor(Number(body.session_seconds || 0))));
+          const isPilgrimage = (row.campaign_mode || "pilgrimage") === "pilgrimage";
+          const addSec = isPilgrimage ? Math.max(0, Math.min(86400, Math.floor(Number(body.session_seconds || 0)))) : 0;
           const totalSec = Number(row.total_play_seconds || 0) + addSec;
           await env.DB.prepare(
             "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, total_play_seconds = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
@@ -372,6 +384,9 @@ export default {
         }
 
         if (parts.length === 4 && parts[3] === "complete" && req.method === "POST") {
+          if ((row.campaign_mode || "pilgrimage") !== "pilgrimage") {
+            return jsonResp({ error: "Only Pilgrimage campaigns are eligible for Hall of Heroes." }, 400);
+          }
           const body = await req.json();
           const rsvps = (
             await env.DB.prepare("SELECT * FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'").bind(cid).all()

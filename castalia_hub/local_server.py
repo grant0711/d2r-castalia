@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   has_cube          INTEGER NOT NULL DEFAULT 0,
   host_progress_b64 TEXT,
   shared_stash      INTEGER NOT NULL DEFAULT 0,
+  campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
@@ -210,14 +211,23 @@ class CampaignDB:
         cid = _slugify(body.get("title", "campaign"))
         host_token = secrets.token_urlsafe(24)
         now = _now_iso()
+        raw_mode = str(body.get("campaign_mode") or "").strip().lower()
+        req_lvl = max(1, min(99, int(body.get("current_level", 1))))
+        req_wp = str(body.get("current_wp") or "a1n").strip()
+        if raw_mode in ("pilgrimage", "open"):
+            mode = raw_mode
+        else:
+            mode = "open" if (req_lvl > 1 or req_wp.lower() != "a1n") else "pilgrimage"
+        start_lvl = 1 if mode == "pilgrimage" else req_lvl
+        start_wp = "a1n" if mode == "pilgrimage" else req_wp
         with self._lock, self._conn() as conn:
             conn.execute(
                 """INSERT INTO campaigns (
                     id, host_name, host_token_hash, title, description, ruleset,
-                    castalia_version, current_level, current_wp, shared_stash, max_seats,
+                    castalia_version, current_level, current_wp, shared_stash, campaign_mode, max_seats,
                     schedule_text, recurrence_days, next_session_utc, status,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
                 (
                     cid,
                     str(body.get("host_name") or "Host").strip(),
@@ -226,9 +236,10 @@ class CampaignDB:
                     str(body.get("description") or "").strip(),
                     str(body.get("ruleset") or "standard").strip(),
                     str(body.get("castalia_version") or "0.3.0").strip().lstrip("v"),
-                    int(body.get("current_level", 1)),
-                    str(body.get("current_wp") or "a1n").strip(),
+                    start_lvl,
+                    start_wp,
                     1 if body.get("shared_stash") else 0,
+                    mode,
                     max(2, min(8, int(body.get("max_seats", 5)))),
                     str(body.get("schedule_text") or "Weekly").strip(),
                     body.get("recurrence_days", 7),
@@ -320,7 +331,8 @@ class CampaignDB:
             else:
                 host_prog = str(host_prog)[:600]
             next_utc = body.get("next_session_utc") or None
-            add_sec = max(0, int(body.get("session_seconds") or 0))
+            is_pilgrimage = str(row["campaign_mode"] or "pilgrimage") == "pilgrimage"
+            add_sec = max(0, int(body.get("session_seconds") or 0)) if is_pilgrimage else 0
             total_sec = int(row["total_play_seconds"] or 0) + add_sec
             conn.execute(
                 """UPDATE campaigns
@@ -442,6 +454,8 @@ class CampaignDB:
     def complete_campaign(self, cid: str, body: Dict[str, Any], bearer: Optional[str]) -> Dict[str, Any]:
         with self._lock, self._conn() as conn:
             crow = self._require_host(conn, cid, bearer)
+            if str(crow["campaign_mode"] or "pilgrimage") != "pilgrimage":
+                raise ValueError("Only Pilgrimage campaigns are eligible for Hall of Heroes.")
             rsvps = [
                 self._public_rsvp(x)
                 for x in conn.execute("SELECT * FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'", (cid,)).fetchall()

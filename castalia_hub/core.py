@@ -514,6 +514,16 @@ class CastaliaHub:
         if not any(abs_src.startswith(r + os.sep) or os.path.dirname(abs_src) == r for r in allowed_roots):
             raise ValueError("Source character must reside inside D2R saves or CastaliaHub profiles.")
 
+        # Enforce Pilgrimage rule: no importing outside characters into Pilgrimage campaigns
+        try:
+            camp = self.get_campaign(campaign_id)
+            if str(camp.get("campaign_mode") or "pilgrimage") == "pilgrimage":
+                raise ValueError("Importing existing characters is disabled in Pilgrimage campaigns.")
+        except ValueError:
+            raise
+        except Exception:
+            pass
+
         target_dir = self.profile_dir_for(campaign_id)
         src_dir = os.path.dirname(abs_src)
         base_name = os.path.basename(abs_src)
@@ -649,6 +659,18 @@ class CastaliaHub:
         host_progress_b64: Optional[str] = None,
     ) -> Dict[str, Any]:
         pdir = self.profile_dir_for(target)
+        # Enforce Pilgrimage Host single-character lock: Host creates 1 Level 1 char and sticks with it
+        if target != "solo" and self.get_token(target, "host_token"):
+            existing_d2s = [f for f in os.listdir(pdir) if f.lower().endswith(".d2s")]
+            if existing_d2s:
+                try:
+                    camp = self.get_campaign(target)
+                    if str(camp.get("campaign_mode") or "pilgrimage") == "pilgrimage":
+                        raise ValueError("Pilgrimage Hosts are locked to their original Level 1 character.")
+                except ValueError:
+                    raise
+                except Exception:
+                    pass
         return generate_dropin_character(
             pdir,
             char_name,

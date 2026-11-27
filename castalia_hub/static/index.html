@@ -138,9 +138,18 @@
     <label>Pinned Castalia Version</label>
     <select id="c-version" style="width:100%"></select>
     <div class="row">
-      <div style="flex:1"><label>Start Level</label><input id="c-level" type="number" min="1" max="99" value="1" style="width:100%"></div>
+      <div style="flex:1">
+        <label>Campaign Mode (locked at creation)</label>
+        <select id="c-mode" style="width:100%" onchange="onCreateModeChange()">
+          <option value="pilgrimage">&#127942; Pilgrimage (Fresh Lvl 1 &rarr; Hell Baal &middot; Timed &amp; Hall of Heroes)</option>
+          <option value="open">&#9876; Open Party (Allow imported chars &middot; Untimed casual)</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Start Level</label><input id="c-level" type="number" min="1" max="99" value="1" style="width:100%" disabled></div>
       <div style="flex:1"><label>Start Act / WP</label>
-        <select id="c-wp" style="width:100%">
+        <select id="c-wp" style="width:100%" disabled>
           <option value="a1n">Normal Act 1 (a1n)</option><option value="a2n">Normal Act 2 (a2n)</option><option value="a3n">Normal Act 3 (a3n)</option><option value="a4n">Normal Act 4 (a4n)</option><option value="a5n">Normal Act 5 (a5n)</option>
           <option value="a1nm">Nightmare Act 1 (a1nm)</option><option value="a2nm">Nightmare Act 2 (a2nm)</option><option value="a3nm">Nightmare Act 3 (a3nm)</option><option value="a4nm">Nightmare Act 4 (a4nm)</option><option value="a5nm">Nightmare Act 5 (a5nm)</option>
           <option value="a1h">Hell Act 1 (a1h)</option><option value="a2h">Hell Act 2 (a2h)</option><option value="a3h">Hell Act 3 (a3h)</option><option value="a4h">Hell Act 4 (a4h)</option><option value="a5h">Hell Act 5 (a5h)</option>
@@ -334,8 +343,9 @@ async function loadCampaignList() {
             ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${esc(String(c.status || "").toUpperCase())}</span>`}
             <b class="serif" style="font-size:16px;color:var(--gold);">${esc(c.title)}</b>
             <span class="pill">v${esc(c.castalia_version)}</span>
+            <span class="pill">${(c.campaign_mode || 'pilgrimage') === 'pilgrimage' ? '&#127942; Pilgrimage' : '&#9876; Open Party'}</span>
             <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
-            ${Number(c.total_play_seconds) >= 60 ? `<span class="pill">&#9201; ${esc(fmtDuration(c.total_play_seconds))}</span>` : ''}
+            ${(c.campaign_mode || 'pilgrimage') === 'pilgrimage' && Number(c.total_play_seconds) >= 60 ? `<span class="pill">&#9201; ${esc(fmtDuration(c.total_play_seconds))}</span>` : ''}
           </div>
           <button class="btn primary" data-cid="${esc(c.id)}" onclick="openCampaign(this.dataset.cid)">View / Join</button>
         </div>
@@ -392,7 +402,9 @@ async function openCampaign(cid) {
       </td>
     </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
 
-  const hostClearedHellBaal = chars.some(ch => Boolean(ch.hell_baal_cleared));
+  const isPilgrimage = (c.campaign_mode || "pilgrimage") === "pilgrimage";
+  const hostLockedChar = Boolean(c.is_host && isPilgrimage && chars.length > 0);
+  const hostClearedHellBaal = isPilgrimage && chars.some(ch => Boolean(ch.hell_baal_cleared));
   const hostBar = c.is_host ? `
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
@@ -409,17 +421,20 @@ async function openCampaign(cid) {
         <button class="btn ghost" onclick="showTab('campaigns')">&#8592; Back</button>
         <h2>${esc(c.title)}</h2>
         <span class="pill">v${esc(c.castalia_version)}</span>
+        <span class="pill">${isPilgrimage ? '&#127942; Pilgrimage' : '&#9876; Open Party'}</span>
         <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
       </div>
-      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Elapsed: <b>&#9201; ${esc(fmtDuration(c.total_play_seconds))}</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
+      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b>${isPilgrimage ? ` &middot; Elapsed: <b>&#9201; ${esc(fmtDuration(c.total_play_seconds))}</b>` : ""} &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
     </div>
     ${liveBanner}
     <div class="card">
       <div class="space-between" style="margin-bottom:6px;">
         <h3>Your Character (Isolated Campaign Profile)</h3>
         <div class="row">
-          <button class="btn" onclick="openImportModal()">&#128194; Import Existing</button>
-          <button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>
+          ${!isPilgrimage ? `<button class="btn" onclick="openImportModal()">&#128194; Import Existing</button>` : ""}
+          ${hostLockedChar
+            ? `<span class="pill">&#127942; Pilgrimage Host Character Locked</span>`
+            : `<button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>`}
           ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp(STATE.activeCampaign.id)">Cancel RSVP</button>` : ""}
         </div>
       </div>
@@ -585,6 +600,15 @@ function openCreateModal() {
   openModal("modal-create");
 }
 
+function onCreateModeChange() {
+  const isPilg = document.getElementById("c-mode").value === "pilgrimage";
+  const lvEl = document.getElementById("c-level");
+  const wpEl = document.getElementById("c-wp");
+  lvEl.disabled = isPilg;
+  wpEl.disabled = isPilg;
+  if (isPilg) { lvEl.value = "1"; wpEl.value = "a1n"; }
+}
+
 async function submitCreateCampaign() {
   const nextVal = document.getElementById("c-next").value;
   const tzVal = document.getElementById("c-tz").value;
@@ -595,6 +619,7 @@ async function submitCreateCampaign() {
       title: document.getElementById("c-title").value,
       description: document.getElementById("c-desc").value,
       ruleset: "standard",
+      campaign_mode: document.getElementById("c-mode").value,
       castalia_version: document.getElementById("c-version").value,
       current_level: Number(document.getElementById("c-level").value || 1),
       current_wp: document.getElementById("c-wp").value,

@@ -440,8 +440,8 @@ Once `bin/d2r-campaign` is built, registering its command cheatsheet in `AGENTS.
   * **Pilgrimage vs. Open Party Runtime Enforcement (`apply_launch_rules` / `restore_launch_rules`):**
     * **Crash-safe split-stash routing:** Single canonical `profiles/_global_stash/*.d2i` for Solo and `shared_stash=true` campaigns; isolated `profiles/campaign-<id>/*.d2i` for `shared_stash=false` campaigns (tracked via `stash_source` in `active_profile.json`).
     * **Mode-driven `d2rloader.toml` & `Settings.json` overrides** (snapshotted into `active_profile.json` as `prev_toml_overrides` / `prev_settings_overrides` and restored on exit or `recover_if_dirty()`):
-      * **Reliability Guards (both modes):** `default_mod = "castalia"`, `show_tcpip_button = true`, `game_port = 4000` (Host) or `<join_port>` (Joiner).
-      * **🏆 Pilgrimage:** `Settings.json` `"Offline Difficulty Scaling": 1`, `enable_respec = false`, `enable_console = false`, `always_generate_new_maps = true`, `allow_global_extensions = false`, plus stripping `-enablerespec` / `-debug_mode` from `launch_arguments` if present.
+      * **Reliability Guards (both modes):** `default_mod = "castalia"`, `show_tcpip_button = true`, `game_port = 4000` (Host) or `<join_port>` (Joiner); **Host only** enables `[d2rloader.developer.logs]` (`enabled`, `hosting`, `chat_messages` — strictly local on Host for auto-LIVE and system-event hooks; personal chat is never stored or transmitted).
+      * **🏆 Pilgrimage:** Client locks (Host & Joiner): `enable_respec = false`, `enable_console = false`, `allow_global_extensions = false`, plus stripping `-enablerespec` / `-debug_mode` from `launch_arguments`. Server-authoritative locks (**Host only**): `Settings.json` `"Offline Difficulty Scaling": 1` and `always_generate_new_maps = true`.
       * **⚔️ Open Party:** `enable_respec = true`; all other player preferences left untouched.
 
 ---

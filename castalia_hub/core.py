@@ -1339,7 +1339,7 @@ class CastaliaHub:
         mode = str(campaign.get("campaign_mode") or "open").strip().lower()
         target_port = 4000 if is_host else (int(join_port) if join_port else 4000)
 
-        # Reliability guards (both modes)
+        # Reliability guards (both modes, Host & Joiner)
         toml_overrides: Dict[str, Dict[str, Any]] = {
             "d2rloader": {
                 "default_mod": "castalia",
@@ -1351,15 +1351,27 @@ class CastaliaHub:
         }
         settings_overrides: Dict[str, Any] = {}
 
+        # Host-only log hooks (auto-LIVE listener detection + local system events like deaths/joins)
+        # Note: d2rloader.log stays strictly local on the Host machine; personal chat is never uploaded or stored.
+        if is_host:
+            toml_overrides["d2rloader.developer.logs"] = {
+                "enabled": True,
+                "hosting": True,
+                "chat_messages": True,
+            }
+
         if mode == "pilgrimage":
+            # Client-enforced Pilgrimage locks (Host & Joiner)
             toml_overrides["d2rcore.player"] = {"enable_respec": False}
             toml_overrides["d2rloader.developer"] = {"enable_console": False}
-            toml_overrides["d2rloader"]["always_generate_new_maps"] = True
             toml_overrides["d2rloader.advanced"]["allow_global_extensions"] = False
             cleaned_args = self._compute_pilgrimage_launch_args()
             if cleaned_args is not None:
                 toml_overrides["d2rloader"]["launch_arguments"] = cleaned_args
-            settings_overrides["Offline Difficulty Scaling"] = 1
+            # Server-authoritative Pilgrimage locks (Host only — Joiner values are ignored by D2Game)
+            if is_host:
+                toml_overrides["d2rloader"]["always_generate_new_maps"] = True
+                settings_overrides["Offline Difficulty Scaling"] = 1
         else:
             toml_overrides["d2rcore.player"] = {"enable_respec": True}
 

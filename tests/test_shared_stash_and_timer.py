@@ -193,6 +193,11 @@ class TestSharedStashAndTimer(unittest.TestCase):
             "\n"
             "[d2rloader.developer]\n"
             "enable_console = true\n"
+            "\n"
+            "[d2rloader.developer.logs]\n"
+            "enabled = false\n"
+            "hosting = false\n"
+            "chat_messages = false\n"
         )
         with open(toml_path, "w", encoding="utf-8") as f:
             f.write(original_toml)
@@ -221,6 +226,9 @@ class TestSharedStashAndTimer(unittest.TestCase):
         self.assertIn("game_port = 4000", toml_after)
         self.assertIn("allow_global_extensions = false", toml_after)
         self.assertIn("enable_console = false", toml_after)
+        self.assertIn("enabled = true", toml_after)
+        self.assertIn("hosting = true", toml_after)
+        self.assertIn("chat_messages = true", toml_after)
         settings_after = json.load(open(settings_path, "r", encoding="utf-8"))
         self.assertEqual(settings_after["Offline Difficulty Scaling"], 1)
         self.assertEqual(settings_after["Auto Gold Pickup"], 1)
@@ -229,6 +237,21 @@ class TestSharedStashAndTimer(unittest.TestCase):
         self.hub.restore_launch_rules(snap)
         self.assertEqual(open(toml_path, "r", encoding="utf-8").read(), original_toml)
         self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 8)
+
+        # 1b. Pilgrimage Joiner launch: enforces client rules + join port, does NOT touch Host-only settings!
+        snap_pjoin = self.hub.apply_launch_rules(pilgrimage_camp, is_host=False, join_port=11887)
+        toml_pjoin = open(toml_path, "r", encoding="utf-8").read()
+        self.assertIn("enable_respec = false", toml_pjoin)
+        self.assertIn("enable_console = false", toml_pjoin)
+        self.assertIn("allow_global_extensions = false", toml_pjoin)
+        self.assertIn("launch_arguments = \"-w -txt\"", toml_pjoin)
+        self.assertIn("game_port = 11887", toml_pjoin)
+        # Host-only settings must stay untouched on Joiner:
+        self.assertIn("always_generate_new_maps = false", toml_pjoin)
+        self.assertIn("chat_messages = false", toml_pjoin)
+        self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 8)
+        self.hub.restore_launch_rules(snap_pjoin)
+        self.assertEqual(open(toml_path, "r", encoding="utf-8").read(), original_toml)
 
         # 2. Open Party Joiner launch: enables respec + reliability guards, leaves other prefs untouched
         toml_open_base = original_toml.replace("enable_respec = true", "enable_respec = false").replace("game_port = 11887", "game_port = 4000")

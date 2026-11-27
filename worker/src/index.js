@@ -308,7 +308,7 @@ export default {
             .bind((body.live_join_info || "").trim(), now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, true);
-          await syncDiscordWithCount(env, camp, cid);
+          await syncDiscordWithCount(env, camp, cid, row.status !== "live");
           return jsonResp(camp);
         }
 

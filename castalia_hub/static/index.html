@@ -593,10 +593,27 @@ function _defaultNextSessionLocal() {
 
 function openCreateModal() {
   const sel = document.getElementById("c-version");
-  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.4.0">v0.4.0</option>`;
+  // Group releases by MAJOR.MINOR (e.g. "0.4") so Hosts pick a minor line (0.4.x)
+  // that automatically tracks the latest patch release in that line.
+  const byMinor = new Map();
+  for (const v of (STATE.versions || [])) {
+    const m = String(v.version || "").match(/^v?(\d+)\.(\d+)\.(\d+)$/);
+    if (!m) continue;
+    const minorKey = `${m[1]}.${m[2]}`;
+    const patchNum = Number(m[3]);
+    const prev = byMinor.get(minorKey);
+    if (!prev || patchNum > prev.patchNum) {
+      byMinor.set(minorKey, { minorKey, patchNum, version: `${m[1]}.${m[2]}.${m[3]}` });
+    }
+  }
+  const minorOpts = Array.from(byMinor.values())
+    .map(g => `<option value="${esc(g.version)}">v${esc(g.minorKey)}.x (latest: v${esc(g.version)})</option>`)
+    .join("");
+  sel.innerHTML = minorOpts || `<option value="0.4.3">v0.4.x (latest: v0.4.3)</option>`;
   _populateTzSelect("c-tz");
   const nextEl = document.getElementById("c-next");
   if (nextEl && !nextEl.value) nextEl.value = _defaultNextSessionLocal();
+  onCreateModeChange();
   openModal("modal-create");
 }
 

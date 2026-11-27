@@ -392,12 +392,13 @@ async function openCampaign(cid) {
       </td>
     </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
 
+  const hostClearedHellBaal = chars.some(ch => Boolean(ch.hell_baal_cleared));
   const hostBar = c.is_host ? `
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
       <div class="row">
         <button class="btn" onclick="openScheduleModal()">Edit Schedule</button>
-        <button class="btn" onclick="promptComplete(STATE.activeCampaign.id)">Complete &#8594; Hall of Heroes</button>
+        ${hostClearedHellBaal ? `<button class="btn primary" onclick="promptComplete(STATE.activeCampaign.id)">&#127942; Complete &#8594; Hall of Heroes</button>` : ""}
         <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
       </div>
     </div>` : "";

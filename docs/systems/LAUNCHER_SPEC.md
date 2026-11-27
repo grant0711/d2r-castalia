@@ -433,14 +433,10 @@ Once `bin/d2r-campaign` is built, registering its command cheatsheet in `AGENTS.
 * **Live Internet Co-Op Round-Trip Verified:**
   * Persistent `castalia-playit.service` (`systemd --user`, `playit` v2.0.2) forwarding `209.25.140.16:11887` → `127.0.0.1:4000`.
   * Both Host (`Jesse`, `acct1`) and Joiner (`Steven`, `mod`) connected simultaneously over the internet via `Browse Games → Direct Join (lower left) → Ctrl+V`, with isolated saves and 43/43 unit tests passing (`tests/test_campaign_hub.py`).
-* **Cloudflare Production Backend ([`worker/`](file:///home/grant/games/d2r/worker)):** `schema.sql`, `wrangler.toml`, and `src/index.js` implemented and ready for deployment.
-
-### Immediate Next Steps
-1. **Verify Trade-Window Stability (1-Variable Test):** Re-test opening Trade between Host and Player 2 with `write_crash_dumps = true` in `d2rloader.toml` to confirm whether the Host exit during Trade was a one-off X11 focus/resize glitch or a trade-panel bug.
-2. **Deploy Production Campaign API (`worker/`):** Provision Cloudflare D1 (`npx wrangler d1 create castalia-campaigns`), apply `worker/schema.sql`, set `DISCORD_CAMPAIGN_WEBHOOK_URL`, and run `npx wrangler deploy`.
-3. **Bundle `castalia-autohost.dll` in Release Zips:** Update `bin/d2r-release` to include `mods/castalia/d2rloader/plugins/castalia-autohost.dll` in `castalia-vX.Y.Z.zip`.
-4. **Merge `feat/campaign-launcher` → `master` & Run First Gated Release:** Merge the MVP branch, then test `./bin/d2r-release prepare` → isolated subagent PR review → `release` branch cascade.
-5. **Windows Teammate Packaging:** Package the launcher for Windows friends (PyInstaller/standalone or Tauri v2 wrapping the existing `static/index.html`).
+* **Live Production Deployment & Windows Installer (`v0.4.3+`):**
+  * Cloudflare Worker + D1 live at `https://castalia-campaign-hub.d2rcastalia.workers.dev` with `#lfg-sessions` Discord webhook (bumping cards to bottom on new scheduled dates and `🟢 LIVE` transitions; resetting `next_session_utc` to `null` on session end).
+  * Windows x64 distribution via **Inno Setup `CastaliaLauncher-Setup.exe`** (per-user `%LOCALAPPDATA%\CastaliaLauncher`, Desktop/Start Menu shortcut, bundling official PSF-signed Python 3.12 embeddable runtime) + portable `castalia-launcher-win64.zip`.
+  * **Launcher UX & Host Toolkit:** Native OS folder picker (`POST /local/browse-dir`), clickable `D2RLoader: Missing` Settings link, 1-click **Import Existing Character** (`GET /local/importable-chars`, `POST /local/import-char`) with optional respec on import, Solo **Respec** (`POST /local/respec-char`, keeping mid-campaign respec disabled), `POST /local/test-host` TCP + `0xAF` D2R greeting reachability probe, real Castalia skill-name resolution from `d2r_game_dir/mods/castalia/castalia.mpq/data/`, and reusable `castalia_hub.tcp_guard.D2RTcpGuard` (`bin/d2r-tcp-guard`) to drop TLS/HTTP internet port scanners before D2RLoader.
 
 ---
 

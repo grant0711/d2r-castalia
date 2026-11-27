@@ -184,6 +184,24 @@
   </div>
 </div>
 
+<!-- IMPORT EXISTING CHARACTER MODAL -->
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal">
+    <div class="space-between"><h3>Import Existing Character</h3><button class="btn ghost" onclick="closeModal('modal-import')">X</button></div>
+    <div style="font-size:12px;color:var(--muted);margin:8px 0;">Copy a character from your Solo profile, Live D2R saves, or another campaign into this campaign's isolated profile.</div>
+    <label>Character to Import</label>
+    <select id="imp-select" style="width:100%"></select>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;">
+      <input type="checkbox" id="imp-respec" style="width:auto;">
+      <span>Refund all stats &amp; skills (Respec) on import</span>
+    </label>
+    <div class="row" style="justify-content:flex-end; margin-top:14px;">
+      <button class="btn ghost" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn primary" id="imp-btn" onclick="submitImportChar()">Import Character</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT SCHEDULE MODAL -->
 <div class="modal-backdrop" id="modal-schedule">
   <div class="modal">
@@ -267,7 +285,7 @@ async function refreshState() {
   STATE.versions = await api("/local/versions");
   const e = STATE.env;
   document.getElementById("status-box").innerHTML =
-    `<div>D2RLoader: ${e.d2rloader_found ? '<span class="ok">Ready &#10003;</span>' : '<span class="warn">Missing</span>'}</div>` +
+    `<div>D2RLoader: ${e.d2rloader_found ? '<span class="ok">Ready &#10003;</span>' : '<a href="#" onclick="showTab(\'settings\');return false;" class="warn" style="text-decoration:underline;" title="Click to set your D2R folder in Settings">Missing (Set Folder)</a>'}</div>` +
     `<div>Installed: <b>v${esc(e.installed_mod_version || "none")}</b></div>` +
     `<div>Name: <b>${esc(STATE.config.display_name || "Wanderer")}</b></div>`;
 }
@@ -392,6 +410,7 @@ async function openCampaign(cid) {
       <div class="space-between" style="margin-bottom:6px;">
         <h3>Your Character (Isolated Campaign Profile)</h3>
         <div class="row">
+          <button class="btn" onclick="openImportModal()">&#128194; Import Existing</button>
           <button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>
           ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp(STATE.activeCampaign.id)">Cancel RSVP</button>` : ""}
         </div>
@@ -409,8 +428,15 @@ async function openCampaign(cid) {
 async function renderSolo() {
   const main = document.getElementById("main");
   const chars = await api("/local/chars/solo");
-  const rows = chars.map(ch => `<tr><td><b>${esc(ch.char_name)}</b></td><td>Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)}</td><td>${esc(ch.char_wp)}</td><td>${esc(ch.build_summary)}</td></tr>`).join("")
-    || `<tr><td colspan="4" style="color:var(--muted);">No solo characters yet.</td></tr>`;
+  STATE.soloChars = chars;
+  const rows = chars.map((ch, idx) => `<tr>
+    <td><b>${esc(ch.char_name)}</b></td>
+    <td>Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)}</td>
+    <td>${esc(ch.char_wp)}</td>
+    <td>${esc(ch.build_summary)}</td>
+    <td style="text-align:right;"><button class="btn ghost" onclick="respecSoloChar(${idx})">Respec</button></td>
+  </tr>`).join("")
+    || `<tr><td colspan="5" style="color:var(--muted);">No solo characters yet.</td></tr>`;
   main.innerHTML = `
     <div class="space-between" style="margin-bottom:12px;">
       <h2>Solo Play (Isolated Profile)</h2>
@@ -421,7 +447,7 @@ async function renderSolo() {
     </div>
     <div class="card">
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Characters in <code>profiles/solo/</code> are completely isolated from your co-op campaigns.</div>
-      <table><thead><tr><th>Name</th><th>Class &amp; Level</th><th>Act / WP</th><th>Build</th></tr></thead><tbody>${rows}</tbody></table>
+      <table><thead><tr><th>Name</th><th>Class &amp; Level</th><th>Act / WP</th><th>Build</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     </div>`;
 }
 
@@ -444,9 +470,22 @@ async function renderSettings() {
     <div class="card">
       <label>Display Name</label><input id="s-name" style="width:100%" value="${esc(c.display_name || '')}">
       <label>Campaign Hub API URL</label><input id="s-api" style="width:100%" value="${esc(c.api_url || '')}">
-      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label><input id="s-hostaddr" style="width:100%" placeholder="147.185.221.21:14322 (optional)" value="${esc(c.host_connect_address || '')}">
-      <label>Diablo II: Resurrected Install Dir</label><input id="s-gdir" style="width:100%" value="${esc(c.d2r_game_dir || '')}">
-      <label>D2R Castalia Save Dir</label><input id="s-sdir" style="width:100%" value="${esc(c.d2r_save_dir || '')}">
+      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label>
+      <div class="row" style="gap:6px;">
+        <input id="s-hostaddr" style="flex:1" placeholder="209.25.140.16:11887 (optional)" value="${esc(c.host_connect_address || '')}">
+        <button class="btn" onclick="testHostAddr()">Test Connection</button>
+      </div>
+      <div id="s-host-status" style="font-size:12px;margin-top:4px;color:var(--muted);"></div>
+      <label>Diablo II: Resurrected Install Dir</label>
+      <div class="row" style="gap:6px;">
+        <input id="s-gdir" style="flex:1" value="${esc(c.d2r_game_dir || '')}">
+        <button class="btn" onclick="browseDir('s-gdir', 'Select Diablo II: Resurrected Install Folder')">Browse...</button>
+      </div>
+      <label>D2R Castalia Save Dir</label>
+      <div class="row" style="gap:6px;">
+        <input id="s-sdir" style="flex:1" value="${esc(c.d2r_save_dir || '')}">
+        <button class="btn" onclick="browseDir('s-sdir', 'Select D2R Castalia Saves Folder')">Browse...</button>
+      </div>
       <div style="margin-top:10px;"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
     </div>
     <div class="card">
@@ -713,7 +752,55 @@ async function submitScheduleUpdate() {
 async function promptDelete(cid, title) { if (confirm(`Permanently delete campaign "${title}"? (Local character saves in your profile folder are kept.)`)) { await api("/local/delete", { method: "POST", body: { campaign_id: cid } }); toast("Campaign deleted."); showTab("campaigns"); } }
 async function saveSettings() {
   await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });
-  await refreshState(); toast("Settings saved!");
+  await refreshState(); toast("Settings saved!"); renderSettings();
+}
+async function browseDir(inputId, title) {
+  const el = document.getElementById(inputId);
+  const res = await api("/local/browse-dir", { method: "POST", body: { title, initial_dir: el.value } });
+  if (res && res.path) { el.value = res.path; toast("Folder selected — click Save Settings."); }
+}
+async function testHostAddr() {
+  const st = document.getElementById("s-host-status");
+  const addr = document.getElementById("s-hostaddr").value.trim();
+  st.textContent = "Testing TCP reachability...";
+  const res = await api("/local/test-host", { method: "POST", body: { address: addr } });
+  st.innerHTML = res.reachable
+    ? `<span class="ok">&#10003; ${esc(res.message)}</span>`
+    : `<span class="warn">&#9888; ${esc(res.message)}</span>`;
+}
+async function openImportModal() {
+  const c = STATE.activeCampaign;
+  const cands = await api(`/local/importable-chars?campaign_id=${encodeURIComponent(c.id)}`);
+  STATE.importableChars = cands;
+  const sel = document.getElementById("imp-select");
+  if (!cands.length) {
+    sel.innerHTML = `<option value="">(No existing characters found in Solo or Live Saves)</option>`;
+    document.getElementById("imp-btn").disabled = true;
+  } else {
+    sel.innerHTML = cands.map((ch, i) => `<option value="${i}">${esc(ch.char_name)} — Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)} (${esc(ch.char_wp)}) [${esc(ch.source_label)}]</option>`).join("");
+    document.getElementById("imp-btn").disabled = false;
+  }
+  document.getElementById("imp-respec").checked = false;
+  openModal("modal-import");
+}
+async function submitImportChar() {
+  const c = STATE.activeCampaign;
+  const idx = Number(document.getElementById("imp-select").value);
+  const chosen = (STATE.importableChars || [])[idx];
+  if (!chosen) return;
+  const respec = document.getElementById("imp-respec").checked;
+  await api("/local/import-char", { method: "POST", body: { campaign_id: c.id, source_path: chosen.source_path, respec } });
+  closeModal("modal-import");
+  toast(`Imported ${chosen.char_name}${respec ? " (respecced)" : ""}!`);
+  openCampaign(c.id);
+}
+async function respecSoloChar(idx) {
+  const ch = (STATE.soloChars || [])[idx];
+  if (!ch) return;
+  if (!confirm(`Refund all skill & stat points on Solo character "${ch.char_name}"?`)) return;
+  await api("/local/respec-char", { method: "POST", body: { target: "solo", char_name: ch.char_name, reset_stats: true } });
+  toast(`Respecced ${ch.char_name}!`);
+  renderSolo();
 }
 async function exportTokens() { const r = await api("/local/tokens/export"); await copyText(r.tokens_json); }
 async function importTokens() { const raw = prompt("Paste exported tokens.json:"); if (raw) { const r = await api("/local/tokens/import", { method: "POST", body: { tokens_json: raw } }); toast(`Imported ${r.imported} campaign tokens!`); } }

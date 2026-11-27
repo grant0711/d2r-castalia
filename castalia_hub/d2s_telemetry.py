@@ -39,14 +39,25 @@ CLASS_SKILL_OFFSET: Dict[int, int] = {
 _SKILL_NAME_CACHE: Optional[Dict[int, str]] = None
 
 
-def _load_castalia_skill_names() -> Dict[int, str]:
+def _load_castalia_skill_names(d2r_game_dir: Optional[str] = None) -> Dict[int, str]:
     """Load Castalia's live skill display names keyed by skills.txt *Id."""
     global _SKILL_NAME_CACHE
-    if _SKILL_NAME_CACHE is not None:
+    if _SKILL_NAME_CACHE:
         return _SKILL_NAME_CACHE
 
+    candidates: List[str] = []
+    if d2r_game_dir:
+        candidates.append(os.path.join(d2r_game_dir, "mods", "castalia", "castalia.mpq", "data"))
+    candidates.append(os.path.realpath(os.path.join(REPO_ROOT, "castalia", "data")))
+
+    mod_data = next(
+        (c for c in candidates if os.path.isfile(os.path.join(c, "global", "excel", "skills.txt"))),
+        "",
+    )
+    if not mod_data:
+        return {}
+
     names: Dict[int, str] = {}
-    mod_data = os.path.realpath(os.path.join(REPO_ROOT, "castalia", "data"))
     skills_txt = os.path.join(mod_data, "global", "excel", "skills.txt")
     skilldesc_txt = os.path.join(mod_data, "global", "excel", "skilldesc.txt")
     skills_json = os.path.join(mod_data, "local", "lng", "strings", "skills.json")
@@ -98,7 +109,8 @@ def _load_castalia_skill_names() -> Dict[int, str]:
         except Exception:
             pass
 
-    _SKILL_NAME_CACHE = names
+    if names:
+        _SKILL_NAME_CACHE = names
     return names
 
 
@@ -135,7 +147,7 @@ def _detect_horadric_cube(raw: bytearray, wp_code: str) -> bool:
     return bool(word & 0x0019)
 
 
-def parse_d2s_telemetry(d2s_path: str) -> Dict[str, object]:
+def parse_d2s_telemetry(d2s_path: str, d2r_game_dir: Optional[str] = None) -> Dict[str, object]:
     """
     Parse a D2R v105 .d2s save and return campaign telemetry:
     char_name, char_class, class_name, char_level, char_wp, active_difficulty,
@@ -149,7 +161,7 @@ def parse_d2s_telemetry(d2s_path: str) -> Dict[str, object]:
 
     cls_id = int(info["class_id"])
     cls_short = ID_TO_SHORT_CODE.get(cls_id, "pal")
-    skill_names = _load_castalia_skill_names()
+    skill_names = _load_castalia_skill_names(d2r_game_dir=d2r_game_dir)
     base_id = CLASS_SKILL_OFFSET.get(cls_id, 0)
 
     invested: List[Tuple[int, str]] = []

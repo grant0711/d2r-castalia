@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -353,16 +354,212 @@ class CastaliaHub:
         if target == "solo":
             self.migrate_initial_solo_saves()
         pdir = self.profile_dir_for(target)
+        gdir = self.config.get("d2r_game_dir")
         chars = []
         for fn in sorted(os.listdir(pdir)):
             if fn.lower().endswith(".d2s"):
                 full = os.path.join(pdir, fn)
                 try:
-                    chars.append(parse_d2s_telemetry(full))
+                    chars.append(parse_d2s_telemetry(full, d2r_game_dir=gdir))
                 except Exception as e:
                     chars.append({"char_name": os.path.splitext(fn)[0], "error": str(e), "path": full})
         chars.sort(key=lambda c: -float(c.get("mtime", 0)))
         return chars
+
+    def list_importable_chars(self, campaign_id: str) -> List[Dict[str, Any]]:
+        """
+        Scan Solo, Live D2R saves, and other Campaign profiles for existing .d2s characters
+        that are not yet present in `campaign_id`, so a player can 1-click import them.
+        """
+        target_dir = self.profile_dir_for(campaign_id)
+        existing_names = {
+            os.path.splitext(f)[0].lower()
+            for f in os.listdir(target_dir)
+            if f.lower().endswith(".d2s")
+        }
+        gdir = self.config.get("d2r_game_dir")
+
+        sources: List[Tuple[str, str]] = []
+        live_dir = self.config.get("d2r_save_dir") or ""
+        if live_dir and os.path.isdir(live_dir):
+            sources.append(("Live Saves", live_dir))
+        solo_dir = os.path.join(self.profiles_dir, "solo")
+        if os.path.isdir(solo_dir):
+            sources.append(("Solo", solo_dir))
+        if os.path.isdir(self.profiles_dir):
+            target_pid = self.profile_id_for(campaign_id)
+            for entry in sorted(os.listdir(self.profiles_dir)):
+                if entry in ("solo", target_pid):
+                    continue
+                cdir = os.path.join(self.profiles_dir, entry)
+                if os.path.isdir(cdir):
+                    label = entry.replace("campaign-", "Campaign: ")
+                    sources.append((label, cdir))
+
+        seen_paths: set = set()
+        seen_names: set = set()
+        out: List[Dict[str, Any]] = []
+        for label, sdir in sources:
+            for fn in sorted(os.listdir(sdir)):
+                if not fn.lower().endswith(".d2s"):
+                    continue
+                stem = os.path.splitext(fn)[0].lower()
+                if stem in existing_names or stem in seen_names:
+                    continue
+                full = os.path.abspath(os.path.join(sdir, fn))
+                if full in seen_paths or not os.path.isfile(full):
+                    continue
+                seen_paths.add(full)
+                seen_names.add(stem)
+                try:
+                    info = parse_d2s_telemetry(full, d2r_game_dir=gdir)
+                    info["source_label"] = label
+                    info["source_path"] = full
+                    out.append(info)
+                except Exception:
+                    continue
+        out.sort(key=lambda c: -float(c.get("mtime", 0)))
+        return out
+
+    def import_char_to_campaign(self, campaign_id: str, source_path: str, respec: bool = False) -> Dict[str, Any]:
+        """
+        Copy an existing .d2s (and its sidecar .key/.ma*/.ctl files) from Solo, Live saves,
+        or another campaign profile into `campaign_id`, optionally refunding all stats & skills.
+        """
+        abs_src = os.path.abspath(source_path or "")
+        if not abs_src.lower().endswith(".d2s") or not os.path.isfile(abs_src):
+            raise FileNotFoundError(f"Character save not found: {source_path}")
+
+        allowed_roots = [os.path.abspath(self.profiles_dir)]
+        live_dir = self.config.get("d2r_save_dir") or ""
+        if live_dir:
+            allowed_roots.append(os.path.abspath(live_dir))
+        if not any(abs_src.startswith(r + os.sep) or os.path.dirname(abs_src) == r for r in allowed_roots):
+            raise ValueError("Source character must reside inside D2R saves or CastaliaHub profiles.")
+
+        target_dir = self.profile_dir_for(campaign_id)
+        src_dir = os.path.dirname(abs_src)
+        base_name = os.path.basename(abs_src)
+        stem = os.path.splitext(base_name)[0].lower()
+        for fname in os.listdir(src_dir):
+            if os.path.splitext(fname)[0].lower() == stem:
+                fpath = os.path.join(src_dir, fname)
+                if os.path.isfile(fpath):
+                    shutil.copy2(fpath, os.path.join(target_dir, fname))
+
+        dst_d2s = os.path.join(target_dir, base_name)
+        if respec:
+            from mod_builder.char_manager import configure_character_d2s
+            configure_character_d2s(dst_d2s, reset_skills=True, reset_stats=True, reroll_seed=False)
+        return parse_d2s_telemetry(dst_d2s, d2r_game_dir=self.config.get("d2r_game_dir"))
+
+    def respec_profile_char(self, target: str, char_name: str, reset_stats: bool = True) -> Dict[str, Any]:
+        """Launcher-level respec: refund all skill points (and optionally stat points) on a profile .d2s."""
+        from mod_builder.char_manager import configure_character_d2s
+        pdir = self.profile_dir_for(target)
+        low_target = f"{char_name.strip().lower()}.d2s"
+        match = next((f for f in os.listdir(pdir) if f.lower() == low_target), None)
+        if not match:
+            raise FileNotFoundError(f"Character '{char_name}' not found in profile '{target}'.")
+        dst_d2s = os.path.join(pdir, match)
+        configure_character_d2s(dst_d2s, reset_skills=True, reset_stats=bool(reset_stats), reroll_seed=False)
+        # Keep live save folder in sync if this profile is currently active
+        if target == "solo":
+            live_dir = self.config.get("d2r_save_dir") or ""
+            live_copy = os.path.join(live_dir, match)
+            if live_dir and os.path.isfile(live_copy):
+                shutil.copy2(dst_d2s, live_copy)
+        return parse_d2s_telemetry(dst_d2s, d2r_game_dir=self.config.get("d2r_game_dir"))
+
+    @staticmethod
+    def browse_directory(title: str = "Select Folder", initial_dir: Optional[str] = None) -> Optional[str]:
+        """Open a native OS folder picker dialog and return the chosen path (or None if cancelled)."""
+        if sys.platform == "win32":
+            safe_title = title.replace("'", "''")
+            init_part = ""
+            if initial_dir and os.path.isdir(initial_dir):
+                safe_init = initial_dir.replace("'", "''")
+                init_part = f"$f.SelectedPath = '{safe_init}'; "
+            ps = (
+                "Add-Type -AssemblyName System.Windows.Forms; "
+                "$f = New-Object System.Windows.Forms.FolderBrowserDialog; "
+                f"$f.Description = '{safe_title}'; "
+                f"{init_part}"
+                "if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }"
+            )
+            try:
+                res = subprocess.run(
+                    ["powershell", "-NoProfile", "-STA", "-Command", ps],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+                chosen = (res.stdout or "").strip()
+                return chosen or None
+            except Exception:
+                return None
+
+        # Linux: try zenity or kdialog
+        for cmd in (
+            ["zenity", "--file-selection", "--directory", f"--title={title}"],
+            ["kdialog", "--getexistingdirectory", initial_dir or os.path.expanduser("~"), "--title", title],
+        ):
+            if shutil.which(cmd[0]):
+                try:
+                    res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                    chosen = (res.stdout or "").strip()
+                    return chosen or None
+                except Exception:
+                    return None
+        return None
+
+    def test_host_reachability(self, address: Optional[str] = None, timeout: float = 4.0) -> Dict[str, Any]:
+        """
+        Test whether the configured host address (`host:port`, e.g. playit.gg tunnel)
+        accepts TCP connections and optionally returns D2R's 0xAF server greeting.
+        """
+        raw_addr = (address if address is not None else self.config.get("host_connect_address") or "").strip()
+        if not raw_addr:
+            return {
+                "reachable": False,
+                "d2r_greeting": False,
+                "address": "",
+                "message": "No Host Connect Address configured yet (set your playit.gg IP:port in Settings).",
+            }
+        host, port = self.parse_host_port(raw_addr)
+        t0 = time.monotonic()
+        try:
+            sock = socket.create_connection((host, port), timeout=timeout)
+            latency_ms = int(round((time.monotonic() - t0) * 1000))
+            d2r_greeting = False
+            try:
+                sock.settimeout(0.8)
+                data = sock.recv(8)
+                if data and data[0] == 0xAF:
+                    d2r_greeting = True
+            except socket.timeout:
+                pass
+            finally:
+                sock.close()
+            if d2r_greeting:
+                msg = f"Reachable ({latency_ms} ms) — D2R host server is live and responding!"
+            else:
+                msg = f"TCP port reachable ({latency_ms} ms) — tunnel is open (start a D2R game to verify full handshake)."
+            return {
+                "reachable": True,
+                "d2r_greeting": d2r_greeting,
+                "latency_ms": latency_ms,
+                "address": f"{host}:{port}",
+                "message": msg,
+            }
+        except Exception as exc:
+            return {
+                "reachable": False,
+                "d2r_greeting": False,
+                "latency_ms": None,
+                "address": f"{host}:{port}",
+                "message": f"Could not reach {host}:{port} ({exc}). Check that playit.gg / port forwarding is running.",
+            }
 
     def create_dropin_char(
         self,
@@ -707,7 +904,7 @@ class CastaliaHub:
             imported = self._import_existing_char_to_campaign(campaign_id, char_name)
             if imported:
                 try:
-                    t = parse_d2s_telemetry(imported)
+                    t = parse_d2s_telemetry(imported, d2r_game_dir=self.config.get("d2r_game_dir"))
                     char_level = int(t.get("char_level") or char_level)
                     char_wp = str(t.get("char_wp") or char_wp)
                     char_class = str(t.get("char_class") or char_class)

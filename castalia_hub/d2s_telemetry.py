@@ -37,11 +37,12 @@ CLASS_SKILL_OFFSET: Dict[int, int] = {
 }
 
 _SKILL_NAME_CACHE: Optional[Dict[int, str]] = None
+_PASSIVE_SKILL_IDS: set = set()
 
 
 def _load_castalia_skill_names(d2r_game_dir: Optional[str] = None) -> Dict[int, str]:
-    """Load Castalia's live skill display names keyed by skills.txt *Id."""
-    global _SKILL_NAME_CACHE
+    """Load Castalia's live skill display names (and passive flags) keyed by skills.txt *Id."""
+    global _SKILL_NAME_CACHE, _PASSIVE_SKILL_IDS
     if _SKILL_NAME_CACHE:
         return _SKILL_NAME_CACHE
 
@@ -88,6 +89,7 @@ def _load_castalia_skill_names(d2r_game_dir: Optional[str] = None) -> Dict[int, 
         except Exception:
             pass
 
+    passives: set = set()
     if os.path.isfile(skills_txt):
         try:
             with open(skills_txt, "r", encoding="utf-8", newline="") as f:
@@ -97,6 +99,7 @@ def _load_castalia_skill_names(d2r_game_dir: Optional[str] = None) -> Dict[int, 
                 i_id = hdr.index("*Id")
                 i_sk = hdr.index("skill")
                 i_sd = hdr.index("skilldesc")
+                i_pas = hdr.index("passive") if "passive" in hdr else -1
                 for line in lines[1:]:
                     cols = line.split("\t")
                     if len(cols) <= max(i_id, i_sk, i_sd) or not cols[i_id].isdigit():
@@ -106,11 +109,15 @@ def _load_castalia_skill_names(d2r_game_dir: Optional[str] = None) -> Dict[int, 
                     skey = desc_to_strkey.get(sd, "")
                     display = str_map.get(skey) or cols[i_sk]
                     names[sid] = display
+                    if i_pas >= 0 and len(cols) > i_pas and cols[i_pas].strip() == "1":
+                        passives.add(sid)
         except Exception:
             pass
 
     if names:
         _SKILL_NAME_CACHE = names
+        _PASSIVE_SKILL_IDS.clear()
+        _PASSIVE_SKILL_IDS.update(passives)
     return names
 
 
@@ -164,16 +171,22 @@ def parse_d2s_telemetry(d2s_path: str, d2r_game_dir: Optional[str] = None) -> Di
     skill_names = _load_castalia_skill_names(d2r_game_dir=d2r_game_dir)
     base_id = CLASS_SKILL_OFFSET.get(cls_id, 0)
 
-    invested: List[Tuple[int, str]] = []
+    invested_castable: List[Tuple[int, str]] = []
+    invested_all: List[Tuple[int, str]] = []
     for idx, pts in enumerate(skill_bytes[:30]):
         if pts > 0:
-            sname = skill_names.get(base_id + idx, f"Skill#{idx + 1}")
-            invested.append((pts, sname))
-    invested.sort(key=lambda x: (-x[0], x[1]))
+            sid = base_id + idx
+            sname = skill_names.get(sid, f"Skill#{idx + 1}")
+            invested_all.append((pts, sname))
+            if sid not in _PASSIVE_SKILL_IDS:
+                invested_castable.append((pts, sname))
+    invested_castable.sort(key=lambda x: (-x[0], x[1]))
+    invested_all.sort(key=lambda x: (-x[0], x[1]))
 
-    top_skills = [{"name": n, "points": p} for p, n in invested[:4]]
-    if invested:
-        build_summary = " / ".join(n for _, n in invested[:2])
+    chosen = invested_castable if invested_castable else invested_all
+    top_skills = [{"name": n, "points": p} for p, n in chosen[:4]]
+    if chosen:
+        build_summary = " / ".join(n for _, n in chosen[:3])
     else:
         build_summary = "Unallocated"
 

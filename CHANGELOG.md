@@ -8,6 +8,12 @@ Versioning follows **Save-Aware SemVer** (`vMAJOR.MINOR.PATCH` — see [docs/sys
 
 ---
 
+## [v0.4.3] - 2026-11-27
+
+**Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)
+
+Playtest #2 co-op & economy tuning + Windows Installer: increased gold pile multipliers (+15%: 2.75/4.6/8.0), added Act-scaled monster potion drops (Hybrid Option C: 10% Act Junk trickle + 1 guaranteed on Champs/Uniques + 2 on SuperUniques), tuned NoDrop on Champs/Uniques/SuperUniques/Act Bosses/Super Chests to preserve exact P1 solo means while scaling drops cleanly with party size (P2-P5), tier-scaled Crafted levelreq offsets (-8/-10/-12/-15/-19), smoothed Barrage (70% base / +40% exhausted) and Increased Speed (+19% at slvl 1 -> +43% at slvl 20), added CastaliaLauncher-Setup.exe Windows installer + returning-character auto-import + Discord next-session bump.
+
 ## [v0.4.2] - 2026-11-26
 
 **Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)

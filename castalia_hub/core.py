@@ -382,8 +382,12 @@ class CastaliaHub:
         vers = [d.lstrip("v") for d in sorted(os.listdir(self.versions_dir)) if os.path.isdir(os.path.join(self.versions_dir, d))]
         return vers
 
-    def list_github_releases(self) -> List[Dict[str, Any]]:
-        """Fetch published Castalia releases from GitHub Releases API (with local fallback)."""
+    def list_github_releases(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
+        """Fetch published Castalia releases from GitHub Releases API (5-min in-memory cache + local fallback)."""
+        now = time.time()
+        cached = getattr(self, "_releases_cache", None)
+        if not force_refresh and cached and (now - cached[0]) < 300:
+            return cached[1]
         url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
         req = urllib.request.Request(url, headers={"User-Agent": "CastaliaHub/1.0", "Accept": "application/vnd.github+json"})
         releases: List[Dict[str, Any]] = []
@@ -424,6 +428,8 @@ class CastaliaHub:
                 "sha_url": None,
                 "cached": True,
             })
+        if releases:
+            self._releases_cache = (now, releases)
         return releases
 
     def delete_cached_version(self, version: str) -> bool:
@@ -535,6 +541,8 @@ class CastaliaHub:
         data = self._api("GET", f"/api/campaigns/{campaign_id}", token=tok)
         data["is_host"] = bool(self.get_token(campaign_id, "host_token"))
         data["my_rsvp_id"] = self.get_token(campaign_id, "rsvp_id")
+        if data["is_host"] and data.get("status") != "completed":
+            self._auto_bump_campaign_version(data)
         return data
 
     def create_campaign(self, payload: Dict[str, Any]) -> Dict[str, Any]:

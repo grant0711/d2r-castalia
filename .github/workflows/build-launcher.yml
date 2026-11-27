@@ -103,7 +103,7 @@ jobs:
           & "$testDir\python\python.exe" "$testDir\app\bin\d2r-launcher" --help
           if ($LASTEXITCODE -ne 0) { throw "d2r-launcher --help failed" }
 
-          & "$testDir\python\python.exe" -c "import castalia_hub.core, castalia_hub.d2s_telemetry, mod_builder.char_manager as cm; print('SMOKE_OK:', len(cm.CLASS_NAME_TO_ID), 'classes')"
+          & "$testDir\python\python.exe" -c "import castalia_hub.core, castalia_hub.d2s_telemetry, mod_builder.char_manager as cm; print('SMOKE_OK:', len(cm.ID_TO_CLASS_NAME), 'classes')"
           if ($LASTEXITCODE -ne 0) { throw "module import smoke test failed" }
 
       - name: Upload castalia-launcher-win64.zip artifact

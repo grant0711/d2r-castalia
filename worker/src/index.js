@@ -52,7 +52,7 @@ function sanitizeRsvp(row) {
   return rest;
 }
 
-async function syncDiscord(env, camp, confirmed) {
+async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
   const webhook = env.DISCORD_CAMPAIGN_WEBHOOK_URL;
   if (!webhook) return camp.discord_msg_id || null;
   const label = { live: "🟢 LIVE", recruiting: "🟡 Recruiting", active: "🔵 Active", completed: "🏆 Completed" }[camp.status] || camp.status;
@@ -85,9 +85,14 @@ async function syncDiscord(env, camp, confirmed) {
       { name: "Next Session", value: nextField, inline: false },
     ],
   };
-  const url = camp.discord_msg_id ? `${webhook}/messages/${camp.discord_msg_id}` : `${webhook}?wait=true`;
+
+  if (bumpToBottom && camp.discord_msg_id) {
+    await fetch(`${webhook}/messages/${camp.discord_msg_id}`, { method: "DELETE" }).catch(() => {});
+  }
+  const usePatch = Boolean(camp.discord_msg_id) && !bumpToBottom;
+  const url = usePatch ? `${webhook}/messages/${camp.discord_msg_id}` : `${webhook}?wait=true`;
   const resp = await fetch(url, {
-    method: camp.discord_msg_id ? "PATCH" : "POST",
+    method: usePatch ? "PATCH" : "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } }),
   });
@@ -96,11 +101,16 @@ async function syncDiscord(env, camp, confirmed) {
   return data.id || camp.discord_msg_id || null;
 }
 
-async function syncDiscordWithCount(env, camp, cid) {
+async function syncDiscordWithCount(env, camp, cid, bumpToBottom = false) {
   const cntRow = await env.DB.prepare(
     "SELECT COUNT(*) AS cnt FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'"
   ).bind(cid).first();
-  return syncDiscord(env, camp, cntRow ? cntRow.cnt : 0);
+  const newMsgId = await syncDiscord(env, camp, cntRow ? cntRow.cnt : 0, bumpToBottom);
+  if (newMsgId && newMsgId !== camp.discord_msg_id) {
+    await env.DB.prepare("UPDATE campaigns SET discord_msg_id = ? WHERE id = ?").bind(newMsgId, cid).run();
+    camp.discord_msg_id = newMsgId;
+  }
+  return newMsgId;
 }
 
 export default {
@@ -304,12 +314,10 @@ export default {
 
         if (parts.length === 4 && parts[3] === "end-session" && req.method === "POST") {
           const body = await req.json();
-          let nextUtc = body.next_session_utc || row.next_session_utc;
-          if (!body.next_session_utc && row.next_session_utc && row.recurrence_days) {
-            const d = new Date(row.next_session_utc);
-            d.setUTCDate(d.getUTCDate() + Number(row.recurrence_days));
-            nextUtc = d.toISOString().replace(/\.\d+Z$/, "Z");
-          }
+          // Default next_session_utc to null on session end so expired timestamps clear;
+          // if the Host explicitly sets a new next_session_utc, bump the Discord card to bottom.
+          const explicitNext = body.next_session_utc ? String(body.next_session_utc).trim() : null;
+          const nextUtc = explicitNext || null;
           const nextWp = String(body.current_wp || row.current_wp || "a1n").trim();
           const hasCube = body.has_cube !== undefined
             ? (body.has_cube ? 1 : 0)
@@ -320,7 +328,7 @@ export default {
           ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, nextUtc, now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, false);
-          await syncDiscordWithCount(env, camp, cid);
+          await syncDiscordWithCount(env, camp, cid, Boolean(explicitNext && explicitNext !== row.next_session_utc));
           return jsonResp(camp);
         }
 
@@ -330,7 +338,10 @@ export default {
           const sets = [];
           const vals = [];
           for (const f of fields) {
-            if (body[f] !== undefined && body[f] !== null) {
+            if (f === "next_session_utc" && body[f] !== undefined) {
+              sets.push(`${f} = ?`);
+              vals.push(body[f] ? String(body[f]).trim() : null);
+            } else if (body[f] !== undefined && body[f] !== null) {
               sets.push(`${f} = ?`);
               vals.push(f === "castalia_version" ? String(body[f]).replace(/^v/, "") : body[f]);
             }
@@ -339,11 +350,11 @@ export default {
           vals.push(now, cid);
           await env.DB.prepare(`UPDATE campaigns SET ${sets.join(", ")} WHERE id = ?`).bind(...vals).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
-          const cntRow = await env.DB.prepare(
-            "SELECT COUNT(*) AS cnt FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'"
-          ).bind(cid).first();
           const camp = sanitizeCampaign(updated, true);
-          await syncDiscord(env, camp, cntRow ? cntRow.cnt : 0);
+          const nextScheduledChanged = Boolean(
+            body.next_session_utc && String(body.next_session_utc).trim() !== (row.next_session_utc || "")
+          );
+          await syncDiscordWithCount(env, camp, cid, nextScheduledChanged);
           return jsonResp(camp);
         }
 

@@ -11,6 +11,7 @@ import socket
 import subprocess
 import sys
 import threading
+from typing import Optional
 import webbrowser
 
 REPO_ROOT = getattr(sys, "_MEIPASS", os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -147,5 +148,45 @@ def main():
         print("\n[d2r-launcher] Shutting down.")
 
 
+def _setup_windows_gui_logging() -> Optional[str]:
+    """Under Windows pythonw.exe, sys.stdout/stderr are None; redirect to launcher.log."""
+    if sys.platform != "win32":
+        return None
+    if sys.stdout is not None and sys.stderr is not None:
+        return None
+    log_dir = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "CastaliaHub")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, "launcher.log")
+    try:
+        fh = open(log_path, "a", encoding="utf-8", buffering=1)
+        if sys.stdout is None:
+            sys.stdout = fh
+        if sys.stderr is None:
+            sys.stderr = fh
+        return log_path
+    except Exception:
+        return None
+
+
+def _show_windows_error(msg: str) -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, msg, "Castalia Launcher Error", 0x10)
+    except Exception:
+        pass
+
+
 if __name__ == "__main__":
-    main()
+    _log_path = _setup_windows_gui_logging()
+    try:
+        main()
+    except Exception as _exc:
+        import traceback
+        _tb = traceback.format_exc()
+        if sys.stderr is not None:
+            sys.stderr.write(_tb + "\n")
+        _hint = f"\n\nFull log: {_log_path}" if _log_path else ""
+        _show_windows_error(f"Castalia Launcher failed to start:\n\n{_exc}{_hint}")
+        sys.exit(1)

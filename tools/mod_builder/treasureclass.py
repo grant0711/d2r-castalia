@@ -120,11 +120,34 @@ def build_treasureclass(cfg: dict) -> str:
         elif r.get("group") == "12":  # Cpot
             _set_items(r, [(_gold_for_tc(tc), "1")])
 
-    # Update Act X Junk to clean gold/ammo only (zero potions, 5% Ammo / 95% Gold)
+    # Act-scaled potion/elixir table (shared by Act X Potion and Act X Chest Roll; zero Rejuvs)
+    act_potions_by_act = {
+        "Act 1": ("hp1", "mp1", "wms", "yps", "vps"),
+        "Act 2": ("hp1", "mp1", "wms", "yps", "vps"),
+        "Act 3": ("hp1", "mp1", "wms", "yps", "vps"),
+        "Act 4": ("hp2", "mp2", "wms", "yps", "vps"),
+        "Act 5": ("hp2", "mp2", "wms", "yps", "vps"),
+        "Act 1 (N)": ("hp3", "mp3", "wm2", "yp2", "vp2"),
+        "Act 2 (N)": ("hp3", "mp3", "wm2", "yp2", "vp2"),
+        "Act 3 (N)": ("hp4", "mp4", "wm2", "yp2", "vp2"),
+        "Act 4 (N)": ("hp4", "mp4", "wm2", "yp2", "vp2"),
+        "Act 5 (N)": ("hp4", "mp4", "wm2", "yp2", "vp2"),
+        "Act 1 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 2 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 3 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 4 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+        "Act 5 (H)": ("hp5", "mp5", "wm3", "yp3", "vp3"),
+    }
+
+    # Update Act X Junk to clean Gold / light Potion trickle / Ammo (85% Gold / 10% Potion / 5% Ammo)
     for r in rows:
         tc = r["Treasure Class"]
         if tc.endswith("Junk"):
-            _set_items(r, [(_gold_for_tc(tc), "19"), ("Ammo", "1")])
+            act_p = tc[: -len(" Junk")]
+            if act_p in act_potions_by_act:
+                _set_items(r, [(_gold_for_tc(tc), "17"), (f"{act_p} Potion", "2"), ("Ammo", "1")])
+            else:
+                _set_items(r, [(_gold_for_tc(tc), "19"), ("Ammo", "1")])
 
     # Catch-all sweep: ensure zero potion, key, or Town Portal item codes exist anywhere in treasureclassex.txt
     banned_potions = {
@@ -314,6 +337,16 @@ def build_treasureclass(cfg: dict) -> str:
         by_tc[lb_tc_name] = lb_row
         prev_lockbox_tc = lb_tc_name
 
+    # Act X Potion sub-tables (38.5% HP / 38.5% MP / 23.1% Elixirs, zero Rejuvs)
+    for act_p, (hp_c, mp_c, wm_c, yp_c, vp_c) in act_potions_by_act.items():
+        pot_tc_name = f"{act_p} Potion"
+        pot_row = _make_blank_row(headers, pot_tc_name)
+        pot_row["Picks"] = "1"
+        pot_row["NoDrop"] = "0"
+        _set_items(pot_row, [(hp_c, "10"), (mp_c, "10"), (wm_c, "2"), (yp_c, "2"), (vp_c, "2")])
+        custom_rows.append(pot_row)
+        by_tc[pot_tc_name] = pot_row
+
     # Insert custom sub-tables right after Runes 17 so they are defined before use!
     runes17_idx = next(i for i, r in enumerate(rows) if r["Treasure Class"] == "Runes 17")
     for offset, crow in enumerate(custom_rows):
@@ -390,8 +423,21 @@ def build_treasureclass(cfg: dict) -> str:
                 r["Set"] = "850"
                 r["Rare"] = "950"
                 r["Magic"] = "1024"
-                r["NoDrop"] = "20"  # 20 / (13 + 5 + 2 + 20) = 50% chance for bonus drop
+                r["NoDrop"] = "20"  # 20 / (20 + 20) = 50% at P1, 75% at P2, 87.5% at P3, 96.9% at P5
                 _set_items(r, [(eq_tc, "13"), (gr_name, "5"), (j_tc, "2")])
+
+                # Co-op scaling 25% bonus roll for Champions & Zone Uniques:
+                # 20 / (20 + 60) = 25% at P1 -> 43.75% at P2 -> 57.8% at P3 -> 76.3% at P5
+                cpot25 = f"{act_prefix} Cpot25 {letter}"
+                if cpot25 not in by_tc:
+                    r25 = dict(r)
+                    r25["Treasure Class"] = cpot25
+                    r25["group"] = ""
+                    r25["level"] = ""
+                    r25["NoDrop"] = "60"
+                    idx_cpot = rows.index(r)
+                    rows.insert(idx_cpot + 1, r25)
+                    by_tc[cpot25] = r25
 
     # Also update any Shard Uitem/Citem rows
     for tc_shard, eq_shard, gr_shard in [
@@ -408,9 +454,11 @@ def build_treasureclass(cfg: dict) -> str:
             r["NoDrop"] = "0"
             _set_items(r, [(eq_shard, "13"), (gr_shard, "5"), ("Jewelry C", "2")])
 
-    # Wire Tier 2 (Uniques & Champions): 1 Guaranteed Roll + 1 Bonus (50%) Roll + 1 Guaranteed Gold Pile
+    # Wire Tier 2 (Uniques & Champions): 1 Guaranteed Roll + 2x Cpot25 (25% at P1 -> 43.75% P2 -> 76.3% P5) + 1 Gold + 1 Potion
+    # Preserves exact P1 mean of 1.50 loot rolls (1 + 2*0.25) while scaling smoothly to 1.88 (P2) .. 2.53 (P5)
     for act_prefix, _, _, _, _, _ in ACTS:
         act_gold = _gold_for_tc(act_prefix)
+        act_pot = f"{act_prefix} Potion"
         for letter in ("A", "B", "C"):
             uitem = f"{act_prefix} Uitem {letter}"
             if uitem not in by_tc:
@@ -418,35 +466,37 @@ def build_treasureclass(cfg: dict) -> str:
             citem = f"{act_prefix} Citem {letter}"
             if citem not in by_tc:
                 citem = f"{act_prefix} Citem B"
-            cpot = f"{act_prefix} Cpot {letter}"
-            if cpot not in by_tc:
-                cpot = f"{act_prefix} Cpot B"
+            cpot25 = f"{act_prefix} Cpot25 {letter}"
+            if cpot25 not in by_tc:
+                cpot25 = f"{act_prefix} Cpot25 B"
 
             utc = f"{act_prefix} Unique {letter}"
             if utc in by_tc:
                 row = by_tc[utc]
-                row["Picks"] = "-3"
+                row["Picks"] = "-5"
                 row["Unique"] = "850"
                 row["Set"] = "850"
                 row["Rare"] = "950"
                 row["Magic"] = "1024"
                 row["NoDrop"] = "0"
-                _set_items(row, [(uitem, "1"), (cpot, "1"), (act_gold, "1")])
+                _set_items(row, [(uitem, "1"), (cpot25, "2"), (act_gold, "1"), (act_pot, "1")])
 
             ctc = f"{act_prefix} Champ {letter}"
             if ctc in by_tc:
                 row = by_tc[ctc]
-                row["Picks"] = "-3"
+                row["Picks"] = "-5"
                 row["Unique"] = "820"
                 row["Set"] = "820"
                 row["Rare"] = "920"
                 row["Magic"] = "1024"
                 row["NoDrop"] = "0"
-                _set_items(row, [(citem, "1"), (cpot, "1"), (act_gold, "1")])
+                _set_items(row, [(citem, "1"), (cpot25, "2"), (act_gold, "1"), (act_pot, "1")])
 
-    # 8. Tier 3 — SuperUniques: 2 Guaranteed Rolls + 1 Bonus (50%) Roll + 1 Guaranteed Gold Pile
+    # 8. Tier 3 — SuperUniques: 1 Guaranteed Roll + 3x Cpot (50% at P1 -> 75% P2 -> 96.9% P5) + 1 Gold + 1 Potion
+    # Preserves exact P1 mean of 2.50 loot rolls (1 + 3*0.50) while scaling smoothly to 3.25 (P2) .. 3.91 (P5)
     for act_prefix, _, _, _, _, _ in ACTS:
         act_gold = _gold_for_tc(act_prefix)
+        act_pot = f"{act_prefix} Potion"
         for suffix in ("A", "B", "C", "Ax", "Bx", "Cx"):
             stc = f"{act_prefix} Super {suffix}"
             letter = suffix[0]
@@ -458,13 +508,13 @@ def build_treasureclass(cfg: dict) -> str:
                 cpot = f"{act_prefix} Cpot B"
             if stc in by_tc:
                 row = by_tc[stc]
-                row["Picks"] = "-4"
+                row["Picks"] = "-6"
                 row["Unique"] = "920"
                 row["Set"] = "920"
                 row["Rare"] = "980"
                 row["Magic"] = "1024"
                 row["NoDrop"] = "0"
-                _set_items(row, [(uitem, "2"), (cpot, "1"), (act_gold, "1")])
+                _set_items(row, [(uitem, "1"), (cpot, "3"), (act_gold, "1"), (act_pot, "1")])
 
     # Named SuperUniques: Blood Raven, Griswold, Smith, Radament, Summoner, Council, Izual, Haphesto, Nihlathak, Cow King
     named_supers = [
@@ -483,6 +533,7 @@ def build_treasureclass(cfg: dict) -> str:
         for diff_suffix in ("", " (N)", " (H)"):
             act_key = f"{base_act}{diff_suffix}"
             act_gold = _gold_for_tc(act_key)
+            act_pot = f"{act_key} Potion"
             uitem = f"{act_key} Uitem C" if f"{act_key} Uitem C" in by_tc else f"{act_key} Uitem B"
             cpot = f"{act_key} Cpot C" if f"{act_key} Cpot C" in by_tc else f"{act_key} Cpot B"
             for r in rows:
@@ -491,13 +542,13 @@ def build_treasureclass(cfg: dict) -> str:
                     tc.startswith(f"{base_name}{diff_suffix} Desecrated")
                     and r.get("Picks") != "-1"
                 ) or tc.startswith(f"{base_name} Item{diff_suffix}"):
-                    r["Picks"] = "-4"
+                    r["Picks"] = "-6"
                     r["Unique"] = "920"
                     r["Set"] = "920"
                     r["Rare"] = "980"
                     r["Magic"] = "1024"
                     r["NoDrop"] = "0"
-                    _set_items(r, [(uitem, "2"), (cpot, "1"), (act_gold, "1")])
+                    _set_items(r, [(uitem, "1"), (cpot, "3"), (act_gold, "1"), (act_pot, "1")])
 
     # Countess: 1 Guaranteed Rune + 1-2 Drops (75% Item / 25% GemRune) = 2-3 total drops
     for diff_suffix, rune_tc, act_key in [
@@ -556,10 +607,9 @@ def build_treasureclass(cfg: dict) -> str:
                     _set_items(
                         r,
                         [
-                            (boss_uitem, "3"),
-                            (boss_cpot, "1"),
+                            (boss_uitem, "2"),
+                            (boss_cpot, "3"),
                             (boss_charm_tc, "1"),
-                            (act_gold, "1"),
                         ],
                     )
 
@@ -632,21 +682,16 @@ def build_treasureclass(cfg: dict) -> str:
                 r["NoDrop"] = "0"
                 _set_items(r, [(f"{matched_act} Lockbox", "100")])
             else:
-                # Picks = -6 with 3x 'Act X Chest Roll' (1 guaranteed drop each = 3 floor)
-                # + 3x 'Act X Chest Pair' (2 picks at 50% NoDrop each = 0..6 bonus drops, mean 3.0)
-                # yields strictly 3..9 total drops per chest (mean = 6.00 drops):
-                #   - 4.00 Gold piles (weight 160 / 240 = 66.67%)
-                #   - 0.75 Gems / Runes (weight 30 / 240 = 12.50%)
-                #   - 0.50 Act-scaled Potions / Elixirs (weight 7+7+2+2+2 = 20 / 240 = 8.33%)
-                #   - 0.50 Rings / Amulets / Jewels (weight 20 / 240 = 8.33%)
-                #   - 0.25 Lockboxes (weight 10 / 240 = 4.17% per item dropped)
+                # Picks = -6 with 2x 'Act X Chest Roll' (1 guaranteed drop each = 2 floor)
+                # + 4x 'Act X Chest Pair' (2 picks at 50% NoDrop each = 0..8 bonus drops, mean 4.0 at P1)
+                # Preserves exact P1 mean of 6.00 drops while scaling to 8.00 (P2) .. 9.75 (P5) in co-op.
                 r["Picks"] = "-6"
                 r["NoDrop"] = "0"
                 _set_items(
                     r,
                     [
-                        (f"{matched_act} Chest Roll", "3"),
-                        (f"{matched_act} Chest Pair", "3"),
+                        (f"{matched_act} Chest Roll", "2"),
+                        (f"{matched_act} Chest Pair", "4"),
                     ],
                 )
 
@@ -730,7 +775,7 @@ def build_treasureclass(cfg: dict) -> str:
             eq_tc = f"{act_prefix} Equip {letter}"
             if eq_tc not in by_tc:
                 eq_tc = equip_fallback
-            for sub_kind in ("Uitem", "Citem", "Cpot"):
+            for sub_kind in ("Uitem", "Citem", "Cpot", "Cpot25"):
                 base_sub = f"{act_prefix} {sub_kind} {letter}"
                 skel_sub = f"{base_sub} Skel"
                 if base_sub in by_tc and skel_sub not in by_tc:
@@ -829,25 +874,30 @@ def build_treasureclass(cfg: dict) -> str:
                 opt_r["Rare"] = "400"
                 opt_r["Magic"] = "600"
             elif grp in ("13", "15", "113", "115"):
-                # Champion & Unique Opt TCs: replace Cpot (50%) with Cpot Opt (95.24%) -> 1.952 vs 1.50 drops (+30.2%)
-                if opt_r.get("Item2", "").strip() and f"{opt_r['Item2'].strip()} Opt" in by_tc:
-                    opt_r["Item2"] = f"{opt_r['Item2'].strip()} Opt"
+                # Champion & Unique Opt TCs: upgrade 2x Cpot25 (25%) -> 2x Cpot (50%) -> 2.00 vs 1.50 drops at P1 (+33%), 2.50 P2, 2.94 P5
+                it2 = opt_r.get("Item2", "").strip()
+                if " Cpot25 " in it2:
+                    upgraded = it2.replace(" Cpot25 ", " Cpot ")
+                    if upgraded in by_tc:
+                        opt_r["Item2"] = upgraded
+                elif it2 and f"{it2} Opt" in by_tc:
+                    opt_r["Item2"] = f"{it2} Opt"
                 opt_r["Unique"] = "950" if grp in ("15", "115") else "920"
                 opt_r["Set"] = "950" if grp in ("15", "115") else "920"
                 opt_r["Rare"] = "990" if grp in ("15", "115") else "970"
             elif grp in ("18", "19"):
-                # SuperUnique Opt TCs: 2 Uitem + 1 Cpot Opt (95.2%) + 1 Cpot (50%) + 1 Gold = 3.45 expected drops
+                # SuperUnique Opt TCs: 1 Uitem + 1 Cpot Opt (95.2%) + 3 Cpot (50%) + 1 Gold = 3.45 at P1 -> 4.25 P2 -> 4.91 P5
                 uitem_tc = opt_r.get("Item1", "").strip()
                 cpot_tc = opt_r.get("Item2", "").strip()
                 gold_tc = opt_r.get("Item3", "").strip()
                 cpot_opt_tc = f"{cpot_tc} Opt" if f"{cpot_tc} Opt" in by_tc else cpot_tc
-                opt_r["Picks"] = "-5"
+                opt_r["Picks"] = "-6"
                 opt_r["Unique"] = "960"
                 opt_r["Set"] = "960"
                 opt_r["Rare"] = "1000"
                 opt_r["Magic"] = "1024"
                 opt_r["NoDrop"] = "0"
-                _set_items(opt_r, [(uitem_tc, "2"), (cpot_opt_tc, "1"), (cpot_tc, "1"), (gold_tc, "1")])
+                _set_items(opt_r, [(uitem_tc, "1"), (cpot_opt_tc, "1"), (cpot_tc, "3"), (gold_tc, "1")])
             elif grp in ("36", "37", "38", "39", "136", "137"):
                 # Desecrated Opt TCs: point base TC in Item1 to <BaseTC> Opt
                 base_ref = opt_r.get("Item1", "").strip()

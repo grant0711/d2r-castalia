@@ -70,6 +70,12 @@ jobs:
           @"
           @echo off
           cd /d "%~dp0"
+          if not exist "%~dp0python\pythonw.exe" (
+            echo [Castalia Launcher] Error: python\pythonw.exe not found.
+            echo Please extract the ENTIRE zip file before running Launch Castalia.bat.
+            pause
+            exit /b 1
+          )
           start "" "%~dp0python\pythonw.exe" "%~dp0app\bin\d2r-launcher" %*
           "@ | Set-Content -Path "$stage\Launch Castalia.bat" -Encoding ASCII
 
@@ -88,11 +94,62 @@ jobs:
             python\python.exe app\bin\d2r-launcher
           "@ | Set-Content -Path "$stage\README.txt" -Encoding ASCII
 
-          # 4. Pack distributable zip
+          # 4. Pack portable distributable zip
           Compress-Archive -Path "$stage\*" -DestinationPath "dist\castalia-launcher-win64.zip" -Force
           Get-Item "dist\castalia-launcher-win64.zip" | Format-List Name, Length
 
-      - name: Smoke-test castalia-launcher-win64.zip
+      - name: Build CastaliaLauncher-Setup.exe (Inno Setup)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $modCfg = Get-Content "tools\mod_builder\mod_config.json" | ConvertFrom-Json
+          $appVer = $modCfg.version
+
+          $iscc = (Get-Command ISCC.exe -ErrorAction SilentlyContinue)?.Source
+          if (-not $iscc) {
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          }
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          }
+
+          $iss = @"
+          [Setup]
+          AppId={{7F6C4B9E-5B1A-4D83-9D2B-4E9C0C2A1B31}
+          AppName=Castalia Launcher
+          AppVersion=$appVer
+          AppPublisher=Castalia D2R Mod
+          AppPublisherURL=https://grant0711.github.io/d2r-castalia/
+          DefaultDirName={localappdata}\CastaliaLauncher
+          DefaultGroupName=Castalia Launcher
+          PrivilegesRequired=lowest
+          DisableProgramGroupPage=yes
+          OutputDir=.
+          OutputBaseFilename=CastaliaLauncher-Setup
+          Compression=lzma2
+          SolidCompression=yes
+          WizardStyle=modern
+
+          [Tasks]
+          Name: "desktopicon"; Description: "Create a &Desktop shortcut"; GroupDescription: "Additional icons:"
+
+          [Files]
+          Source: "castalia-launcher-win64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+          [Icons]
+          Name: "{autoprograms}\Castalia Launcher"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\bin\d2r-launcher"""; WorkingDir: "{app}"
+          Name: "{autodesktop}\Castalia Launcher"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\bin\d2r-launcher"""; WorkingDir: "{app}"; Tasks: desktopicon
+
+          [Run]
+          Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\bin\d2r-launcher"""; WorkingDir: "{app}"; Description: "Launch Castalia Launcher"; Flags: nowait postinstall skipifsilent
+          "@
+          Set-Content -Path "dist\castalia-launcher.iss" -Value $iss -Encoding UTF8
+          & $iscc "dist\castalia-launcher.iss"
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+          Get-Item "dist\CastaliaLauncher-Setup.exe" | Format-List Name, Length
+
+      - name: Smoke-test zip & CastaliaLauncher-Setup.exe
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -106,9 +163,19 @@ jobs:
           & "$testDir\python\python.exe" -c "import castalia_hub.core, castalia_hub.d2s_telemetry, mod_builder.char_manager as cm; print('SMOKE_OK:', len(cm.ID_TO_CLASS_NAME), 'classes')"
           if ($LASTEXITCODE -ne 0) { throw "module import smoke test failed" }
 
-      - name: Upload castalia-launcher-win64.zip artifact
+          # Silent-install CastaliaLauncher-Setup.exe and verify installed launcher
+          $instDir = "$env:TEMP\castalia-setup-smoke"
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $instDir
+          $p = Start-Process -FilePath ".\dist\CastaliaLauncher-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$instDir`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Setup.exe silent install failed with exit code $($p.ExitCode)" }
+          & "$instDir\python\python.exe" "$instDir\app\bin\d2r-launcher" --help
+          if ($LASTEXITCODE -ne 0) { throw "Installed d2r-launcher --help failed" }
+
+      - name: Upload Windows launcher artifacts
         uses: actions/upload-artifact@v4
         with:
           name: castalia-launcher-win64
-          path: dist/castalia-launcher-win64.zip
+          path: |
+            dist/castalia-launcher-win64.zip
+            dist/CastaliaLauncher-Setup.exe
           if-no-files-found: error

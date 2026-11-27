@@ -155,6 +155,10 @@
       <div style="flex:2"><label>Next Session Date &amp; Time</label><input id="c-next" type="datetime-local" style="width:100%"></div>
       <div style="flex:1"><label>Timezone (GMT)</label><select id="c-tz" style="width:100%"></select></div>
     </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;">
+      <input type="checkbox" id="c-shared-stash" style="width:auto;">
+      <span>Allow Global Shared Stash <span style="color:var(--muted);font-size:11px;">(unchecked = isolated campaign-only stash; locked at creation)</span></span>
+    </label>
     <div class="row" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn ghost" onclick="closeModal('modal-create')">Cancel</button>
       <button class="btn primary" onclick="submitCreateCampaign()">Create Campaign &amp; Publish</button>
@@ -330,6 +334,8 @@ async function loadCampaignList() {
             ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${esc(String(c.status || "").toUpperCase())}</span>`}
             <b class="serif" style="font-size:16px;color:var(--gold);">${esc(c.title)}</b>
             <span class="pill">v${esc(c.castalia_version)}</span>
+            <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
+            ${Number(c.total_play_seconds) >= 60 ? `<span class="pill">&#9201; ${esc(fmtDuration(c.total_play_seconds))}</span>` : ''}
           </div>
           <button class="btn primary" data-cid="${esc(c.id)}" onclick="openCampaign(this.dataset.cid)">View / Join</button>
         </div>
@@ -451,12 +457,26 @@ async function renderSolo() {
     </div>`;
 }
 
+function fmtDuration(sec) {
+  const s = Math.max(0, Number(sec) || 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 async function renderHoH() {
   const main = document.getElementById("main");
   const items = await api("/local/chronicles");
   main.innerHTML = `<h2 style="margin-bottom:12px;">&#127942; Hall of Heroes</h2>` + (items.length ? items.map(x => `
     <div class="card">
-      <div class="space-between"><b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b><span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span></div>
+      <div class="space-between">
+        <b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b>
+        <div>
+          <span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span>
+          <span class="pill">${x.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
+          ${Number(x.total_play_seconds) > 0 ? `<span class="pill">&#9201; ${esc(fmtDuration(x.total_play_seconds))}</span>` : ''}
+        </div>
+      </div>
       <div style="margin:6px 0;">${esc(x.summary)}</div>
       <div style="font-size:11px;color:var(--muted);">Sessions: ${Number(x.sessions_played) || 0} &middot; Deaths: ${Number(x.death_count) || 0} &middot; Cleared: ${esc(fmtLocalTime(x.completed_at))}</div>
     </div>`).join("") : `<div class="card">No completed Hell Baal campaigns recorded yet.</div>`);
@@ -577,6 +597,7 @@ async function submitCreateCampaign() {
       current_level: Number(document.getElementById("c-level").value || 1),
       current_wp: document.getElementById("c-wp").value,
       max_seats: Number(document.getElementById("c-seats").value || 5),
+      shared_stash: Boolean(document.getElementById("c-shared-stash").checked),
       schedule_text: document.getElementById("c-sched").value,
       next_session_utc: _localInputToUtcIso(nextVal, tzVal),
     },

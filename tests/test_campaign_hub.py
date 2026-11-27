@@ -183,7 +183,7 @@ class TestCampaignHub(unittest.TestCase):
         ended = self.hub.end_session(cid, current_level=52, current_wp="a4nm")
         self.assertEqual(ended["current_level"], 52)
         self.assertEqual(ended["current_wp"], "a4nm")
-        self.assertEqual(ended["next_session_utc"], "2026-12-03T20:00:00+00:00")
+        self.assertIsNone(ended["next_session_utc"])
         self.assertIsNone(ended["live_join_info"])
         self.assertEqual(ended["rsvps"][0]["char_level"], 52)
         self.assertEqual(ended["rsvps"][0]["build_summary"], "Spearbolt / Conduction")

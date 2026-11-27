@@ -1,0 +1,121 @@
+"""
+TDD test suite for:
+  1. Global vs. Isolated Shared Stash (.d2i) routing & crash-safe recovery
+  2. Host-locked `shared_stash` flag at campaign creation (immutable via PATCH)
+  3. Cumulative Host in-game elapsed time (`total_play_seconds`) across sessions & Hall of Heroes
+"""
+import os
+import sys
+import tempfile
+import threading
+import unittest
+
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+for p in (REPO_ROOT, os.path.join(REPO_ROOT, "tools")):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+from castalia_hub.core import CastaliaHub
+from castalia_hub.local_server import start_local_api_server
+
+
+class TestSharedStashAndTimer(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.data_dir = os.path.join(self.tmp.name, "hub")
+        self.save_dir = os.path.join(self.tmp.name, "live_saves")
+        os.makedirs(self.save_dir, exist_ok=True)
+        self.db_path = os.path.join(self.tmp.name, "campaigns.db")
+        self.api_srv, _ = start_local_api_server(self.db_path, host="127.0.0.1", port=0)
+        self.api_port = self.api_srv.server_address[1]
+        self.api_thread = threading.Thread(target=self.api_srv.serve_forever, daemon=True)
+        self.api_thread.start()
+        self.hub = CastaliaHub(
+            data_dir=self.data_dir,
+            api_url=f"http://127.0.0.1:{self.api_port}",
+            d2r_save_dir=self.save_dir,
+        )
+
+    def tearDown(self):
+        self.api_srv.shutdown()
+        self.api_srv.server_close()
+        self.tmp.cleanup()
+
+    def test_isolated_vs_global_shared_stash_and_crash_recovery(self):
+        # Seed a global shared stash in live saves before first swap
+        global_stash_live = os.path.join(self.save_dir, "SharedStashSoftCoreV2.d2i")
+        with open(global_stash_live, "wb") as f:
+            f.write(b"GLOBAL_V1")
+
+        # 1. Isolated campaign (shared_stash=False): starts with NO .d2i in live saves
+        self.hub.swap_to_profile("camp-iso", shared_stash=False)
+        self.assertFalse(os.path.exists(global_stash_live), "Isolated campaign must NOT inherit global .d2i")
+        # Simulate D2R creating a fresh campaign-local stash during play
+        with open(global_stash_live, "wb") as f:
+            f.write(b"ISO_STASH_DATA")
+        self.hub.sync_back_active_profile()
+        self.hub._restore_solo_to_live()
+
+        # Verify campaign-local stash was saved to campaign folder & global stash is untouched in live
+        iso_stash = os.path.join(self.hub.profile_dir_for("camp-iso"), "SharedStashSoftCoreV2.d2i")
+        self.assertTrue(os.path.isfile(iso_stash))
+        self.assertEqual(open(iso_stash, "rb").read(), b"ISO_STASH_DATA")
+        self.assertEqual(open(global_stash_live, "rb").read(), b"GLOBAL_V1")
+
+        # 2. Global shared-stash campaign (shared_stash=True): loads & updates _global_stash
+        self.hub.swap_to_profile("camp-shared", shared_stash=True)
+        self.assertEqual(open(global_stash_live, "rb").read(), b"GLOBAL_V1")
+        with open(global_stash_live, "wb") as f:
+            f.write(b"GLOBAL_V2_UPDATED")
+        self.hub.sync_back_active_profile()
+        self.hub._restore_solo_to_live()
+
+        # Global stash updated; isolated campaign stash still intact!
+        self.assertEqual(open(global_stash_live, "rb").read(), b"GLOBAL_V2_UPDATED")
+        self.assertEqual(open(iso_stash, "rb").read(), b"ISO_STASH_DATA")
+        shared_camp_d2i = os.path.join(self.hub.profile_dir_for("camp-shared"), "SharedStashSoftCoreV2.d2i")
+        self.assertFalse(os.path.exists(shared_camp_d2i), "shared_stash=True campaign must NOT store duplicate .d2i")
+
+        # 3. Crash recovery during isolated campaign: must restore dirty .d2i to camp-iso, NOT _global_stash!
+        self.hub.swap_to_profile("camp-iso", shared_stash=False)
+        self.assertEqual(open(global_stash_live, "rb").read(), b"ISO_STASH_DATA")
+        with open(global_stash_live, "wb") as f:
+            f.write(b"ISO_AFTER_CRASH")
+        # Simulate sudden crash (no sync_back_active_profile called) -> next launch recovers dirty profile
+        self.hub.recover_dirty_profile()
+        self.assertEqual(open(iso_stash, "rb").read(), b"ISO_AFTER_CRASH")
+        global_store = os.path.join(self.hub.global_stash_dir, "SharedStashSoftCoreV2.d2i")
+        self.assertEqual(open(global_store, "rb").read(), b"GLOBAL_V2_UPDATED")
+
+    def test_shared_stash_locked_at_creation_and_host_elapsed_timer(self):
+        # Create isolated campaign (default shared_stash=False)
+        res = self.hub.create_campaign({
+            "title": "Speedrun SSF",
+            "ruleset": "standard",
+            "castalia_version": "0.4.3",
+            "shared_stash": False,
+        })
+        cid = res["campaign"]["id"]
+        self.assertFalse(bool(res["campaign"]["shared_stash"]))
+        self.assertEqual(res["campaign"]["total_play_seconds"], 0)
+
+        # Attempting to flip shared_stash via PATCH must be ignored (locked at creation!)
+        patched = self.hub.update_campaign(cid, {"shared_stash": True, "schedule_text": "Sat 14:00 UTC"})
+        self.assertFalse(bool(patched["shared_stash"]), "shared_stash must stay locked after creation")
+
+        # Accumulate Host elapsed play time across two sessions
+        s1 = self.hub.end_session(cid, current_level=15, current_wp="a1n", session_seconds=3600)
+        self.assertEqual(s1["total_play_seconds"], 3600)
+        s2 = self.hub.end_session(cid, current_level=24, current_wp="a2n", session_seconds=1845)
+        self.assertEqual(s2["total_play_seconds"], 5445)
+
+        # Complete campaign -> Hall of Heroes chronicle preserves total_play_seconds & shared_stash
+        self.hub.complete_campaign(cid, summary="Hell Baal down!", death_count=2, sessions_played=2)
+        hoh = self.hub.list_chronicles()
+        self.assertEqual(len(hoh), 1)
+        self.assertEqual(hoh[0]["total_play_seconds"], 5445)
+        self.assertFalse(bool(hoh[0]["shared_stash"]))
+
+
+if __name__ == "__main__":
+    unittest.main()

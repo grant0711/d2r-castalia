@@ -74,6 +74,9 @@ async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
       (camp.schedule_text ? `${camp.schedule_text}\n` : "") +
       `[📅 Add to Google Calendar](${gcalUrl})`;
   }
+  const stashLabel = camp.shared_stash ? "📦 Global Shared Stash" : "🔒 Isolated Stash";
+  const playSec = Number(camp.total_play_seconds || 0);
+  const playStr = playSec >= 60 ? ` · ⏱ ${Math.floor(playSec / 3600)}h ${Math.floor((playSec % 3600) / 60)}m` : "";
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,
     description: (camp.description || "").slice(0, 1500),
@@ -81,7 +84,8 @@ async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
     fields: [
       { name: "Host", value: camp.host_name, inline: true },
       { name: "Seats", value: `${confirmed}/${camp.max_seats}`, inline: true },
-      { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\``, inline: true },
+      { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\`${playStr}`, inline: true },
+      { name: "Ruleset", value: `${camp.ruleset} · ${stashLabel}`, inline: false },
       { name: "Next Session", value: nextField, inline: false },
     ],
   };
@@ -167,9 +171,9 @@ export default {
         await env.DB.prepare(
           `INSERT INTO campaigns (
             id, host_name, host_token_hash, title, description, ruleset,
-            castalia_version, current_level, current_wp, max_seats,
+            castalia_version, current_level, current_wp, shared_stash, max_seats,
             schedule_text, recurrence_days, next_session_utc, status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
         ).bind(
           cid,
           String(body.host_name || "Host").trim().slice(0, 32),
@@ -180,6 +184,7 @@ export default {
           String(body.castalia_version || "0.3.0").replace(/^v/, "").slice(0, 16),
           Math.max(1, Math.min(99, Number(body.current_level || 1))),
           String(body.current_wp || "a1n").trim().slice(0, 12),
+          body.shared_stash ? 1 : 0,
           Math.max(2, Math.min(8, Number(body.max_seats || 5))),
           String(body.schedule_text || "Weekly").trim().slice(0, 60),
           Math.max(0, Math.min(365, Number(body.recurrence_days ?? 7))),
@@ -200,7 +205,7 @@ export default {
       // GET /api/chronicles
       if (parts.length === 2 && parts[0] === "api" && parts[1] === "chronicles" && req.method === "GET") {
         const { results } = await env.DB.prepare(
-          `SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version
+          `SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version, c.shared_stash
            FROM chronicles ch JOIN campaigns c ON c.id = ch.campaign_id
            ORDER BY ch.completed_at DESC`
         ).all();
@@ -323,9 +328,11 @@ export default {
             ? (body.has_cube ? 1 : 0)
             : (["start", "a1n", "a2n"].includes(nextWp.toLowerCase()) ? Number(row.has_cube || 0) : 1);
           const hostProg = body.host_progress_b64 ? String(body.host_progress_b64).slice(0, 600) : (row.host_progress_b64 || null);
+          const addSec = Math.max(0, Math.min(86400, Math.floor(Number(body.session_seconds || 0))));
+          const totalSec = Number(row.total_play_seconds || 0) + addSec;
           await env.DB.prepare(
-            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
-          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, nextUtc, now, cid).run();
+            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, total_play_seconds = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
+          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, totalSec, nextUtc, now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, false);
           await syncDiscordWithCount(env, camp, cid, Boolean(explicitNext && explicitNext !== row.next_session_utc));
@@ -373,8 +380,8 @@ export default {
           await env.DB.prepare("UPDATE campaigns SET status = 'completed', live_join_info = NULL, updated_at = ? WHERE id = ?")
             .bind(now, cid).run();
           await env.DB.prepare(
-            "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-          ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
+            "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, total_play_seconds, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), Number(row.total_play_seconds || 0), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
           const completedRow = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           await syncDiscordWithCount(env, sanitizeCampaign(completedRow, false), cid);
           return jsonResp({ id: chid, campaign_id: cid, party_roster: rsvps });

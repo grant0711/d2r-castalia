@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS campaigns (
   current_wp        TEXT NOT NULL DEFAULT 'a1n',
   has_cube          INTEGER NOT NULL DEFAULT 0,
   host_progress_b64 TEXT,
+  shared_stash      INTEGER NOT NULL DEFAULT 0,
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -43,6 +45,7 @@ CREATE TABLE IF NOT EXISTS chronicles (
   completed_at      TEXT NOT NULL,
   sessions_played   INTEGER NOT NULL DEFAULT 1,
   death_count       INTEGER NOT NULL DEFAULT 0,
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
   party_roster_json TEXT NOT NULL,
   summary           TEXT NOT NULL,
   screenshot_url    TEXT

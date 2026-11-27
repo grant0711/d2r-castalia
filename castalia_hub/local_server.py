@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS campaigns (
   current_wp        TEXT NOT NULL DEFAULT 'a1n',
   has_cube          INTEGER NOT NULL DEFAULT 0,
   host_progress_b64 TEXT,
+  shared_stash      INTEGER NOT NULL DEFAULT 0,
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -62,6 +64,7 @@ CREATE TABLE IF NOT EXISTS chronicles (
   completed_at      TEXT NOT NULL,
   sessions_played   INTEGER NOT NULL DEFAULT 1,
   death_count       INTEGER NOT NULL DEFAULT 0,
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
   party_roster_json TEXT NOT NULL,
   summary           TEXT NOT NULL,
   screenshot_url    TEXT
@@ -211,10 +214,10 @@ class CampaignDB:
             conn.execute(
                 """INSERT INTO campaigns (
                     id, host_name, host_token_hash, title, description, ruleset,
-                    castalia_version, current_level, current_wp, max_seats,
+                    castalia_version, current_level, current_wp, shared_stash, max_seats,
                     schedule_text, recurrence_days, next_session_utc, status,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
                 (
                     cid,
                     str(body.get("host_name") or "Host").strip(),
@@ -225,6 +228,7 @@ class CampaignDB:
                     str(body.get("castalia_version") or "0.3.0").strip().lstrip("v"),
                     int(body.get("current_level", 1)),
                     str(body.get("current_wp") or "a1n").strip(),
+                    1 if body.get("shared_stash") else 0,
                     max(2, min(8, int(body.get("max_seats", 5)))),
                     str(body.get("schedule_text") or "Weekly").strip(),
                     body.get("recurrence_days", 7),
@@ -315,13 +319,16 @@ class CampaignDB:
                 host_prog = row["host_progress_b64"]
             else:
                 host_prog = str(host_prog)[:600]
-            next_utc = body.get("next_session_utc") or _advance_iso_days(row["next_session_utc"], row["recurrence_days"])
+            next_utc = body.get("next_session_utc") or None
+            add_sec = max(0, int(body.get("session_seconds") or 0))
+            total_sec = int(row["total_play_seconds"] or 0) + add_sec
             conn.execute(
                 """UPDATE campaigns
                    SET status = 'active', live_join_info = NULL,
-                       current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, next_session_utc = ?, updated_at = ?
+                       current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?,
+                       total_play_seconds = ?, next_session_utc = ?, updated_at = ?
                    WHERE id = ?""",
-                (new_lvl, new_wp, has_cube, host_prog, next_utc, _now_iso(), cid),
+                (new_lvl, new_wp, has_cube, host_prog, total_sec, next_utc, _now_iso(), cid),
             )
             updated = conn.execute("SELECT * FROM campaigns WHERE id = ?", (cid,)).fetchone()
             rsvps = [
@@ -449,14 +456,15 @@ class CampaignDB:
             conn.execute(
                 """INSERT INTO chronicles (
                     id, campaign_id, completed_at, sessions_played, death_count,
-                    party_roster_json, summary, screenshot_url
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    total_play_seconds, party_roster_json, summary, screenshot_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     chid,
                     cid,
                     now,
                     int(body.get("sessions_played", 1)),
                     int(body.get("death_count", 0)),
+                    int(crow["total_play_seconds"] or 0),
                     roster_json,
                     str(body.get("summary") or f"{crow['title']} cleared Hell Baal!"),
                     body.get("screenshot_url"),
@@ -468,6 +476,7 @@ class CampaignDB:
             out["title"] = crow["title"]
             out["castalia_version"] = crow["castalia_version"]
             out["ruleset"] = crow["ruleset"]
+            out["shared_stash"] = bool(crow["shared_stash"])
             if self.hoh_webhook:
                 self._post_discord(
                     self.hoh_webhook,
@@ -482,7 +491,7 @@ class CampaignDB:
     def list_chronicles(self):
         with self._lock, self._conn() as conn:
             rows = conn.execute(
-                """SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version
+                """SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version, c.shared_stash
                    FROM chronicles ch JOIN campaigns c ON c.id = ch.campaign_id
                    ORDER BY ch.completed_at DESC"""
             ).fetchall()

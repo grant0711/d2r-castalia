@@ -36,9 +36,22 @@ DEFAULT_DATA_DIR = (
 DEFAULT_API_URL = os.environ.get("CASTALIA_API_URL", "https://castalia-campaign-hub.d2rcastalia.workers.dev")
 
 # Save extensions swapped per campaign profile (Settings.json stays global & untouched!)
-SAVE_EXTS = (".d2s", ".d2i", ".key", ".ctl", ".map", ".ma0", ".ma1", ".ma2", ".ma3", ".ma4")
+CHAR_EXTS = (".d2s", ".key", ".ctl", ".map", ".ma0", ".ma1", ".ma2", ".ma3", ".ma4")
+STASH_EXTS = (".d2i",)
+SAVE_EXTS = CHAR_EXTS + STASH_EXTS
 GAME_ID_LOG_RE = re.compile(r"(?:Game\s*ID|game_id|advertised_id)\s*[:=]\s*([A-Za-z0-9_-]{4,24})", re.I)
 LISTENER_READY_RE = re.compile(r"Listener ready:\s*bound_port=(\d+)", re.I)
+
+
+def _is_char_file(filename: str) -> bool:
+    low = filename.lower()
+    if low == "settings.json":
+        return False
+    return low.endswith(CHAR_EXTS)
+
+
+def _is_stash_file(filename: str) -> bool:
+    return filename.lower().endswith(STASH_EXTS)
 
 
 def _is_save_file(filename: str) -> bool:
@@ -61,6 +74,7 @@ class CastaliaHub:
         self.data_dir = os.path.abspath(data_dir or os.environ.get("CASTALIA_HUB_DIR") or DEFAULT_DATA_DIR)
         self.versions_dir = os.path.join(self.data_dir, "versions")
         self.profiles_dir = os.path.join(self.data_dir, "profiles")
+        self.global_stash_dir = os.path.join(self.profiles_dir, "_global_stash")
         self.config_path = os.path.join(self.data_dir, "config.json")
         self.tokens_path = os.path.join(self.data_dir, "tokens.json")
         self.active_profile_path = os.path.join(self.data_dir, "active_profile.json")
@@ -68,6 +82,7 @@ class CastaliaHub:
         os.makedirs(self.versions_dir, exist_ok=True)
         os.makedirs(self.profiles_dir, exist_ok=True)
         os.makedirs(os.path.join(self.profiles_dir, "solo"), exist_ok=True)
+        os.makedirs(self.global_stash_dir, exist_ok=True)
 
         self.config = self._load_json(self.config_path, default={})
         if api_url:
@@ -257,10 +272,37 @@ class CastaliaHub:
             return 0
         copied = 0
         for fn in os.listdir(live_dir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(live_dir, fn), os.path.join(solo_dir, fn))
                 copied += 1
+            elif _is_stash_file(fn):
+                dst_stash = os.path.join(self.global_stash_dir, fn)
+                if not os.path.isfile(dst_stash):
+                    shutil.copy2(os.path.join(live_dir, fn), dst_stash)
+                    copied += 1
         return copied
+
+    def _migrate_global_stash(self) -> None:
+        """Ensure any legacy .d2i in profiles/solo/ or live saves is seeded into profiles/_global_stash/."""
+        os.makedirs(self.global_stash_dir, exist_ok=True)
+        if any(_is_stash_file(f) for f in os.listdir(self.global_stash_dir)):
+            return
+        solo_dir = self.profile_dir_for("solo")
+        for sdir in (solo_dir, self.config.get("d2r_save_dir") or ""):
+            if not sdir or not os.path.isdir(sdir):
+                continue
+            found = False
+            for fn in os.listdir(sdir):
+                if _is_stash_file(fn):
+                    shutil.copy2(os.path.join(sdir, fn), os.path.join(self.global_stash_dir, fn))
+                    found = True
+            if found:
+                # Remove legacy .d2i from solo_dir so _global_stash is the single source of truth
+                if sdir == solo_dir:
+                    for fn in os.listdir(solo_dir):
+                        if _is_stash_file(fn):
+                            os.remove(os.path.join(solo_dir, fn))
+                return
 
     def recover_if_dirty(self) -> Optional[str]:
         """If active_profile.json exists (previous crash), sync live saves back and restore game_port."""
@@ -268,40 +310,64 @@ class CastaliaHub:
             return None
         state = self._load_json(self.active_profile_path, {})
         pid = state.get("profile_id")
+        stash_source = state.get("stash_source")
         if pid:
-            self._sync_live_to_profile(pid)
+            self._sync_live_to_profile(pid, stash_source=stash_source)
         prev_port = state.get("prev_game_port")
         if isinstance(prev_port, int) and prev_port > 0:
             self.set_d2rloader_game_port(prev_port)
         os.remove(self.active_profile_path)
         return pid
 
-    def _sync_live_to_profile(self, profile_id: str) -> int:
+    # Alias for clarity in callers & tests
+    recover_dirty_profile = recover_if_dirty
+
+    def _stash_dir_for(self, stash_source: Optional[str], profile_id: str) -> str:
+        if stash_source == "_global_stash" or (stash_source is None and profile_id == "solo"):
+            os.makedirs(self.global_stash_dir, exist_ok=True)
+            return self.global_stash_dir
+        return self.profile_dir_for(stash_source or profile_id)
+
+    def _sync_live_to_profile(self, profile_id: str, stash_source: Optional[str] = None) -> int:
         live_dir = self.config["d2r_save_dir"]
         pdir = self.profile_dir_for(profile_id)
+        sdir = self._stash_dir_for(stash_source, profile_id)
         if not os.path.isdir(live_dir):
             return 0
-        # Remove old save files in profile dir that were deleted in-game, then copy live saves
+        # Sync character files (.d2s/.key/.ma*/.ctl) -> profile dir
         for fn in os.listdir(pdir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 os.remove(os.path.join(pdir, fn))
+        # Sync shared stash files (.d2i) -> stash_source dir (_global_stash or campaign-<id>)
+        for fn in os.listdir(sdir):
+            if _is_stash_file(fn):
+                os.remove(os.path.join(sdir, fn))
         count = 0
         for fn in os.listdir(live_dir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(live_dir, fn), os.path.join(pdir, fn))
+                count += 1
+            elif _is_stash_file(fn):
+                shutil.copy2(os.path.join(live_dir, fn), os.path.join(sdir, fn))
                 count += 1
         return count
 
-    def swap_to_profile(self, target: str) -> str:
+    def swap_to_profile(self, target: str, shared_stash: bool = False) -> str:
         """
         Crash-safe swap: recover any dirty profile, clear live save files (preserving Settings.json),
-        copy target profile into live save dir, and write active_profile.json lockfile.
+        copy target character files + routed Shared Stash (.d2i from _global_stash when solo or
+        shared_stash=True, else campaign-local isolated stash), and write active_profile.json lockfile.
         """
         self.migrate_initial_solo_saves()
+        self._migrate_global_stash()
         self.recover_if_dirty()
 
         pid = self.profile_id_for(target)
         pdir = self.profile_dir_for(pid)
+        use_global_stash = (pid == "solo") or bool(shared_stash)
+        stash_source = "_global_stash" if use_global_stash else pid
+        sdir = self._stash_dir_for(stash_source, pid)
+
         live_dir = self.config["d2r_save_dir"]
         os.makedirs(live_dir, exist_ok=True)
 
@@ -310,13 +376,18 @@ class CastaliaHub:
                 os.remove(os.path.join(live_dir, fn))
 
         for fn in os.listdir(pdir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(pdir, fn), os.path.join(live_dir, fn))
+
+        for fn in os.listdir(sdir):
+            if _is_stash_file(fn):
+                shutil.copy2(os.path.join(sdir, fn), os.path.join(live_dir, fn))
 
         self._save_json(
             self.active_profile_path,
             {
                 "profile_id": pid,
+                "stash_source": stash_source,
                 "switched_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "pid": os.getpid(),
             },
@@ -324,7 +395,8 @@ class CastaliaHub:
         return pid
 
     def _restore_solo_to_live(self) -> int:
-        """Restore profiles/solo/ into the live D2R save dir (without writing an active lockfile)."""
+        """Restore profiles/solo/ characters + _global_stash .d2i into the live D2R save dir."""
+        self._migrate_global_stash()
         live_dir = self.config["d2r_save_dir"]
         solo_dir = self.profile_dir_for("solo")
         os.makedirs(live_dir, exist_ok=True)
@@ -333,19 +405,24 @@ class CastaliaHub:
                 os.remove(os.path.join(live_dir, fn))
         copied = 0
         for fn in os.listdir(solo_dir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(solo_dir, fn), os.path.join(live_dir, fn))
+                copied += 1
+        for fn in os.listdir(self.global_stash_dir):
+            if _is_stash_file(fn):
+                shutil.copy2(os.path.join(self.global_stash_dir, fn), os.path.join(live_dir, fn))
                 copied += 1
         return copied
 
     def sync_back_active_profile(self) -> Optional[str]:
-        """Sync live saves back to the active profile and clear active_profile.json."""
+        """Sync live saves back to the active profile (+ stash_source) and clear active_profile.json."""
         if not os.path.isfile(self.active_profile_path):
             return None
         state = self._load_json(self.active_profile_path, {})
         pid = state.get("profile_id")
+        stash_source = state.get("stash_source")
         if pid:
-            self._sync_live_to_profile(pid)
+            self._sync_live_to_profile(pid, stash_source=stash_source)
         os.remove(self.active_profile_path)
         return pid
 
@@ -840,6 +917,7 @@ class CastaliaHub:
         next_session_utc: Optional[str] = None,
         has_cube: Optional[bool] = None,
         host_progress_b64: Optional[str] = None,
+        session_seconds: Optional[int] = None,
     ) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
@@ -855,6 +933,8 @@ class CastaliaHub:
             body["has_cube"] = bool(has_cube)
         if host_progress_b64:
             body["host_progress_b64"] = str(host_progress_b64)
+        if session_seconds is not None and int(session_seconds) > 0:
+            body["session_seconds"] = int(session_seconds)
         return self._api("POST", f"/api/campaigns/{campaign_id}/end-session", body=body, token=tok)
 
     def _import_existing_char_to_campaign(self, campaign_id: str, char_name: str) -> Optional[str]:
@@ -1169,7 +1249,8 @@ class CastaliaHub:
             intent_data = self._load_json(intent_path, {})
             if intent_data.get("game_name"):
                 self.copy_to_clipboard(intent_data["game_name"])
-        pid = self.swap_to_profile(target)
+        use_shared_stash = bool(campaign.get("shared_stash")) if campaign else True
+        pid = self.swap_to_profile(target, shared_stash=use_shared_stash)
         if prev_game_port is not None and os.path.isfile(self.active_profile_path):
             ap = self._load_json(self.active_profile_path, {})
             ap["prev_game_port"] = prev_game_port
@@ -1194,6 +1275,7 @@ class CastaliaHub:
             )
             tail_thread.start()
 
+        session_t0 = time.monotonic()
         try:
             d2r_mod_bin = os.path.join(REPO_ROOT, "bin", "d2r-mod")
             if sys.platform != "win32" and os.path.isfile(d2r_mod_bin):
@@ -1213,6 +1295,7 @@ class CastaliaHub:
                     check=False,
                 )
         finally:
+            session_seconds = max(0, int(round(time.monotonic() - session_t0)))
             stop_evt.set()
             if tail_thread:
                 tail_thread.join(timeout=2)
@@ -1240,6 +1323,7 @@ class CastaliaHub:
                         current_wp=str(latest_char["char_wp"]),
                         has_cube=bool(latest_char.get("has_cube", False)),
                         host_progress_b64=latest_char.get("host_progress_b64"),
+                        session_seconds=session_seconds,
                     )
                     result["host_rollover"] = rolled
                 except Exception as e:

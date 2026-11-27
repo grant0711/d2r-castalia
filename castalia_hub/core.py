@@ -150,11 +150,22 @@ class CastaliaHub:
             candidates = [
                 r"C:\Program Files (x86)\Diablo II Resurrected",
                 r"C:\Program Files\Diablo II Resurrected",
+                r"C:\Games\Diablo II Resurrected",
                 r"C:\Program Files (x86)\Steam\steamapps\common\Diablo II Resurrected",
+                r"D:\Diablo II Resurrected",
+                r"D:\Games\Diablo II Resurrected",
+                r"D:\Battle.net\Diablo II Resurrected",
                 r"D:\Program Files (x86)\Diablo II Resurrected",
+                r"D:\Program Files\Diablo II Resurrected",
                 r"D:\SteamLibrary\steamapps\common\Diablo II Resurrected",
+                r"E:\Diablo II Resurrected",
+                r"E:\Games\Diablo II Resurrected",
                 r"E:\SteamLibrary\steamapps\common\Diablo II Resurrected",
+                r"F:\SteamLibrary\steamapps\common\Diablo II Resurrected",
             ]
+            for c in candidates:
+                if os.path.isfile(os.path.join(c, "D2RLoader.exe")):
+                    return c
         else:
             candidates = [
                 os.path.join(REPO_ROOT, "game", "Diablo II Resurrected"),

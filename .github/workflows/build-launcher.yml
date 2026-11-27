@@ -2,8 +2,18 @@ name: Build Castalia Launcher (Windows x64)
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [master, release]
+    paths:
+      - "castalia_hub/**"
+      - "bin/d2r-launcher"
+      - "tools/mod_builder/char_manager.py"
+      - "tools/mod_builder/common.py"
+      - "tools/mod_builder/mod_config.json"
+      - "tools/char_templates/**"
+      - ".github/workflows/build-launcher.yml"
   push:
-    branches: [master, release, feat/campaign-launcher]
+    branches: [master, release, "feat/**"]
     paths:
       - "castalia_hub/**"
       - "bin/d2r-launcher"
@@ -19,39 +29,153 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install PyInstaller
-        run: python -m pip install --upgrade pip pyinstaller
-
-      - name: Build castalia-launcher-win64.exe
+      - name: Package castalia-launcher-win64.zip (PSF-signed Embeddable Python 3.12)
         shell: pwsh
         run: |
-          python -m PyInstaller `
-            --onefile `
-            --name castalia-launcher-win64 `
-            --paths . `
-            --paths tools `
-            --add-data "castalia_hub\static;castalia_hub\static" `
-            --add-data "tools\mod_builder\mod_config.json;mod_builder" `
-            --add-data "tools\char_templates;tools\char_templates" `
-            --add-data "vanilla-reference\data\global\excel\charstats.txt;vanilla-reference\data\global\excel" `
-            --add-data "vanilla-reference\data\global\excel\experience.txt;vanilla-reference\data\global\excel" `
-            --hidden-import mod_builder.char_manager `
-            --hidden-import mod_builder.common `
-            bin/d2r-launcher
+          $ErrorActionPreference = "Stop"
+          $pyVer = "3.12.10"
+          $pyUrl = "https://www.python.org/ftp/python/$pyVer/python-$pyVer-embed-amd64.zip"
+          $stage = "dist\castalia-launcher-win64"
+          $pyDir = "$stage\python"
+          $appDir = "$stage\app"
 
-      - name: Smoke-test castalia-launcher-win64.exe
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $stage, "dist\castalia-launcher-win64.zip"
+          New-Item -ItemType Directory -Force -Path $pyDir, "$appDir\bin", "$appDir\tools\mod_builder", "$appDir\vanilla-reference\data\global\excel" | Out-Null
+
+          # 1. Download official PSF-signed Windows Embeddable Python (0/70 VirusTotal)
+          $pyZip = "$env:TEMP\python-$pyVer-embed-amd64.zip"
+          Invoke-WebRequest -Uri $pyUrl -OutFile $pyZip
+          Expand-Archive -Path $pyZip -DestinationPath $pyDir -Force
+
+          # Configure python312._pth so ..\app and ..\app\tools are on sys.path
+          $pthFile = Get-ChildItem -Path $pyDir -Filter "python*._pth" | Select-Object -First 1
+          if (-not $pthFile) { throw "Missing python*._pth in embeddable zip" }
+          Add-Content -Path $pthFile.FullName -Value "`n..\app`n..\app\tools`nimport site"
+
+          # 2. Copy plain-text launcher scripts & character templates
+          Copy-Item "bin\d2r-launcher" "$appDir\bin\d2r-launcher"
+          Copy-Item -Recurse "castalia_hub" "$appDir\castalia_hub"
+          Get-ChildItem -Path "$appDir\castalia_hub" -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
+          Copy-Item "tools\mod_builder\char_manager.py" "$appDir\tools\mod_builder\"
+          Copy-Item "tools\mod_builder\common.py" "$appDir\tools\mod_builder\"
+          Copy-Item "tools\mod_builder\mod_config.json" "$appDir\tools\mod_builder\"
+          if (Test-Path "tools\mod_builder\__init__.py") {
+            Copy-Item "tools\mod_builder\__init__.py" "$appDir\tools\mod_builder\"
+          }
+          Copy-Item -Recurse "tools\char_templates" "$appDir\tools\char_templates"
+          Copy-Item "vanilla-reference\data\global\excel\charstats.txt" "$appDir\vanilla-reference\data\global\excel\"
+          Copy-Item "vanilla-reference\data\global\excel\experience.txt" "$appDir\vanilla-reference\data\global\excel\"
+
+          # 3. Create 1-click launcher .bat (uses PSF-signed pythonw.exe — no console flash)
+          @"
+          @echo off
+          cd /d "%~dp0"
+          if not exist "%~dp0python\pythonw.exe" (
+            echo [Castalia Launcher] Error: python\pythonw.exe not found.
+            echo Please extract the ENTIRE zip file before running Launch Castalia.bat.
+            pause
+            exit /b 1
+          )
+          start "" "%~dp0python\pythonw.exe" "%~dp0app\bin\d2r-launcher" %*
+          "@ | Set-Content -Path "$stage\Launch Castalia.bat" -Encoding ASCII
+
+          @"
+          Castalia Co-Op Campaign Launcher (Windows x64)
+          ==============================================
+          1. Extract this entire folder anywhere (e.g. Desktop or C:\Games\CastaliaLauncher\).
+          2. Double-click "Launch Castalia.bat".
+          3. No Python installation is required — this folder bundles the official
+             Python Software Foundation signed embeddable runtime (python/) plus
+             100% inspectable plain-text launcher scripts (app/).
+
+          Troubleshooting:
+          If the window does not open, run this from Command Prompt inside this folder
+          to see any error output:
+            python\python.exe app\bin\d2r-launcher
+          "@ | Set-Content -Path "$stage\README.txt" -Encoding ASCII
+
+          # 4. Pack portable distributable zip
+          Compress-Archive -Path "$stage\*" -DestinationPath "dist\castalia-launcher-win64.zip" -Force
+          Get-Item "dist\castalia-launcher-win64.zip" | Format-List Name, Length
+
+      - name: Build CastaliaLauncher-Setup.exe (Inno Setup)
         shell: pwsh
         run: |
-          .\dist\castalia-launcher-win64.exe --help
-          Get-Item .\dist\castalia-launcher-win64.exe | Format-List Name, Length
+          $ErrorActionPreference = "Stop"
+          $modCfg = Get-Content "tools\mod_builder\mod_config.json" | ConvertFrom-Json
+          $appVer = $modCfg.version
 
-      - name: Upload castalia-launcher-win64.exe artifact
+          $iscc = (Get-Command ISCC.exe -ErrorAction SilentlyContinue)?.Source
+          if (-not $iscc) {
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          }
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+            $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          }
+
+          $iss = @"
+          [Setup]
+          AppId={{7F6C4B9E-5B1A-4D83-9D2B-4E9C0C2A1B31}
+          AppName=Castalia Launcher
+          AppVersion=$appVer
+          AppPublisher=Castalia D2R Mod
+          AppPublisherURL=https://grant0711.github.io/d2r-castalia/
+          DefaultDirName={localappdata}\CastaliaLauncher
+          DefaultGroupName=Castalia Launcher
+          PrivilegesRequired=lowest
+          DisableProgramGroupPage=yes
+          OutputDir=.
+          OutputBaseFilename=CastaliaLauncher-Setup
+          Compression=lzma2
+          SolidCompression=yes
+          WizardStyle=modern
+
+          [Tasks]
+          Name: "desktopicon"; Description: "Create a &Desktop shortcut"; GroupDescription: "Additional icons:"
+
+          [Files]
+          Source: "castalia-launcher-win64\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+          [Icons]
+          Name: "{autoprograms}\Castalia Launcher"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\bin\d2r-launcher"""; WorkingDir: "{app}"
+          Name: "{autodesktop}\Castalia Launcher"; Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\bin\d2r-launcher"""; WorkingDir: "{app}"; Tasks: desktopicon
+
+          [Run]
+          Filename: "{app}\python\pythonw.exe"; Parameters: """{app}\app\bin\d2r-launcher"""; WorkingDir: "{app}"; Description: "Launch Castalia Launcher"; Flags: nowait postinstall skipifsilent
+          "@
+          Set-Content -Path "dist\castalia-launcher.iss" -Value $iss -Encoding UTF8
+          & $iscc "dist\castalia-launcher.iss"
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+          Get-Item "dist\CastaliaLauncher-Setup.exe" | Format-List Name, Length
+
+      - name: Smoke-test zip & CastaliaLauncher-Setup.exe
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $testDir = "$env:TEMP\castalia-launcher-smoke"
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $testDir
+          Expand-Archive -Path "dist\castalia-launcher-win64.zip" -DestinationPath $testDir -Force
+
+          & "$testDir\python\python.exe" "$testDir\app\bin\d2r-launcher" --help
+          if ($LASTEXITCODE -ne 0) { throw "d2r-launcher --help failed" }
+
+          & "$testDir\python\python.exe" -c "import castalia_hub.core, castalia_hub.d2s_telemetry, mod_builder.char_manager as cm; print('SMOKE_OK:', len(cm.ID_TO_CLASS_NAME), 'classes')"
+          if ($LASTEXITCODE -ne 0) { throw "module import smoke test failed" }
+
+          # Silent-install CastaliaLauncher-Setup.exe and verify installed launcher
+          $instDir = "$env:TEMP\castalia-setup-smoke"
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue $instDir
+          $p = Start-Process -FilePath ".\dist\CastaliaLauncher-Setup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$instDir`"" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Setup.exe silent install failed with exit code $($p.ExitCode)" }
+          & "$instDir\python\python.exe" "$instDir\app\bin\d2r-launcher" --help
+          if ($LASTEXITCODE -ne 0) { throw "Installed d2r-launcher --help failed" }
+
+      - name: Upload Windows launcher artifacts
         uses: actions/upload-artifact@v4
         with:
           name: castalia-launcher-win64
-          path: dist/castalia-launcher-win64.exe
+          path: |
+            dist/castalia-launcher-win64.zip
+            dist/CastaliaLauncher-Setup.exe
           if-no-files-found: error

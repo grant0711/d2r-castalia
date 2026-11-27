@@ -14,9 +14,9 @@
             "calc1": "clc5+(((100-(stat('stamina'.accr)*100)/max(256,stat('maxstamina'.accr))))*clc6)/100",
             "calc5": "(par1+(10*(lvl-1)+5*max(0,lvl-5)+8*max(0,lvl-10)+7*max(0,lvl-15))*par2/20)+skill('Double Swing'.blvl)*par8",
             "*calc5 desc": "Base Damage % at Full Stamina",
-            "calc6": "70+(lvl-1)*15+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc1):0)",
+            "calc6": "40+(lvl-1)*15+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc1):0)",
             "*calc6 desc": "Max Exhaustion Damage % Bonus at Zero Stamina",
-            "Param1": "40",
+            "Param1": "70",
             "ToHitCalc": "20+(lvl-1)*10+((stat('skill_chillingarmor'.accr)>0)?skill('Grim Ward'.clc4):0)"
           }
         },

@@ -150,11 +150,22 @@ class CastaliaHub:
             candidates = [
                 r"C:\Program Files (x86)\Diablo II Resurrected",
                 r"C:\Program Files\Diablo II Resurrected",
+                r"C:\Games\Diablo II Resurrected",
                 r"C:\Program Files (x86)\Steam\steamapps\common\Diablo II Resurrected",
+                r"D:\Diablo II Resurrected",
+                r"D:\Games\Diablo II Resurrected",
+                r"D:\Battle.net\Diablo II Resurrected",
                 r"D:\Program Files (x86)\Diablo II Resurrected",
+                r"D:\Program Files\Diablo II Resurrected",
                 r"D:\SteamLibrary\steamapps\common\Diablo II Resurrected",
+                r"E:\Diablo II Resurrected",
+                r"E:\Games\Diablo II Resurrected",
                 r"E:\SteamLibrary\steamapps\common\Diablo II Resurrected",
+                r"F:\SteamLibrary\steamapps\common\Diablo II Resurrected",
             ]
+            for c in candidates:
+                if os.path.isfile(os.path.join(c, "D2RLoader.exe")):
+                    return c
         else:
             candidates = [
                 os.path.join(REPO_ROOT, "game", "Diablo II Resurrected"),
@@ -382,8 +393,12 @@ class CastaliaHub:
         vers = [d.lstrip("v") for d in sorted(os.listdir(self.versions_dir)) if os.path.isdir(os.path.join(self.versions_dir, d))]
         return vers
 
-    def list_github_releases(self) -> List[Dict[str, Any]]:
-        """Fetch published Castalia releases from GitHub Releases API (with local fallback)."""
+    def list_github_releases(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
+        """Fetch published Castalia releases from GitHub Releases API (5-min in-memory cache + local fallback)."""
+        now = time.time()
+        cached = getattr(self, "_releases_cache", None)
+        if not force_refresh and cached and (now - cached[0]) < 300:
+            return cached[1]
         url = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
         req = urllib.request.Request(url, headers={"User-Agent": "CastaliaHub/1.0", "Accept": "application/vnd.github+json"})
         releases: List[Dict[str, Any]] = []
@@ -424,6 +439,8 @@ class CastaliaHub:
                 "sha_url": None,
                 "cached": True,
             })
+        if releases:
+            self._releases_cache = (now, releases)
         return releases
 
     def delete_cached_version(self, version: str) -> bool:
@@ -535,6 +552,8 @@ class CastaliaHub:
         data = self._api("GET", f"/api/campaigns/{campaign_id}", token=tok)
         data["is_host"] = bool(self.get_token(campaign_id, "host_token"))
         data["my_rsvp_id"] = self.get_token(campaign_id, "rsvp_id")
+        if data["is_host"] and data.get("status") != "completed":
+            self._auto_bump_campaign_version(data)
         return data
 
     def create_campaign(self, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -641,6 +660,38 @@ class CastaliaHub:
             body["host_progress_b64"] = str(host_progress_b64)
         return self._api("POST", f"/api/campaigns/{campaign_id}/end-session", body=body, token=tok)
 
+    def _import_existing_char_to_campaign(self, campaign_id: str, char_name: str) -> Optional[str]:
+        """
+        If a player RSVPs as 'returning' with a character that already exists in their live
+        D2R save folder or solo profile (e.g. played manually before installing the launcher),
+        copy that .d2s and its sidecar files into the campaign's isolated profile folder.
+        """
+        if not char_name:
+            return None
+        target_dir = self.profile_dir_for(campaign_id)
+        low_target = f"{char_name.lower()}.d2s"
+        if any(f.lower() == low_target for f in os.listdir(target_dir)):
+            return next(os.path.join(target_dir, f) for f in os.listdir(target_dir) if f.lower() == low_target)
+
+        search_dirs = [
+            self.config.get("d2r_save_dir") or "",
+            os.path.join(self.profiles_dir, "solo"),
+        ]
+        for sdir in search_dirs:
+            if not sdir or not os.path.isdir(sdir):
+                continue
+            match_d2s = next((f for f in os.listdir(sdir) if f.lower() == low_target), None)
+            if not match_d2s:
+                continue
+            stem = os.path.splitext(match_d2s)[0].lower()
+            for fname in os.listdir(sdir):
+                if os.path.splitext(fname)[0].lower() == stem:
+                    src = os.path.join(sdir, fname)
+                    if os.path.isfile(src):
+                        shutil.copy2(src, os.path.join(target_dir, fname))
+            return os.path.join(target_dir, match_d2s)
+        return None
+
     def rsvp_campaign(
         self,
         campaign_id: str,
@@ -652,6 +703,18 @@ class CastaliaHub:
         build_summary: str = "",
         player_name: Optional[str] = None,
     ) -> Dict[str, Any]:
+        if join_mode == "returning":
+            imported = self._import_existing_char_to_campaign(campaign_id, char_name)
+            if imported:
+                try:
+                    t = parse_d2s_telemetry(imported)
+                    char_level = int(t.get("char_level") or char_level)
+                    char_wp = str(t.get("char_wp") or char_wp)
+                    char_class = str(t.get("char_class") or char_class)
+                    if not build_summary and t.get("build_summary"):
+                        build_summary = str(t["build_summary"])
+                except Exception:
+                    pass
         body = {
             "player_name": player_name or self.config["display_name"],
             "join_mode": join_mode,

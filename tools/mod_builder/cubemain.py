@@ -986,10 +986,10 @@ def build_cubemain(cfg: dict) -> str:
     rune_codes = [r[0] for r in RUNE_SPECS]
     tail_empty = "\t" * (num_cols - 47 - 1) + "\t0"
 
-    # Flat -5 item_levelreq perk stamped into mod 4 of each Gem+Rune Crafted recipe to
-    # soften D2R's hardcoded Crafted penalty (+10 + 3*N_affixes) without dropping high-req
-    # bases more than 5 levels below their base requirement.
-    gem_craft_levelreq_offsets = ("-5", "-5", "-5", "-5", "-5")
+    # Tier-scaled negative item_levelreq offset stamped into mod 4 of each Gem+Rune Crafted recipe
+    # to track D2R's escalating Crafted +10 + 3*N_affixes tax without ever going net-negative:
+    # Chipped (-8), Flawed (-10), Standard (-12), Flawless (-15), Perfect (-19).
+    gem_craft_levelreq_offsets = ("-8", "-10", "-12", "-15", "-19")
 
     # Precompute 2-Rune combinations per (slot_idx, gem_tier_idx)
     # slot_tier_combos[s_idx][t_idx] = List[(inp_3_5_str, mod_2_4_str)]

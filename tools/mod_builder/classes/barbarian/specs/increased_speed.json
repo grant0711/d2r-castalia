@@ -5,7 +5,15 @@
       "description": "layout only; vanilla Increased Speed behaviour"
     },
     "final": {
-      "description": "Increased Speed (Increased Speed)"
+      "description": "Increased Speed (Increased Speed)",
+      "tables": {
+        "skills.txt": {
+          "Increased Speed": {
+            "Param1": "14",
+            "Param2": "49"
+          }
+        }
+      }
     }
   }
 }

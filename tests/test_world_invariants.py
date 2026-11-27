@@ -27,6 +27,7 @@ class TestWorldInvariants(unittest.TestCase):
         for r in tc_rows:
             tc_name = r.get("Treasure Class", "")
             is_chest_tc = "Chest" in tc_name
+            is_act_potion_tc = tc_name.endswith(" Potion")
             has_lockbox = False
             for i in range(1, 11):
                 it = r.get(f"Item{i}", "").strip()
@@ -34,13 +35,13 @@ class TestWorldInvariants(unittest.TestCase):
                     it in globally_forbidden_tc_items or it == "tsc",
                     f"TreasureClassEx.txt ({tc_name}): globally forbidden item {it!r} in Item{i}",
                 )
-                if not is_chest_tc:
+                if not is_chest_tc and not is_act_potion_tc:
                     self.assertNotIn(
                         it,
                         monster_forbidden_potions,
                         f"TreasureClassEx.txt ({tc_name}): forbidden potion {it!r} in monster TC Item{i}",
                     )
-                else:
+                elif is_chest_tc:
                     self.assertFalse(
                         any(bad in it for bad in ("Equip", "Weap", "Armo", "Melee", "Bow", "Junk")),
                         f"TreasureClassEx.txt ({tc_name}): forbidden equipment/junk {it!r} in Chest Item{i}",

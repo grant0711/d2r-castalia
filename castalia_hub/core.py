@@ -305,7 +305,7 @@ class CastaliaHub:
                 return
 
     def recover_if_dirty(self) -> Optional[str]:
-        """If active_profile.json exists (previous crash), sync live saves back and restore game_port."""
+        """If active_profile.json exists (previous crash), sync live saves back and restore launch overrides."""
         if not os.path.isfile(self.active_profile_path):
             return None
         state = self._load_json(self.active_profile_path, {})
@@ -313,9 +313,12 @@ class CastaliaHub:
         stash_source = state.get("stash_source")
         if pid:
             self._sync_live_to_profile(pid, stash_source=stash_source)
-        prev_port = state.get("prev_game_port")
-        if isinstance(prev_port, int) and prev_port > 0:
-            self.set_d2rloader_game_port(prev_port)
+        if state.get("prev_toml_overrides") or state.get("prev_settings_overrides"):
+            self.restore_launch_rules(state)
+        else:
+            prev_port = state.get("prev_game_port")
+            if isinstance(prev_port, int) and prev_port > 0:
+                self.set_d2rloader_game_port(prev_port)
         os.remove(self.active_profile_path)
         return pid
 
@@ -1160,6 +1163,232 @@ class CastaliaHub:
             f.write(updated)
         return prev_port
 
+    @staticmethod
+    def _format_toml_value(val: Any) -> str:
+        if isinstance(val, bool):
+            return "true" if val else "false"
+        if isinstance(val, int):
+            return str(val)
+        return json.dumps(str(val))
+
+    def _d2rloader_toml_path(self) -> str:
+        return os.path.join(self.config["d2r_game_dir"], "d2rloader", "config", "d2rloader.toml")
+
+    def _settings_json_paths(self) -> List[str]:
+        """Return existing Settings.json path(s) D2R reads (mod save dir + parent root if under mods/<mod>)."""
+        save_dir = os.path.normpath(self.config.get("d2r_save_dir") or "")
+        if not save_dir:
+            return []
+        candidates = [os.path.join(save_dir, "Settings.json")]
+        parent = os.path.dirname(save_dir)
+        if os.path.basename(parent).lower() == "mods":
+            root_settings = os.path.normpath(os.path.join(parent, "..", "Settings.json"))
+            if root_settings not in candidates:
+                candidates.append(root_settings)
+        return [p for p in candidates if os.path.isfile(p)]
+
+    def _apply_d2rloader_toml_overrides(
+        self,
+        overrides: Dict[str, Dict[str, Any]],
+        raw_literals: bool = False,
+    ) -> Dict[str, Dict[str, str]]:
+        """
+        Section-aware in-place update of d2rloader.toml preserving all comments, formatting, and line endings.
+        Returns {section: {key: previous_raw_literal}} for every key whose value changed.
+        When `raw_literals=True`, values in `overrides` are written verbatim (used when restoring).
+        """
+        toml_path = self._d2rloader_toml_path()
+        if not overrides or not os.path.isfile(toml_path):
+            return {}
+        with open(toml_path, "r", encoding="utf-8", newline="") as f:
+            lines = f.read().splitlines(keepends=True)
+
+        prev: Dict[str, Dict[str, str]] = {}
+        current_section: Optional[str] = None
+        new_lines: List[str] = []
+        changed = False
+
+        for line in lines:
+            if line.endswith("\r\n"):
+                body, eol = line[:-2], "\r\n"
+            elif line.endswith("\n"):
+                body, eol = line[:-1], "\n"
+            else:
+                body, eol = line, ""
+
+            sec_m = re.match(r"^\s*\[([^\]]+)\]\s*(?:#.*)?$", body)
+            if sec_m:
+                current_section = sec_m.group(1).strip()
+                new_lines.append(line)
+                continue
+
+            if current_section and current_section in overrides:
+                kv_m = re.match(r"^(\s*)([A-Za-z0-9_]+)(\s*=\s*)(.*?)(\s*(?:#.*)?)$", body)
+                if kv_m:
+                    indent, key, eq, old_raw, trailing = kv_m.groups()
+                    sec_ov = overrides[current_section]
+                    if key in sec_ov:
+                        new_raw = str(sec_ov[key]) if raw_literals else self._format_toml_value(sec_ov[key])
+                        if old_raw != new_raw:
+                            prev.setdefault(current_section, {})[key] = old_raw
+                            new_lines.append(f"{indent}{key}{eq}{new_raw}{trailing}{eol}")
+                            changed = True
+                            continue
+            new_lines.append(line)
+
+        if changed:
+            with open(toml_path, "w", encoding="utf-8", newline="") as f:
+                f.write("".join(new_lines))
+        return prev
+
+    def _compute_pilgrimage_launch_args(self) -> Optional[str]:
+        """If [d2rloader] launch_arguments contains -enablerespec or -debug_mode, return cleaned string."""
+        toml_path = self._d2rloader_toml_path()
+        if not os.path.isfile(toml_path):
+            return None
+        with open(toml_path, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        in_section = False
+        for line in lines:
+            sec_m = re.match(r"^\s*\[([^\]]+)\]\s*(?:#.*)?$", line)
+            if sec_m:
+                in_section = sec_m.group(1).strip() == "d2rloader"
+                continue
+            if in_section:
+                kv_m = re.match(r"^\s*launch_arguments\s*=\s*(.*?)\s*(?:#.*)?$", line)
+                if kv_m:
+                    raw_val = kv_m.group(1).strip()
+                    try:
+                        parsed = json.loads(raw_val)
+                    except Exception:
+                        parsed = raw_val.strip("\"'")
+                    tokens = str(parsed).split()
+                    banned = {"-enablerespec", "-debug_mode"}
+                    cleaned = [t for t in tokens if t.lower() not in banned]
+                    if len(cleaned) != len(tokens):
+                        return " ".join(cleaned)
+                    return None
+        return None
+
+    def _apply_settings_json_overrides(self, overrides: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """Update keys in D2R Settings.json file(s) and return {path: {key: prev_value_or_sentinel}}."""
+        if not overrides:
+            return {}
+        prev_map: Dict[str, Dict[str, Any]] = {}
+        for path in self._settings_json_paths():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if not isinstance(data, dict):
+                    continue
+                changed = False
+                file_prev: Dict[str, Any] = {}
+                for k, v in overrides.items():
+                    if k not in data:
+                        file_prev[k] = {"__missing__": True}
+                        data[k] = v
+                        changed = True
+                    elif data[k] != v:
+                        file_prev[k] = data[k]
+                        data[k] = v
+                        changed = True
+                if changed:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=4)
+                    prev_map[path] = file_prev
+            except Exception:
+                continue
+        return prev_map
+
+    def _restore_settings_json_overrides(self, prev_map: Dict[str, Dict[str, Any]]) -> None:
+        if not prev_map:
+            return
+        for path, file_prev in prev_map.items():
+            if not os.path.isfile(path) or not isinstance(file_prev, dict):
+                continue
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if not isinstance(data, dict):
+                    continue
+                for k, old_v in file_prev.items():
+                    if isinstance(old_v, dict) and old_v.get("__missing__"):
+                        data.pop(k, None)
+                    else:
+                        data[k] = old_v
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=4)
+            except Exception:
+                continue
+
+    def apply_launch_rules(
+        self,
+        campaign: Optional[Dict[str, Any]],
+        is_host: bool,
+        join_port: Optional[int] = None,
+        persist_to_active_profile: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Enforce mode-specific rules & reliability guards in d2rloader.toml and Settings.json.
+        Returns a snapshot dict of previous values so restore_launch_rules() (or crash recovery)
+        restores the player's exact original Solo settings.
+        """
+        if campaign is None:
+            return {"prev_toml_overrides": {}, "prev_settings_overrides": {}}
+
+        mode = str(campaign.get("campaign_mode") or "open").strip().lower()
+        target_port = 4000 if is_host else (int(join_port) if join_port else 4000)
+
+        # Reliability guards (both modes)
+        toml_overrides: Dict[str, Dict[str, Any]] = {
+            "d2rloader": {
+                "default_mod": "castalia",
+                "show_tcpip_button": True,
+            },
+            "d2rloader.advanced": {
+                "game_port": target_port,
+            },
+        }
+        settings_overrides: Dict[str, Any] = {}
+
+        if mode == "pilgrimage":
+            toml_overrides["d2rcore.player"] = {"enable_respec": False}
+            toml_overrides["d2rloader.developer"] = {"enable_console": False}
+            toml_overrides["d2rloader"]["always_generate_new_maps"] = True
+            toml_overrides["d2rloader.advanced"]["allow_global_extensions"] = False
+            cleaned_args = self._compute_pilgrimage_launch_args()
+            if cleaned_args is not None:
+                toml_overrides["d2rloader"]["launch_arguments"] = cleaned_args
+            settings_overrides["Offline Difficulty Scaling"] = 1
+        else:
+            toml_overrides["d2rcore.player"] = {"enable_respec": True}
+
+        prev_toml = self._apply_d2rloader_toml_overrides(toml_overrides, raw_literals=False)
+        prev_settings = self._apply_settings_json_overrides(settings_overrides)
+        snapshot = {
+            "prev_toml_overrides": prev_toml,
+            "prev_settings_overrides": prev_settings,
+        }
+        if persist_to_active_profile and os.path.isfile(self.active_profile_path):
+            ap = self._load_json(self.active_profile_path, {})
+            if prev_toml:
+                ap["prev_toml_overrides"] = prev_toml
+            if prev_settings:
+                ap["prev_settings_overrides"] = prev_settings
+            self._save_json(self.active_profile_path, ap)
+        return snapshot
+
+    def restore_launch_rules(self, snapshot: Optional[Dict[str, Any]]) -> None:
+        """Restore exact pre-launch d2rloader.toml and Settings.json values from snapshot."""
+        if not snapshot:
+            return
+        prev_toml = snapshot.get("prev_toml_overrides")
+        if isinstance(prev_toml, dict) and prev_toml:
+            self._apply_d2rloader_toml_overrides(prev_toml, raw_literals=True)
+        prev_settings = snapshot.get("prev_settings_overrides")
+        if isinstance(prev_settings, dict) and prev_settings:
+            self._restore_settings_json_overrides(prev_settings)
+
     def write_launch_intent(self, campaign: Optional[Dict[str, Any]], is_host: bool) -> Optional[str]:
         """Write or clear mods/castalia/d2rloader/config/castalia_launch_intent.json for castalia-autohost.dll."""
         intent_dir = os.path.join(self.config["d2r_game_dir"], "mods", "castalia", "d2rloader", "config")
@@ -1249,7 +1478,8 @@ class CastaliaHub:
         campaign = None
         is_host = False
         copied_game_id = None
-        prev_game_port = None
+        join_port = 4000
+        launch_rules_snapshot = None
 
         if target != "solo":
             campaign = self.get_campaign(target)
@@ -1261,8 +1491,6 @@ class CastaliaHub:
                 join_host, join_port = self.parse_host_port(str(campaign["live_join_info"]))
                 copied_game_id = join_host
                 self.copy_to_clipboard(join_host)
-                if join_port != 4000 and not dry_run:
-                    prev_game_port = self.set_d2rloader_game_port(join_port)
         else:
             ver_status = "solo_current"
 
@@ -1273,10 +1501,13 @@ class CastaliaHub:
                 self.copy_to_clipboard(intent_data["game_name"])
         use_shared_stash = bool(campaign.get("shared_stash")) if campaign else True
         pid = self.swap_to_profile(target, shared_stash=use_shared_stash)
-        if prev_game_port is not None and os.path.isfile(self.active_profile_path):
-            ap = self._load_json(self.active_profile_path, {})
-            ap["prev_game_port"] = prev_game_port
-            self._save_json(self.active_profile_path, ap)
+        if campaign and not dry_run:
+            launch_rules_snapshot = self.apply_launch_rules(
+                campaign,
+                is_host=is_host,
+                join_port=join_port,
+                persist_to_active_profile=True,
+            )
         result: Dict[str, Any] = {
             "profile_id": pid,
             "version_status": ver_status,
@@ -1321,8 +1552,7 @@ class CastaliaHub:
             stop_evt.set()
             if tail_thread:
                 tail_thread.join(timeout=2)
-            if prev_game_port is not None:
-                self.set_d2rloader_game_port(prev_game_port)
+            self.restore_launch_rules(launch_rules_snapshot)
             self.write_launch_intent(None, False)
             self.sync_back_active_profile()
             if target != "solo":

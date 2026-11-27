@@ -169,6 +169,98 @@ class TestSharedStashAndTimer(unittest.TestCase):
         with self.assertRaises(Exception):
             self.hub.complete_campaign(ocid, summary="Should fail", death_count=0, sessions_played=1)
 
+    def test_pilgrimage_vs_open_runtime_config_and_crash_recovery(self):
+        import json
+
+        game_dir = os.path.join(self.tmp.name, "game")
+        toml_dir = os.path.join(game_dir, "d2rloader", "config")
+        os.makedirs(toml_dir, exist_ok=True)
+        toml_path = os.path.join(toml_dir, "d2rloader.toml")
+        original_toml = (
+            "# Header comment\n"
+            "[d2rcore.player]\n"
+            "enable_respec = true\n"
+            "\n"
+            "[d2rloader]\n"
+            "default_mod = \"othermod\"\n"
+            "launch_arguments = \"-w -enablerespec -debug_mode -txt\"\n"
+            "show_tcpip_button = false\n"
+            "always_generate_new_maps = false\n"
+            "\n"
+            "[d2rloader.advanced]\n"
+            "game_port = 11887\n"
+            "allow_global_extensions = true\n"
+            "\n"
+            "[d2rloader.developer]\n"
+            "enable_console = true\n"
+        )
+        with open(toml_path, "w", encoding="utf-8") as f:
+            f.write(original_toml)
+
+        settings_path = os.path.join(self.save_dir, "Settings.json")
+        original_settings = {
+            "Offline Difficulty Scaling": 8,
+            "Max Players": 8,
+            "Auto Gold Pickup": 1,
+        }
+        with open(settings_path, "w", encoding="utf-8") as f:
+            json.dump(original_settings, f, indent=4)
+
+        self.hub.config["d2r_game_dir"] = game_dir
+
+        # 1. Pilgrimage Host launch: enforces all 5 Pilgrimage rules + 3 reliability guards
+        pilgrimage_camp = {"id": "pilg-1", "campaign_mode": "pilgrimage"}
+        snap = self.hub.apply_launch_rules(pilgrimage_camp, is_host=True)
+        toml_after = open(toml_path, "r", encoding="utf-8").read()
+        self.assertIn("# Header comment", toml_after)
+        self.assertIn("enable_respec = false", toml_after)
+        self.assertIn("default_mod = \"castalia\"", toml_after)
+        self.assertIn("launch_arguments = \"-w -txt\"", toml_after)
+        self.assertIn("show_tcpip_button = true", toml_after)
+        self.assertIn("always_generate_new_maps = true", toml_after)
+        self.assertIn("game_port = 4000", toml_after)
+        self.assertIn("allow_global_extensions = false", toml_after)
+        self.assertIn("enable_console = false", toml_after)
+        settings_after = json.load(open(settings_path, "r", encoding="utf-8"))
+        self.assertEqual(settings_after["Offline Difficulty Scaling"], 1)
+        self.assertEqual(settings_after["Auto Gold Pickup"], 1)
+
+        # Clean restore brings back exact player settings
+        self.hub.restore_launch_rules(snap)
+        self.assertEqual(open(toml_path, "r", encoding="utf-8").read(), original_toml)
+        self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 8)
+
+        # 2. Open Party Joiner launch: enables respec + reliability guards, leaves other prefs untouched
+        toml_open_base = original_toml.replace("enable_respec = true", "enable_respec = false").replace("game_port = 11887", "game_port = 4000")
+        with open(toml_path, "w", encoding="utf-8") as f:
+            f.write(toml_open_base)
+        open_camp = {"id": "open-1", "campaign_mode": "open"}
+        snap_open = self.hub.apply_launch_rules(open_camp, is_host=False, join_port=11887)
+        toml_open_after = open(toml_path, "r", encoding="utf-8").read()
+        self.assertIn("enable_respec = true", toml_open_after)
+        self.assertIn("default_mod = \"castalia\"", toml_open_after)
+        self.assertIn("show_tcpip_button = true", toml_open_after)
+        self.assertIn("game_port = 11887", toml_open_after)
+        # Untouched in Open Party:
+        self.assertIn("always_generate_new_maps = false", toml_open_after)
+        self.assertIn("allow_global_extensions = true", toml_open_after)
+        self.assertIn("enable_console = true", toml_open_after)
+        self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 8)
+        self.hub.restore_launch_rules(snap_open)
+        self.assertEqual(open(toml_path, "r", encoding="utf-8").read(), toml_open_base)
+
+        # 3. Crash recovery: swap_to_profile + persisted launch rules -> recover_dirty_profile restores both files
+        with open(toml_path, "w", encoding="utf-8") as f:
+            f.write(original_toml)
+        self.hub.swap_to_profile("pilg-1", shared_stash=False)
+        self.hub.apply_launch_rules(pilgrimage_camp, is_host=True, persist_to_active_profile=True)
+        self.assertIn("enable_respec = false", open(toml_path, "r", encoding="utf-8").read())
+        self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 1)
+        # Simulate crash -> next startup runs recover_dirty_profile()
+        self.hub.recover_dirty_profile()
+        self.assertEqual(open(toml_path, "r", encoding="utf-8").read(), original_toml)
+        self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 8)
+
 
 if __name__ == "__main__":
     unittest.main()

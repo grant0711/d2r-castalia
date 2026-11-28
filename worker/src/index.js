@@ -74,6 +74,11 @@ async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
       (camp.schedule_text ? `${camp.schedule_text}\n` : "") +
       `[📅 Add to Google Calendar](${gcalUrl})`;
   }
+  const isPilgrimage = (camp.campaign_mode || "pilgrimage") === "pilgrimage";
+  const modeLabel = isPilgrimage ? "🏆 Pilgrimage" : "⚔️ Open Party";
+  const stashLabel = camp.shared_stash ? "📦 Global Shared Stash" : "🔒 Isolated Stash";
+  const playSec = Number(camp.total_play_seconds || 0);
+  const playStr = isPilgrimage && playSec >= 60 ? ` · ⏱ ${Math.floor(playSec / 3600)}h ${Math.floor((playSec % 3600) / 60)}m` : "";
   const embed = {
     title: `${label} — ${camp.title} (v${camp.castalia_version})`,
     description: (camp.description || "").slice(0, 1500),
@@ -81,7 +86,8 @@ async function syncDiscord(env, camp, confirmed, bumpToBottom = false) {
     fields: [
       { name: "Host", value: camp.host_name, inline: true },
       { name: "Seats", value: `${confirmed}/${camp.max_seats}`, inline: true },
-      { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\``, inline: true },
+      { name: "Progress", value: `Lvl ${camp.current_level} · \`${camp.current_wp}\`${playStr}`, inline: true },
+      { name: "Ruleset", value: `${modeLabel} · ${camp.ruleset} · ${stashLabel}`, inline: false },
       { name: "Next Session", value: nextField, inline: false },
     ],
   };
@@ -164,12 +170,22 @@ export default {
         const cid = slugify(body.title);
         const hostToken = randHex(24);
         const tokenHash = await sha256Hex(hostToken);
+        const rawMode = String(body.campaign_mode || "").trim().toLowerCase();
+        const reqLvl = Math.max(1, Math.min(99, Number(body.current_level || 1)));
+        const reqWp = String(body.current_wp || "a1n").trim().slice(0, 12);
+        const mode = (rawMode === "pilgrimage" || rawMode === "open")
+          ? rawMode
+          : ((reqLvl > 1 || reqWp.toLowerCase() !== "a1n") ? "open" : "pilgrimage");
+        const rawScope = String(body.pilgrimage_scope || "full").trim().toLowerCase();
+        const scope = ["full", "normal", "nightmare", "hell"].includes(rawScope) ? rawScope : "full";
+        const scopeStarts = { full: [1, "a1n"], normal: [1, "a1n"], nightmare: [38, "a1nm"], hell: [65, "a1h"] };
+        const [startLvl, startWp] = mode === "pilgrimage" ? scopeStarts[scope] : [reqLvl, reqWp];
         await env.DB.prepare(
           `INSERT INTO campaigns (
             id, host_name, host_token_hash, title, description, ruleset,
-            castalia_version, current_level, current_wp, max_seats,
+            castalia_version, current_level, current_wp, shared_stash, campaign_mode, pilgrimage_scope, max_seats,
             schedule_text, recurrence_days, next_session_utc, status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
         ).bind(
           cid,
           String(body.host_name || "Host").trim().slice(0, 32),
@@ -178,8 +194,11 @@ export default {
           String(body.description || "").trim().slice(0, 400),
           String(body.ruleset || "standard").trim().slice(0, 24),
           String(body.castalia_version || "0.3.0").replace(/^v/, "").slice(0, 16),
-          Math.max(1, Math.min(99, Number(body.current_level || 1))),
-          String(body.current_wp || "a1n").trim().slice(0, 12),
+          startLvl,
+          startWp,
+          body.shared_stash ? 1 : 0,
+          mode,
+          scope,
           Math.max(2, Math.min(8, Number(body.max_seats || 5))),
           String(body.schedule_text || "Weekly").trim().slice(0, 60),
           Math.max(0, Math.min(365, Number(body.recurrence_days ?? 7))),
@@ -200,7 +219,7 @@ export default {
       // GET /api/chronicles
       if (parts.length === 2 && parts[0] === "api" && parts[1] === "chronicles" && req.method === "GET") {
         const { results } = await env.DB.prepare(
-          `SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version
+          `SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version, c.shared_stash
            FROM chronicles ch JOIN campaigns c ON c.id = ch.campaign_id
            ORDER BY ch.completed_at DESC`
         ).all();
@@ -275,14 +294,16 @@ export default {
               error: `Character name '${newName}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games).`,
             }, 409);
           }
+          const newHash = body.char_hash ? String(body.char_hash).trim().slice(0, 64) : (rrow.char_hash || null);
           await env.DB.prepare(
-            "UPDATE rsvps SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ? WHERE id = ?"
+            "UPDATE rsvps SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?, char_hash = ? WHERE id = ?"
           ).bind(
             newName,
             (body.char_class || rrow.char_class).toLowerCase(),
             Number(body.char_level ?? rrow.char_level),
             body.char_wp || rrow.char_wp,
             body.build_summary ?? rrow.build_summary,
+            newHash,
             rid
           ).run();
           const updated = await env.DB.prepare("SELECT * FROM rsvps WHERE id = ?").bind(rid).first();
@@ -308,7 +329,7 @@ export default {
             .bind((body.live_join_info || "").trim(), now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, true);
-          await syncDiscordWithCount(env, camp, cid);
+          await syncDiscordWithCount(env, camp, cid, row.status !== "live");
           return jsonResp(camp);
         }
 
@@ -323,9 +344,15 @@ export default {
             ? (body.has_cube ? 1 : 0)
             : (["start", "a1n", "a2n"].includes(nextWp.toLowerCase()) ? Number(row.has_cube || 0) : 1);
           const hostProg = body.host_progress_b64 ? String(body.host_progress_b64).slice(0, 600) : (row.host_progress_b64 || null);
+          const isPilgrimage = (row.campaign_mode || "pilgrimage") === "pilgrimage";
+          const addSec = isPilgrimage ? Math.max(0, Math.min(86400, Math.floor(Number(body.session_seconds || 0)))) : 0;
+          const totalSec = Number(row.total_play_seconds || 0) + addSec;
+          const hostCharName = row.host_char_name || (body.host_char_name ? String(body.host_char_name).trim().slice(0, 15) : null);
+          const hostCharHash = body.host_char_hash ? String(body.host_char_hash).trim().slice(0, 64) : (row.host_char_hash || null);
+          const invalReason = row.pilgrimage_invalidated_reason || (body.pilgrimage_invalidated_reason ? String(body.pilgrimage_invalidated_reason).trim().slice(0, 200) : null);
           await env.DB.prepare(
-            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
-          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, nextUtc, now, cid).run();
+            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, total_play_seconds = ?, host_char_name = ?, host_char_hash = ?, pilgrimage_invalidated_reason = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
+          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, totalSec, hostCharName, hostCharHash, invalReason, nextUtc, now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, false);
           await syncDiscordWithCount(env, camp, cid, Boolean(explicitNext && explicitNext !== row.next_session_utc));
@@ -334,10 +361,11 @@ export default {
 
         if (parts.length === 3 && req.method === "PATCH") {
           const body = await req.json();
-          const fields = ["title", "description", "ruleset", "castalia_version", "current_level", "current_wp", "max_seats", "schedule_text", "recurrence_days", "next_session_utc", "status"];
+          const fields = ["title", "description", "ruleset", "castalia_version", "current_level", "current_wp", "max_seats", "schedule_text", "recurrence_days", "next_session_utc", "status", "host_char_name", "host_char_hash", "pilgrimage_invalidated_reason"];
           const sets = [];
           const vals = [];
           for (const f of fields) {
+            if (f === "host_char_name" && row.host_char_name) continue;
             if (f === "next_session_utc" && body[f] !== undefined) {
               sets.push(`${f} = ?`);
               vals.push(body[f] ? String(body[f]).trim() : null);
@@ -365,6 +393,12 @@ export default {
         }
 
         if (parts.length === 4 && parts[3] === "complete" && req.method === "POST") {
+          if ((row.campaign_mode || "pilgrimage") !== "pilgrimage") {
+            return jsonResp({ error: "Only Pilgrimage campaigns are eligible for Hall of Heroes." }, 400);
+          }
+          if (row.pilgrimage_invalidated_reason) {
+            return jsonResp({ error: `Pilgrimage integrity was voided: ${row.pilgrimage_invalidated_reason}` }, 400);
+          }
           const body = await req.json();
           const rsvps = (
             await env.DB.prepare("SELECT * FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'").bind(cid).all()
@@ -373,8 +407,8 @@ export default {
           await env.DB.prepare("UPDATE campaigns SET status = 'completed', live_join_info = NULL, updated_at = ? WHERE id = ?")
             .bind(now, cid).run();
           await env.DB.prepare(
-            "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-          ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
+            "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, total_play_seconds, pilgrimage_scope, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), Number(row.total_play_seconds || 0), String(row.pilgrimage_scope || "full"), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
           const completedRow = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           await syncDiscordWithCount(env, sanitizeCampaign(completedRow, false), cid);
           return jsonResp({ id: chid, campaign_id: cid, party_roster: rsvps });

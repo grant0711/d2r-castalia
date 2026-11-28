@@ -10,6 +10,13 @@ CREATE TABLE IF NOT EXISTS campaigns (
   current_wp        TEXT NOT NULL DEFAULT 'a1n',
   has_cube          INTEGER NOT NULL DEFAULT 0,
   host_progress_b64 TEXT,
+  shared_stash      INTEGER NOT NULL DEFAULT 0,
+  campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
+  pilgrimage_scope  TEXT NOT NULL DEFAULT 'full',
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  host_char_name    TEXT,
+  host_char_hash    TEXT,
+  pilgrimage_invalidated_reason TEXT,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -33,6 +40,7 @@ CREATE TABLE IF NOT EXISTS rsvps (
   char_level        INTEGER NOT NULL DEFAULT 1,
   char_wp           TEXT NOT NULL DEFAULT 'a1n',
   build_summary     TEXT NOT NULL DEFAULT '',
+  char_hash         TEXT,
   status            TEXT NOT NULL DEFAULT 'confirmed',
   created_at        TEXT NOT NULL
 );
@@ -43,6 +51,8 @@ CREATE TABLE IF NOT EXISTS chronicles (
   completed_at      TEXT NOT NULL,
   sessions_played   INTEGER NOT NULL DEFAULT 1,
   death_count       INTEGER NOT NULL DEFAULT 0,
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  pilgrimage_scope  TEXT NOT NULL DEFAULT 'full',
   party_roster_json TEXT NOT NULL,
   summary           TEXT NOT NULL,
   screenshot_url    TEXT

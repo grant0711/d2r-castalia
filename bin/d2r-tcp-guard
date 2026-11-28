@@ -1,202 +1,22 @@
 #!/usr/bin/env python3
 """
-bin/d2r-tcp-guard — Lightweight asyncio TCP protocol guard for D2RLoader TCP/IP hosting.
-
-Sits between playit.gg (e.g. 127.0.0.1:4001) and D2RLoader (127.0.0.1:4000).
-Drops automated internet port scanners (TLS/HTTPS ClientHello 0x16 0x03, HTTP, SSH,
-oversized non-D2R pre-greeting bursts, and connection-flood bursts) BEFORE they can
-reach D2RLoader's TCP/IP packet parser and trigger `BC_ASSERT: size() > 0`.
+bin/d2r-tcp-guard — CLI wrapper around castalia_hub.tcp_guard.D2RTcpGuard.
 
 Usage:
   ./bin/d2r-tcp-guard --listen 127.0.0.1:4001 --target 127.0.0.1:4000
 """
 import argparse
 import asyncio
-import collections
 import logging
+import os
 import signal
-import time
-from typing import Deque, Tuple
+import sys
 
-SCANNER_PREFIXES = (
-    b"\x16\x03",        # TLS ClientHello (SSL 3.0 / TLS 1.0-1.3)
-    b"GET ",
-    b"POST ",
-    b"HEAD ",
-    b"PUT ",
-    b"DELETE ",
-    b"OPTIONS ",
-    b"CONNECT ",
-    b"PATCH ",
-    b"PRI * HTTP/",     # HTTP/2 preface
-    b"SSH-",            # SSH banner
-    b"EHLO ",           # SMTP
-    b"HELO ",
-    b"RTSP/",
-    b"INVITE ",         # SIP
-    b"*1\r\n",          # Redis RESP
-    b"PING\r\n",
-)
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 
-
-def is_scanner_payload(data: bytes) -> str:
-    """Return a non-empty reason string if `data` is clearly non-D2R scanner traffic."""
-    if not data:
-        return ""
-    for prefix in SCANNER_PREFIXES:
-        if data.startswith(prefix):
-            return f"matched scanner signature {prefix!r}"
-    # SSLv2 ClientHello: 0x80 <len> 0x01 0x03
-    if len(data) >= 4 and data[0] == 0x80 and data[2] == 0x01 and data[3] == 0x03:
-        return "matched SSLv2 ClientHello"
-    return ""
-
-
-class D2RTcpGuard:
-    def __init__(
-        self,
-        listen_host: str,
-        listen_port: int,
-        target_host: str,
-        target_port: int,
-        peek_ms: int = 120,
-        max_conns: int = 16,
-        burst_limit: int = 6,
-        burst_window_s: float = 10.0,
-    ) -> None:
-        self.listen_host = listen_host
-        self.listen_port = listen_port
-        self.target_host = target_host
-        self.target_port = target_port
-        self.peek_s = max(0.02, peek_ms / 1000.0)
-        self.max_conns = max_conns
-        self.burst_limit = burst_limit
-        self.burst_window_s = burst_window_s
-        self.active_conns = 0
-        self.recent_accepts: Deque[float] = collections.deque()
-        self.dropped_count = 0
-        self.forwarded_count = 0
-
-    def _check_burst(self) -> bool:
-        now = time.monotonic()
-        cutoff = now - self.burst_window_s
-        while self.recent_accepts and self.recent_accepts[0] < cutoff:
-            self.recent_accepts.popleft()
-        if len(self.recent_accepts) >= self.burst_limit:
-            return False
-        self.recent_accepts.append(now)
-        return True
-
-    @staticmethod
-    async def _pipe(
-        reader: asyncio.StreamReader,
-        writer: asyncio.StreamWriter,
-        inspect_first: bool = False,
-        peer: str = "",
-    ) -> None:
-        first = True
-        try:
-            while True:
-                data = await reader.read(8192)
-                if not data:
-                    break
-                if inspect_first and first:
-                    first = False
-                    reason = is_scanner_payload(data)
-                    if reason:
-                        logging.warning("DROPPED post-connect %s (%s, %d bytes)", peer, reason, len(data))
-                        break
-                writer.write(data)
-                await writer.drain()
-        except (ConnectionResetError, BrokenPipeError, asyncio.CancelledError, OSError):
-            pass
-        finally:
-            try:
-                writer.close()
-                await writer.wait_closed()
-            except Exception:
-                pass
-
-    async def handle_client(self, c_reader: asyncio.StreamReader, c_writer: asyncio.StreamWriter) -> None:
-        peer_info = c_writer.get_extra_info("peername")
-        peer = f"{peer_info[0]}:{peer_info[1]}" if peer_info else "unknown"
-
-        if self.active_conns >= self.max_conns:
-            self.dropped_count += 1
-            logging.warning("DROPPED %s (max_conns=%d reached)", peer, self.max_conns)
-            c_writer.close()
-            return
-
-        # 1. Pre-connect peek: real D2R clients wait for the host's 0xAF 0x00 greeting.
-        #    Scanners blast TLS/HTTP/SSH immediately; drop them before touching port 4000.
-        initial_data = b""
-        try:
-            initial_data = await asyncio.wait_for(c_reader.read(2048), timeout=self.peek_s)
-            if initial_data == b"":
-                # Peer closed immediately (TCP port probe)
-                self.dropped_count += 1
-                logging.info("DROPPED %s (empty TCP probe)", peer)
-                c_writer.close()
-                return
-            reason = is_scanner_payload(initial_data)
-            if not reason and len(initial_data) > 512:
-                reason = f"oversized unsolicited pre-greeting payload ({len(initial_data)} bytes)"
-            if reason:
-                self.dropped_count += 1
-                logging.warning("DROPPED %s (%s)", peer, reason)
-                c_writer.close()
-                return
-        except asyncio.TimeoutError:
-            # Expected path for a real D2R client waiting for host 0xAF 0x00 greeting!
-            pass
-        except Exception:
-            c_writer.close()
-            return
-
-        # 2. Connection-burst rate limit (stops multi-connection scanner floods)
-        if not self._check_burst():
-            self.dropped_count += 1
-            logging.warning("DROPPED %s (burst limit %d/%gs exceeded)", peer, self.burst_limit, self.burst_window_s)
-            c_writer.close()
-            return
-
-        # 3. Connect to local D2RLoader host
-        try:
-            u_reader, u_writer = await asyncio.wait_for(
-                asyncio.open_connection(self.target_host, self.target_port),
-                timeout=3.0,
-            )
-        except Exception as exc:
-            logging.warning("Upstream %s:%d unreachable for %s (%s)", self.target_host, self.target_port, peer, exc)
-            c_writer.close()
-            return
-
-        self.active_conns += 1
-        self.forwarded_count += 1
-        logging.info("FORWARD %s -> %s:%d (active=%d)", peer, self.target_host, self.target_port, self.active_conns)
-        try:
-            if initial_data:
-                u_writer.write(initial_data)
-                await u_writer.drain()
-            t1 = asyncio.create_task(self._pipe(c_reader, u_writer, inspect_first=not bool(initial_data), peer=peer))
-            t2 = asyncio.create_task(self._pipe(u_reader, c_writer, inspect_first=False, peer=peer))
-            done, pending = await asyncio.wait({t1, t2}, return_when=asyncio.FIRST_COMPLETED)
-            for task in pending:
-                task.cancel()
-            await asyncio.gather(*pending, return_exceptions=True)
-        finally:
-            self.active_conns -= 1
-            for w in (u_writer, c_writer):
-                try:
-                    w.close()
-                except Exception:
-                    pass
-            logging.info("CLOSED %s (active=%d)", peer, self.active_conns)
-
-
-def parse_host_port(spec: str) -> Tuple[str, int]:
-    host, port = spec.rsplit(":", 1)
-    return host, int(port)
+from castalia_hub.tcp_guard import D2RTcpGuard, parse_host_port
 
 
 async def run_guard(args: argparse.Namespace) -> None:

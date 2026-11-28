@@ -107,6 +107,9 @@ def make_ui_handler(hub: CastaliaHub):
                 if p.startswith("/local/chars/"):
                     target = p.split("/")[3]
                     return self._send_json(200, hub.list_profile_chars(target))
+                if p == "/local/importable-chars":
+                    cid = qs.get("campaign_id", [""])[0]
+                    return self._send_json(200, hub.list_importable_chars(cid))
                 if p == "/local/chronicles":
                     return self._send_json(200, hub.list_chronicles())
                 if p == "/local/tokens/export":
@@ -186,21 +189,59 @@ def make_ui_handler(hub: CastaliaHub):
                 if p == "/local/version/delete":
                     ok = hub.delete_cached_version(body["version"])
                     return self._send_json(200, {"deleted": ok})
+                if p == "/local/import-char":
+                    telem = hub.import_char_to_campaign(
+                        body["campaign_id"],
+                        body["source_path"],
+                        respec=bool(body.get("respec", False)),
+                    )
+                    return self._send_json(200, telem)
+                if p == "/local/respec-char":
+                    telem = hub.respec_profile_char(
+                        body["target"],
+                        body["char_name"],
+                        reset_stats=bool(body.get("reset_stats", True)),
+                    )
+                    return self._send_json(200, telem)
+                if p == "/local/browse-dir":
+                    chosen = hub.browse_directory(
+                        title=str(body.get("title") or "Select Folder"),
+                        initial_dir=body.get("initial_dir"),
+                    )
+                    return self._send_json(200, {"path": chosen, "cancelled": not bool(chosen)})
+                if p == "/local/test-host":
+                    return self._send_json(200, hub.test_host_reachability(body.get("address")))
                 if p == "/local/launch":
                     target = body["target"]
                     dry = bool(body.get("dry_run", False))
+                    allow_inval = bool(body.get("allow_invalidate", False))
                     if dry:
                         return self._send_json(200, hub.launch_session(target, dry_run=True))
+                    if target != "solo":
+                        chk = hub.verify_pilgrimage_integrity(target)
+                        if not chk.get("ok"):
+                            if chk.get("blocked"):
+                                return self._send_json(400, {"error": chk.get("reason") or "Pilgrimage launch blocked.", "blocked": True})
+                            if not allow_inval:
+                                return self._send_json(409, {"error": chk.get("reason") or "Pilgrimage integrity warning.", "can_invalidate": True})
                     # Run D2RLoader in background thread so UI stays responsive
-                    t = threading.Thread(target=hub.launch_session, args=(target, False), daemon=True)
+                    t = threading.Thread(
+                        target=hub.launch_session,
+                        args=(target, False, allow_inval),
+                        daemon=True,
+                    )
                     t.start()
                     return self._send_json(200, {"launched": True, "target": target})
                 self._send_json(404, {"error": "not_found"})
             except Exception as e:
                 self._send_json(400, {"error": str(e)})
 
+    UIHandler.auth_token = session_token
     return UIHandler
 
 
 def start_ui_server(hub: CastaliaHub, host: str = "127.0.0.1", port: int = 8788) -> ThreadingHTTPServer:
-    return ThreadingHTTPServer((host, port), make_ui_handler(hub))
+    handler_cls = make_ui_handler(hub)
+    srv = ThreadingHTTPServer((host, port), handler_cls)
+    srv.auth_token = handler_cls.auth_token
+    return srv

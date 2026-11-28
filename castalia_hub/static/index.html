@@ -138,9 +138,36 @@
     <label>Pinned Castalia Version</label>
     <select id="c-version" style="width:100%"></select>
     <div class="row">
-      <div style="flex:1"><label>Start Level</label><input id="c-level" type="number" min="1" max="99" value="1" style="width:100%"></div>
+      <div style="flex:1">
+        <label>Campaign Mode (locked at creation)</label>
+        <select id="c-mode" style="width:100%" onchange="onCreateModeChange()">
+          <option value="pilgrimage">&#127942; Pilgrimage (Timed &amp; Hall of Heroes)</option>
+          <option value="open">&#9876; Open Party (Allow imported chars &middot; Untimed casual)</option>
+        </select>
+      </div>
+      <div style="flex:1" id="c-scope-wrap">
+        <label>Pilgrimage Bracket (locked at creation)</label>
+        <select id="c-scope" style="width:100%" onchange="onCreateModeChange()">
+          <option value="full">&#127942; Full (Normal &rarr; Hell, Lvl 1)</option>
+          <option value="normal">&#129353; Normal Only (Lvl 1 &rarr; Norm Baal)</option>
+          <option value="nightmare">&#129352; Nightmare Only (Lvl 38 &rarr; NM Baal)</option>
+          <option value="hell">&#129351; Hell Only (Lvl 65 &rarr; Hell Baal)</option>
+        </select>
+      </div>
+    </div>
+    <div id="c-pilgrimage-rules" style="margin-top:8px;padding:8px 10px;border:1px solid var(--gold-dim);border-radius:6px;background:#1a150e;font-size:11.5px;color:var(--muted);line-height:1.45;">
+      <b style="color:var(--gold);">&#128220; Pilgrimage Rules (Hall of Heroes Eligible):</b>
+      <ul style="margin:4px 0 0 16px;padding:0;">
+        <li>Host starts fresh at Level 1 (Act 1 Normal) and plays the same character through Hell Baal.</li>
+        <li>Character saves are isolated &amp; SHA-256 checksum-verified between sessions — do not edit <code>.d2s</code> files externally.</li>
+        <li>Auto-enforced on launch: earned respecs only, <code>/players</code> scaling = 1 (follows real party size), fresh maps each session, console &amp; global plugins disabled.</li>
+        <li>Joiners launch once the Host is <b>&#128994; LIVE</b>.</li>
+      </ul>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Start Level</label><input id="c-level" type="number" min="1" max="99" value="1" style="width:100%" disabled></div>
       <div style="flex:1"><label>Start Act / WP</label>
-        <select id="c-wp" style="width:100%">
+        <select id="c-wp" style="width:100%" disabled>
           <option value="a1n">Normal Act 1 (a1n)</option><option value="a2n">Normal Act 2 (a2n)</option><option value="a3n">Normal Act 3 (a3n)</option><option value="a4n">Normal Act 4 (a4n)</option><option value="a5n">Normal Act 5 (a5n)</option>
           <option value="a1nm">Nightmare Act 1 (a1nm)</option><option value="a2nm">Nightmare Act 2 (a2nm)</option><option value="a3nm">Nightmare Act 3 (a3nm)</option><option value="a4nm">Nightmare Act 4 (a4nm)</option><option value="a5nm">Nightmare Act 5 (a5nm)</option>
           <option value="a1h">Hell Act 1 (a1h)</option><option value="a2h">Hell Act 2 (a2h)</option><option value="a3h">Hell Act 3 (a3h)</option><option value="a4h">Hell Act 4 (a4h)</option><option value="a5h">Hell Act 5 (a5h)</option>
@@ -155,6 +182,10 @@
       <div style="flex:2"><label>Next Session Date &amp; Time</label><input id="c-next" type="datetime-local" style="width:100%"></div>
       <div style="flex:1"><label>Timezone (GMT)</label><select id="c-tz" style="width:100%"></select></div>
     </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;">
+      <input type="checkbox" id="c-shared-stash" style="width:auto;">
+      <span>Allow Global Shared Stash <span style="color:var(--muted);font-size:11px;">(unchecked = isolated campaign-only stash; locked at creation)</span></span>
+    </label>
     <div class="row" style="justify-content:flex-end; margin-top:14px;">
       <button class="btn ghost" onclick="closeModal('modal-create')">Cancel</button>
       <button class="btn primary" onclick="submitCreateCampaign()">Create Campaign &amp; Publish</button>
@@ -180,6 +211,24 @@
       <button class="btn ghost" onclick="closeModal('modal-dropin')">Cancel</button>
       <button class="btn" id="di-save-btn" onclick="submitDropIn(false)">Create Character</button>
       <button class="btn launch" id="di-launch-btn" onclick="submitDropIn(true)">Create &amp; Launch D2RLoader</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT EXISTING CHARACTER MODAL -->
+<div class="modal-backdrop" id="modal-import">
+  <div class="modal">
+    <div class="space-between"><h3>Import Existing Character</h3><button class="btn ghost" onclick="closeModal('modal-import')">X</button></div>
+    <div style="font-size:12px;color:var(--muted);margin:8px 0;">Copy a character from your Solo profile, Live D2R saves, or another campaign into this campaign's isolated profile.</div>
+    <label>Character to Import</label>
+    <select id="imp-select" style="width:100%"></select>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;">
+      <input type="checkbox" id="imp-respec" style="width:auto;">
+      <span>Refund all stats &amp; skills (Respec) on import</span>
+    </label>
+    <div class="row" style="justify-content:flex-end; margin-top:14px;">
+      <button class="btn ghost" onclick="closeModal('modal-import')">Cancel</button>
+      <button class="btn primary" id="imp-btn" onclick="submitImportChar()">Import Character</button>
     </div>
   </div>
 </div>
@@ -267,7 +316,7 @@ async function refreshState() {
   STATE.versions = await api("/local/versions");
   const e = STATE.env;
   document.getElementById("status-box").innerHTML =
-    `<div>D2RLoader: ${e.d2rloader_found ? '<span class="ok">Ready &#10003;</span>' : '<span class="warn">Missing</span>'}</div>` +
+    `<div>D2RLoader: ${e.d2rloader_found ? '<span class="ok">Ready &#10003;</span>' : '<a href="#" onclick="showTab(\'settings\');return false;" class="warn" style="text-decoration:underline;" title="Click to set your D2R folder in Settings">Missing (Set Folder)</a>'}</div>` +
     `<div>Installed: <b>v${esc(e.installed_mod_version || "none")}</b></div>` +
     `<div>Name: <b>${esc(STATE.config.display_name || "Wanderer")}</b></div>`;
 }
@@ -312,6 +361,9 @@ async function loadCampaignList() {
             ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${esc(String(c.status || "").toUpperCase())}</span>`}
             <b class="serif" style="font-size:16px;color:var(--gold);">${esc(c.title)}</b>
             <span class="pill">v${esc(c.castalia_version)}</span>
+            <span class="pill">${fmtModeBadge(c)}</span>
+            <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
+            ${(c.campaign_mode || 'pilgrimage') === 'pilgrimage' && Number(c.total_play_seconds) >= 60 ? `<span class="pill">&#9201; ${esc(fmtDuration(c.total_play_seconds))}</span>` : ''}
           </div>
           <button class="btn primary" data-cid="${esc(c.id)}" onclick="openCampaign(this.dataset.cid)">View / Join</button>
         </div>
@@ -335,6 +387,8 @@ async function openCampaign(cid) {
   STATE.activeCampaign = c;
   STATE.activeChars = chars;
 
+  const isPilgrimage = (c.campaign_mode || "pilgrimage") === "pilgrimage";
+  const joinerWaitingForLive = isPilgrimage && !c.is_host && c.status !== "live";
   const liveBanner = c.status === "live" && c.live_join_info ? `
     <div class="card live space-between">
       <div>
@@ -345,9 +399,25 @@ async function openCampaign(cid) {
       </div>
       <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
     </div>` : `
-    <div class="card" style="display:flex;justify-content:flex-end;">
-      <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
+    <div class="card" style="display:flex;justify-content:flex-end;align-items:center;gap:10px;">
+      ${joinerWaitingForLive
+        ? `<button class="btn" disabled style="opacity:0.65;cursor:not-allowed;" title="In Pilgrimage mode, Joiners launch once the Host goes LIVE.">&#9203; Waiting for Host to go LIVE</button>`
+        : `<button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>`}
     </div>`;
+
+  const integrityBanner = isPilgrimage && c.pilgrimage_invalidated_reason ? `
+    <div class="card" style="border-color:var(--red);background:#251212;">
+      <b style="color:#ff8a8a;">&#9888; Pilgrimage Integrity Voided:</b> ${esc(c.pilgrimage_invalidated_reason)}
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">You can continue playing this campaign together, but it is no longer eligible for the Hall of Heroes.</div>
+    </div>` : (isPilgrimage ? `
+    <details class="card" style="padding:8px 12px;font-size:12px;color:var(--muted);">
+      <summary style="cursor:pointer;color:var(--gold);font-weight:600;">&#128220; Pilgrimage Rules &amp; Integrity Check</summary>
+      <ul style="margin:6px 0 0 18px;padding:0;line-height:1.5;">
+        <li>Saves are isolated &amp; SHA-256 verified between sessions — don't manually edit <code>.d2s</code> files or swap the Host character.</li>
+        <li>Respecs are earned in-game only; difficulty follows real party size (don't use <code>/players</code>); maps refresh each session; console &amp; global plugins are auto-disabled.</li>
+        <li>Joiners launch once the Host is <b>&#128994; LIVE</b>.</li>
+      </ul>
+    </details>` : "");
 
   const charRows = chars.length
     ? chars.map((ch, idx) => `
@@ -368,12 +438,19 @@ async function openCampaign(cid) {
       </td>
     </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
 
+  const hostLockedChar = Boolean(c.is_host && isPilgrimage && chars.length > 0);
+  const scope = String(c.pilgrimage_scope || "full").toLowerCase();
+  const hostClearedGoal = isPilgrimage && !c.pilgrimage_invalidated_reason && chars.some(ch => {
+    if (scope === "normal") return Boolean(ch.normal_baal_cleared);
+    if (scope === "nightmare") return Boolean(ch.nm_baal_cleared);
+    return Boolean(ch.hell_baal_cleared);
+  });
   const hostBar = c.is_host ? `
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
       <div class="row">
         <button class="btn" onclick="openScheduleModal()">Edit Schedule</button>
-        <button class="btn" onclick="promptComplete(STATE.activeCampaign.id)">Complete &#8594; Hall of Heroes</button>
+        ${hostClearedGoal ? `<button class="btn primary" onclick="promptComplete(STATE.activeCampaign.id)">&#127942; Complete &#8594; Hall of Heroes</button>` : ""}
         <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
       </div>
     </div>` : "";
@@ -384,15 +461,21 @@ async function openCampaign(cid) {
         <button class="btn ghost" onclick="showTab('campaigns')">&#8592; Back</button>
         <h2>${esc(c.title)}</h2>
         <span class="pill">v${esc(c.castalia_version)}</span>
+        <span class="pill">${fmtModeBadge(c)}</span>
+        <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
       </div>
-      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b> &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
+      <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b>${isPilgrimage ? ` &middot; Elapsed: <b>&#9201; ${esc(fmtDuration(c.total_play_seconds))}</b>` : ""} &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
     </div>
     ${liveBanner}
+    ${integrityBanner}
     <div class="card">
       <div class="space-between" style="margin-bottom:6px;">
         <h3>Your Character (Isolated Campaign Profile)</h3>
         <div class="row">
-          <button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>
+          ${!isPilgrimage ? `<button class="btn" onclick="openImportModal()">&#128194; Import Existing</button>` : ""}
+          ${hostLockedChar
+            ? `<span class="pill">&#127942; Pilgrimage Host Character Locked</span>`
+            : `<button class="btn primary" onclick="openDropInModal(false, false)">+ ${Number(c.current_level) === 1 ? 'New Level 1 Character' : `Generate Drop-In (Lvl ${Number(c.current_level) || 1}, ${esc(c.current_wp)})`}</button>`}
           ${c.my_rsvp_id ? `<button class="btn danger" onclick="cancelRsvp(STATE.activeCampaign.id)">Cancel RSVP</button>` : ""}
         </div>
       </div>
@@ -409,8 +492,15 @@ async function openCampaign(cid) {
 async function renderSolo() {
   const main = document.getElementById("main");
   const chars = await api("/local/chars/solo");
-  const rows = chars.map(ch => `<tr><td><b>${esc(ch.char_name)}</b></td><td>Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)}</td><td>${esc(ch.char_wp)}</td><td>${esc(ch.build_summary)}</td></tr>`).join("")
-    || `<tr><td colspan="4" style="color:var(--muted);">No solo characters yet.</td></tr>`;
+  STATE.soloChars = chars;
+  const rows = chars.map((ch, idx) => `<tr>
+    <td><b>${esc(ch.char_name)}</b></td>
+    <td>Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)}</td>
+    <td>${esc(ch.char_wp)}</td>
+    <td>${esc(ch.build_summary)}</td>
+    <td style="text-align:right;"><button class="btn ghost" onclick="respecSoloChar(${idx})">Respec</button></td>
+  </tr>`).join("")
+    || `<tr><td colspan="5" style="color:var(--muted);">No solo characters yet.</td></tr>`;
   main.innerHTML = `
     <div class="space-between" style="margin-bottom:12px;">
       <h2>Solo Play (Isolated Profile)</h2>
@@ -421,16 +511,58 @@ async function renderSolo() {
     </div>
     <div class="card">
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Characters in <code>profiles/solo/</code> are completely isolated from your co-op campaigns.</div>
-      <table><thead><tr><th>Name</th><th>Class &amp; Level</th><th>Act / WP</th><th>Build</th></tr></thead><tbody>${rows}</tbody></table>
+      <table><thead><tr><th>Name</th><th>Class &amp; Level</th><th>Act / WP</th><th>Build</th><th></th></tr></thead><tbody>${rows}</tbody></table>
     </div>`;
 }
 
-async function renderHoH() {
+function fmtDuration(sec) {
+  const s = Math.max(0, Number(sec) || 0);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function fmtScopeBadge(scope) {
+  const s = String(scope || "full").toLowerCase();
+  if (s === "normal") return "&#129353; Normal Pilgrimage";
+  if (s === "nightmare") return "&#129352; Nightmare Pilgrimage";
+  if (s === "hell") return "&#129351; Hell Pilgrimage";
+  return "&#127942; Full Pilgrimage";
+}
+
+function fmtModeBadge(c) {
+  return (c.campaign_mode || "pilgrimage") === "pilgrimage"
+    ? fmtScopeBadge(c.pilgrimage_scope)
+    : "&#9876; Open Party";
+}
+
+let HOH_FILTER = "all";
+
+async function renderHoH(filterScope = HOH_FILTER) {
+  HOH_FILTER = filterScope || "all";
   const main = document.getElementById("main");
-  const items = await api("/local/chronicles");
-  main.innerHTML = `<h2 style="margin-bottom:12px;">&#127942; Hall of Heroes</h2>` + (items.length ? items.map(x => `
+  const allItems = await api("/local/chronicles");
+  const items = HOH_FILTER === "all"
+    ? allItems
+    : allItems.filter(x => String(x.pilgrimage_scope || "full").toLowerCase() === HOH_FILTER);
+  const filters = [
+    ["all", "All Brackets"],
+    ["full", "&#127942; Full"],
+    ["normal", "&#129353; Normal"],
+    ["nightmare", "&#129352; Nightmare"],
+    ["hell", "&#129351; Hell"],
+  ].map(([k, lbl]) => `<button class="btn ${HOH_FILTER === k ? 'primary' : 'ghost'}" style="padding:4px 10px;font-size:12px;" onclick="renderHoH('${k}')">${lbl}</button>`).join("");
+  main.innerHTML = `<div class="space-between" style="margin-bottom:12px;"><h2>&#127942; Hall of Heroes</h2><div class="row">${filters}</div></div>` + (items.length ? items.map(x => `
     <div class="card">
-      <div class="space-between"><b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b><span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span></div>
+      <div class="space-between">
+        <b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b>
+        <div>
+          <span class="pill">${fmtScopeBadge(x.pilgrimage_scope)}</span>
+          <span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span>
+          <span class="pill">${x.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
+          ${Number(x.total_play_seconds) > 0 ? `<span class="pill">&#9201; ${esc(fmtDuration(x.total_play_seconds))}</span>` : ''}
+        </div>
+      </div>
       <div style="margin:6px 0;">${esc(x.summary)}</div>
       <div style="font-size:11px;color:var(--muted);">Sessions: ${Number(x.sessions_played) || 0} &middot; Deaths: ${Number(x.death_count) || 0} &middot; Cleared: ${esc(fmtLocalTime(x.completed_at))}</div>
     </div>`).join("") : `<div class="card">No completed Hell Baal campaigns recorded yet.</div>`);
@@ -444,9 +576,22 @@ async function renderSettings() {
     <div class="card">
       <label>Display Name</label><input id="s-name" style="width:100%" value="${esc(c.display_name || '')}">
       <label>Campaign Hub API URL</label><input id="s-api" style="width:100%" value="${esc(c.api_url || '')}">
-      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label><input id="s-hostaddr" style="width:100%" placeholder="147.185.221.21:14322 (optional)" value="${esc(c.host_connect_address || '')}">
-      <label>Diablo II: Resurrected Install Dir</label><input id="s-gdir" style="width:100%" value="${esc(c.d2r_game_dir || '')}">
-      <label>D2R Castalia Save Dir</label><input id="s-sdir" style="width:100%" value="${esc(c.d2r_save_dir || '')}">
+      <label>Host Tunnel / Public Address (e.g. playit.gg host:port)</label>
+      <div class="row" style="gap:6px;">
+        <input id="s-hostaddr" style="flex:1" placeholder="209.25.140.16:11887 (optional)" value="${esc(c.host_connect_address || '')}">
+        <button class="btn" onclick="testHostAddr()">Test Connection</button>
+      </div>
+      <div id="s-host-status" style="font-size:12px;margin-top:4px;color:var(--muted);"></div>
+      <label>Diablo II: Resurrected Install Dir</label>
+      <div class="row" style="gap:6px;">
+        <input id="s-gdir" style="flex:1" value="${esc(c.d2r_game_dir || '')}">
+        <button class="btn" onclick="browseDir('s-gdir', 'Select Diablo II: Resurrected Install Folder')">Browse...</button>
+      </div>
+      <label>D2R Castalia Save Dir</label>
+      <div class="row" style="gap:6px;">
+        <input id="s-sdir" style="flex:1" value="${esc(c.d2r_save_dir || '')}">
+        <button class="btn" onclick="browseDir('s-sdir', 'Select D2R Castalia Saves Folder')">Browse...</button>
+      </div>
       <div style="margin-top:10px;"><button class="btn primary" onclick="saveSettings()">Save Settings</button></div>
     </div>
     <div class="card">
@@ -517,11 +662,48 @@ function _defaultNextSessionLocal() {
 
 function openCreateModal() {
   const sel = document.getElementById("c-version");
-  sel.innerHTML = (STATE.versions || []).map(v => `<option value="${esc(v.version)}">v${esc(v.version)} ${v.cached ? '(cached)' : ''}</option>`).join("") || `<option value="0.4.0">v0.4.0</option>`;
+  // Group releases by MAJOR.MINOR (e.g. "0.4") so Hosts pick a minor line (0.4.x)
+  // that automatically tracks the latest patch release in that line.
+  const byMinor = new Map();
+  for (const v of (STATE.versions || [])) {
+    const m = String(v.version || "").match(/^v?(\d+)\.(\d+)\.(\d+)$/);
+    if (!m) continue;
+    const minorKey = `${m[1]}.${m[2]}`;
+    const patchNum = Number(m[3]);
+    const prev = byMinor.get(minorKey);
+    if (!prev || patchNum > prev.patchNum) {
+      byMinor.set(minorKey, { minorKey, patchNum, version: `${m[1]}.${m[2]}.${m[3]}` });
+    }
+  }
+  const minorOpts = Array.from(byMinor.values())
+    .map(g => `<option value="${esc(g.version)}">v${esc(g.minorKey)}.x (latest: v${esc(g.version)})</option>`)
+    .join("");
+  sel.innerHTML = minorOpts || `<option value="0.4.3">v0.4.x (latest: v0.4.3)</option>`;
   _populateTzSelect("c-tz");
   const nextEl = document.getElementById("c-next");
   if (nextEl && !nextEl.value) nextEl.value = _defaultNextSessionLocal();
+  onCreateModeChange();
   openModal("modal-create");
+}
+
+function onCreateModeChange() {
+  const isPilg = document.getElementById("c-mode").value === "pilgrimage";
+  const lvEl = document.getElementById("c-level");
+  const wpEl = document.getElementById("c-wp");
+  const rulesEl = document.getElementById("c-pilgrimage-rules");
+  const scopeWrap = document.getElementById("c-scope-wrap");
+  const scopeEl = document.getElementById("c-scope");
+  lvEl.disabled = isPilg;
+  wpEl.disabled = isPilg;
+  if (scopeWrap) scopeWrap.style.display = isPilg ? "block" : "none";
+  if (isPilg) {
+    const sc = scopeEl ? scopeEl.value : "full";
+    const starts = { full: ["1", "a1n"], normal: ["1", "a1n"], nightmare: ["38", "a1nm"], hell: ["65", "a1h"] };
+    const [lvl, wp] = starts[sc] || ["1", "a1n"];
+    lvEl.value = lvl;
+    wpEl.value = wp;
+  }
+  if (rulesEl) rulesEl.style.display = isPilg ? "block" : "none";
 }
 
 async function submitCreateCampaign() {
@@ -534,10 +716,13 @@ async function submitCreateCampaign() {
       title: document.getElementById("c-title").value,
       description: document.getElementById("c-desc").value,
       ruleset: "standard",
+      campaign_mode: document.getElementById("c-mode").value,
+      pilgrimage_scope: document.getElementById("c-scope") ? document.getElementById("c-scope").value : "full",
       castalia_version: document.getElementById("c-version").value,
       current_level: Number(document.getElementById("c-level").value || 1),
       current_wp: document.getElementById("c-wp").value,
       max_seats: Number(document.getElementById("c-seats").value || 5),
+      shared_stash: Boolean(document.getElementById("c-shared-stash").checked),
       schedule_text: document.getElementById("c-sched").value,
       next_session_utc: _localInputToUtcIso(nextVal, tzVal),
     },
@@ -662,7 +847,22 @@ async function kickRsvp(cid, rid) {
 }
 async function cancelRsvp(cid) { await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid } }); toast("RSVP cancelled."); openCampaign(cid); }
 async function copyText(t) { await api("/local/clipboard", { method: "POST", body: { text: t } }); toast("Copied to clipboard!"); }
-async function doLaunch(t) { await api("/local/launch", { method: "POST", body: { target: t } }); toast("Synced profile & launched D2RLoader!"); }
+async function doLaunch(t, allowInvalidate = false) {
+  const headers = { "X-Castalia-Token": TOKEN, "Content-Type": "application/json" };
+  const r = await fetch("/local/launch", { method: "POST", headers, body: JSON.stringify({ target: t, allow_invalidate: allowInvalidate }) });
+  const data = await r.json();
+  if (r.status === 409 && data.can_invalidate) {
+    if (confirm(`⚠️ Pilgrimage Integrity Warning:\n\n${data.error}\n\nLaunching anyway will void Hall of Heroes eligibility for this campaign. Continue?`)) {
+      return doLaunch(t, true);
+    }
+    return;
+  }
+  if (!r.ok) {
+    alert(data.error || `Launch failed (HTTP ${r.status})`);
+    return;
+  }
+  toast("Synced profile & launched D2RLoader!");
+}
 async function launchTarget(t) {
   const chars = await api(`/local/chars/${t}`);
   if (!chars.length) {
@@ -713,7 +913,55 @@ async function submitScheduleUpdate() {
 async function promptDelete(cid, title) { if (confirm(`Permanently delete campaign "${title}"? (Local character saves in your profile folder are kept.)`)) { await api("/local/delete", { method: "POST", body: { campaign_id: cid } }); toast("Campaign deleted."); showTab("campaigns"); } }
 async function saveSettings() {
   await api("/local/config", { method: "POST", body: { display_name: document.getElementById("s-name").value, api_url: document.getElementById("s-api").value, host_connect_address: document.getElementById("s-hostaddr").value, d2r_game_dir: document.getElementById("s-gdir").value, d2r_save_dir: document.getElementById("s-sdir").value } });
-  await refreshState(); toast("Settings saved!");
+  await refreshState(); toast("Settings saved!"); renderSettings();
+}
+async function browseDir(inputId, title) {
+  const el = document.getElementById(inputId);
+  const res = await api("/local/browse-dir", { method: "POST", body: { title, initial_dir: el.value } });
+  if (res && res.path) { el.value = res.path; toast("Folder selected — click Save Settings."); }
+}
+async function testHostAddr() {
+  const st = document.getElementById("s-host-status");
+  const addr = document.getElementById("s-hostaddr").value.trim();
+  st.textContent = "Testing TCP reachability...";
+  const res = await api("/local/test-host", { method: "POST", body: { address: addr } });
+  st.innerHTML = res.reachable
+    ? `<span class="ok">&#10003; ${esc(res.message)}</span>`
+    : `<span class="warn">&#9888; ${esc(res.message)}</span>`;
+}
+async function openImportModal() {
+  const c = STATE.activeCampaign;
+  const cands = await api(`/local/importable-chars?campaign_id=${encodeURIComponent(c.id)}`);
+  STATE.importableChars = cands;
+  const sel = document.getElementById("imp-select");
+  if (!cands.length) {
+    sel.innerHTML = `<option value="">(No existing characters found in Solo or Live Saves)</option>`;
+    document.getElementById("imp-btn").disabled = true;
+  } else {
+    sel.innerHTML = cands.map((ch, i) => `<option value="${i}">${esc(ch.char_name)} — Lvl ${Number(ch.char_level) || 1} ${esc(ch.class_name)} (${esc(ch.char_wp)}) [${esc(ch.source_label)}]</option>`).join("");
+    document.getElementById("imp-btn").disabled = false;
+  }
+  document.getElementById("imp-respec").checked = false;
+  openModal("modal-import");
+}
+async function submitImportChar() {
+  const c = STATE.activeCampaign;
+  const idx = Number(document.getElementById("imp-select").value);
+  const chosen = (STATE.importableChars || [])[idx];
+  if (!chosen) return;
+  const respec = document.getElementById("imp-respec").checked;
+  await api("/local/import-char", { method: "POST", body: { campaign_id: c.id, source_path: chosen.source_path, respec } });
+  closeModal("modal-import");
+  toast(`Imported ${chosen.char_name}${respec ? " (respecced)" : ""}!`);
+  openCampaign(c.id);
+}
+async function respecSoloChar(idx) {
+  const ch = (STATE.soloChars || [])[idx];
+  if (!ch) return;
+  if (!confirm(`Refund all skill & stat points on Solo character "${ch.char_name}"?`)) return;
+  await api("/local/respec-char", { method: "POST", body: { target: "solo", char_name: ch.char_name, reset_stats: true } });
+  toast(`Respecced ${ch.char_name}!`);
+  renderSolo();
 }
 async function exportTokens() { const r = await api("/local/tokens/export"); await copyText(r.tokens_json); }
 async function importTokens() { const raw = prompt("Paste exported tokens.json:"); if (raw) { const r = await api("/local/tokens/import", { method: "POST", body: { tokens_json: raw } }); toast(`Imported ${r.imported} campaign tokens!`); } }

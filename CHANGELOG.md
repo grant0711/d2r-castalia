@@ -8,6 +8,26 @@ Versioning follows **Save-Aware SemVer** (`vMAJOR.MINOR.PATCH` — see [docs/sys
 
 ---
 
+## [v0.4.4] - 2026-11-28
+
+**Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)
+
+### Changes
+- docs: document 4 Pilgrimage brackets in LAUNCHER_SPEC (8496273)
+- feat(pilgrimage): add Full, Normal-only, Nightmare-only, and Hell-only Pilgrimage brackets (ad55718)
+- Merge feat/launcher-ux-and-host-toolkit: Pilgrimage/Open rulesets, split-stash, integrity checks, host toolkit (ece0a0b)
+- feat(pilgrimage): add Host+Joiner .d2s SHA-256 continuity, LIVE gate, and rules UI (39761f8)
+- feat(launcher): scope server-authoritative rules & chat_messages log hook to Host only (63da6fe)
+- feat(launcher): enforce Pilgrimage vs Open Party d2rloader.toml & Settings.json rules with crash-safe restore (e42945f)
+- feat(ui): group Create Campaign version selector by MAJOR.MINOR (e.g. v0.4.x) (65b0d82)
+- feat(hub): add Pilgrimage vs Open Party campaign_mode with Host single-char lock and HoH gating (4bdb112)
+- feat(ui): display stash mode pill and elapsed play time in Campaign Detail header (0d49d72)
+- feat(telemetry): display top 3 castable/aura skills in build_summary (excluding passives) (5dcf8fb)
+- feat(ui): gate Complete -> Hall of Heroes button on Host Hell Act 5 Q6 (Baal) completion (e459c7d)
+- feat(hub): add locked shared_stash toggle (global vs isolated .d2i) and cumulative host elapsed play time (06bbb07)
+- feat(launcher): TDD launcher UX & host toolkit (skill names, import+respec, folder picker, host reachability, tcp_guard) (4794614)
+- feat(worker): bump Discord campaign embed to bottom of channel when going live (ccd65b8)
+
 ## [v0.4.3] - 2026-11-27
 
 **Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)

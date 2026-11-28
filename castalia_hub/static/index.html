@@ -848,7 +848,7 @@ async function kickRsvp(cid, rid) {
 async function cancelRsvp(cid) { await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid } }); toast("RSVP cancelled."); openCampaign(cid); }
 async function copyText(t) { await api("/local/clipboard", { method: "POST", body: { text: t } }); toast("Copied to clipboard!"); }
 async function doLaunch(t, allowInvalidate = false) {
-  const headers = { "X-Castalia-Token": TOKEN, "Content-Type": "application/json" };
+  const headers = { "X-Castalia-Token": SESSION_TOKEN, "Content-Type": "application/json" };
   const r = await fetch("/local/launch", { method: "POST", headers, body: JSON.stringify({ target: t, allow_invalidate: allowInvalidate }) });
   const data = await r.json();
   if (r.status === 409 && data.can_invalidate) {

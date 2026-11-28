@@ -205,6 +205,15 @@ class TestLauncherUXAndHostToolkit(unittest.TestCase):
             st, probe = _req("POST", "/local/test-host", {"address": "127.0.0.1:1"})
             self.assertEqual(st, 200)
             self.assertFalse(probe["reachable"])
+
+            st, lres = _req("POST", "/local/launch", {"target": "solo", "dry_run": True})
+            self.assertEqual(st, 200)
+            self.assertEqual(lres["profile_id"], "solo")
+
+            # Static guard: index.html must use SESSION_TOKEN, never undefined TOKEN
+            idx_html = open(os.path.join(REPO_ROOT, "castalia_hub", "static", "index.html"), "r", encoding="utf-8").read()
+            import re
+            self.assertNotRegex(idx_html, r"\bTOKEN\b", "index.html must reference SESSION_TOKEN, not undefined TOKEN")
         finally:
             srv.shutdown()
             srv.server_close()

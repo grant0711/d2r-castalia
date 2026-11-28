@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS campaigns (
   shared_stash      INTEGER NOT NULL DEFAULT 0,
   campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  host_char_name    TEXT,
+  host_char_hash    TEXT,
+  pilgrimage_invalidated_reason TEXT,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -36,6 +39,7 @@ CREATE TABLE IF NOT EXISTS rsvps (
   char_level        INTEGER NOT NULL DEFAULT 1,
   char_wp           TEXT NOT NULL DEFAULT 'a1n',
   build_summary     TEXT NOT NULL DEFAULT '',
+  char_hash         TEXT,
   status            TEXT NOT NULL DEFAULT 'confirmed',
   created_at        TEXT NOT NULL
 );

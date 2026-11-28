@@ -291,14 +291,16 @@ export default {
               error: `Character name '${newName}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games).`,
             }, 409);
           }
+          const newHash = body.char_hash ? String(body.char_hash).trim().slice(0, 64) : (rrow.char_hash || null);
           await env.DB.prepare(
-            "UPDATE rsvps SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ? WHERE id = ?"
+            "UPDATE rsvps SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?, char_hash = ? WHERE id = ?"
           ).bind(
             newName,
             (body.char_class || rrow.char_class).toLowerCase(),
             Number(body.char_level ?? rrow.char_level),
             body.char_wp || rrow.char_wp,
             body.build_summary ?? rrow.build_summary,
+            newHash,
             rid
           ).run();
           const updated = await env.DB.prepare("SELECT * FROM rsvps WHERE id = ?").bind(rid).first();
@@ -342,9 +344,12 @@ export default {
           const isPilgrimage = (row.campaign_mode || "pilgrimage") === "pilgrimage";
           const addSec = isPilgrimage ? Math.max(0, Math.min(86400, Math.floor(Number(body.session_seconds || 0)))) : 0;
           const totalSec = Number(row.total_play_seconds || 0) + addSec;
+          const hostCharName = row.host_char_name || (body.host_char_name ? String(body.host_char_name).trim().slice(0, 15) : null);
+          const hostCharHash = body.host_char_hash ? String(body.host_char_hash).trim().slice(0, 64) : (row.host_char_hash || null);
+          const invalReason = row.pilgrimage_invalidated_reason || (body.pilgrimage_invalidated_reason ? String(body.pilgrimage_invalidated_reason).trim().slice(0, 200) : null);
           await env.DB.prepare(
-            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, total_play_seconds = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
-          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, totalSec, nextUtc, now, cid).run();
+            "UPDATE campaigns SET status = 'active', live_join_info = NULL, current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, total_play_seconds = ?, host_char_name = ?, host_char_hash = ?, pilgrimage_invalidated_reason = ?, next_session_utc = ?, updated_at = ? WHERE id = ?"
+          ).bind(Number(body.current_level ?? row.current_level), nextWp, hasCube, hostProg, totalSec, hostCharName, hostCharHash, invalReason, nextUtc, now, cid).run();
           const updated = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           const camp = sanitizeCampaign(updated, false);
           await syncDiscordWithCount(env, camp, cid, Boolean(explicitNext && explicitNext !== row.next_session_utc));
@@ -353,10 +358,11 @@ export default {
 
         if (parts.length === 3 && req.method === "PATCH") {
           const body = await req.json();
-          const fields = ["title", "description", "ruleset", "castalia_version", "current_level", "current_wp", "max_seats", "schedule_text", "recurrence_days", "next_session_utc", "status"];
+          const fields = ["title", "description", "ruleset", "castalia_version", "current_level", "current_wp", "max_seats", "schedule_text", "recurrence_days", "next_session_utc", "status", "host_char_name", "host_char_hash", "pilgrimage_invalidated_reason"];
           const sets = [];
           const vals = [];
           for (const f of fields) {
+            if (f === "host_char_name" && row.host_char_name) continue;
             if (f === "next_session_utc" && body[f] !== undefined) {
               sets.push(`${f} = ?`);
               vals.push(body[f] ? String(body[f]).trim() : null);
@@ -386,6 +392,9 @@ export default {
         if (parts.length === 4 && parts[3] === "complete" && req.method === "POST") {
           if ((row.campaign_mode || "pilgrimage") !== "pilgrimage") {
             return jsonResp({ error: "Only Pilgrimage campaigns are eligible for Hall of Heroes." }, 400);
+          }
+          if (row.pilgrimage_invalidated_reason) {
+            return jsonResp({ error: `Pilgrimage integrity was voided: ${row.pilgrimage_invalidated_reason}` }, 400);
           }
           const body = await req.json();
           const rsvps = (

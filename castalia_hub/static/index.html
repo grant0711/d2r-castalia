@@ -146,6 +146,15 @@
         </select>
       </div>
     </div>
+    <div id="c-pilgrimage-rules" style="margin-top:8px;padding:8px 10px;border:1px solid var(--gold-dim);border-radius:6px;background:#1a150e;font-size:11.5px;color:var(--muted);line-height:1.45;">
+      <b style="color:var(--gold);">&#128220; Pilgrimage Rules (Hall of Heroes Eligible):</b>
+      <ul style="margin:4px 0 0 16px;padding:0;">
+        <li>Host starts fresh at Level 1 (Act 1 Normal) and plays the same character through Hell Baal.</li>
+        <li>Character saves are isolated &amp; SHA-256 checksum-verified between sessions — do not edit <code>.d2s</code> files externally.</li>
+        <li>Auto-enforced on launch: earned respecs only, <code>/players</code> scaling = 1 (follows real party size), fresh maps each session, console &amp; global plugins disabled.</li>
+        <li>Joiners launch once the Host is <b>&#128994; LIVE</b>.</li>
+      </ul>
+    </div>
     <div class="row">
       <div style="flex:1"><label>Start Level</label><input id="c-level" type="number" min="1" max="99" value="1" style="width:100%" disabled></div>
       <div style="flex:1"><label>Start Act / WP</label>
@@ -369,6 +378,8 @@ async function openCampaign(cid) {
   STATE.activeCampaign = c;
   STATE.activeChars = chars;
 
+  const isPilgrimage = (c.campaign_mode || "pilgrimage") === "pilgrimage";
+  const joinerWaitingForLive = isPilgrimage && !c.is_host && c.status !== "live";
   const liveBanner = c.status === "live" && c.live_join_info ? `
     <div class="card live space-between">
       <div>
@@ -379,9 +390,25 @@ async function openCampaign(cid) {
       </div>
       <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
     </div>` : `
-    <div class="card" style="display:flex;justify-content:flex-end;">
-      <button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>
+    <div class="card" style="display:flex;justify-content:flex-end;align-items:center;gap:10px;">
+      ${joinerWaitingForLive
+        ? `<button class="btn" disabled style="opacity:0.65;cursor:not-allowed;" title="In Pilgrimage mode, Joiners launch once the Host goes LIVE.">&#9203; Waiting for Host to go LIVE</button>`
+        : `<button class="btn launch" onclick="launchTarget(STATE.activeCampaign.id)">&#9654; Play Campaign</button>`}
     </div>`;
+
+  const integrityBanner = isPilgrimage && c.pilgrimage_invalidated_reason ? `
+    <div class="card" style="border-color:var(--red);background:#251212;">
+      <b style="color:#ff8a8a;">&#9888; Pilgrimage Integrity Voided:</b> ${esc(c.pilgrimage_invalidated_reason)}
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">You can continue playing this campaign together, but it is no longer eligible for the Hall of Heroes.</div>
+    </div>` : (isPilgrimage ? `
+    <details class="card" style="padding:8px 12px;font-size:12px;color:var(--muted);">
+      <summary style="cursor:pointer;color:var(--gold);font-weight:600;">&#128220; Pilgrimage Rules &amp; Integrity Check</summary>
+      <ul style="margin:6px 0 0 18px;padding:0;line-height:1.5;">
+        <li>Saves are isolated &amp; SHA-256 verified between sessions — don't manually edit <code>.d2s</code> files or swap the Host character.</li>
+        <li>Respecs are earned in-game only; difficulty follows real party size (don't use <code>/players</code>); maps refresh each session; console &amp; global plugins are auto-disabled.</li>
+        <li>Joiners launch once the Host is <b>&#128994; LIVE</b>.</li>
+      </ul>
+    </details>` : "");
 
   const charRows = chars.length
     ? chars.map((ch, idx) => `
@@ -402,9 +429,8 @@ async function openCampaign(cid) {
       </td>
     </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
 
-  const isPilgrimage = (c.campaign_mode || "pilgrimage") === "pilgrimage";
   const hostLockedChar = Boolean(c.is_host && isPilgrimage && chars.length > 0);
-  const hostClearedHellBaal = isPilgrimage && chars.some(ch => Boolean(ch.hell_baal_cleared));
+  const hostClearedHellBaal = isPilgrimage && !c.pilgrimage_invalidated_reason && chars.some(ch => Boolean(ch.hell_baal_cleared));
   const hostBar = c.is_host ? `
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
@@ -427,6 +453,7 @@ async function openCampaign(cid) {
       <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b>${isPilgrimage ? ` &middot; Elapsed: <b>&#9201; ${esc(fmtDuration(c.total_play_seconds))}</b>` : ""} &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
     </div>
     ${liveBanner}
+    ${integrityBanner}
     <div class="card">
       <div class="space-between" style="margin-bottom:6px;">
         <h3>Your Character (Isolated Campaign Profile)</h3>
@@ -621,9 +648,11 @@ function onCreateModeChange() {
   const isPilg = document.getElementById("c-mode").value === "pilgrimage";
   const lvEl = document.getElementById("c-level");
   const wpEl = document.getElementById("c-wp");
+  const rulesEl = document.getElementById("c-pilgrimage-rules");
   lvEl.disabled = isPilg;
   wpEl.disabled = isPilg;
   if (isPilg) { lvEl.value = "1"; wpEl.value = "a1n"; }
+  if (rulesEl) rulesEl.style.display = isPilg ? "block" : "none";
 }
 
 async function submitCreateCampaign() {
@@ -766,7 +795,22 @@ async function kickRsvp(cid, rid) {
 }
 async function cancelRsvp(cid) { await api("/local/rsvp/cancel", { method: "POST", body: { campaign_id: cid } }); toast("RSVP cancelled."); openCampaign(cid); }
 async function copyText(t) { await api("/local/clipboard", { method: "POST", body: { text: t } }); toast("Copied to clipboard!"); }
-async function doLaunch(t) { await api("/local/launch", { method: "POST", body: { target: t } }); toast("Synced profile & launched D2RLoader!"); }
+async function doLaunch(t, allowInvalidate = false) {
+  const headers = { "X-Castalia-Token": TOKEN, "Content-Type": "application/json" };
+  const r = await fetch("/local/launch", { method: "POST", headers, body: JSON.stringify({ target: t, allow_invalidate: allowInvalidate }) });
+  const data = await r.json();
+  if (r.status === 409 && data.can_invalidate) {
+    if (confirm(`⚠️ Pilgrimage Integrity Warning:\n\n${data.error}\n\nLaunching anyway will void Hall of Heroes eligibility for this campaign. Continue?`)) {
+      return doLaunch(t, true);
+    }
+    return;
+  }
+  if (!r.ok) {
+    alert(data.error || `Launch failed (HTTP ${r.status})`);
+    return;
+  }
+  toast("Synced profile & launched D2RLoader!");
+}
 async function launchTarget(t) {
   const chars = await api(`/local/chars/${t}`);
   if (!chars.length) {

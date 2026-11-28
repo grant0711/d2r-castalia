@@ -214,10 +214,22 @@ def make_ui_handler(hub: CastaliaHub):
                 if p == "/local/launch":
                     target = body["target"]
                     dry = bool(body.get("dry_run", False))
+                    allow_inval = bool(body.get("allow_invalidate", False))
                     if dry:
                         return self._send_json(200, hub.launch_session(target, dry_run=True))
+                    if target != "solo":
+                        chk = hub.verify_pilgrimage_integrity(target)
+                        if not chk.get("ok"):
+                            if chk.get("blocked"):
+                                return self._send_json(400, {"error": chk.get("reason") or "Pilgrimage launch blocked.", "blocked": True})
+                            if not allow_inval:
+                                return self._send_json(409, {"error": chk.get("reason") or "Pilgrimage integrity warning.", "can_invalidate": True})
                     # Run D2RLoader in background thread so UI stays responsive
-                    t = threading.Thread(target=hub.launch_session, args=(target, False), daemon=True)
+                    t = threading.Thread(
+                        target=hub.launch_session,
+                        args=(target, False, allow_inval),
+                        daemon=True,
+                    )
                     t.start()
                     return self._send_json(200, {"launched": True, "target": target})
                 self._send_json(404, {"error": "not_found"})

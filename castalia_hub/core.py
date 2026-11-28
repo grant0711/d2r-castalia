@@ -41,6 +41,15 @@ STASH_EXTS = (".d2i",)
 SAVE_EXTS = CHAR_EXTS + STASH_EXTS
 GAME_ID_LOG_RE = re.compile(r"(?:Game\s*ID|game_id|advertised_id)\s*[:=]\s*([A-Za-z0-9_-]{4,24})", re.I)
 LISTENER_READY_RE = re.compile(r"Listener ready:\s*bound_port=(\d+)", re.I)
+HOST_CHAR_LOG_RE = re.compile(r'\[HOST TRACE\].*character\.name="([^"]+)"')
+
+
+def _sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _is_char_file(filename: str) -> bool:
@@ -313,6 +322,13 @@ class CastaliaHub:
         stash_source = state.get("stash_source")
         if pid:
             self._sync_live_to_profile(pid, stash_source=stash_source)
+            if pid != "solo":
+                try:
+                    marker = os.path.join(self.profile_dir_for(pid), ".crash_recovered")
+                    with open(marker, "w", encoding="utf-8") as mf:
+                        mf.write(datetime.datetime.now(datetime.timezone.utc).isoformat())
+                except Exception:
+                    pass
         if state.get("prev_toml_overrides") or state.get("prev_settings_overrides"):
             self.restore_launch_rules(state)
         else:
@@ -943,6 +959,9 @@ class CastaliaHub:
         has_cube: Optional[bool] = None,
         host_progress_b64: Optional[str] = None,
         session_seconds: Optional[int] = None,
+        host_char_name: Optional[str] = None,
+        host_char_hash: Optional[str] = None,
+        pilgrimage_invalidated_reason: Optional[str] = None,
     ) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
@@ -960,6 +979,12 @@ class CastaliaHub:
             body["host_progress_b64"] = str(host_progress_b64)
         if session_seconds is not None and int(session_seconds) > 0:
             body["session_seconds"] = int(session_seconds)
+        if host_char_name:
+            body["host_char_name"] = str(host_char_name)
+        if host_char_hash:
+            body["host_char_hash"] = str(host_char_hash)
+        if pilgrimage_invalidated_reason:
+            body["pilgrimage_invalidated_reason"] = str(pilgrimage_invalidated_reason)
         return self._api("POST", f"/api/campaigns/{campaign_id}/end-session", body=body, token=tok)
 
     def _import_existing_char_to_campaign(self, campaign_id: str, char_name: str) -> Optional[str]:
@@ -1044,13 +1069,21 @@ class CastaliaHub:
         tok = self.get_token(campaign_id, "rsvp_token") or self.get_token(campaign_id, "host_token")
         if not rid or not tok:
             return None
-        body = {
+        char_hash = telem.get("char_hash")
+        if not char_hash and telem.get("path") and os.path.isfile(telem["path"]):
+            try:
+                char_hash = _sha256_file(telem["path"])
+            except Exception:
+                char_hash = None
+        body: Dict[str, Any] = {
             "char_name": telem["char_name"],
             "char_class": telem["char_class"],
             "char_level": telem["char_level"],
             "char_wp": telem["char_wp"],
             "build_summary": telem["build_summary"],
         }
+        if char_hash:
+            body["char_hash"] = str(char_hash)
         return self._api("PATCH", f"/api/campaigns/{campaign_id}/rsvp/{rid}/telemetry", body=body, token=tok)
 
     def complete_campaign(self, campaign_id: str, summary: str, death_count: int = 0, sessions_played: int = 1) -> Dict[str, Any]:
@@ -1101,12 +1134,17 @@ class CastaliaHub:
             pass
         return None
 
-    def _tail_d2rloader_log_for_game_id(self, campaign_id: str, stop_event: threading.Event) -> None:
+    def _tail_d2rloader_log_for_game_id(
+        self,
+        campaign_id: str,
+        stop_event: threading.Event,
+        hosted_char_names: Optional[List[str]] = None,
+    ) -> None:
         log_path = os.path.join(self.config["d2r_game_dir"], "d2rloader", "logs", "d2rloader.log")
         offset = os.path.getsize(log_path) if os.path.isfile(log_path) else 0
         published_id = False
         published_fallback = False
-        while not stop_event.is_set() and not published_id:
+        while not stop_event.is_set():
             if os.path.isfile(log_path):
                 try:
                     cur_size = os.path.getsize(log_path)
@@ -1116,22 +1154,28 @@ class CastaliaHub:
                         f.seek(offset)
                         chunk = f.read()
                         offset = f.tell()
-                    m = GAME_ID_LOG_RE.search(chunk)
-                    if m:
-                        gid = m.group(1)
-                        try:
-                            self.go_live(campaign_id, gid)
-                            published_id = True
-                        except Exception:
-                            pass
-                    elif not published_fallback and LISTENER_READY_RE.search(chunk):
-                        addr = (self.config.get("host_connect_address") or "").strip()
-                        if addr:
+                    if hosted_char_names is not None and chunk:
+                        for cm in HOST_CHAR_LOG_RE.finditer(chunk):
+                            cname = cm.group(1).strip()
+                            if cname and cname not in hosted_char_names:
+                                hosted_char_names.append(cname)
+                    if not published_id:
+                        m = GAME_ID_LOG_RE.search(chunk)
+                        if m:
+                            gid = m.group(1)
                             try:
-                                self.go_live(campaign_id, addr)
-                                published_fallback = True
+                                self.go_live(campaign_id, gid)
+                                published_id = True
                             except Exception:
                                 pass
+                        elif not published_fallback and LISTENER_READY_RE.search(chunk):
+                            addr = (self.config.get("host_connect_address") or "").strip()
+                            if addr:
+                                try:
+                                    self.go_live(campaign_id, addr)
+                                    published_fallback = True
+                                except Exception:
+                                    pass
                 except Exception:
                     pass
             stop_event.wait(1.5)
@@ -1477,15 +1521,107 @@ class CastaliaHub:
         except Exception:
             return None
 
-    def launch_session(self, target: str, dry_run: bool = False) -> Dict[str, Any]:
+    def verify_pilgrimage_integrity(
+        self,
+        campaign_id: str,
+        campaign: Optional[Dict[str, Any]] = None,
+        consume_crash_marker: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Pre-launch Pilgrimage integrity verification for both Host and Joiners:
+          - Host: checks locked `host_char_name` & `.d2s` SHA-256 continuity (crash recovery exempt).
+          - Joiner: requires Host to be LIVE (`waiting_for_live`) and checks RSVP `.d2s` SHA-256 continuity
+            before launch (`blocked=True` so a tampered Joiner cannot taint the party's Pilgrimage run).
+        """
+        camp = campaign or self.get_campaign(campaign_id)
+        if str(camp.get("campaign_mode") or "open").lower() != "pilgrimage":
+            return {"ok": True, "skipped": True}
+
+        is_host = bool(camp.get("is_host")) or bool(self.get_token(campaign_id, "host_token"))
+        pdir = self.profile_dir_for(campaign_id)
+        crash_marker = os.path.join(pdir, ".crash_recovered")
+        crash_exempt = os.path.isfile(crash_marker)
+        if crash_exempt and consume_crash_marker:
+            try:
+                os.remove(crash_marker)
+            except Exception:
+                pass
+
+        def _find_d2s(expected_name: str) -> Optional[str]:
+            target_low = f"{expected_name.lower()}.d2s"
+            for fn in os.listdir(pdir):
+                if fn.lower() == target_low:
+                    return os.path.join(pdir, fn)
+            return None
+
+        if is_host:
+            locked_name = str(camp.get("host_char_name") or "").strip()
+            expected_hash = str(camp.get("host_char_hash") or "").strip()
+            if not locked_name or not expected_hash:
+                return {"ok": True, "role": "host", "initial": True}
+            d2s_path = _find_d2s(locked_name)
+            if not d2s_path:
+                return {
+                    "ok": False,
+                    "role": "host",
+                    "blocked": False,
+                    "reason": f"Locked Pilgrimage character '{locked_name}.d2s' was removed or swapped.",
+                }
+            if crash_exempt:
+                return {"ok": True, "role": "host", "crash_exempt": True, "char_name": locked_name}
+            actual_hash = _sha256_file(d2s_path)
+            if actual_hash != expected_hash:
+                return {
+                    "ok": False,
+                    "role": "host",
+                    "blocked": False,
+                    "reason": f"Host character '{locked_name}.d2s' was modified outside of a campaign session.",
+                }
+            return {"ok": True, "role": "host", "char_name": locked_name, "char_hash": actual_hash}
+
+        # Joiner checks
+        if str(camp.get("status") or "").lower() != "live":
+            return {
+                "ok": False,
+                "role": "joiner",
+                "blocked": True,
+                "waiting_for_live": True,
+                "reason": "Waiting for Host to go LIVE before launching into a Pilgrimage campaign.",
+            }
+        rsvp_id = self.get_token(campaign_id, "rsvp_id")
+        rsvps = camp.get("rsvps") or []
+        my_rsvp = next((r for r in rsvps if r.get("id") == rsvp_id), None)
+        if my_rsvp and my_rsvp.get("char_hash") and my_rsvp.get("char_name"):
+            cname = str(my_rsvp["char_name"]).strip()
+            expected_hash = str(my_rsvp["char_hash"]).strip()
+            d2s_path = _find_d2s(cname)
+            if not d2s_path:
+                return {
+                    "ok": False,
+                    "role": "joiner",
+                    "blocked": True,
+                    "reason": f"Your Pilgrimage character '{cname}.d2s' is missing from this campaign profile.",
+                }
+            if not crash_exempt:
+                actual_hash = _sha256_file(d2s_path)
+                if actual_hash != expected_hash:
+                    return {
+                        "ok": False,
+                        "role": "joiner",
+                        "blocked": True,
+                        "reason": f"Your Pilgrimage character '{cname}.d2s' was modified outside of a campaign session and cannot join this Pilgrimage run.",
+                    }
+        return {"ok": True, "role": "joiner"}
+
+    def launch_session(self, target: str, dry_run: bool = False, allow_invalidate: bool = False) -> Dict[str, Any]:
         """
         Full launch lifecycle:
           1. If campaign: fetch snapshot, auto-bump patch version (same MAJOR.MINOR) for Host,
-             sync pinned mod version, write castalia_launch_intent.json,
-             auto-configure d2rloader.toml game_port for custom playit.gg ports, copy host/Game ID to clipboard
+             verify Pilgrimage integrity (LIVE gate + .d2s SHA-256 continuity), sync pinned mod version,
+             write castalia_launch_intent.json, apply mode-specific d2rloader.toml & Settings.json rules
           2. Swap isolated save profile into live mods/castalia/
           3. Launch D2RLoader (via bin/d2r-mod --coop on Linux or D2RLoader.exe on Windows)
-          4. On exit: restore game_port, clear intent, sync saves back, parse .d2s telemetry & auto-roll Host
+          4. On exit: restore launch rules, clear intent, sync saves back, parse .d2s telemetry + hash & auto-roll Host
         """
         campaign = None
         is_host = False
@@ -1498,6 +1634,16 @@ class CastaliaHub:
             is_host = bool(campaign.get("is_host"))
             if is_host and not dry_run:
                 self._auto_bump_campaign_version(campaign)
+            if not dry_run and str(campaign.get("campaign_mode") or "open").lower() == "pilgrimage":
+                chk = self.verify_pilgrimage_integrity(target, campaign=campaign, consume_crash_marker=True)
+                if not chk.get("ok"):
+                    if chk.get("blocked") or not allow_invalidate:
+                        raise ValueError(chk.get("reason") or "Pilgrimage integrity check failed.")
+                    try:
+                        self.update_campaign(target, {"pilgrimage_invalidated_reason": chk["reason"]})
+                        campaign["pilgrimage_invalidated_reason"] = chk["reason"]
+                    except Exception:
+                        pass
             ver_status = self.ensure_version_installed(campaign["castalia_version"])
             if campaign.get("live_join_info") and not is_host:
                 join_host, join_port = self.parse_host_port(str(campaign["live_join_info"]))
@@ -1532,10 +1678,11 @@ class CastaliaHub:
 
         stop_evt = threading.Event()
         tail_thread = None
+        hosted_char_names: List[str] = []
         if campaign and is_host:
             tail_thread = threading.Thread(
                 target=self._tail_d2rloader_log_for_game_id,
-                args=(target, stop_evt),
+                args=(target, stop_evt, hosted_char_names),
                 daemon=True,
             )
             tail_thread.start()
@@ -1570,16 +1717,29 @@ class CastaliaHub:
             if target != "solo":
                 self._restore_solo_to_live()
 
-        # Post-exit .d2s telemetry & Host auto-rollover
+        # Post-exit .d2s telemetry, SHA-256 hash update & Host auto-rollover
         chars = self.list_profile_chars(target)
         if campaign and chars:
             latest_char = chars[0]
+            char_hash = None
+            if latest_char.get("path") and os.path.isfile(latest_char["path"]):
+                try:
+                    char_hash = _sha256_file(latest_char["path"])
+                    latest_char["char_hash"] = char_hash
+                except Exception:
+                    char_hash = None
             result["post_session_char"] = latest_char
             try:
                 self.send_telemetry(target, latest_char)
             except Exception as e:
                 result["telemetry_error"] = str(e)
             if is_host and latest_char.get("char_level"):
+                inval_reason = None
+                locked_name = str(campaign.get("host_char_name") or "").strip()
+                if str(campaign.get("campaign_mode") or "open").lower() == "pilgrimage" and locked_name:
+                    swapped = next((n for n in hosted_char_names if n.lower() != locked_name.lower()), None)
+                    if swapped:
+                        inval_reason = f"Host launched a game with '{swapped}' instead of locked Pilgrimage character '{locked_name}'."
                 try:
                     rolled = self.end_session(
                         target,
@@ -1588,10 +1748,13 @@ class CastaliaHub:
                         has_cube=bool(latest_char.get("has_cube", False)),
                         host_progress_b64=latest_char.get("host_progress_b64"),
                         session_seconds=session_seconds,
+                        host_char_name=str(latest_char.get("char_name") or "") or None,
+                        host_char_hash=char_hash,
+                        pilgrimage_invalidated_reason=inval_reason,
                     )
                     result["host_rollover"] = rolled
                 except Exception as e:
                     result["rollover_error"] = str(e)
-                if latest_char.get("hell_baal_cleared"):
+                if latest_char.get("hell_baal_cleared") and not inval_reason and not campaign.get("pilgrimage_invalidated_reason"):
                     result["hell_baal_victory_prompt"] = True
         return result

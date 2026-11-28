@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS campaigns (
   shared_stash      INTEGER NOT NULL DEFAULT 0,
   campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  host_char_name    TEXT,
+  host_char_hash    TEXT,
+  pilgrimage_invalidated_reason TEXT,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -55,6 +58,7 @@ CREATE TABLE IF NOT EXISTS rsvps (
   char_level        INTEGER NOT NULL DEFAULT 1,
   char_wp           TEXT NOT NULL DEFAULT 'a1n',
   build_summary     TEXT NOT NULL DEFAULT '',
+  char_hash         TEXT,
   status            TEXT NOT NULL DEFAULT 'confirmed',
   created_at        TEXT NOT NULL
 );
@@ -269,12 +273,16 @@ class CampaignDB:
             "title", "description", "ruleset", "castalia_version",
             "current_level", "current_wp", "max_seats", "schedule_text",
             "recurrence_days", "next_session_utc", "status",
+            "host_char_name", "host_char_hash", "pilgrimage_invalidated_reason",
         )
         with self._lock, self._conn() as conn:
-            self._require_host(conn, cid, bearer)
+            existing = self._require_host(conn, cid, bearer)
             sets, vals = [], []
             for k in allowed:
                 if k in body and body[k] is not None:
+                    # host_char_name is locked once set on a campaign
+                    if k == "host_char_name" and existing["host_char_name"]:
+                        continue
                     v = body[k]
                     if k == "castalia_version":
                         v = str(v).strip().lstrip("v")
@@ -334,13 +342,19 @@ class CampaignDB:
             is_pilgrimage = str(row["campaign_mode"] or "pilgrimage") == "pilgrimage"
             add_sec = max(0, int(body.get("session_seconds") or 0)) if is_pilgrimage else 0
             total_sec = int(row["total_play_seconds"] or 0) + add_sec
+            host_char_name = row["host_char_name"] or (str(body.get("host_char_name")).strip()[:15] if body.get("host_char_name") else None)
+            host_char_hash = str(body.get("host_char_hash")).strip()[:64] if body.get("host_char_hash") else row["host_char_hash"]
+            inval_reason = row["pilgrimage_invalidated_reason"] or (
+                str(body.get("pilgrimage_invalidated_reason")).strip()[:200] if body.get("pilgrimage_invalidated_reason") else None
+            )
             conn.execute(
                 """UPDATE campaigns
                    SET status = 'active', live_join_info = NULL,
                        current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?,
-                       total_play_seconds = ?, next_session_utc = ?, updated_at = ?
+                       total_play_seconds = ?, host_char_name = ?, host_char_hash = ?,
+                       pilgrimage_invalidated_reason = ?, next_session_utc = ?, updated_at = ?
                    WHERE id = ?""",
-                (new_lvl, new_wp, has_cube, host_prog, total_sec, next_utc, _now_iso(), cid),
+                (new_lvl, new_wp, has_cube, host_prog, total_sec, host_char_name, host_char_hash, inval_reason, next_utc, _now_iso(), cid),
             )
             updated = conn.execute("SELECT * FROM campaigns WHERE id = ?", (cid,)).fetchone()
             rsvps = [
@@ -414,9 +428,10 @@ class CampaignDB:
                 raise FileExistsError(
                     f"Character name '{new_name}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games)."
                 )
+            new_hash = str(body.get("char_hash")).strip()[:64] if body.get("char_hash") else rrow["char_hash"]
             conn.execute(
                 """UPDATE rsvps
-                   SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?
+                   SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?, char_hash = ?
                    WHERE id = ?""",
                 (
                     new_name,
@@ -424,6 +439,7 @@ class CampaignDB:
                     int(body.get("char_level", rrow["char_level"])),
                     str(body.get("char_wp") or rrow["char_wp"]),
                     str(body.get("build_summary") or rrow["build_summary"]),
+                    new_hash,
                     rid,
                 ),
             )
@@ -456,6 +472,8 @@ class CampaignDB:
             crow = self._require_host(conn, cid, bearer)
             if str(crow["campaign_mode"] or "pilgrimage") != "pilgrimage":
                 raise ValueError("Only Pilgrimage campaigns are eligible for Hall of Heroes.")
+            if crow["pilgrimage_invalidated_reason"]:
+                raise ValueError(f"Pilgrimage integrity was voided: {crow['pilgrimage_invalidated_reason']}")
             rsvps = [
                 self._public_rsvp(x)
                 for x in conn.execute("SELECT * FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'", (cid,)).fetchall()

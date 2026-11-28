@@ -284,6 +284,106 @@ class TestSharedStashAndTimer(unittest.TestCase):
         self.assertEqual(open(toml_path, "r", encoding="utf-8").read(), original_toml)
         self.assertEqual(json.load(open(settings_path, "r", encoding="utf-8"))["Offline Difficulty Scaling"], 8)
 
+    def test_pilgrimage_integrity_hash_and_live_gate(self):
+        import hashlib
+
+        # 1. Create Pilgrimage campaign & Host Lv 1 character
+        p_res = self.hub.create_campaign({
+            "title": "Integrity Pilgrimage",
+            "campaign_mode": "pilgrimage",
+            "castalia_version": "0.4.3",
+        })
+        cid = p_res["campaign"]["id"]
+        created = self.hub.create_dropin_char(cid, "OrigPal", "pal", 1, "a1n")
+        host_d2s = created["path"]
+        with open(host_d2s, "rb") as f:
+            h1 = hashlib.sha256(f.read()).hexdigest()
+
+        # End Session 1 locks host_char_name + host_char_hash
+        rolled = self.hub.end_session(
+            cid,
+            current_level=5,
+            current_wp="a1n",
+            session_seconds=900,
+            host_char_name="OrigPal",
+            host_char_hash=h1,
+        )
+        self.assertEqual(rolled["host_char_name"], "OrigPal")
+        self.assertEqual(rolled["host_char_hash"], h1)
+
+        # Clean before Session 2 -> passes integrity
+        chk_ok = self.hub.verify_pilgrimage_integrity(cid)
+        self.assertTrue(chk_ok["ok"])
+
+        # Offline Hero Editor tamper (1 byte changed) -> detected!
+        with open(host_d2s, "rb") as f:
+            orig_bytes = f.read()
+        with open(host_d2s, "wb") as f:
+            f.write(orig_bytes[:-1] + bytes([orig_bytes[-1] ^ 0xFF]))
+        chk_bad = self.hub.verify_pilgrimage_integrity(cid)
+        self.assertFalse(chk_bad["ok"])
+        self.assertIn("modified", chk_bad["reason"].lower())
+
+        # Restore original bytes, then simulate crash recovery -> must NOT false-positive!
+        with open(host_d2s, "wb") as f:
+            f.write(orig_bytes)
+        self.hub.swap_to_profile(cid, shared_stash=False)
+        live_host_d2s = os.path.join(self.save_dir, "OrigPal.d2s")
+        with open(live_host_d2s, "wb") as f:
+            f.write(orig_bytes[:-1] + bytes([orig_bytes[-1] ^ 0x01]))
+        self.hub.recover_dirty_profile()
+        chk_crash = self.hub.verify_pilgrimage_integrity(cid)
+        self.assertTrue(chk_crash["ok"], "Crash recovery must not falsely flag tampering")
+
+        # 2. Joiner LIVE gate & pre-launch hash gate
+        joiner_dir = os.path.join(self.tmp.name, "joiner_hub")
+        joiner_saves = os.path.join(self.tmp.name, "joiner_saves")
+        os.makedirs(joiner_saves, exist_ok=True)
+        joiner = CastaliaHub(
+            data_dir=joiner_dir,
+            api_url=f"http://127.0.0.1:{self.api_port}",
+            d2r_save_dir=joiner_saves,
+        )
+        joiner.rsvp_campaign(cid, char_name="JoinSorc", char_class="Sorceress", join_mode="drop_in", char_level=5, char_wp="a1n")
+        j_created = joiner.create_dropin_char(cid, "JoinSorc", "sor", 5, "a1n")
+        j_d2s = j_created["path"]
+        with open(j_d2s, "rb") as f:
+            jh1 = hashlib.sha256(f.read()).hexdigest()
+        joiner.send_telemetry(cid, {
+            "char_name": "JoinSorc",
+            "char_class": "Sorceress",
+            "char_level": 5,
+            "char_wp": "a1n",
+            "build_summary": "Fire Bolt",
+            "char_hash": jh1,
+        })
+
+        # Campaign is NOT live yet -> Joiner blocked from launching
+        j_wait = joiner.verify_pilgrimage_integrity(cid)
+        self.assertFalse(j_wait["ok"])
+        self.assertTrue(j_wait.get("blocked"))
+        self.assertTrue(j_wait.get("waiting_for_live"))
+
+        # Host goes LIVE -> Joiner with clean .d2s passes!
+        self.hub.go_live(cid, "127.0.0.1:4000")
+        j_ok = joiner.verify_pilgrimage_integrity(cid)
+        self.assertTrue(j_ok["ok"])
+
+        # Joiner tampers with their .d2s -> blocked BEFORE launch!
+        with open(j_d2s, "rb") as f:
+            jb = f.read()
+        with open(j_d2s, "wb") as f:
+            f.write(jb[:-1] + bytes([jb[-1] ^ 0xFF]))
+        j_bad = joiner.verify_pilgrimage_integrity(cid)
+        self.assertFalse(j_bad["ok"])
+        self.assertTrue(j_bad.get("blocked"))
+        self.assertIn("modified", j_bad["reason"].lower())
+
+        # 3. Invalidated Pilgrimage cannot complete -> Hall of Heroes
+        self.hub.update_campaign(cid, {"pilgrimage_invalidated_reason": "Host character modified offline"})
+        with self.assertRaises(Exception):
+            self.hub.complete_campaign(cid, summary="Voided run", death_count=0, sessions_played=2)
+
 
 if __name__ == "__main__":
     unittest.main()

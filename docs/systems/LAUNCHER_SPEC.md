@@ -443,6 +443,9 @@ Once `bin/d2r-campaign` is built, registering its command cheatsheet in `AGENTS.
       * **Reliability Guards (both modes):** `default_mod = "castalia"`, `show_tcpip_button = true`, `game_port = 4000` (Host) or `<join_port>` (Joiner); **Host only** enables `[d2rloader.developer.logs]` (`enabled`, `hosting`, `chat_messages` — strictly local on Host for auto-LIVE and system-event hooks; personal chat is never stored or transmitted).
       * **🏆 Pilgrimage:** Client locks (Host & Joiner): `enable_respec = false`, `enable_console = false`, `allow_global_extensions = false`, plus stripping `-enablerespec` / `-debug_mode` from `launch_arguments`. Server-authoritative locks (**Host only**): `Settings.json` `"Offline Difficulty Scaling": 1` and `always_generate_new_maps = true`.
       * **⚔️ Open Party:** `enable_respec = true`; all other player preferences left untouched.
+    * **Pilgrimage Integrity & Joiner LIVE Gate (`verify_pilgrimage_integrity`):**
+      * Locks `host_char_name` + `.d2s` SHA-256 `host_char_hash` on `campaigns` (and Joiner `char_hash` on `rsvps`) across sessions, with automatic `.crash_recovered` exemption on dirty crash recovery and `[HOST TRACE] character.name` mismatch check in `d2rloader.log`.
+      * Joiners in Pilgrimage mode are gated until Host is `🟢 LIVE` and blocked pre-launch if their `.d2s` was edited externally (protecting the party's Hall of Heroes eligibility); Host mismatch prompts before launch (`409` → `pilgrimage_invalidated_reason` disables `/complete`).
 
 ---
 

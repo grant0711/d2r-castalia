@@ -433,14 +433,19 @@ Once `bin/d2r-campaign` is built, registering its command cheatsheet in `AGENTS.
 * **Live Internet Co-Op Round-Trip Verified:**
   * Persistent `castalia-playit.service` (`systemd --user`, `playit` v2.0.2) forwarding `209.25.140.16:11887` → `127.0.0.1:4000`.
   * Both Host (`Jesse`, `acct1`) and Joiner (`Steven`, `mod`) connected simultaneously over the internet via `Browse Games → Direct Join (lower left) → Ctrl+V`, with isolated saves and 43/43 unit tests passing (`tests/test_campaign_hub.py`).
-* **Cloudflare Production Backend ([`worker/`](file:///home/grant/games/d2r/worker)):** `schema.sql`, `wrangler.toml`, and `src/index.js` implemented and ready for deployment.
-
-### Immediate Next Steps
-1. **Verify Trade-Window Stability (1-Variable Test):** Re-test opening Trade between Host and Player 2 with `write_crash_dumps = true` in `d2rloader.toml` to confirm whether the Host exit during Trade was a one-off X11 focus/resize glitch or a trade-panel bug.
-2. **Deploy Production Campaign API (`worker/`):** Provision Cloudflare D1 (`npx wrangler d1 create castalia-campaigns`), apply `worker/schema.sql`, set `DISCORD_CAMPAIGN_WEBHOOK_URL`, and run `npx wrangler deploy`.
-3. **Bundle `castalia-autohost.dll` in Release Zips:** Update `bin/d2r-release` to include `mods/castalia/d2rloader/plugins/castalia-autohost.dll` in `castalia-vX.Y.Z.zip`.
-4. **Merge `feat/campaign-launcher` → `master` & Run First Gated Release:** Merge the MVP branch, then test `./bin/d2r-release prepare` → isolated subagent PR review → `release` branch cascade.
-5. **Windows Teammate Packaging:** Package the launcher for Windows friends (PyInstaller/standalone or Tauri v2 wrapping the existing `static/index.html`).
+* **Live Production Deployment & Windows Installer (`v0.4.3+`):**
+  * Cloudflare Worker + D1 live at `https://castalia-campaign-hub.d2rcastalia.workers.dev` with `#lfg-sessions` Discord webhook (bumping cards to bottom on new scheduled dates and `🟢 LIVE` transitions; resetting `next_session_utc` to `null` on session end).
+  * Windows x64 distribution via **Inno Setup `CastaliaLauncher-Setup.exe`** (per-user `%LOCALAPPDATA%\CastaliaLauncher`, Desktop/Start Menu shortcut, bundling official PSF-signed Python 3.12 embeddable runtime) + portable `castalia-launcher-win64.zip`.
+  * **Launcher UX & Host Toolkit:** Native OS folder picker (`POST /local/browse-dir`), clickable `D2RLoader: Missing` Settings link, 1-click **Import Existing Character** (`GET /local/importable-chars`, `POST /local/import-char`) with optional respec on import, Solo **Respec** (`POST /local/respec-char`, keeping mid-campaign respec disabled), `POST /local/test-host` TCP + `0xAF` D2R greeting reachability probe, real Castalia skill-name resolution from `d2r_game_dir/mods/castalia/castalia.mpq/data/` (top 3 castable/aura skills excluding passives), and reusable `castalia_hub.tcp_guard.D2RTcpGuard` (`bin/d2r-tcp-guard`) to drop TLS/HTTP internet port scanners before D2RLoader.
+  * **Pilgrimage vs. Open Party Runtime Enforcement (`apply_launch_rules` / `restore_launch_rules`):**
+    * **Crash-safe split-stash routing:** Single canonical `profiles/_global_stash/*.d2i` for Solo and `shared_stash=true` campaigns; isolated `profiles/campaign-<id>/*.d2i` for `shared_stash=false` campaigns (tracked via `stash_source` in `active_profile.json`).
+    * **Mode-driven `d2rloader.toml` & `Settings.json` overrides** (snapshotted into `active_profile.json` as `prev_toml_overrides` / `prev_settings_overrides` and restored on exit or `recover_if_dirty()`):
+      * **Reliability Guards (both modes):** `default_mod = "castalia"`, `show_tcpip_button = true`, `game_port = 4000` (Host) or `<join_port>` (Joiner); **Host only** enables `[d2rloader.developer.logs]` (`enabled`, `hosting`, `chat_messages` — strictly local on Host for auto-LIVE and system-event hooks; personal chat is never stored or transmitted).
+      * **🏆 Pilgrimage:** Client locks (Host & Joiner): `enable_respec = false`, `enable_console = false`, `allow_global_extensions = false`, plus stripping `-enablerespec` / `-debug_mode` from `launch_arguments`. Server-authoritative locks (**Host only**): `Settings.json` `"Offline Difficulty Scaling": 1` and `always_generate_new_maps = true`.
+      * **⚔️ Open Party:** `enable_respec = true`; all other player preferences left untouched.
+    * **Pilgrimage Integrity & Joiner LIVE Gate (`verify_pilgrimage_integrity`):**
+      * Locks `host_char_name` + `.d2s` SHA-256 `host_char_hash` on `campaigns` (and Joiner `char_hash` on `rsvps`) across sessions, with automatic `.crash_recovered` exemption on dirty crash recovery and `[HOST TRACE] character.name` mismatch check in `d2rloader.log`.
+      * Joiners in Pilgrimage mode are gated until Host is `🟢 LIVE` and blocked pre-launch if their `.d2s` was edited externally (protecting the party's Hall of Heroes eligibility); Host mismatch prompts before launch (`409` → `pilgrimage_invalidated_reason` disables `/complete`).
 
 ---
 

@@ -13,6 +13,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -35,9 +36,31 @@ DEFAULT_DATA_DIR = (
 DEFAULT_API_URL = os.environ.get("CASTALIA_API_URL", "https://castalia-campaign-hub.d2rcastalia.workers.dev")
 
 # Save extensions swapped per campaign profile (Settings.json stays global & untouched!)
-SAVE_EXTS = (".d2s", ".d2i", ".key", ".ctl", ".map", ".ma0", ".ma1", ".ma2", ".ma3", ".ma4")
+CHAR_EXTS = (".d2s", ".key", ".ctl", ".map", ".ma0", ".ma1", ".ma2", ".ma3", ".ma4")
+STASH_EXTS = (".d2i",)
+SAVE_EXTS = CHAR_EXTS + STASH_EXTS
 GAME_ID_LOG_RE = re.compile(r"(?:Game\s*ID|game_id|advertised_id)\s*[:=]\s*([A-Za-z0-9_-]{4,24})", re.I)
 LISTENER_READY_RE = re.compile(r"Listener ready:\s*bound_port=(\d+)", re.I)
+HOST_CHAR_LOG_RE = re.compile(r'\[HOST TRACE\].*character\.name="([^"]+)"')
+
+
+def _sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _is_char_file(filename: str) -> bool:
+    low = filename.lower()
+    if low == "settings.json":
+        return False
+    return low.endswith(CHAR_EXTS)
+
+
+def _is_stash_file(filename: str) -> bool:
+    return filename.lower().endswith(STASH_EXTS)
 
 
 def _is_save_file(filename: str) -> bool:
@@ -60,6 +83,7 @@ class CastaliaHub:
         self.data_dir = os.path.abspath(data_dir or os.environ.get("CASTALIA_HUB_DIR") or DEFAULT_DATA_DIR)
         self.versions_dir = os.path.join(self.data_dir, "versions")
         self.profiles_dir = os.path.join(self.data_dir, "profiles")
+        self.global_stash_dir = os.path.join(self.profiles_dir, "_global_stash")
         self.config_path = os.path.join(self.data_dir, "config.json")
         self.tokens_path = os.path.join(self.data_dir, "tokens.json")
         self.active_profile_path = os.path.join(self.data_dir, "active_profile.json")
@@ -67,6 +91,7 @@ class CastaliaHub:
         os.makedirs(self.versions_dir, exist_ok=True)
         os.makedirs(self.profiles_dir, exist_ok=True)
         os.makedirs(os.path.join(self.profiles_dir, "solo"), exist_ok=True)
+        os.makedirs(self.global_stash_dir, exist_ok=True)
 
         self.config = self._load_json(self.config_path, default={})
         if api_url:
@@ -256,51 +281,112 @@ class CastaliaHub:
             return 0
         copied = 0
         for fn in os.listdir(live_dir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(live_dir, fn), os.path.join(solo_dir, fn))
                 copied += 1
+            elif _is_stash_file(fn):
+                dst_stash = os.path.join(self.global_stash_dir, fn)
+                if not os.path.isfile(dst_stash):
+                    shutil.copy2(os.path.join(live_dir, fn), dst_stash)
+                    copied += 1
         return copied
 
+    def _migrate_global_stash(self) -> None:
+        """Ensure any legacy .d2i in profiles/solo/ or live saves is seeded into profiles/_global_stash/."""
+        os.makedirs(self.global_stash_dir, exist_ok=True)
+        if any(_is_stash_file(f) for f in os.listdir(self.global_stash_dir)):
+            return
+        solo_dir = self.profile_dir_for("solo")
+        for sdir in (solo_dir, self.config.get("d2r_save_dir") or ""):
+            if not sdir or not os.path.isdir(sdir):
+                continue
+            found = False
+            for fn in os.listdir(sdir):
+                if _is_stash_file(fn):
+                    shutil.copy2(os.path.join(sdir, fn), os.path.join(self.global_stash_dir, fn))
+                    found = True
+            if found:
+                # Remove legacy .d2i from solo_dir so _global_stash is the single source of truth
+                if sdir == solo_dir:
+                    for fn in os.listdir(solo_dir):
+                        if _is_stash_file(fn):
+                            os.remove(os.path.join(solo_dir, fn))
+                return
+
     def recover_if_dirty(self) -> Optional[str]:
-        """If active_profile.json exists (previous crash), sync live saves back and restore game_port."""
+        """If active_profile.json exists (previous crash), sync live saves back and restore launch overrides."""
         if not os.path.isfile(self.active_profile_path):
             return None
         state = self._load_json(self.active_profile_path, {})
         pid = state.get("profile_id")
+        stash_source = state.get("stash_source")
         if pid:
-            self._sync_live_to_profile(pid)
-        prev_port = state.get("prev_game_port")
-        if isinstance(prev_port, int) and prev_port > 0:
-            self.set_d2rloader_game_port(prev_port)
+            self._sync_live_to_profile(pid, stash_source=stash_source)
+            if pid != "solo":
+                try:
+                    marker = os.path.join(self.profile_dir_for(pid), ".crash_recovered")
+                    with open(marker, "w", encoding="utf-8") as mf:
+                        mf.write(datetime.datetime.now(datetime.timezone.utc).isoformat())
+                except Exception:
+                    pass
+        if state.get("prev_toml_overrides") or state.get("prev_settings_overrides"):
+            self.restore_launch_rules(state)
+        else:
+            prev_port = state.get("prev_game_port")
+            if isinstance(prev_port, int) and prev_port > 0:
+                self.set_d2rloader_game_port(prev_port)
         os.remove(self.active_profile_path)
         return pid
 
-    def _sync_live_to_profile(self, profile_id: str) -> int:
+    # Alias for clarity in callers & tests
+    recover_dirty_profile = recover_if_dirty
+
+    def _stash_dir_for(self, stash_source: Optional[str], profile_id: str) -> str:
+        if stash_source == "_global_stash" or (stash_source is None and profile_id == "solo"):
+            os.makedirs(self.global_stash_dir, exist_ok=True)
+            return self.global_stash_dir
+        return self.profile_dir_for(stash_source or profile_id)
+
+    def _sync_live_to_profile(self, profile_id: str, stash_source: Optional[str] = None) -> int:
         live_dir = self.config["d2r_save_dir"]
         pdir = self.profile_dir_for(profile_id)
+        sdir = self._stash_dir_for(stash_source, profile_id)
         if not os.path.isdir(live_dir):
             return 0
-        # Remove old save files in profile dir that were deleted in-game, then copy live saves
+        # Sync character files (.d2s/.key/.ma*/.ctl) -> profile dir
         for fn in os.listdir(pdir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 os.remove(os.path.join(pdir, fn))
+        # Sync shared stash files (.d2i) -> stash_source dir (_global_stash or campaign-<id>)
+        for fn in os.listdir(sdir):
+            if _is_stash_file(fn):
+                os.remove(os.path.join(sdir, fn))
         count = 0
         for fn in os.listdir(live_dir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(live_dir, fn), os.path.join(pdir, fn))
+                count += 1
+            elif _is_stash_file(fn):
+                shutil.copy2(os.path.join(live_dir, fn), os.path.join(sdir, fn))
                 count += 1
         return count
 
-    def swap_to_profile(self, target: str) -> str:
+    def swap_to_profile(self, target: str, shared_stash: bool = False) -> str:
         """
         Crash-safe swap: recover any dirty profile, clear live save files (preserving Settings.json),
-        copy target profile into live save dir, and write active_profile.json lockfile.
+        copy target character files + routed Shared Stash (.d2i from _global_stash when solo or
+        shared_stash=True, else campaign-local isolated stash), and write active_profile.json lockfile.
         """
         self.migrate_initial_solo_saves()
+        self._migrate_global_stash()
         self.recover_if_dirty()
 
         pid = self.profile_id_for(target)
         pdir = self.profile_dir_for(pid)
+        use_global_stash = (pid == "solo") or bool(shared_stash)
+        stash_source = "_global_stash" if use_global_stash else pid
+        sdir = self._stash_dir_for(stash_source, pid)
+
         live_dir = self.config["d2r_save_dir"]
         os.makedirs(live_dir, exist_ok=True)
 
@@ -309,13 +395,18 @@ class CastaliaHub:
                 os.remove(os.path.join(live_dir, fn))
 
         for fn in os.listdir(pdir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(pdir, fn), os.path.join(live_dir, fn))
+
+        for fn in os.listdir(sdir):
+            if _is_stash_file(fn):
+                shutil.copy2(os.path.join(sdir, fn), os.path.join(live_dir, fn))
 
         self._save_json(
             self.active_profile_path,
             {
                 "profile_id": pid,
+                "stash_source": stash_source,
                 "switched_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
                 "pid": os.getpid(),
             },
@@ -323,7 +414,8 @@ class CastaliaHub:
         return pid
 
     def _restore_solo_to_live(self) -> int:
-        """Restore profiles/solo/ into the live D2R save dir (without writing an active lockfile)."""
+        """Restore profiles/solo/ characters + _global_stash .d2i into the live D2R save dir."""
+        self._migrate_global_stash()
         live_dir = self.config["d2r_save_dir"]
         solo_dir = self.profile_dir_for("solo")
         os.makedirs(live_dir, exist_ok=True)
@@ -332,19 +424,24 @@ class CastaliaHub:
                 os.remove(os.path.join(live_dir, fn))
         copied = 0
         for fn in os.listdir(solo_dir):
-            if _is_save_file(fn):
+            if _is_char_file(fn):
                 shutil.copy2(os.path.join(solo_dir, fn), os.path.join(live_dir, fn))
+                copied += 1
+        for fn in os.listdir(self.global_stash_dir):
+            if _is_stash_file(fn):
+                shutil.copy2(os.path.join(self.global_stash_dir, fn), os.path.join(live_dir, fn))
                 copied += 1
         return copied
 
     def sync_back_active_profile(self) -> Optional[str]:
-        """Sync live saves back to the active profile and clear active_profile.json."""
+        """Sync live saves back to the active profile (+ stash_source) and clear active_profile.json."""
         if not os.path.isfile(self.active_profile_path):
             return None
         state = self._load_json(self.active_profile_path, {})
         pid = state.get("profile_id")
+        stash_source = state.get("stash_source")
         if pid:
-            self._sync_live_to_profile(pid)
+            self._sync_live_to_profile(pid, stash_source=stash_source)
         os.remove(self.active_profile_path)
         return pid
 
@@ -353,16 +450,222 @@ class CastaliaHub:
         if target == "solo":
             self.migrate_initial_solo_saves()
         pdir = self.profile_dir_for(target)
+        gdir = self.config.get("d2r_game_dir")
         chars = []
         for fn in sorted(os.listdir(pdir)):
             if fn.lower().endswith(".d2s"):
                 full = os.path.join(pdir, fn)
                 try:
-                    chars.append(parse_d2s_telemetry(full))
+                    chars.append(parse_d2s_telemetry(full, d2r_game_dir=gdir))
                 except Exception as e:
                     chars.append({"char_name": os.path.splitext(fn)[0], "error": str(e), "path": full})
         chars.sort(key=lambda c: -float(c.get("mtime", 0)))
         return chars
+
+    def list_importable_chars(self, campaign_id: str) -> List[Dict[str, Any]]:
+        """
+        Scan Solo, Live D2R saves, and other Campaign profiles for existing .d2s characters
+        that are not yet present in `campaign_id`, so a player can 1-click import them.
+        """
+        target_dir = self.profile_dir_for(campaign_id)
+        existing_names = {
+            os.path.splitext(f)[0].lower()
+            for f in os.listdir(target_dir)
+            if f.lower().endswith(".d2s")
+        }
+        gdir = self.config.get("d2r_game_dir")
+
+        sources: List[Tuple[str, str]] = []
+        live_dir = self.config.get("d2r_save_dir") or ""
+        if live_dir and os.path.isdir(live_dir):
+            sources.append(("Live Saves", live_dir))
+        solo_dir = os.path.join(self.profiles_dir, "solo")
+        if os.path.isdir(solo_dir):
+            sources.append(("Solo", solo_dir))
+        if os.path.isdir(self.profiles_dir):
+            target_pid = self.profile_id_for(campaign_id)
+            for entry in sorted(os.listdir(self.profiles_dir)):
+                if entry in ("solo", target_pid):
+                    continue
+                cdir = os.path.join(self.profiles_dir, entry)
+                if os.path.isdir(cdir):
+                    label = entry.replace("campaign-", "Campaign: ")
+                    sources.append((label, cdir))
+
+        seen_paths: set = set()
+        seen_names: set = set()
+        out: List[Dict[str, Any]] = []
+        for label, sdir in sources:
+            for fn in sorted(os.listdir(sdir)):
+                if not fn.lower().endswith(".d2s"):
+                    continue
+                stem = os.path.splitext(fn)[0].lower()
+                if stem in existing_names or stem in seen_names:
+                    continue
+                full = os.path.abspath(os.path.join(sdir, fn))
+                if full in seen_paths or not os.path.isfile(full):
+                    continue
+                seen_paths.add(full)
+                seen_names.add(stem)
+                try:
+                    info = parse_d2s_telemetry(full, d2r_game_dir=gdir)
+                    info["source_label"] = label
+                    info["source_path"] = full
+                    out.append(info)
+                except Exception:
+                    continue
+        out.sort(key=lambda c: -float(c.get("mtime", 0)))
+        return out
+
+    def import_char_to_campaign(self, campaign_id: str, source_path: str, respec: bool = False) -> Dict[str, Any]:
+        """
+        Copy an existing .d2s (and its sidecar .key/.ma*/.ctl files) from Solo, Live saves,
+        or another campaign profile into `campaign_id`, optionally refunding all stats & skills.
+        """
+        abs_src = os.path.abspath(source_path or "")
+        if not abs_src.lower().endswith(".d2s") or not os.path.isfile(abs_src):
+            raise FileNotFoundError(f"Character save not found: {source_path}")
+
+        allowed_roots = [os.path.abspath(self.profiles_dir)]
+        live_dir = self.config.get("d2r_save_dir") or ""
+        if live_dir:
+            allowed_roots.append(os.path.abspath(live_dir))
+        if not any(abs_src.startswith(r + os.sep) or os.path.dirname(abs_src) == r for r in allowed_roots):
+            raise ValueError("Source character must reside inside D2R saves or CastaliaHub profiles.")
+
+        # Enforce Pilgrimage rule: no importing outside characters into Pilgrimage campaigns
+        try:
+            camp = self.get_campaign(campaign_id)
+            if str(camp.get("campaign_mode") or "pilgrimage") == "pilgrimage":
+                raise ValueError("Importing existing characters is disabled in Pilgrimage campaigns.")
+        except ValueError:
+            raise
+        except Exception:
+            pass
+
+        target_dir = self.profile_dir_for(campaign_id)
+        src_dir = os.path.dirname(abs_src)
+        base_name = os.path.basename(abs_src)
+        stem = os.path.splitext(base_name)[0].lower()
+        for fname in os.listdir(src_dir):
+            if os.path.splitext(fname)[0].lower() == stem:
+                fpath = os.path.join(src_dir, fname)
+                if os.path.isfile(fpath):
+                    shutil.copy2(fpath, os.path.join(target_dir, fname))
+
+        dst_d2s = os.path.join(target_dir, base_name)
+        if respec:
+            from mod_builder.char_manager import configure_character_d2s
+            configure_character_d2s(dst_d2s, reset_skills=True, reset_stats=True, reroll_seed=False)
+        return parse_d2s_telemetry(dst_d2s, d2r_game_dir=self.config.get("d2r_game_dir"))
+
+    def respec_profile_char(self, target: str, char_name: str, reset_stats: bool = True) -> Dict[str, Any]:
+        """Launcher-level respec: refund all skill points (and optionally stat points) on a profile .d2s."""
+        from mod_builder.char_manager import configure_character_d2s
+        pdir = self.profile_dir_for(target)
+        low_target = f"{char_name.strip().lower()}.d2s"
+        match = next((f for f in os.listdir(pdir) if f.lower() == low_target), None)
+        if not match:
+            raise FileNotFoundError(f"Character '{char_name}' not found in profile '{target}'.")
+        dst_d2s = os.path.join(pdir, match)
+        configure_character_d2s(dst_d2s, reset_skills=True, reset_stats=bool(reset_stats), reroll_seed=False)
+        # Keep live save folder in sync if this profile is currently active
+        if target == "solo":
+            live_dir = self.config.get("d2r_save_dir") or ""
+            live_copy = os.path.join(live_dir, match)
+            if live_dir and os.path.isfile(live_copy):
+                shutil.copy2(dst_d2s, live_copy)
+        return parse_d2s_telemetry(dst_d2s, d2r_game_dir=self.config.get("d2r_game_dir"))
+
+    @staticmethod
+    def browse_directory(title: str = "Select Folder", initial_dir: Optional[str] = None) -> Optional[str]:
+        """Open a native OS folder picker dialog and return the chosen path (or None if cancelled)."""
+        if sys.platform == "win32":
+            safe_title = title.replace("'", "''")
+            init_part = ""
+            if initial_dir and os.path.isdir(initial_dir):
+                safe_init = initial_dir.replace("'", "''")
+                init_part = f"$f.SelectedPath = '{safe_init}'; "
+            ps = (
+                "Add-Type -AssemblyName System.Windows.Forms; "
+                "$f = New-Object System.Windows.Forms.FolderBrowserDialog; "
+                f"$f.Description = '{safe_title}'; "
+                f"{init_part}"
+                "if ($f.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { Write-Output $f.SelectedPath }"
+            )
+            try:
+                res = subprocess.run(
+                    ["powershell", "-NoProfile", "-STA", "-Command", ps],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+                chosen = (res.stdout or "").strip()
+                return chosen or None
+            except Exception:
+                return None
+
+        # Linux: try zenity or kdialog
+        for cmd in (
+            ["zenity", "--file-selection", "--directory", f"--title={title}"],
+            ["kdialog", "--getexistingdirectory", initial_dir or os.path.expanduser("~"), "--title", title],
+        ):
+            if shutil.which(cmd[0]):
+                try:
+                    res = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+                    chosen = (res.stdout or "").strip()
+                    return chosen or None
+                except Exception:
+                    return None
+        return None
+
+    def test_host_reachability(self, address: Optional[str] = None, timeout: float = 4.0) -> Dict[str, Any]:
+        """
+        Test whether the configured host address (`host:port`, e.g. playit.gg tunnel)
+        accepts TCP connections and optionally returns D2R's 0xAF server greeting.
+        """
+        raw_addr = (address if address is not None else self.config.get("host_connect_address") or "").strip()
+        if not raw_addr:
+            return {
+                "reachable": False,
+                "d2r_greeting": False,
+                "address": "",
+                "message": "No Host Connect Address configured yet (set your playit.gg IP:port in Settings).",
+            }
+        host, port = self.parse_host_port(raw_addr)
+        t0 = time.monotonic()
+        try:
+            sock = socket.create_connection((host, port), timeout=timeout)
+            latency_ms = int(round((time.monotonic() - t0) * 1000))
+            d2r_greeting = False
+            try:
+                sock.settimeout(0.8)
+                data = sock.recv(8)
+                if data and data[0] == 0xAF:
+                    d2r_greeting = True
+            except socket.timeout:
+                pass
+            finally:
+                sock.close()
+            if d2r_greeting:
+                msg = f"Reachable ({latency_ms} ms) — D2R host server is live and responding!"
+            else:
+                msg = f"TCP port reachable ({latency_ms} ms) — tunnel is open (start a D2R game to verify full handshake)."
+            return {
+                "reachable": True,
+                "d2r_greeting": d2r_greeting,
+                "latency_ms": latency_ms,
+                "address": f"{host}:{port}",
+                "message": msg,
+            }
+        except Exception as exc:
+            return {
+                "reachable": False,
+                "d2r_greeting": False,
+                "latency_ms": None,
+                "address": f"{host}:{port}",
+                "message": f"Could not reach {host}:{port} ({exc}). Check that playit.gg / port forwarding is running.",
+            }
 
     def create_dropin_char(
         self,
@@ -375,6 +678,18 @@ class CastaliaHub:
         host_progress_b64: Optional[str] = None,
     ) -> Dict[str, Any]:
         pdir = self.profile_dir_for(target)
+        # Enforce Pilgrimage Host single-character lock: Host creates 1 Level 1 char and sticks with it
+        if target != "solo" and self.get_token(target, "host_token"):
+            existing_d2s = [f for f in os.listdir(pdir) if f.lower().endswith(".d2s")]
+            if existing_d2s:
+                try:
+                    camp = self.get_campaign(target)
+                    if str(camp.get("campaign_mode") or "pilgrimage") == "pilgrimage":
+                        raise ValueError("Pilgrimage Hosts are locked to their original Level 1 character.")
+                except ValueError:
+                    raise
+                except Exception:
+                    pass
         return generate_dropin_character(
             pdir,
             char_name,
@@ -643,6 +958,10 @@ class CastaliaHub:
         next_session_utc: Optional[str] = None,
         has_cube: Optional[bool] = None,
         host_progress_b64: Optional[str] = None,
+        session_seconds: Optional[int] = None,
+        host_char_name: Optional[str] = None,
+        host_char_hash: Optional[str] = None,
+        pilgrimage_invalidated_reason: Optional[str] = None,
     ) -> Dict[str, Any]:
         tok = self.get_token(campaign_id, "host_token")
         if not tok:
@@ -658,6 +977,14 @@ class CastaliaHub:
             body["has_cube"] = bool(has_cube)
         if host_progress_b64:
             body["host_progress_b64"] = str(host_progress_b64)
+        if session_seconds is not None and int(session_seconds) > 0:
+            body["session_seconds"] = int(session_seconds)
+        if host_char_name:
+            body["host_char_name"] = str(host_char_name)
+        if host_char_hash:
+            body["host_char_hash"] = str(host_char_hash)
+        if pilgrimage_invalidated_reason:
+            body["pilgrimage_invalidated_reason"] = str(pilgrimage_invalidated_reason)
         return self._api("POST", f"/api/campaigns/{campaign_id}/end-session", body=body, token=tok)
 
     def _import_existing_char_to_campaign(self, campaign_id: str, char_name: str) -> Optional[str]:
@@ -707,7 +1034,7 @@ class CastaliaHub:
             imported = self._import_existing_char_to_campaign(campaign_id, char_name)
             if imported:
                 try:
-                    t = parse_d2s_telemetry(imported)
+                    t = parse_d2s_telemetry(imported, d2r_game_dir=self.config.get("d2r_game_dir"))
                     char_level = int(t.get("char_level") or char_level)
                     char_wp = str(t.get("char_wp") or char_wp)
                     char_class = str(t.get("char_class") or char_class)
@@ -742,13 +1069,21 @@ class CastaliaHub:
         tok = self.get_token(campaign_id, "rsvp_token") or self.get_token(campaign_id, "host_token")
         if not rid or not tok:
             return None
-        body = {
+        char_hash = telem.get("char_hash")
+        if not char_hash and telem.get("path") and os.path.isfile(telem["path"]):
+            try:
+                char_hash = _sha256_file(telem["path"])
+            except Exception:
+                char_hash = None
+        body: Dict[str, Any] = {
             "char_name": telem["char_name"],
             "char_class": telem["char_class"],
             "char_level": telem["char_level"],
             "char_wp": telem["char_wp"],
             "build_summary": telem["build_summary"],
         }
+        if char_hash:
+            body["char_hash"] = str(char_hash)
         return self._api("PATCH", f"/api/campaigns/{campaign_id}/rsvp/{rid}/telemetry", body=body, token=tok)
 
     def complete_campaign(self, campaign_id: str, summary: str, death_count: int = 0, sessions_played: int = 1) -> Dict[str, Any]:
@@ -799,12 +1134,17 @@ class CastaliaHub:
             pass
         return None
 
-    def _tail_d2rloader_log_for_game_id(self, campaign_id: str, stop_event: threading.Event) -> None:
+    def _tail_d2rloader_log_for_game_id(
+        self,
+        campaign_id: str,
+        stop_event: threading.Event,
+        hosted_char_names: Optional[List[str]] = None,
+    ) -> None:
         log_path = os.path.join(self.config["d2r_game_dir"], "d2rloader", "logs", "d2rloader.log")
         offset = os.path.getsize(log_path) if os.path.isfile(log_path) else 0
         published_id = False
         published_fallback = False
-        while not stop_event.is_set() and not published_id:
+        while not stop_event.is_set():
             if os.path.isfile(log_path):
                 try:
                     cur_size = os.path.getsize(log_path)
@@ -814,22 +1154,28 @@ class CastaliaHub:
                         f.seek(offset)
                         chunk = f.read()
                         offset = f.tell()
-                    m = GAME_ID_LOG_RE.search(chunk)
-                    if m:
-                        gid = m.group(1)
-                        try:
-                            self.go_live(campaign_id, gid)
-                            published_id = True
-                        except Exception:
-                            pass
-                    elif not published_fallback and LISTENER_READY_RE.search(chunk):
-                        addr = (self.config.get("host_connect_address") or "").strip()
-                        if addr:
+                    if hosted_char_names is not None and chunk:
+                        for cm in HOST_CHAR_LOG_RE.finditer(chunk):
+                            cname = cm.group(1).strip()
+                            if cname and cname not in hosted_char_names:
+                                hosted_char_names.append(cname)
+                    if not published_id:
+                        m = GAME_ID_LOG_RE.search(chunk)
+                        if m:
+                            gid = m.group(1)
                             try:
-                                self.go_live(campaign_id, addr)
-                                published_fallback = True
+                                self.go_live(campaign_id, gid)
+                                published_id = True
                             except Exception:
                                 pass
+                        elif not published_fallback and LISTENER_READY_RE.search(chunk):
+                            addr = (self.config.get("host_connect_address") or "").strip()
+                            if addr:
+                                try:
+                                    self.go_live(campaign_id, addr)
+                                    published_fallback = True
+                                except Exception:
+                                    pass
                 except Exception:
                     pass
             stop_event.wait(1.5)
@@ -860,6 +1206,244 @@ class CastaliaHub:
         with open(toml_path, "w", encoding="utf-8") as f:
             f.write(updated)
         return prev_port
+
+    @staticmethod
+    def _format_toml_value(val: Any) -> str:
+        if isinstance(val, bool):
+            return "true" if val else "false"
+        if isinstance(val, int):
+            return str(val)
+        return json.dumps(str(val))
+
+    def _d2rloader_toml_path(self) -> str:
+        return os.path.join(self.config["d2r_game_dir"], "d2rloader", "config", "d2rloader.toml")
+
+    def _settings_json_paths(self) -> List[str]:
+        """Return existing Settings.json path(s) D2R reads (mod save dir + parent root if under mods/<mod>)."""
+        save_dir = os.path.normpath(self.config.get("d2r_save_dir") or "")
+        if not save_dir:
+            return []
+        candidates = [os.path.join(save_dir, "Settings.json")]
+        parent = os.path.dirname(save_dir)
+        if os.path.basename(parent).lower() == "mods":
+            root_settings = os.path.normpath(os.path.join(parent, "..", "Settings.json"))
+            if root_settings not in candidates:
+                candidates.append(root_settings)
+        return [p for p in candidates if os.path.isfile(p)]
+
+    def _apply_d2rloader_toml_overrides(
+        self,
+        overrides: Dict[str, Dict[str, Any]],
+        raw_literals: bool = False,
+    ) -> Dict[str, Dict[str, str]]:
+        """
+        Section-aware in-place update of d2rloader.toml preserving all comments, formatting, and line endings.
+        Returns {section: {key: previous_raw_literal}} for every key whose value changed.
+        When `raw_literals=True`, values in `overrides` are written verbatim (used when restoring).
+        """
+        toml_path = self._d2rloader_toml_path()
+        if not overrides or not os.path.isfile(toml_path):
+            return {}
+        with open(toml_path, "r", encoding="utf-8", newline="") as f:
+            lines = f.read().splitlines(keepends=True)
+
+        prev: Dict[str, Dict[str, str]] = {}
+        current_section: Optional[str] = None
+        new_lines: List[str] = []
+        changed = False
+
+        for line in lines:
+            if line.endswith("\r\n"):
+                body, eol = line[:-2], "\r\n"
+            elif line.endswith("\n"):
+                body, eol = line[:-1], "\n"
+            else:
+                body, eol = line, ""
+
+            sec_m = re.match(r"^\s*\[([^\]]+)\]\s*(?:#.*)?$", body)
+            if sec_m:
+                current_section = sec_m.group(1).strip()
+                new_lines.append(line)
+                continue
+
+            if current_section and current_section in overrides:
+                kv_m = re.match(r"^(\s*)([A-Za-z0-9_]+)(\s*=\s*)(.*?)(\s*(?:#.*)?)$", body)
+                if kv_m:
+                    indent, key, eq, old_raw, trailing = kv_m.groups()
+                    sec_ov = overrides[current_section]
+                    if key in sec_ov:
+                        new_raw = str(sec_ov[key]) if raw_literals else self._format_toml_value(sec_ov[key])
+                        if old_raw != new_raw:
+                            prev.setdefault(current_section, {})[key] = old_raw
+                            new_lines.append(f"{indent}{key}{eq}{new_raw}{trailing}{eol}")
+                            changed = True
+                            continue
+            new_lines.append(line)
+
+        if changed:
+            with open(toml_path, "w", encoding="utf-8", newline="") as f:
+                f.write("".join(new_lines))
+        return prev
+
+    def _compute_pilgrimage_launch_args(self) -> Optional[str]:
+        """If [d2rloader] launch_arguments contains -enablerespec or -debug_mode, return cleaned string."""
+        toml_path = self._d2rloader_toml_path()
+        if not os.path.isfile(toml_path):
+            return None
+        with open(toml_path, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+        in_section = False
+        for line in lines:
+            sec_m = re.match(r"^\s*\[([^\]]+)\]\s*(?:#.*)?$", line)
+            if sec_m:
+                in_section = sec_m.group(1).strip() == "d2rloader"
+                continue
+            if in_section:
+                kv_m = re.match(r"^\s*launch_arguments\s*=\s*(.*?)\s*(?:#.*)?$", line)
+                if kv_m:
+                    raw_val = kv_m.group(1).strip()
+                    try:
+                        parsed = json.loads(raw_val)
+                    except Exception:
+                        parsed = raw_val.strip("\"'")
+                    tokens = str(parsed).split()
+                    banned = {"-enablerespec", "-debug_mode"}
+                    cleaned = [t for t in tokens if t.lower() not in banned]
+                    if len(cleaned) != len(tokens):
+                        return " ".join(cleaned)
+                    return None
+        return None
+
+    def _apply_settings_json_overrides(self, overrides: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """Update keys in D2R Settings.json file(s) and return {path: {key: prev_value_or_sentinel}}."""
+        if not overrides:
+            return {}
+        prev_map: Dict[str, Dict[str, Any]] = {}
+        for path in self._settings_json_paths():
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if not isinstance(data, dict):
+                    continue
+                changed = False
+                file_prev: Dict[str, Any] = {}
+                for k, v in overrides.items():
+                    if k not in data:
+                        file_prev[k] = {"__missing__": True}
+                        data[k] = v
+                        changed = True
+                    elif data[k] != v:
+                        file_prev[k] = data[k]
+                        data[k] = v
+                        changed = True
+                if changed:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=4)
+                    prev_map[path] = file_prev
+            except Exception:
+                continue
+        return prev_map
+
+    def _restore_settings_json_overrides(self, prev_map: Dict[str, Dict[str, Any]]) -> None:
+        if not prev_map:
+            return
+        for path, file_prev in prev_map.items():
+            if not os.path.isfile(path) or not isinstance(file_prev, dict):
+                continue
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                if not isinstance(data, dict):
+                    continue
+                for k, old_v in file_prev.items():
+                    if isinstance(old_v, dict) and old_v.get("__missing__"):
+                        data.pop(k, None)
+                    else:
+                        data[k] = old_v
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=4)
+            except Exception:
+                continue
+
+    def apply_launch_rules(
+        self,
+        campaign: Optional[Dict[str, Any]],
+        is_host: bool,
+        join_port: Optional[int] = None,
+        persist_to_active_profile: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Enforce mode-specific rules & reliability guards in d2rloader.toml and Settings.json.
+        Returns a snapshot dict of previous values so restore_launch_rules() (or crash recovery)
+        restores the player's exact original Solo settings.
+        """
+        if campaign is None:
+            return {"prev_toml_overrides": {}, "prev_settings_overrides": {}}
+
+        mode = str(campaign.get("campaign_mode") or "open").strip().lower()
+        target_port = 4000 if is_host else (int(join_port) if join_port else 4000)
+
+        # Reliability guards (both modes, Host & Joiner)
+        toml_overrides: Dict[str, Dict[str, Any]] = {
+            "d2rloader": {
+                "default_mod": "castalia",
+                "show_tcpip_button": True,
+            },
+            "d2rloader.advanced": {
+                "game_port": target_port,
+            },
+        }
+        settings_overrides: Dict[str, Any] = {}
+
+        # Host-only log hooks (auto-LIVE listener detection + local system events like deaths/joins)
+        # Note: d2rloader.log stays strictly local on the Host machine; personal chat is never uploaded or stored.
+        if is_host:
+            toml_overrides["d2rloader.developer.logs"] = {
+                "enabled": True,
+                "hosting": True,
+                "chat_messages": True,
+            }
+
+        if mode == "pilgrimage":
+            # Client-enforced Pilgrimage locks (Host & Joiner)
+            toml_overrides["d2rcore.player"] = {"enable_respec": False}
+            toml_overrides["d2rloader.developer"] = {"enable_console": False}
+            toml_overrides["d2rloader.advanced"]["allow_global_extensions"] = False
+            cleaned_args = self._compute_pilgrimage_launch_args()
+            if cleaned_args is not None:
+                toml_overrides["d2rloader"]["launch_arguments"] = cleaned_args
+            # Server-authoritative Pilgrimage locks (Host only — Joiner values are ignored by D2Game)
+            if is_host:
+                toml_overrides["d2rloader"]["always_generate_new_maps"] = True
+                settings_overrides["Offline Difficulty Scaling"] = 1
+        else:
+            toml_overrides["d2rcore.player"] = {"enable_respec": True}
+
+        prev_toml = self._apply_d2rloader_toml_overrides(toml_overrides, raw_literals=False)
+        prev_settings = self._apply_settings_json_overrides(settings_overrides)
+        snapshot = {
+            "prev_toml_overrides": prev_toml,
+            "prev_settings_overrides": prev_settings,
+        }
+        if persist_to_active_profile and os.path.isfile(self.active_profile_path):
+            ap = self._load_json(self.active_profile_path, {})
+            if prev_toml:
+                ap["prev_toml_overrides"] = prev_toml
+            if prev_settings:
+                ap["prev_settings_overrides"] = prev_settings
+            self._save_json(self.active_profile_path, ap)
+        return snapshot
+
+    def restore_launch_rules(self, snapshot: Optional[Dict[str, Any]]) -> None:
+        """Restore exact pre-launch d2rloader.toml and Settings.json values from snapshot."""
+        if not snapshot:
+            return
+        prev_toml = snapshot.get("prev_toml_overrides")
+        if isinstance(prev_toml, dict) and prev_toml:
+            self._apply_d2rloader_toml_overrides(prev_toml, raw_literals=True)
+        prev_settings = snapshot.get("prev_settings_overrides")
+        if isinstance(prev_settings, dict) and prev_settings:
+            self._restore_settings_json_overrides(prev_settings)
 
     def write_launch_intent(self, campaign: Optional[Dict[str, Any]], is_host: bool) -> Optional[str]:
         """Write or clear mods/castalia/d2rloader/config/castalia_launch_intent.json for castalia-autohost.dll."""
@@ -937,33 +1521,134 @@ class CastaliaHub:
         except Exception:
             return None
 
-    def launch_session(self, target: str, dry_run: bool = False) -> Dict[str, Any]:
+    def verify_pilgrimage_integrity(
+        self,
+        campaign_id: str,
+        campaign: Optional[Dict[str, Any]] = None,
+        consume_crash_marker: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Pre-launch Pilgrimage integrity verification for both Host and Joiners:
+          - Host: checks locked `host_char_name` & `.d2s` SHA-256 continuity (crash recovery exempt).
+          - Joiner: requires Host to be LIVE (`waiting_for_live`) and checks RSVP `.d2s` SHA-256 continuity
+            before launch (`blocked=True` so a tampered Joiner cannot taint the party's Pilgrimage run).
+        """
+        camp = campaign or self.get_campaign(campaign_id)
+        if str(camp.get("campaign_mode") or "open").lower() != "pilgrimage":
+            return {"ok": True, "skipped": True}
+
+        is_host = bool(camp.get("is_host")) or bool(self.get_token(campaign_id, "host_token"))
+        pdir = self.profile_dir_for(campaign_id)
+        crash_marker = os.path.join(pdir, ".crash_recovered")
+        crash_exempt = os.path.isfile(crash_marker)
+        if crash_exempt and consume_crash_marker:
+            try:
+                os.remove(crash_marker)
+            except Exception:
+                pass
+
+        def _find_d2s(expected_name: str) -> Optional[str]:
+            target_low = f"{expected_name.lower()}.d2s"
+            for fn in os.listdir(pdir):
+                if fn.lower() == target_low:
+                    return os.path.join(pdir, fn)
+            return None
+
+        if is_host:
+            locked_name = str(camp.get("host_char_name") or "").strip()
+            expected_hash = str(camp.get("host_char_hash") or "").strip()
+            if not locked_name or not expected_hash:
+                return {"ok": True, "role": "host", "initial": True}
+            d2s_path = _find_d2s(locked_name)
+            if not d2s_path:
+                return {
+                    "ok": False,
+                    "role": "host",
+                    "blocked": False,
+                    "reason": f"Locked Pilgrimage character '{locked_name}.d2s' was removed or swapped.",
+                }
+            if crash_exempt:
+                return {"ok": True, "role": "host", "crash_exempt": True, "char_name": locked_name}
+            actual_hash = _sha256_file(d2s_path)
+            if actual_hash != expected_hash:
+                return {
+                    "ok": False,
+                    "role": "host",
+                    "blocked": False,
+                    "reason": f"Host character '{locked_name}.d2s' was modified outside of a campaign session.",
+                }
+            return {"ok": True, "role": "host", "char_name": locked_name, "char_hash": actual_hash}
+
+        # Joiner checks
+        if str(camp.get("status") or "").lower() != "live":
+            return {
+                "ok": False,
+                "role": "joiner",
+                "blocked": True,
+                "waiting_for_live": True,
+                "reason": "Waiting for Host to go LIVE before launching into a Pilgrimage campaign.",
+            }
+        rsvp_id = self.get_token(campaign_id, "rsvp_id")
+        rsvps = camp.get("rsvps") or []
+        my_rsvp = next((r for r in rsvps if r.get("id") == rsvp_id), None)
+        if my_rsvp and my_rsvp.get("char_hash") and my_rsvp.get("char_name"):
+            cname = str(my_rsvp["char_name"]).strip()
+            expected_hash = str(my_rsvp["char_hash"]).strip()
+            d2s_path = _find_d2s(cname)
+            if not d2s_path:
+                return {
+                    "ok": False,
+                    "role": "joiner",
+                    "blocked": True,
+                    "reason": f"Your Pilgrimage character '{cname}.d2s' is missing from this campaign profile.",
+                }
+            if not crash_exempt:
+                actual_hash = _sha256_file(d2s_path)
+                if actual_hash != expected_hash:
+                    return {
+                        "ok": False,
+                        "role": "joiner",
+                        "blocked": True,
+                        "reason": f"Your Pilgrimage character '{cname}.d2s' was modified outside of a campaign session and cannot join this Pilgrimage run.",
+                    }
+        return {"ok": True, "role": "joiner"}
+
+    def launch_session(self, target: str, dry_run: bool = False, allow_invalidate: bool = False) -> Dict[str, Any]:
         """
         Full launch lifecycle:
           1. If campaign: fetch snapshot, auto-bump patch version (same MAJOR.MINOR) for Host,
-             sync pinned mod version, write castalia_launch_intent.json,
-             auto-configure d2rloader.toml game_port for custom playit.gg ports, copy host/Game ID to clipboard
+             verify Pilgrimage integrity (LIVE gate + .d2s SHA-256 continuity), sync pinned mod version,
+             write castalia_launch_intent.json, apply mode-specific d2rloader.toml & Settings.json rules
           2. Swap isolated save profile into live mods/castalia/
           3. Launch D2RLoader (via bin/d2r-mod --coop on Linux or D2RLoader.exe on Windows)
-          4. On exit: restore game_port, clear intent, sync saves back, parse .d2s telemetry & auto-roll Host
+          4. On exit: restore launch rules, clear intent, sync saves back, parse .d2s telemetry + hash & auto-roll Host
         """
         campaign = None
         is_host = False
         copied_game_id = None
-        prev_game_port = None
+        join_port = 4000
+        launch_rules_snapshot = None
 
         if target != "solo":
             campaign = self.get_campaign(target)
             is_host = bool(campaign.get("is_host"))
             if is_host and not dry_run:
                 self._auto_bump_campaign_version(campaign)
+            if not dry_run and str(campaign.get("campaign_mode") or "open").lower() == "pilgrimage":
+                chk = self.verify_pilgrimage_integrity(target, campaign=campaign, consume_crash_marker=True)
+                if not chk.get("ok"):
+                    if chk.get("blocked") or not allow_invalidate:
+                        raise ValueError(chk.get("reason") or "Pilgrimage integrity check failed.")
+                    try:
+                        self.update_campaign(target, {"pilgrimage_invalidated_reason": chk["reason"]})
+                        campaign["pilgrimage_invalidated_reason"] = chk["reason"]
+                    except Exception:
+                        pass
             ver_status = self.ensure_version_installed(campaign["castalia_version"])
             if campaign.get("live_join_info") and not is_host:
                 join_host, join_port = self.parse_host_port(str(campaign["live_join_info"]))
                 copied_game_id = join_host
                 self.copy_to_clipboard(join_host)
-                if join_port != 4000 and not dry_run:
-                    prev_game_port = self.set_d2rloader_game_port(join_port)
         else:
             ver_status = "solo_current"
 
@@ -972,11 +1657,15 @@ class CastaliaHub:
             intent_data = self._load_json(intent_path, {})
             if intent_data.get("game_name"):
                 self.copy_to_clipboard(intent_data["game_name"])
-        pid = self.swap_to_profile(target)
-        if prev_game_port is not None and os.path.isfile(self.active_profile_path):
-            ap = self._load_json(self.active_profile_path, {})
-            ap["prev_game_port"] = prev_game_port
-            self._save_json(self.active_profile_path, ap)
+        use_shared_stash = bool(campaign.get("shared_stash")) if campaign else True
+        pid = self.swap_to_profile(target, shared_stash=use_shared_stash)
+        if campaign and not dry_run:
+            launch_rules_snapshot = self.apply_launch_rules(
+                campaign,
+                is_host=is_host,
+                join_port=join_port,
+                persist_to_active_profile=True,
+            )
         result: Dict[str, Any] = {
             "profile_id": pid,
             "version_status": ver_status,
@@ -989,14 +1678,16 @@ class CastaliaHub:
 
         stop_evt = threading.Event()
         tail_thread = None
+        hosted_char_names: List[str] = []
         if campaign and is_host:
             tail_thread = threading.Thread(
                 target=self._tail_d2rloader_log_for_game_id,
-                args=(target, stop_evt),
+                args=(target, stop_evt, hosted_char_names),
                 daemon=True,
             )
             tail_thread.start()
 
+        session_t0 = time.monotonic()
         try:
             d2r_mod_bin = os.path.join(REPO_ROOT, "bin", "d2r-mod")
             if sys.platform != "win32" and os.path.isfile(d2r_mod_bin):
@@ -1016,26 +1707,39 @@ class CastaliaHub:
                     check=False,
                 )
         finally:
+            session_seconds = max(0, int(round(time.monotonic() - session_t0)))
             stop_evt.set()
             if tail_thread:
                 tail_thread.join(timeout=2)
-            if prev_game_port is not None:
-                self.set_d2rloader_game_port(prev_game_port)
+            self.restore_launch_rules(launch_rules_snapshot)
             self.write_launch_intent(None, False)
             self.sync_back_active_profile()
             if target != "solo":
                 self._restore_solo_to_live()
 
-        # Post-exit .d2s telemetry & Host auto-rollover
+        # Post-exit .d2s telemetry, SHA-256 hash update & Host auto-rollover
         chars = self.list_profile_chars(target)
         if campaign and chars:
             latest_char = chars[0]
+            char_hash = None
+            if latest_char.get("path") and os.path.isfile(latest_char["path"]):
+                try:
+                    char_hash = _sha256_file(latest_char["path"])
+                    latest_char["char_hash"] = char_hash
+                except Exception:
+                    char_hash = None
             result["post_session_char"] = latest_char
             try:
                 self.send_telemetry(target, latest_char)
             except Exception as e:
                 result["telemetry_error"] = str(e)
             if is_host and latest_char.get("char_level"):
+                inval_reason = None
+                locked_name = str(campaign.get("host_char_name") or "").strip()
+                if str(campaign.get("campaign_mode") or "open").lower() == "pilgrimage" and locked_name:
+                    swapped = next((n for n in hosted_char_names if n.lower() != locked_name.lower()), None)
+                    if swapped:
+                        inval_reason = f"Host launched a game with '{swapped}' instead of locked Pilgrimage character '{locked_name}'."
                 try:
                     rolled = self.end_session(
                         target,
@@ -1043,10 +1747,14 @@ class CastaliaHub:
                         current_wp=str(latest_char["char_wp"]),
                         has_cube=bool(latest_char.get("has_cube", False)),
                         host_progress_b64=latest_char.get("host_progress_b64"),
+                        session_seconds=session_seconds,
+                        host_char_name=str(latest_char.get("char_name") or "") or None,
+                        host_char_hash=char_hash,
+                        pilgrimage_invalidated_reason=inval_reason,
                     )
                     result["host_rollover"] = rolled
                 except Exception as e:
                     result["rollover_error"] = str(e)
-                if latest_char.get("hell_baal_cleared"):
+                if latest_char.get("hell_baal_cleared") and not inval_reason and not campaign.get("pilgrimage_invalidated_reason"):
                     result["hell_baal_victory_prompt"] = True
         return result

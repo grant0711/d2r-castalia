@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS campaigns (
   current_wp        TEXT NOT NULL DEFAULT 'a1n',
   has_cube          INTEGER NOT NULL DEFAULT 0,
   host_progress_b64 TEXT,
+  shared_stash      INTEGER NOT NULL DEFAULT 0,
+  campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  host_char_name    TEXT,
+  host_char_hash    TEXT,
+  pilgrimage_invalidated_reason TEXT,
   max_seats         INTEGER NOT NULL DEFAULT 5,
   schedule_text     TEXT NOT NULL,
   recurrence_days   INTEGER DEFAULT 7,
@@ -52,6 +58,7 @@ CREATE TABLE IF NOT EXISTS rsvps (
   char_level        INTEGER NOT NULL DEFAULT 1,
   char_wp           TEXT NOT NULL DEFAULT 'a1n',
   build_summary     TEXT NOT NULL DEFAULT '',
+  char_hash         TEXT,
   status            TEXT NOT NULL DEFAULT 'confirmed',
   created_at        TEXT NOT NULL
 );
@@ -62,6 +69,7 @@ CREATE TABLE IF NOT EXISTS chronicles (
   completed_at      TEXT NOT NULL,
   sessions_played   INTEGER NOT NULL DEFAULT 1,
   death_count       INTEGER NOT NULL DEFAULT 0,
+  total_play_seconds INTEGER NOT NULL DEFAULT 0,
   party_roster_json TEXT NOT NULL,
   summary           TEXT NOT NULL,
   screenshot_url    TEXT
@@ -207,14 +215,23 @@ class CampaignDB:
         cid = _slugify(body.get("title", "campaign"))
         host_token = secrets.token_urlsafe(24)
         now = _now_iso()
+        raw_mode = str(body.get("campaign_mode") or "").strip().lower()
+        req_lvl = max(1, min(99, int(body.get("current_level", 1))))
+        req_wp = str(body.get("current_wp") or "a1n").strip()
+        if raw_mode in ("pilgrimage", "open"):
+            mode = raw_mode
+        else:
+            mode = "open" if (req_lvl > 1 or req_wp.lower() != "a1n") else "pilgrimage"
+        start_lvl = 1 if mode == "pilgrimage" else req_lvl
+        start_wp = "a1n" if mode == "pilgrimage" else req_wp
         with self._lock, self._conn() as conn:
             conn.execute(
                 """INSERT INTO campaigns (
                     id, host_name, host_token_hash, title, description, ruleset,
-                    castalia_version, current_level, current_wp, max_seats,
+                    castalia_version, current_level, current_wp, shared_stash, campaign_mode, max_seats,
                     schedule_text, recurrence_days, next_session_utc, status,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
                 (
                     cid,
                     str(body.get("host_name") or "Host").strip(),
@@ -223,8 +240,10 @@ class CampaignDB:
                     str(body.get("description") or "").strip(),
                     str(body.get("ruleset") or "standard").strip(),
                     str(body.get("castalia_version") or "0.3.0").strip().lstrip("v"),
-                    int(body.get("current_level", 1)),
-                    str(body.get("current_wp") or "a1n").strip(),
+                    start_lvl,
+                    start_wp,
+                    1 if body.get("shared_stash") else 0,
+                    mode,
                     max(2, min(8, int(body.get("max_seats", 5)))),
                     str(body.get("schedule_text") or "Weekly").strip(),
                     body.get("recurrence_days", 7),
@@ -254,12 +273,16 @@ class CampaignDB:
             "title", "description", "ruleset", "castalia_version",
             "current_level", "current_wp", "max_seats", "schedule_text",
             "recurrence_days", "next_session_utc", "status",
+            "host_char_name", "host_char_hash", "pilgrimage_invalidated_reason",
         )
         with self._lock, self._conn() as conn:
-            self._require_host(conn, cid, bearer)
+            existing = self._require_host(conn, cid, bearer)
             sets, vals = [], []
             for k in allowed:
                 if k in body and body[k] is not None:
+                    # host_char_name is locked once set on a campaign
+                    if k == "host_char_name" and existing["host_char_name"]:
+                        continue
                     v = body[k]
                     if k == "castalia_version":
                         v = str(v).strip().lstrip("v")
@@ -315,13 +338,23 @@ class CampaignDB:
                 host_prog = row["host_progress_b64"]
             else:
                 host_prog = str(host_prog)[:600]
-            next_utc = body.get("next_session_utc") or _advance_iso_days(row["next_session_utc"], row["recurrence_days"])
+            next_utc = body.get("next_session_utc") or None
+            is_pilgrimage = str(row["campaign_mode"] or "pilgrimage") == "pilgrimage"
+            add_sec = max(0, int(body.get("session_seconds") or 0)) if is_pilgrimage else 0
+            total_sec = int(row["total_play_seconds"] or 0) + add_sec
+            host_char_name = row["host_char_name"] or (str(body.get("host_char_name")).strip()[:15] if body.get("host_char_name") else None)
+            host_char_hash = str(body.get("host_char_hash")).strip()[:64] if body.get("host_char_hash") else row["host_char_hash"]
+            inval_reason = row["pilgrimage_invalidated_reason"] or (
+                str(body.get("pilgrimage_invalidated_reason")).strip()[:200] if body.get("pilgrimage_invalidated_reason") else None
+            )
             conn.execute(
                 """UPDATE campaigns
                    SET status = 'active', live_join_info = NULL,
-                       current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?, next_session_utc = ?, updated_at = ?
+                       current_level = ?, current_wp = ?, has_cube = ?, host_progress_b64 = ?,
+                       total_play_seconds = ?, host_char_name = ?, host_char_hash = ?,
+                       pilgrimage_invalidated_reason = ?, next_session_utc = ?, updated_at = ?
                    WHERE id = ?""",
-                (new_lvl, new_wp, has_cube, host_prog, next_utc, _now_iso(), cid),
+                (new_lvl, new_wp, has_cube, host_prog, total_sec, host_char_name, host_char_hash, inval_reason, next_utc, _now_iso(), cid),
             )
             updated = conn.execute("SELECT * FROM campaigns WHERE id = ?", (cid,)).fetchone()
             rsvps = [
@@ -395,9 +428,10 @@ class CampaignDB:
                 raise FileExistsError(
                     f"Character name '{new_name}' is already taken in this campaign (D2RLoader rejects duplicate names in TCP/IP games)."
                 )
+            new_hash = str(body.get("char_hash")).strip()[:64] if body.get("char_hash") else rrow["char_hash"]
             conn.execute(
                 """UPDATE rsvps
-                   SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?
+                   SET char_name = ?, char_class = ?, char_level = ?, char_wp = ?, build_summary = ?, char_hash = ?
                    WHERE id = ?""",
                 (
                     new_name,
@@ -405,6 +439,7 @@ class CampaignDB:
                     int(body.get("char_level", rrow["char_level"])),
                     str(body.get("char_wp") or rrow["char_wp"]),
                     str(body.get("build_summary") or rrow["build_summary"]),
+                    new_hash,
                     rid,
                 ),
             )
@@ -435,6 +470,10 @@ class CampaignDB:
     def complete_campaign(self, cid: str, body: Dict[str, Any], bearer: Optional[str]) -> Dict[str, Any]:
         with self._lock, self._conn() as conn:
             crow = self._require_host(conn, cid, bearer)
+            if str(crow["campaign_mode"] or "pilgrimage") != "pilgrimage":
+                raise ValueError("Only Pilgrimage campaigns are eligible for Hall of Heroes.")
+            if crow["pilgrimage_invalidated_reason"]:
+                raise ValueError(f"Pilgrimage integrity was voided: {crow['pilgrimage_invalidated_reason']}")
             rsvps = [
                 self._public_rsvp(x)
                 for x in conn.execute("SELECT * FROM rsvps WHERE campaign_id = ? AND status = 'confirmed'", (cid,)).fetchall()
@@ -449,14 +488,15 @@ class CampaignDB:
             conn.execute(
                 """INSERT INTO chronicles (
                     id, campaign_id, completed_at, sessions_played, death_count,
-                    party_roster_json, summary, screenshot_url
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    total_play_seconds, party_roster_json, summary, screenshot_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     chid,
                     cid,
                     now,
                     int(body.get("sessions_played", 1)),
                     int(body.get("death_count", 0)),
+                    int(crow["total_play_seconds"] or 0),
                     roster_json,
                     str(body.get("summary") or f"{crow['title']} cleared Hell Baal!"),
                     body.get("screenshot_url"),
@@ -468,6 +508,7 @@ class CampaignDB:
             out["title"] = crow["title"]
             out["castalia_version"] = crow["castalia_version"]
             out["ruleset"] = crow["ruleset"]
+            out["shared_stash"] = bool(crow["shared_stash"])
             if self.hoh_webhook:
                 self._post_discord(
                     self.hoh_webhook,
@@ -482,7 +523,7 @@ class CampaignDB:
     def list_chronicles(self):
         with self._lock, self._conn() as conn:
             rows = conn.execute(
-                """SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version
+                """SELECT ch.*, c.title, c.host_name, c.ruleset, c.castalia_version, c.shared_stash
                    FROM chronicles ch JOIN campaigns c ON c.id = ch.campaign_id
                    ORDER BY ch.completed_at DESC"""
             ).fetchall()

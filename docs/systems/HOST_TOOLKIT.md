@@ -94,6 +94,8 @@ Post this in `#campaign-board` to recruit your party:
 | **Someone has a version mismatch** | Have them run `update-castalia.ps1` (or re-extract the pinned GitHub Release zip after deleting old `mods/castalia/castalia.mpq/`) and re-verify the version tag. |
 | **Party hits a tough Hell immunity wall** | Pause in town, inspect the Compendium together, craft targeted elemental/physical swaps using the 7 Cube recipes, or adjust your 10-slot mercenaries' kits and auras. |
 
+| **Random internet scanners hit your public `playit.gg` port** | Run `bin/d2r-tcp-guard --listen 127.0.0.1:4001 --target 127.0.0.1:4000` (or `castalia-tcp-guard.service`) and point your Playit tunnel's local port to `4001`. It drops TLS (`0x16 0x03`), HTTP, SSH, and burst probes before they reach D2RLoader. Use **Settings → Test Connection** in the Castalia Launcher to verify reachability before going live. |
+
 ---
 
 ## 6. Campaign Finale — Hall of Heroes Template

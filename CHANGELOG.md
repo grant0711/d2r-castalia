@@ -8,6 +8,12 @@ Versioning follows **Save-Aware SemVer** (`vMAJOR.MINOR.PATCH` — see [docs/sys
 
 ---
 
+## [v0.5.0] - 2026-11-28
+
+**Save Compatibility:** 🟡 Save-Compatible (Respec Recommended)
+
+All 4 Alpha classes (Paladin, Barbarian, Assassin, Sorceress — 120/120 skills) complete! Finalizes the Sorceress Cold tree (Frozen Orb Glacial Singularity capstone, Avalanche Knockback/Freeze surge with smooth snowstorm audio, Permafrost Cryostasis freeze field, Blizzard, Icicle Spear, custom HD icons), adds radiating party Conduction (zero solo double-dipping), unifies tri-elemental monster tempo (Fire -Phys Res, Cold gradual thaw, Lightning supercharge), aligns monster coldeffect with deterministic Cold affinities (+ ++ nameplate subtitles), reorders Sorceress tabs to Fire -> Cold -> Lightning, makes Assassin Shadow Bind non-curse, and balances Sorceress trees to 1.00x Fire / 1.15x Lightning / 0.85x Cold with 0.80x 60-pt hybrid parity.
+
 ## [v0.4.4] - 2026-11-28
 
 **Save Compatibility:** 🟢 Save-Compatible (drop-in safe mid-campaign)

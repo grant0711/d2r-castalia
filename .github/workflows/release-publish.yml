@@ -116,7 +116,7 @@ jobs:
           asset_names = [a.get("name", "") for a in (rel.get("assets") or [])]
 
           # Detect if Launcher code changed since the previous v* tag
-          tags_raw = subprocess.check_output(["git", "tag", "--sort=-v:refname", "v*"], text=True).splitlines()
+          tags_raw = subprocess.check_output(["git", "tag", "--list", "--sort=-v:refname", "v*"], text=True).splitlines()
           prev_tag = next((t for t in tags_raw if t != tag), None)
           launcher_changed = False
           if prev_tag:

@@ -8,7 +8,7 @@
       "description": "test_fizzle: Cinder Lance fizzles out immediately (Range=1, Radius=0) when cast in Cryostasis or Overcharge",
       "no_label": true,
       "strings": {
-        "name": "Cinder Lance",
+        "name": "Fire Bolt",
         "short": "bolt of flame - explodes in Conflagration",
         "long": "Hurls a bolt of flame against a single target\nBolts explode on impact while Conflagration is active"
       },
@@ -78,15 +78,15 @@
             "EMin": "6",
             "EMinLev1": "2",
             "EMinLev2": "4",
-            "EMinLev3": "18",
-            "EMinLev4": "48",
-            "EMinLev5": "90",
+            "EMinLev3": "14",
+            "EMinLev4": "53",
+            "EMinLev5": "101",
             "EMax": "10",
             "EMaxLev1": "2",
             "EMaxLev2": "5",
-            "EMaxLev3": "22",
-            "EMaxLev4": "56",
-            "EMaxLev5": "104",
+            "EMaxLev3": "18",
+            "EMaxLev4": "62",
+            "EMaxLev5": "116",
             "EDmgSymPerCalc": "(skill('Fire Ball'.blvl) + skill('Inferno'.blvl)) * 10"
           }
         },

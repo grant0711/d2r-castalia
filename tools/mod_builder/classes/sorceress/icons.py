@@ -16,7 +16,11 @@ Lightning tree icon changes:
   - Heaven's Wrath (row 'charged bolt',      cel  4) <- NEW: celestial starburst halo pierced by thunderbolt (assets/skill_icons/heavens_wrath.jpg)
 
 Cold tree icon changes:
+  - Cryostasis     (row 'frozen armor',      cel  8) <- vanilla Cold Mastery icon (cel 58)
+  - Permafrost     (row 'ice blast',         cel 18) <- NEW: cracked frozen ground slab with erupting frost spikes (assets/skill_icons/permafrost.jpg)
   - Stasis         (row 'shiver armor',      cel 28) <- NEW: minimalist hourglass silhouette (assets/skill_icons/stasis.jpg)
+  - Avalanche      (row 'chilling armor',    cel 48) <- NEW: surging glacial wave over tumbling ice boulders (assets/skill_icons/avalanche.jpg)
+  - Equilibrium    (row 'cold mastery',      cel 58) <- NEW: symmetrical balance scale with central crystal spark (assets/skill_icons/equilibrium.jpg)
 New icons are stamped as silver-plate silhouettes on the same brown stone tile as the vanilla icons.
 """
 import math
@@ -31,7 +35,7 @@ PX0, PX1, PY0, PY1 = 19, 112, 19, 111  # plate interior (93x92)
 CX, CY = 65.5, 65.0
 
 # dst cel <- src cel (verbatim copies of vanilla art)
-COPY_CELS = {50: 2, 32: 50, 10: 22, 44: 54}
+COPY_CELS = {50: 2, 32: 50, 10: 22, 44: 54, 8: 58}
 
 
 def _cel(buf: bytes, cel: int, w: int, h: int) -> bytearray:
@@ -166,14 +170,18 @@ def _downscale(frame: bytes) -> bytes:
         input=bytes(frame))
 
 
-def _mask_from_icon_jpg(filename: str, inset: int = 5) -> list:
+def _mask_from_icon_jpg(filename: str, inset: int = 5, crop_pct: float = 0.0) -> list:
     """Load a white-on-black silhouette JPEG from assets/skill_icons/ into the plate interior."""
     img_path = os.path.join(REPO_ROOT, "assets", "skill_icons", filename)
     pw = (PX1 - PX0) - 2 * inset
     ph = (PY1 - PY0) - 2 * inset
+    vf = f"scale={pw}:{ph}:flags=lanczos"
+    if crop_pct > 0.0:
+        keep = 1.0 - 2.0 * crop_pct
+        vf = f"crop=iw*{keep:.3f}:ih*{keep:.3f}:iw*{crop_pct:.3f}:ih*{crop_pct:.3f}," + vf
     art_px = subprocess.check_output([
         "ffmpeg", "-v", "error", "-i", img_path,
-        "-vf", f"scale={pw}:{ph}:flags=lanczos",
+        "-vf", vf,
         "-f", "rawvideo", "-pix_fmt", "rgb24", "-"
     ])
     m = [[0.0] * FW for _ in range(FH)]
@@ -216,6 +224,18 @@ def stasis_mask(src_cels: dict, pressed: int) -> list:
     return _mask_from_icon_jpg("stasis.jpg", inset=4)
 
 
+def permafrost_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("permafrost.jpg", inset=2, crop_pct=0.07)
+
+
+def avalanche_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("avalanche.jpg", inset=2, crop_pct=0.04)
+
+
+def equilibrium_mask(src_cels: dict, pressed: int) -> list:
+    return _mask_from_icon_jpg("equilibrium.jpg", inset=2, crop_pct=0.07)
+
+
 def build_soskillicon_pair() -> str:
     rel = "data/hd/global/ui/spells/sorceress/"
     src_hd = os.path.join(VANILLA_ROOT, rel, "soskillicon.sprite")
@@ -251,7 +271,10 @@ def build_soskillicon_pair() -> str:
         (14, arc_mask),
         (12, sunderbolt_mask),
         (4, heavens_wrath_mask),
+        (18, permafrost_mask),
         (28, stasis_mask),
+        (48, avalanche_mask),
+        (58, equilibrium_mask),
     ):
         for p in (0, 1):
             mask = maker(src_cels, p)

@@ -9,8 +9,8 @@
       "no_label": true,
       "strings": {
         "name": "Conduction",
-        "short": "conduct your active stance element onto an ally",
-        "long": "conducts your active elemental stance onto a targeted ally or hireling\ntransfers matching elemental skill damage (up to +30%)\nempowers matching elemental skills of allies with additional effects\nrequires an active stance"
+        "short": "radiate your active stance onto nearby allies",
+        "long": "Requires an active stance\nRadiates your active stance element onto nearby allies and hirelings"
       },
       "strings_extra": {
         "ModSorc_CondBoon": "Elemental Damage Transferred: %d%%",
@@ -44,12 +44,12 @@
             "passivestat2": "",
             "passivecalc2": "",
             "srvstfunc": "",
-            "srvdofunc": "25",
+            "srvdofunc": "22",
             "cltstfunc": "",
-            "cltdofunc": "",
-            "TargetAlly": "1",
-            "TargetPet": "1",
-            "InTown": "1",
+            "cltdofunc": "25",
+            "TargetAlly": "",
+            "TargetPet": "",
+            "InTown": "",
             "range": "none",
             "leftskill": "0",
             "rightskill": "1",
@@ -65,7 +65,7 @@
             "dosound": "",
             "castoverlay": "light_cast_2",
             "aurastate": "sorc_conduction",
-            "auratargetstate": "",
+            "auratargetstate": "sorc_conduction",
             "auralencalc": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr) + stat('skill_frenzy'.accr)) > 0) ? ((1500 + (lvl * 250)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300) : 1",
             "calc1": "min(100, 25 + (lvl - 1) * 75 / 19)",
             "*calc1 desc": "Elemental Damage Transfer % (25 -> 100 at lvl 20)",
@@ -86,7 +86,14 @@
             "aurastat5": "target1",
             "aurastatcalc5": "1 + (stat('conversion_maxhp'.accr) * clc1 / 100)",
             "aurastat6": "goldlost",
-            "aurastatcalc6": "1 + (stat('lifetap_level'.accr) * clc1 / 100)"
+            "aurastatcalc6": "1 + (stat('lifetap_level'.accr) * clc1 / 100)",
+            "srvmissilea": "conduction_wave",
+            "cltmissilea": "conduction_wave",
+            "aurafilter": "",
+            "aurarangecalc": "15",
+            "srvmissile": "",
+            "cltmissile": "",
+            "perdelay": ""
           }
         },
         "skilldesc.txt": {
@@ -122,7 +129,17 @@
             "desccalca6": "",
             "desccalcb6": ""
           }
+        },
+        "missiles.txt": {
+          "conduction_wave": {
+            "_clone": "battleorders",
+            "TravelSound": "",
+            "Skill": "Lightning Mastery"
+          }
         }
+      },
+      "hd_missiles": {
+        "conduction_wave": "electric_nova"
       }
     }
   }

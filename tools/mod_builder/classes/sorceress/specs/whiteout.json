@@ -8,9 +8,12 @@
       "description": "final1: Cursor snowstorm bombardment (Blizzard engine 28/28, 1.6s CD, blizzardcenter pSrvDoFunc=10/pCltDoFunc=13). Scales storm radius with Expansion & Cryostasis (7->10 base), duration with Stasis & Cryostasis (3s->4s base), and faster shard cadence in Cryostasis (4->3 frames). Fizzles in Conflagration or Overcharge.",
       "no_label": true,
       "strings": {
-        "name": "Whiteout",
-        "short": "summons a raging snowstorm at the target area",
-        "long": "Calls down a violent snowstorm that chills and bombards enemies\nCryostasis: wider storm radius, longer duration, and faster shard cadence"
+        "name": "Blizzard",
+        "short": "calls down a snowstorm",
+        "long": "Calls down a raging snowstorm\nthat chills and bombards enemies"
+      },
+      "hd_missiles": {
+        "whiteout_thaw_pulse": "null"
       },
       "tables": {
         "missiles.txt": {
@@ -19,15 +22,48 @@
             "Skill": "Blizzard"
           },
           "blizzard1": {
+            "pSrvHitFunc": "4",
+            "HitSubMissile1": "whiteout_thaw_pulse",
             "NextHit": "1",
             "NextDelay": "4",
             "EType": "cold",
             "HitClass": "48",
             "Skill": "Blizzard"
+          },
+          "whiteout_thaw_pulse": {
+            "_clone": "sigillethargysmall",
+            "pSrvDoFunc": "14",
+            "pCltDoFunc": "",
+            "pSrvHitFunc": "",
+            "HitSubMissile1": "",
+            "Param1": "1",
+            "Param2": "30",
+            "Radius": "2",
+            "Range": "2",
+            "CelFile": "null",
+            "ClientSend": "",
+            "NumDirections": "1",
+            "TravelSound": "",
+            "OnDiedSound": "",
+            "Skill": "Blizzard",
+            "HitClass": "48"
           }
         },
         "skills.txt": {
           "Blizzard": {
+            "aurafilter": "3",
+            "aurastate": "",
+            "auratargetstate": "sorc_tempo",
+            "aurarangecalc": "2",
+            "auralencalc": "225",
+            "aurastat1": "velocitypercent",
+            "aurastatcalc1": "0 - min(20, 5 + lvl / 2)",
+            "aurastat2": "attackrate",
+            "aurastatcalc2": "0 - min(20, 5 + lvl / 2)",
+            "aurastat3": "item_fastercastrate",
+            "aurastatcalc3": "0 - min(25, 10 + lvl / 2)",
+            "aurastat4": "item_fastergethitrate",
+            "aurastatcalc4": "0 - min(35, 10 + lvl)",
             "localdelay": "40",
             "minmana": "1",
             "manashift": "7",
@@ -42,21 +78,21 @@
             "EMin": "56",
             "EMinLev1": "8",
             "EMinLev2": "16",
-            "EMinLev3": "52",
-            "EMinLev4": "132",
-            "EMinLev5": "235",
+            "EMinLev3": "44",
+            "EMinLev4": "155",
+            "EMinLev5": "280",
             "EMax": "74",
             "EMaxLev1": "10",
             "EMaxLev2": "22",
-            "EMaxLev3": "66",
-            "EMaxLev4": "160",
-            "EMaxLev5": "280",
+            "EMaxLev3": "56",
+            "EMaxLev4": "187",
+            "EMaxLev5": "334",
             "ELen": "100",
             "ELevLen1": "15",
             "ELevLen2": "10",
             "ELevLen3": "8",
             "ELenSymPerCalc": "stat('conversion_maxhp'.accr) / 2",
-            "EDmgSymPerCalc": "skill('Ice Blast'.blvl) * 18 + skill('Frost Nova'.blvl) * 6"
+            "EDmgSymPerCalc": "skill('Ice Blast'.blvl) * 24"
           }
         },
         "skilldesc.txt": {
@@ -68,15 +104,15 @@
             "desccalca1": "usmc",
             "desccalcb1": "256",
             "descline2": "75",
-            "desctexta2": "StrSkill5",
+            "desctexta2": "StrSkill6",
             "desctextb2": "",
             "desccalca2": "enma",
             "desccalcb2": "exma",
-            "descline3": "12",
-            "desctexta3": "StrSkill18",
-            "desctextb3": "",
-            "desccalca3": "len",
-            "desccalcb3": "",
+            "descline3": "36",
+            "desctexta3": "StrSkillColdLengthSingular",
+            "desctextb3": "StrSkill13",
+            "desccalca3": "edln",
+            "desccalcb3": "25",
             "descline4": "",
             "descline5": "",
             "descline6": "",
@@ -87,12 +123,19 @@
             "dsc3line2": "76",
             "dsc3texta2": "Colddplev",
             "dsc3textb2": "ModSorc_permafrost_name",
-            "dsc3calca2": "18",
-            "dsc3line3": "76",
-            "dsc3texta3": "Colddplev",
-            "dsc3textb3": "ModSorc_hoarfrost_burst_name",
-            "dsc3calca3": "6",
-            "dsc3line4": ""
+            "dsc3calca2": "24",
+            "dsc3line3": "",
+            "dsc3texta3": "",
+            "dsc3textb3": "",
+            "dsc3calca3": "",
+            "dsc3line4": "",
+            "dsc3texta4": "",
+            "dsc3textb4": "",
+            "dsc3calca4": "",
+            "dsc3line5": "",
+            "dsc3texta5": "",
+            "dsc3textb5": "",
+            "dsc3calca5": ""
           }
         }
       }

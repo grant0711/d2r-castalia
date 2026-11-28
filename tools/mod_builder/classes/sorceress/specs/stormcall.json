@@ -9,8 +9,8 @@
       "no_label": true,
       "strings": {
         "name": "Stormcall",
-        "short": "calls down a localized lightning storm",
-        "long": "calls down a violent storm of lightning strikes across the target area\novercharge: wider storm area, longer duration, and faster strike rate"
+        "short": "calls down a lightning storm",
+        "long": "Calls down a violent lightning storm\nacross the target area"
       },
       "hd_missiles": {
         "stormcall_center": "null",
@@ -20,16 +20,6 @@
         "stormcall_frenzy_pulse": "null"
       },
       "tables": {
-        "states.txt": {
-          "stormcall_frenzy": {
-            "_clone": "sigillethargy",
-            "castoverlay": "holyshockhit",
-            "overlay1": "lightningenchant",
-            "colorpri": "",
-            "colorshift": "",
-            "onsound": ""
-          }
-        },
         "missiles.txt": {
           "stormcall_center": {
             "_clone": "erruption center",
@@ -152,7 +142,7 @@
             "perdelay": "",
             "aurafilter": "3",
             "aurastate": "",
-            "auratargetstate": "stormcall_frenzy",
+            "auratargetstate": "sorc_tempo",
             "auralencalc": "75",
             "aurarangecalc": "",
             "stsound": "sorceress_thunder_cast",
@@ -194,15 +184,15 @@
             "EMin": "20",
             "EMinLev1": "6",
             "EMinLev2": "12",
-            "EMinLev3": "25",
-            "EMinLev4": "50",
-            "EMinLev5": "78",
+            "EMinLev3": "26",
+            "EMinLev4": "72",
+            "EMinLev5": "113",
             "EMax": "96",
             "EMaxLev1": "28",
             "EMaxLev2": "54",
-            "EMaxLev3": "150",
-            "EMaxLev4": "300",
-            "EMaxLev5": "468",
+            "EMaxLev3": "156",
+            "EMaxLev4": "429",
+            "EMaxLev5": "681",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : (skill('Nova'.blvl) * par8 + skill('Static Field'.blvl) * 6)"
           }
         },

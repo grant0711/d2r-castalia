@@ -157,7 +157,6 @@ ASSASSIN_STATES = [
     (
         "ass_shadow_bind",
         {
-            "curse": "1",
             "curable": "1",
             "overlay1": "cloaked",
             "castoverlay": "psychic_hammer_hit",

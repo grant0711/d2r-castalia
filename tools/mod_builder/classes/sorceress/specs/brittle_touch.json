@@ -169,8 +169,8 @@
       },
       "strings": {
         "name": "Stasis",
-        "short": "passive - extends duration of lingering spell effects",
-        "long": "Passive\n\nextends the duration of all lingering Sorceress\nspell effects, wakes, storms, summons, and stances"
+        "short": "passive - extends duration of spell effects",
+        "long": "Passive\n\nExtends the duration of lingering Sorceress spells and stances"
       },
       "no_label": true,
       "strings_extra": {

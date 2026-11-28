@@ -9,8 +9,8 @@
       "no_label": true,
       "strings": {
         "name": "Static Lance",
-        "short": "hurl a fast bolt of lightning",
-        "long": "hurls a fast bolt of lightning whose velocity increases with level\novercharge: doubles range and erupts in a shock burst on impact"
+        "short": "bolt of lightning - explodes in Overcharge",
+        "long": "Hurls a fast bolt of lightning\nBolts explode on impact while Overcharge is active"
       },
       "hd_missiles": {
         "static_lance_bolt": "lightningbolt",
@@ -18,16 +18,6 @@
         "static_lance_frenzy_pulse": "null"
       },
       "tables": {
-        "states.txt": {
-          "static_lance_frenzy": {
-            "_clone": "sigillethargy",
-            "castoverlay": "holyshockhit",
-            "overlay1": "lightningenchant",
-            "colorpri": "",
-            "colorshift": "",
-            "onsound": ""
-          }
-        },
         "missiles.txt": {
           "static_lance_bolt": {
             "_clone": "firebolt",
@@ -118,7 +108,7 @@
             "cltmissilec": "",
             "aurafilter": "3",
             "aurastate": "",
-            "auratargetstate": "static_lance_frenzy",
+            "auratargetstate": "sorc_tempo",
             "auralencalc": "75",
             "aurarangecalc": "",
             "stsound": "sorceress_cast_lightning",
@@ -152,15 +142,15 @@
             "EMin": "3",
             "EMinLev1": "1",
             "EMinLev2": "2",
-            "EMinLev3": "7",
-            "EMinLev4": "14",
-            "EMinLev5": "22",
+            "EMinLev3": "6",
+            "EMinLev4": "15",
+            "EMinLev5": "26",
             "EMax": "16",
             "EMaxLev1": "4",
             "EMaxLev2": "7",
-            "EMaxLev3": "42",
-            "EMaxLev4": "84",
-            "EMaxLev5": "134",
+            "EMaxLev3": "34",
+            "EMaxLev4": "96",
+            "EMaxLev5": "155",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Chain Lightning'.blvl) + skill('Charged Bolt'.blvl)) * par8)"
           }
         },

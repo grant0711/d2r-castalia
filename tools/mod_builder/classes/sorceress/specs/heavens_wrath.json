@@ -8,9 +8,9 @@
       "description": "P6: restore vanilla thunderstorm state (overlay2=thunderstormback with ambient thunder rumble) by moving Overcharge's overlay1 in _shared.json to holyshockback. Also zero out damage (EDmgSymPerCalc=-100) and pause perdelay (9999) if the player switches into Conflagration or Cryostasis while Heaven's Wrath is active.",
       "no_label": true,
       "strings": {
-        "name": "Heaven's Wrath",
-        "short": "summon a walking storm of chaining lightning",
-        "long": "summons a close-range storm that calls down chaining bolts of lightning on nearby enemies\novercharge: faster strikes, wider reach, longer burst, and extra chain jumps"
+        "name": "Thunder Storm",
+        "short": "summons a walking lightning storm",
+        "long": "Summons a storm around you that calls down\nchaining lightning bolts on nearby enemies"
       },
       "hd_missiles": {
         "heavens_wrath_bolt": "lightningbolt_big",
@@ -18,16 +18,6 @@
         "heavens_wrath_frenzy_pulse": "null"
       },
       "tables": {
-        "states.txt": {
-          "heavens_wrath_frenzy": {
-            "_clone": "sigillethargy",
-            "castoverlay": "holyshockhit",
-            "overlay1": "lightningenchant",
-            "colorpri": "",
-            "colorshift": "",
-            "onsound": ""
-          }
-        },
         "missiles.txt": {
           "heavens_wrath_bolt": {
             "_clone": "thunderstorm1",
@@ -99,7 +89,7 @@
             "periodic": "1",
             "perdelay": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 9999 : (((stat('skill_decrepify'.accr) + (((stat('target0'.accr) / 1000) == 2) ? 1 : 0)) > 0) ? max(10, 22 - lvl * 5 / 10) : max(14, 30 - lvl * 7 / 10))",
             "aurastate": "thunderstorm",
-            "auratargetstate": "heavens_wrath_frenzy",
+            "auratargetstate": "sorc_tempo",
             "auralencalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 1 : ((100 + (lvl - 1) * 2 + (((stat('skill_decrepify'.accr) + (((stat('target0'.accr) / 1000) == 2) ? 1 : 0)) > 0) ? 25 : 0)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300)",
             "aurarangecalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 1 : (7 + (((stat('skill_decrepify'.accr) + (((stat('target0'.accr) / 1000) == 2) ? 1 : 0)) > 0) ? 3 : 0))",
             "srvmissile": "",
@@ -147,15 +137,15 @@
             "EMin": "18",
             "EMinLev1": "6",
             "EMinLev2": "12",
-            "EMinLev3": "25",
-            "EMinLev4": "50",
-            "EMinLev5": "78",
+            "EMinLev3": "21",
+            "EMinLev4": "57",
+            "EMinLev5": "92",
             "EMax": "140",
             "EMaxLev1": "46",
             "EMaxLev2": "92",
-            "EMaxLev3": "225",
-            "EMaxLev4": "450",
-            "EMaxLev5": "702",
+            "EMaxLev3": "188",
+            "EMaxLev4": "517",
+            "EMaxLev5": "822",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Chain Lightning'.blvl) + skill('Lightning'.blvl)) * par8)",
             "aurafilter": "42371",
             "aurastat1": "velocitypercent",

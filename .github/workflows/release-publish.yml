@@ -115,6 +115,8 @@ jobs:
           body = (rel.get("body") or "").strip()
           asset_names = [a.get("name", "") for a in (rel.get("assets") or [])]
 
+          # Fetch newly created remote tags so git diff prev_tag..tag always resolves
+          subprocess.run(["git", "fetch", "--tags", "--force"], check=False)
           # Detect if Launcher code changed since the previous v* tag
           tags_raw = subprocess.check_output(["git", "tag", "--list", "--sort=-v:refname", "v*"], text=True).splitlines()
           prev_tag = next((t for t in tags_raw if t != tag), None)

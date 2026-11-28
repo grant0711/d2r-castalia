@@ -53,7 +53,7 @@
   },
   "glacier_step": {
     "status": "done",
-    "variant": "p3_freeze_curve"
+    "variant": "avalanche1"
   },
   "heavens_wrath": {
     "status": "done",

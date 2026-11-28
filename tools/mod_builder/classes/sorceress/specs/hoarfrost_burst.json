@@ -80,10 +80,10 @@
             "EMaxLev3": "38",
             "EMaxLev4": "86",
             "EMaxLev5": "152",
-            "ELen": "100",
-            "ELevLen1": "20",
-            "ELevLen2": "15",
-            "ELevLen3": "10",
+            "ELen": "62",
+            "ELevLen1": "10",
+            "ELevLen2": "8",
+            "ELevLen3": "6",
             "ELenSymPerCalc": "stat('conversion_maxhp'.accr) / 2",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? -100 : ((skill('Glacial Spike'.blvl) + skill('Frozen Orb'.blvl)) * par8)"
           }

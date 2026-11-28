@@ -9,8 +9,8 @@
       "no_label": true,
       "strings": {
         "name": "Spearbolt",
-        "short": "lightning spear with electrified wake and chaining impact",
-        "long": "hurls a high-voltage spear of lightning that leaves a crackling wake and erupts into chaining lightning arcs on impact\novercharge: longer-lasting crackling wake and extra chaining arcs"
+        "short": "lightning spear with chaining impact",
+        "long": "Hurls a lightning spear that leaves a shock wake\nand erupts into chaining arcs on impact"
       },
       "hd_missiles": {
         "spearbolt_lance": "lightningbolt",
@@ -19,16 +19,6 @@
         "spearbolt_frenzy_pulse": "null"
       },
       "tables": {
-        "states.txt": {
-          "spearbolt_frenzy": {
-            "_clone": "sigillethargy",
-            "castoverlay": "holyshockhit",
-            "overlay1": "lightningenchant",
-            "colorpri": "",
-            "colorshift": "",
-            "onsound": ""
-          }
-        },
         "missiles.txt": {
           "spearbolt_lance": {
             "_clone": "fireball",
@@ -97,15 +87,15 @@
             "EMin": "5",
             "MinELev1": "2",
             "MinELev2": "4",
-            "MinELev3": "5",
-            "MinELev4": "10",
-            "MinELev5": "15",
+            "MinELev3": "4",
+            "MinELev4": "11",
+            "MinELev5": "18",
             "EMax": "27",
             "MaxELev1": "8",
             "MaxELev2": "16",
-            "MaxELev3": "29",
-            "MaxELev4": "58",
-            "MaxELev5": "90",
+            "MaxELev3": "24",
+            "MaxELev4": "66",
+            "MaxELev5": "105",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Charged Bolt'.blvl) + skill('Lightning'.blvl)) * 10)"
           },
           "spearbolt_chain": {
@@ -160,7 +150,7 @@
             "cltmissilec": "",
             "aurafilter": "3",
             "aurastate": "",
-            "auratargetstate": "spearbolt_frenzy",
+            "auratargetstate": "sorc_tempo",
             "auralencalc": "75",
             "aurarangecalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? 1 : (12 + (((stat('skill_decrepify'.accr) + (((stat('target0'.accr) / 1000) == 2) ? 1 : 0)) > 0) ? 6 : 0))",
             "stsound": "sorceress_cast_lightning",
@@ -198,15 +188,15 @@
             "EMin": "18",
             "EMinLev1": "6",
             "EMinLev2": "12",
-            "EMinLev3": "16",
-            "EMinLev4": "32",
-            "EMinLev5": "50",
+            "EMinLev3": "14",
+            "EMinLev4": "36",
+            "EMinLev5": "58",
             "EMax": "90",
             "EMaxLev1": "28",
             "EMaxLev2": "54",
-            "EMaxLev3": "96",
-            "EMaxLev4": "192",
-            "EMaxLev5": "300",
+            "EMaxLev3": "80",
+            "EMaxLev4": "220",
+            "EMaxLev5": "349",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : ((skill('Charged Bolt'.blvl) + skill('Lightning'.blvl)) * par8)",
             "seqnum": "",
             "UseAttackRate": "",

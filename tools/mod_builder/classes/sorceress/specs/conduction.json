@@ -173,8 +173,8 @@
       },
       "strings": {
         "name": "Arc",
-        "short": "passive - increases spell range and bonus chains/bolts",
-        "long": "Passive\n\nincreases the range of all Sorceress projectiles\nand adds bonus chains or bolts"
+        "short": "passive - increases spell range and chains",
+        "long": "Passive\n\nIncreases the range of Sorceress projectiles\nand adds bonus chains or bolts"
       },
       "no_label": true,
       "strings_extra": {

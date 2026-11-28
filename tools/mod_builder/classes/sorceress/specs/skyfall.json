@@ -8,7 +8,7 @@
       "description": "test_fizzle: Skyfall fizzles out immediately when cast in Cryostasis or Overcharge",
       "no_label": true,
       "strings": {
-        "name": "Skyfall",
+        "name": "Meteor",
         "short": "calls down a meteor",
         "long": "Calls down a meteor on your target,\nleaving a crater of flame"
       },
@@ -19,7 +19,8 @@
         "skyfall_fire": "ground_fire_small",
         "skyfall_crater_clt": "ground_fire_small",
         "skyfall_ground_fire_1": "ground_fire_small",
-        "skyfall_ground_fire_2": "ground_fire_small"
+        "skyfall_ground_fire_2": "ground_fire_small",
+        "skyfall_tempo_pulse": "null"
       },
       "tables": {
         "missiles.txt": {
@@ -59,15 +60,17 @@
             "MinELev1": "3",
             "MinELev2": "8",
             "MinELev3": "38",
-            "MinELev4": "98",
-            "MinELev5": "176",
+            "MinELev4": "134",
+            "MinELev5": "244",
             "EMax": "14",
             "MaxELev1": "3",
             "MaxELev2": "9",
             "MaxELev3": "44",
-            "MaxELev4": "112",
-            "MaxELev5": "200",
-            "EDmgSymPerCalc": "skill('Fire Wall'.blvl) * 18 + skill('Fire Ball'.blvl) * 6"
+            "MaxELev4": "153",
+            "MaxELev5": "278",
+            "EDmgSymPerCalc": "skill('Fire Wall'.blvl) * 18 + skill('Fire Ball'.blvl) * 6",
+            "pSrvHitFunc": "4",
+            "HitSubMissile1": "skyfall_tempo_pulse"
           },
           "skyfall_crater_clt": {
             "_clone": "erruption center",
@@ -119,6 +122,24 @@
             "MaxELev3": "",
             "MaxELev4": "",
             "MaxELev5": ""
+          },
+          "skyfall_tempo_pulse": {
+            "_clone": "sigillethargysmall",
+            "pSrvDoFunc": "14",
+            "pCltDoFunc": "",
+            "pSrvHitFunc": "",
+            "HitSubMissile1": "",
+            "Param1": "1",
+            "Param2": "30",
+            "Radius": "2",
+            "Range": "2",
+            "CelFile": "null",
+            "ClientSend": "",
+            "NumDirections": "1",
+            "TravelSound": "",
+            "OnDiedSound": "",
+            "Skill": "Meteor",
+            "HitClass": "32"
           }
         },
         "skills.txt": {
@@ -135,7 +156,7 @@
             "lvlmana": "3",
             "Param3": "80",
             "Param4": "5",
-            "aurarangecalc": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : ((4 + (lvl - 1) / 5 + (((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 3 : 0)) * (100 + stat('ironmaiden_level'.accr)) * 5 / 600)",
+            "aurarangecalc": "2",
             "calc1": "((stat('skill_frenzy'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : ((4 + (lvl - 1) / 5 + (((stat('skill_handofathena'.accr) + (((stat('target0'.accr) / 1000) == 1) ? 1 : 0)) > 0) ? 3 : 0)) * (100 + stat('ironmaiden_level'.accr)) * 5 / 600)",
             "*calc1 desc": "Explosion and fire crater radius (Conflagration +3)",
             "calc2": "1",
@@ -147,16 +168,22 @@
             "EMin": "95",
             "EMinLev1": "10",
             "EMinLev2": "26",
-            "EMinLev3": "142",
-            "EMinLev4": "365",
-            "EMinLev5": "660",
+            "EMinLev3": "141",
+            "EMinLev4": "498",
+            "EMinLev5": "916",
             "EMax": "135",
             "EMaxLev1": "12",
             "EMaxLev2": "30",
-            "EMaxLev3": "162",
-            "EMaxLev4": "420",
-            "EMaxLev5": "755",
-            "EDmgSymPerCalc": "skill('Fire Wall'.blvl) * 18 + skill('Fire Ball'.blvl) * 6"
+            "EMaxLev3": "161",
+            "EMaxLev4": "573",
+            "EMaxLev5": "1048",
+            "EDmgSymPerCalc": "skill('Fire Wall'.blvl) * 18 + skill('Fire Ball'.blvl) * 6",
+            "aurafilter": "3",
+            "aurastate": "",
+            "auratargetstate": "sorc_tempo",
+            "auralencalc": "100",
+            "aurastat1": "damageresist",
+            "aurastatcalc1": "0 - min(25, 5 + lvl * 3 / 4)"
           }
         },
         "skilldesc.txt": {

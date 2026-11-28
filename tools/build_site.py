@@ -759,7 +759,7 @@ def build_site() -> str:
             '<p style="margin:0 0 8px 0;">The Sorceress of Castalia no longer stands in place spamming a single spell &mdash; she <b>becomes</b> the element she commands. '
             'By weaving between three mutually exclusive <b>Elemental Stances</b> &mdash; the glass-cannon fury of <b>Conflagration</b>, the lightning-fast storm of <b>Overcharge</b>, '
             'and the armored bastion of <b>Cryostasis</b> &mdash; she reshapes her spells mid-fight while accepting steep defensive trade-offs and locking out opposing elements until she shifts her attunement. '
-            'With unrestricted Teleport removed, survival comes from sharp positioning and elemental blinks (<b>Flashfire</b>, <b>Phase Step</b>, <b>Glacier Step</b>).</p>'
+            'With unrestricted Teleport removed, survival comes from sharp positioning and elemental mobility (<b>Blaze</b>, <b>Blink</b>, <b>Avalanche</b>).</p>'
             '<p style="margin:0;">Her true breakthrough is <b>Conduction</b> &mdash; a cooperative art that transfers her matching Elemental Skill Damage (up to <b>+30%</b>) '
             'alongside her three independent cross-tree passives (<b>Expansion</b> radius, <b>Stasis</b> duration/stun, and <b>Arc</b> chains/strikes/pulse tempo) to any teammate or hireling, '
             'transforming how Paladin, Barbarian, and Assassin skills behave across the entire battlefield.</p>'

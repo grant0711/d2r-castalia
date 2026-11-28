@@ -186,7 +186,7 @@
       },
       "strings": {
         "short": "Stance - Lightning Element",
-        "long": "Stance\n\nbecome supercharged, boosting lightning damage, movement, hit recovery,\nand block speed at the cost of reduced defense\nmelee attackers that hit you are shocked\nonly one stance can be active at a time"
+        "long": "Stance\n\nBecome supercharged, boosting lightning damage and speed\nat the cost of reduced defense\nOnly one stance may be active at a time"
       },
       "no_label": true,
       "strings_extra": {

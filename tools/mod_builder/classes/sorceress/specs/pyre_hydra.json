@@ -8,12 +8,13 @@
       "description": "test_fizzle: Pyre Hydra fizzles out immediately (duration=1 frame) when cast in Cryostasis or Overcharge",
       "no_label": true,
       "strings": {
-        "name": "Pyre Hydra",
+        "name": "Hydra",
         "short": "summons fire-spewing hydras",
         "long": "Summons fire-spewing hydra heads\nthat bombard nearby enemies"
       },
       "hd_missiles": {
-        "pyre_hydra_blast": "exp_arrow_explode"
+        "pyre_hydra_blast": "exp_arrow_explode",
+        "pyre_hydra_tempo_pulse": "null"
       },
       "tables": {
         "missiles.txt": {
@@ -72,7 +73,27 @@
             "HitClass": "32",
             "TravelSound": "sorceress_firebolt_1",
             "HitSound": "sorceress_fireball_impact_1",
-            "ExplosionMissile": "explodingarrowexp"
+            "ExplosionMissile": "explodingarrowexp",
+            "pSrvHitFunc": "4",
+            "HitSubMissile1": "pyre_hydra_tempo_pulse"
+          },
+          "pyre_hydra_tempo_pulse": {
+            "_clone": "sigillethargysmall",
+            "pSrvDoFunc": "14",
+            "pCltDoFunc": "",
+            "pSrvHitFunc": "",
+            "HitSubMissile1": "",
+            "Param1": "1",
+            "Param2": "30",
+            "Radius": "2",
+            "Range": "2",
+            "CelFile": "null",
+            "ClientSend": "",
+            "NumDirections": "1",
+            "TravelSound": "",
+            "OnDiedSound": "",
+            "Skill": "Hydra",
+            "HitClass": "32"
           }
         },
         "skills.txt": {
@@ -100,16 +121,23 @@
             "EMin": "32",
             "EMinLev1": "4",
             "EMinLev2": "8",
-            "EMinLev3": "24",
-            "EMinLev4": "62",
-            "EMinLev5": "114",
+            "EMinLev3": "19",
+            "EMinLev4": "68",
+            "EMinLev5": "128",
             "EMax": "44",
             "EMaxLev1": "5",
             "EMaxLev2": "10",
-            "EMaxLev3": "28",
-            "EMaxLev4": "72",
-            "EMaxLev5": "132",
-            "EDmgSymPerCalc": "(skill('Inferno'.blvl) + skill('Fire Ball'.blvl)) * 10"
+            "EMaxLev3": "22",
+            "EMaxLev4": "79",
+            "EMaxLev5": "148",
+            "EDmgSymPerCalc": "(skill('Inferno'.blvl) + skill('Fire Ball'.blvl)) * 10",
+            "aurafilter": "3",
+            "aurastate": "",
+            "auratargetstate": "sorc_tempo",
+            "auralencalc": "100",
+            "aurarangecalc": "2",
+            "aurastat1": "damageresist",
+            "aurastatcalc1": "0 - min(25, 5 + lvl * 3 / 4)"
           },
           "HydraMissile": {
             "calc1": "(lvl > 30) ? 6 : 2",

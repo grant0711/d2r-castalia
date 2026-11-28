@@ -1,8 +1,8 @@
 {
   "mod_name": "castalia",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "save_schema": 1,
-  "save_compat": "compatible",
+  "save_compat": "respec",
   "d2r_patch": "95032",
   "austerity_level": 1.0,
   "economy": {

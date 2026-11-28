@@ -8,9 +8,9 @@
       "description": "P10: p9 + frenzy scales with level: min(40, 18 + lvl*2) (+20% at lvl 1, +2%/lvl, cap 40% at lvl 11). Minimal tooltip: description + mana cost + lightning damage only (radius/frenzy are felt, not listed).",
       "no_label": true,
       "strings": {
-        "name": "Phase Step",
-        "short": "blink, shocking monsters in your path",
-        "long": "requires Overcharge to cast\nblink to a location, shocking monsters in your path"
+        "name": "Blink",
+        "short": "lightning blink - requires Overcharge",
+        "long": "Requires Overcharge to cast\nBlink to a location, shocking foes in your path"
       },
       "hd_missiles": {
         "phase_step_warp": "null",
@@ -136,20 +136,10 @@
             "EMax": "4",
             "MaxELev1": "2",
             "MaxELev2": "2",
-            "MaxELev3": "3",
+            "MaxELev3": "2",
             "MaxELev4": "4",
-            "MaxELev5": "5",
+            "MaxELev5": "6",
             "EDmgSymPerCalc": ""
-          }
-        },
-        "states.txt": {
-          "phase_step_frenzy": {
-            "_clone": "sigillethargy",
-            "castoverlay": "holyshockhit",
-            "overlay1": "lightningenchant",
-            "colorpri": "",
-            "colorshift": "",
-            "onsound": ""
           }
         },
         "skills.txt": {
@@ -164,7 +154,7 @@
             "cltmissilea": "phase_step_warp",
             "aurafilter": "3",
             "aurastate": "",
-            "auratargetstate": "phase_step_frenzy",
+            "auratargetstate": "sorc_tempo",
             "auralencalc": "75",
             "aurarangecalc": "(4 + lvl / 3) * (100 + stat('ironmaiden_level'.accr)) * 5 / 600",
             "aurastat1": "velocitypercent",
@@ -215,15 +205,15 @@
             "EMin": "3",
             "EMinLev1": "2",
             "EMinLev2": "3",
-            "EMinLev3": "4",
-            "EMinLev4": "5",
-            "EMinLev5": "6",
+            "EMinLev3": "3",
+            "EMinLev4": "6",
+            "EMinLev5": "7",
             "EMax": "10",
             "EMaxLev1": "4",
             "EMaxLev2": "6",
-            "EMaxLev3": "8",
-            "EMaxLev4": "10",
-            "EMaxLev5": "12",
+            "EMaxLev3": "6",
+            "EMaxLev4": "11",
+            "EMaxLev5": "13",
             "EDmgSymPerCalc": "",
             "ELen": "",
             "ELevLen1": "",

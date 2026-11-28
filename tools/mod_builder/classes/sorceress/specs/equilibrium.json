@@ -10,7 +10,7 @@
       "strings": {
         "name": "Equilibrium",
         "short": "passive - restores mana after each kill",
-        "long": "Passive\n\nrestores mana after each enemy you kill"
+        "long": "Passive\n\nRestores mana after each enemy you kill"
       },
       "strings_extra": {
         "ModSorc_EquilibriumMaek": "Mana after each Kill: +%d"

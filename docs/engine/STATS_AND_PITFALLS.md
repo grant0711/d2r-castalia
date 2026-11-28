@@ -37,7 +37,7 @@ Every entry below is empirically verified in-game in D2R Castalia. Anything not 
 | — | `item_thrust_damage_percent` / `item_absorb_thrust` | Assassin **Claws of Thunder** held-orb lightning damage (`op=2`) | Custom `op=2` in `affixes.py` | **In use.** |
 
 ### Reserved `states.txt` Groups & `automagic.txt` Groups
-- **`states.txt` `group` in use:** `1..13` (`10` = Barb Battle Orders vs Bloodlust; `11` = Barb Shout vs Enduring Cry; `13` = Sorc 3 Elemental Stances). **Next free group: `14`.**
+- **`states.txt` `group` in use:** `1..13` (`10` = Barb Battle Orders vs Bloodlust; `11` = Barb Shout vs Enduring Cry; `13` = Sorc 3 Elemental Stances). **Next free group: `14`.** *(Note: Sorceress tri-elemental monster speed uses a single unified `sorc_tempo` state with `group = ""` and `curse = ""` so Cold/Lightning/Fire overwrite each other via `srvdofunc = 30` without colliding with Necromancer curses.)*
 - **`automagic.txt` custom groups:** `304..323` (shields, helms, staves/orbs, class helms/pelts), `324` (Boots/Gloves: Stamina Fatigue + Stun Fatigue), `325` (Armor/Belts: Stamina Fatigue + Stun Reset). **Total rows must stay `< 2048`** (`.d2s` 11-bit auto-affix ID limit; enforced by `test_automagic_rows_fit_d2s_save_format`).
 
 ---
@@ -57,6 +57,7 @@ Every entry below is empirically verified in-game in D2R Castalia. Anything not 
 5. **`srvdofunc = 150` (`Smite`) Engine Hardcodes:**
    - **Fact:** `srvdofunc = 150` ignores `aurastate`/`auratargetstate`/`HitClass`, hardcodes `HITCLASS_STUN` impact audio (`impact_stun_1..3`) in C++, and treats `ResultFlags = 8` (Knockback) as a static boolean bit.
    - **Fact:** Pairing `srvstfunc = 32` (`Concentrate`) or `srvstfunc = 39` (`Berserk`) with `srvdofunc = 150` clobbers `Smite`'s stun execution (and `srvstfunc = 39` hardcodes `armor_override_percent = 100`, dropping Defense to 0!).
+   - **Fact (`descdam = 10` LCS Quirk — Verified 2026-11-28):** `skilldesc.txt` `descdam = 10` (Smite Character Screen damage) ignores both `ddam calc1` and live `calc1` Stamina scaling — it hardcodes vanilla `ln34` (`Param3 + (lvl-1)*Param4`). Actual server-side Smite damage (`srvdofunc = 150`) and the Skill Tree tooltip (`desccalca2 = clc1`) **do** evaluate `calc1` dynamically with Stamina.
 6. **`srvdofunc = 67` (`Charge`) Engine Hardcode:**
    - **Fact:** Knockback is hardcoded inside `srvdofunc = 67` in C++ even when `ResultFlags = ""`.
 7. **Negative `staminarecoverybonus` Cannot Drain Stamina:**
@@ -73,3 +74,9 @@ Every entry below is empirically verified in-game in D2R Castalia. Anything not 
     - **Fact:** `lastexp` holds the character's actual previous XP value (millions at Lvl 60); `armor_override_percent` is overwritten to `100` by `srvstfunc = 39`.
 11. **Dual Website Evaluators (`tools/build_site.py`):**
     - **Fact:** `build_site.py` has *two* expression evaluators — Python `_eval_skill_expr` (static tables) and browser JS `evalSkillExpr` (live tooltips). Both must default `mana`/`maxmana`/`stamina`/`maxstamina` to `256` and stay in sync.
+12. **`srvdofunc = 23` (`aurastate = blaze`) + `srvdofunc = 30` (`pSrvDoFunc = 14`) Conflict (Verified 2026-11-28):**
+    - **Fact:** Adding `aurafilter`/`auratargetstate`/`aurastat1..4` onto a `srvdofunc = 23` (`aurastate = blaze`) skill row and triggering `srvdofunc = 30` (`pSrvDoFunc = 14, Param2 = 30`) against that same skill breaks monster AI (impacted monsters stall in idle wobble and stop pursuing) and can trigger self-damage/frozen-lock on the caster.
+    - **Mitigation:** Keep `srvdofunc = 23` (`blaze`) skill rows pure self-buff (`aurafilter`/`auratargetstate`/`aurastat*` empty). If a missile spawned by a `srvdofunc = 23` skill needs to apply a `srvdofunc = 30` debuff, point the pulse missile's `Skill` column to a clean skill with `aurastate = ""` (e.g. `Frost Nova` for `cold_thaw`).
+13. **`srvdofunc = 30` (`Curse`) & `srvdofunc = 25` (`Enchant`) Ignore `states.txt` `group` (Verified 2026-11-28):**
+    - **Fact:** Neither `srvdofunc = 30` nor `srvdofunc = 25` enforces `states.txt` `group` mutual exclusion (`cold_thaw` + `pulse_ring_frenzy` stacked in `group = 14`; `sorc_conduction` + `sorc_stance_cold` stacked in `group = 13`). Additionally, `srvdofunc = 25` ignores `TargetableOnly = 1` and hardcodes self-targeting on empty-ground clicks, and `srvdofunc = 30` ignores `aurafilter` bit `0x040000`.
+    - **Mitigation:** For `srvdofunc = 30` mutual exclusion without colliding with Necromancer `curse = 1` states, target the **same `auratargetstate`** (e.g. `sorc_tempo`, overwriting its statlist & duration in place). Only `srvdofunc = 18` reliably enforces `states.txt` `group`.

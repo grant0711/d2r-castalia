@@ -57,15 +57,15 @@
             "EMin": "8",
             "EMinLev1": "2",
             "EMinLev2": "5",
-            "EMinLev3": "28",
-            "EMinLev4": "74",
-            "EMinLev5": "136",
+            "EMinLev3": "22",
+            "EMinLev4": "81",
+            "EMinLev5": "152",
             "EMax": "12",
             "EMaxLev1": "3",
             "EMaxLev2": "6",
-            "EMaxLev3": "34",
-            "EMaxLev4": "86",
-            "EMaxLev5": "156",
+            "EMaxLev3": "27",
+            "EMaxLev4": "95",
+            "EMaxLev5": "175",
             "EDmgSymPerCalc": "(skill('Fire Bolt'.blvl) + skill('Inferno'.blvl)) * 10"
           }
         },
@@ -94,7 +94,7 @@
       },
       "strings": {
         "short": "expanding ring of fire bolts",
-        "long": "unleashes a ring of fiery bolts that knock enemies back"
+        "long": "Unleashes a ring of fiery bolts\nthat knock enemies back"
       },
       "strings_extra": {
         "ModSorcPyroMissiles": "Bolts: %d"

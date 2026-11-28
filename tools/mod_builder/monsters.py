@@ -586,14 +586,33 @@ def _apply_affinity_resists(
         row[f"Res{rtype}(N)"] = str(min(99, 20 + delta))
         row[f"Res{rtype}(H)"] = str(min(99, 30 + delta))
 
+    # Align monster coldeffect (chill/freeze susceptibility) with deterministic Cold affinity:
+    #   Cold-Vulnerable (-35/-70): -40 / -30 / -25
+    #   Neutral (0):               -35 / -25 / -20
+    #   Cold-Resistant +1/+2 (+35/+70): 0 / 0 / 0 (unchillable & unfreezable; only feels subtle sorc_tempo)
+    if vuln_elem == "Co" and vuln_steps > 0:
+        ce_caps = (-40, -30, -25)
+    elif res_elem == "Co" and res_steps >= 1:
+        ce_caps = (0, 0, 0)
+    else:
+        ce_caps = (-35, -25, -20)
+    for col, cap in zip(("coldeffect", "coldeffect(N)", "coldeffect(H)"), ce_caps):
+        raw = row.get(col, "").strip()
+        if cap == 0:
+            row[col] = "0"
+        elif raw != "":
+            cur = parse_int(raw, 0)
+            if cur < 0:
+                row[col] = str(max(cur, cap))
+
 
 def _apply_monster_resistances(
     row: dict, base_id: str, mon_id: str = ""
-) -> tuple[str | None, str | None]:
+) -> tuple[str | None, int, str | None, int]:
     tier_idx = _parse_monster_tier(mon_id, base_id)
     v_el, v_st, r_el, r_st = _get_monster_affinity(mon_id, base_id, tier_idx)
     _apply_affinity_resists(row, v_el, v_st, r_el, r_st)
-    return v_el, r_el
+    return v_el, v_st, r_el, r_st
 
 
 def _configure_capstone_bosses(row: dict, mon_id: str) -> bool:
@@ -1142,14 +1161,25 @@ TACTICAL_DESCSTR_MAP = {
 }
 
 
+def _format_elem_label(elem: str, steps: int = 1) -> str:
+    label = RES_COLOR_LABELS[elem]
+    if steps >= 2:
+        return label.replace("ÿc0", "++ÿc0")
+    return label
+
+
 def _format_monster_affinity_desc(
-    vuln_elem: str | None, res_elem: str | None, orig_desc_key: str = ""
+    vuln_elem: str | None,
+    res_elem: str | None,
+    orig_desc_key: str = "",
+    vuln_steps: int = 1,
+    res_steps: int = 1,
 ) -> str:
     parts: list[str] = []
     if vuln_elem:
-        parts.append(f"Vulnerable: {RES_COLOR_LABELS[vuln_elem]}")
+        parts.append(f"Vulnerable: {_format_elem_label(vuln_elem, vuln_steps)}")
     if res_elem:
-        parts.append(f"Resists: {RES_COLOR_LABELS[res_elem]}")
+        parts.append(f"Resists: {_format_elem_label(res_elem, res_steps)}")
     tactical_tag = TACTICAL_DESCSTR_MAP.get(orig_desc_key)
     if tactical_tag:
         parts.append(tactical_tag)
@@ -1163,10 +1193,17 @@ def build_monstats(cfg: dict) -> str:
     pool_idx = 0
 
     def assign_desc_str(
-        r: dict, vuln_elem: str | None, res_elem: str | None, orig_d: str = ""
+        r: dict,
+        vuln_elem: str | None,
+        res_elem: str | None,
+        orig_d: str = "",
+        vuln_steps: int = 1,
+        res_steps: int = 1,
     ) -> None:
         nonlocal pool_idx
-        desc_text = _format_monster_affinity_desc(vuln_elem, res_elem, orig_d)
+        desc_text = _format_monster_affinity_desc(
+            vuln_elem, res_elem, orig_d, vuln_steps, res_steps
+        )
         if not desc_text:
             r["DescStr"] = ""
             return
@@ -1435,10 +1472,10 @@ def build_monstats(cfg: dict) -> str:
             row[col] = scale_int(row[col], xp_mult)
 
         # Apply 10%/20%/30% difficulty baseline with ±35%/±70% steps and 99% cap
-        v_el, r_el = _apply_monster_resistances(row, base_id, mon_id)
+        v_el, v_st, r_el, r_st = _apply_monster_resistances(row, base_id, mon_id)
 
         # Populate concise custom affinity + tactical subtitle via DescStr (or clear DescStr if Neutral)
-        assign_desc_str(row, v_el, r_el, orig_desc)
+        assign_desc_str(row, v_el, r_el, orig_desc, v_st, r_st)
 
     # 5. Optional Exploration Dungeon Monsters:
     #    a) Clone the 34 remapped shared monsters/minions/spawns (src_id -> dst_id) preserving dst_id's Id and *hcIdx
@@ -2020,6 +2057,12 @@ def build_charstats(cfg: dict) -> str:
         cls = row.get("class", "").strip()
         if not cls or cls == "Expansion":
             continue
+
+        if cls == "Sorceress":
+            # Sorceress skill tabs reordered left-to-right: Fire (Page 3) -> Cold (Page 2) -> Lightning (Page 1)
+            row["StrSkillTab1"] = "StrSklTabItem14"  # Page 1 = Lightning Skills
+            row["StrSkillTab2"] = "StrSklTabItem13"  # Page 2 = Cold Skills
+            row["StrSkillTab3"] = "StrSklTabItem15"  # Page 3 = Fire Skills
 
         # Remove starting Scroll of Town Portal (tsc) from all classes
         for i in range(1, 11):

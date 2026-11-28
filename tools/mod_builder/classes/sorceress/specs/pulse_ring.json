@@ -8,25 +8,15 @@
       "description": "final1: Verified in-game. Expanding 64-bolt lightning ring (srvdofunc=22/cltdofunc=25, GetHit=1, pSrvHitFunc=4) scaling radius with level via synced calc3/cltcalc1 + Range (reach 126->242 neutral, 198->338 Overcharge; fizzles in opposing stances). On hit spawns pulse_ring_frenzy_pulse (sigil func 14) supercharging struck enemies (+20..40% run/attack speed, +40..80% FHR, 3s, lightning glow only).",
       "no_label": true,
       "strings": {
-        "name": "Pulse Ring",
-        "short": "unleash an expanding ring of lightning",
-        "long": "unleashes an expanding ring of lightning around you\novercharge: greatly increased ring radius"
+        "name": "Nova",
+        "short": "expanding ring of lightning",
+        "long": "Unleashes an expanding ring of lightning\naround you"
       },
       "hd_missiles": {
         "pulse_ring_nova": "electric_nova",
         "pulse_ring_frenzy_pulse": "null"
       },
       "tables": {
-        "states.txt": {
-          "pulse_ring_frenzy": {
-            "_clone": "sigillethargy",
-            "castoverlay": "holyshockhit",
-            "overlay1": "lightningenchant",
-            "colorpri": "",
-            "colorshift": "",
-            "onsound": ""
-          }
-        },
         "missiles.txt": {
           "pulse_ring_nova": {
             "_clone": "nova",
@@ -78,7 +68,7 @@
             "cltmissilea": "pulse_ring_nova",
             "aurafilter": "3",
             "aurastate": "",
-            "auratargetstate": "pulse_ring_frenzy",
+            "auratargetstate": "sorc_tempo",
             "auralencalc": "75",
             "aurarangecalc": "2",
             "aurastat1": "velocitypercent",
@@ -112,15 +102,15 @@
             "EMin": "4",
             "EMinLev1": "2",
             "EMinLev2": "3",
-            "EMinLev3": "11",
-            "EMinLev4": "22",
-            "EMinLev5": "35",
+            "EMinLev3": "9",
+            "EMinLev4": "25",
+            "EMinLev5": "40",
             "EMax": "24",
             "EMaxLev1": "5",
             "EMaxLev2": "8",
-            "EMaxLev3": "66",
-            "EMaxLev4": "132",
-            "EMaxLev5": "210",
+            "EMaxLev3": "55",
+            "EMaxLev4": "151",
+            "EMaxLev5": "244",
             "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_frenzy'.accr)) > 0) ? -100 : (skill('Thunder Storm'.blvl) * par8 + skill('Static Field'.blvl) * 6)"
           }
         },

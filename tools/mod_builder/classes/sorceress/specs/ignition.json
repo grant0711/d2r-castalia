@@ -8,9 +8,9 @@
       "description": "final2: Always-on passive granting 20% -> 172% Mana Recovery Rate at lvl 20 (balanced alongside Conflagration's mana regen).",
       "no_label": true,
       "strings": {
-        "name": "Ignition",
+        "name": "Warmth",
         "short": "passive - increases mana recovery rate",
-        "long": "Passive\n\nincreases the rate at which you recover mana"
+        "long": "Passive\n\nIncreases the rate at which you recover mana"
       },
       "strings_extra": {
         "ModSorc_IgnitionManaRegen": "Mana Recovery Rate: +%d%%"

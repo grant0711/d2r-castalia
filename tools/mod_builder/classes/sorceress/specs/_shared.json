@@ -6,6 +6,11 @@
     },
     "anim_v3": {
       "description": "anim_v3: every stance holds skill2 x6; skill_handofathena/skill_frenzy/skill_decrepify used as dedicated stance markers; restrict=1 on all three stance states",
+      "string_entries": [
+        [11196, "SkillCategorySo1", "Fire Spells"],
+        [11197, "SkillCategorySo2", "Cold Spells"],
+        [11198, "SkillCategorySo3", "Lightning Spells"]
+      ],
       "tables": {
         "states.txt": {
           "sorc_stance_fire": {
@@ -47,6 +52,14 @@
             "armblue": "",
             "onsound": "sorceress_thunder_cast",
             "offsound": ""
+          },
+          "sorc_tempo": {
+            "_clone": "sigillethargy",
+            "castoverlay": "",
+            "overlay1": "",
+            "colorpri": "",
+            "colorshift": "",
+            "onsound": ""
           }
         },
         "skills.txt": {
@@ -146,6 +159,26 @@
           "Cold Mastery": {
             "restrict": "1"
           }
+        },
+        "missiles.txt": {
+          "cold_tempo_pulse": {
+            "_clone": "sigillethargysmall",
+            "pSrvDoFunc": "14",
+            "pCltDoFunc": "",
+            "pSrvHitFunc": "",
+            "HitSubMissile1": "",
+            "Param1": "1",
+            "Param2": "30",
+            "Radius": "2",
+            "Range": "2",
+            "CelFile": "null",
+            "ClientSend": "",
+            "NumDirections": "1",
+            "TravelSound": "",
+            "OnDiedSound": "",
+            "Skill": "Frost Nova",
+            "HitClass": "48"
+          }
         }
       },
       "state_machine": [
@@ -176,7 +209,10 @@
             }
           ]
         }
-      ]
+      ],
+      "hd_missiles": {
+        "cold_tempo_pulse": "null"
+      }
     }
   }
 }

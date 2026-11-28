@@ -137,7 +137,7 @@
       "strings": {
         "name": "Expansion",
         "short": "passive - increases area of effect of all spells",
-        "long": "Passive\n\nincreases the area of effect radius of all Sorceress spells"
+        "long": "Passive\n\nIncreases the area of effect radius of all Sorceress spells"
       },
       "no_label": true,
       "strings_extra": {

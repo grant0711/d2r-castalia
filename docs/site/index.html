@@ -888,10 +888,101 @@
           </a>
         </div>
         <ul style="margin:0;padding-left:18px;">
-          <li style="margin-bottom:6px;"><b class="d2-gold">Zero-Install Portable Zip (<code>castalia-launcher-win64.zip</code>):</b> Unzip and double-click <code>Launch Castalia.bat</code> &mdash; bundles the official Python Software Foundation signed embeddable runtime plus plain-text scripts, auto-installs the pinned Castalia release with SHA-256 verification, and launches D2RLoader with zero manual config editing.</li>
-          <li style="margin-bottom:6px;"><b class="d2-gold">Crash-Safe Isolated Saves:</b> Each campaign gets its own isolated save profile &mdash; your solo characters and <code>Settings.json</code> stay completely untouched.</li>
-          <li style="margin-bottom:0;"><b class="d2-gold">In-Game Guide &amp; Hall of Heroes:</b> The bundled <code>castalia-autohost.dll</code> plugin shows your host/join steps inside D2RLoader's Multiplayer screen, and completed sessions automatically update your party roster and Hall of Heroes.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Windows Installer (<code>CastaliaLauncher-Setup.exe</code>) &amp; Portable Zip:</b> Per-user install with Desktop/Start Menu shortcut (or zero-install portable zip) &mdash; bundles the official Python Software Foundation signed embeddable runtime, auto-installs the pinned Castalia release with SHA-256 verification, and upgrades in place without touching your saves.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Crash-Safe Isolated Saves &amp; Split Shared Stash:</b> Each campaign gets its own isolated save profile (and optional isolated vs. global shared stash) &mdash; your solo characters and <code>Settings.json</code> stay completely untouched.</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">In-Game Guide:</b> The bundled <code>castalia-autohost.dll</code> plugin displays your host/join steps right inside D2RLoader's Multiplayer screen, and completed sessions automatically sync your character level, Act/WP, and top 3 castable skills.</li>
         </ul>
+      </div>
+    </div>
+
+    <!-- PILGRIMAGE & HALL OF HEROES -->
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>&#127942; PILGRIMAGE MODE, OPEN PARTY &amp; HALL OF HEROES</h2>
+        <div class="section-sub">Two distinct campaign modes &mdash; structured, timed fair-play runs or relaxed drop-in co-op</div>
+      </div>
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.6;font-size:13px;color:#d8cbb8;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:14px;">
+          <div style="border:1px solid #8a6c30;background:#1a140c;padding:12px 14px;border-radius:3px;">
+            <div style="font-weight:bold;color:#f0d890;font-size:14px;margin-bottom:6px;">&#127942; Pilgrimage Mode (Timed &amp; Hall of Heroes)</div>
+            <ul style="margin:0;padding-left:18px;font-size:12.5px;">
+              <li style="margin-bottom:4px;"><b>Equalized Fresh Start:</b> Host sticks to one character from the bracket's start through its final Baal kill. No importing outside characters.</li>
+              <li style="margin-bottom:4px;"><b>Auto-Enforced Fair Play:</b> On launch, the launcher automatically sets earned respecs only (<code>enable_respec = false</code>), difficulty scaling = <code>1</code> (strictly follows actual party size), fresh maps each session, and disables console &amp; global plugins &mdash; then cleanly restores your Solo settings on exit.</li>
+              <li style="margin-bottom:4px;"><b>Checksum Integrity:</b> Saves are isolated per campaign and SHA-256 verified between sessions (with crash-recovery exemption) so Hero Editors and offline grinding are prevented without ever punishing honest play.</li>
+              <li style="margin-bottom:0;"><b>Play Together:</b> Joiners launch once the Host is <b>&#128994; LIVE</b>, and cumulative Host playtime is tracked automatically across sessions.</li>
+            </ul>
+          </div>
+          <div style="border:1px solid #4a3c28;background:#110e0a;padding:12px 14px;border-radius:3px;">
+            <div style="font-weight:bold;color:#8cd0ff;font-size:14px;margin-bottom:6px;">&#9876; Open Party (Casual, Farming &amp; Build Testing)</div>
+            <ul style="margin:0;padding-left:18px;font-size:12.5px;">
+              <li style="margin-bottom:4px;"><b>Bring Your Own Hero:</b> Start at any Level or Act/WP and 1-click <b>Import Existing</b> characters from Solo or other campaigns (with optional free Respec on import).</li>
+              <li style="margin-bottom:4px;"><b>Free In-Game Respecs:</b> Automatically enables Alt+click respec (<code>enable_respec = true</code>) so your group can experiment with builds freely.</li>
+              <li style="margin-bottom:4px;"><b>Optional Global Shared Stash:</b> Host chooses at creation whether to share your global stash or keep an isolated campaign stash.</li>
+              <li style="margin-bottom:0;"><b>Untimed &amp; Relaxed:</b> No timer pressure and not eligible for the Hall of Heroes leaderboard.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="color:#f0d890;margin:0 0 6px 0;font-size:14px;">Four Pilgrimage Brackets &amp; Hall of Heroes</h3>
+        <p style="margin:0 0 8px 0;">Choose the commitment length that fits your group's schedule. Once the Host clears the bracket's final Baal quest, <b>&#127942; Complete &rarr; Hall of Heroes</b> unlocks and archives your party's elapsed time, builds, deaths, and roster into its bracket leaderboard:</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:4px;">
+          <thead>
+            <tr style="border-bottom:1px solid #5a4628;color:#f0d890;text-align:left;">
+              <th style="padding:6px 8px;">Bracket</th>
+              <th style="padding:6px 8px;">Starting Point</th>
+              <th style="padding:6px 8px;">Victory Goal</th>
+              <th style="padding:6px 8px;">Best For</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #2b2217;">
+              <td style="padding:6px 8px;"><b>&#127942; Full Pilgrimage</b></td>
+              <td style="padding:6px 8px;">Lvl 1 &middot; Act 1 Normal</td>
+              <td style="padding:6px 8px;">Hell Baal (A5H Q6)</td>
+              <td style="padding:6px 8px;">Flagship multi-week guild / friend-group run (15&ndash;25 hrs)</td>
+            </tr>
+            <tr style="border-bottom:1px solid #2b2217;">
+              <td style="padding:6px 8px;"><b>&#129353; Normal Only</b></td>
+              <td style="padding:6px 8px;">Lvl 1 &middot; Act 1 Normal</td>
+              <td style="padding:6px 8px;">Normal Baal (A5N Q6)</td>
+              <td style="padding:6px 8px;">Weekend LFG one-shots &amp; onboarding new players (3&ndash;6 hrs)</td>
+            </tr>
+            <tr style="border-bottom:1px solid #2b2217;">
+              <td style="padding:6px 8px;"><b>&#129352; Nightmare Only</b></td>
+              <td style="padding:6px 8px;">Lvl 38 Starter Kit &middot; Act 1 NM</td>
+              <td style="padding:6px 8px;">NM Baal (A5NM Q6)</td>
+              <td style="padding:6px 8px;">Jumping straight into Lvl 30+ capstone builds (4&ndash;7 hrs)</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 8px;"><b>&#129351; Hell Only</b></td>
+              <td style="padding:6px 8px;">Lvl 65 Starter Kit &middot; Act 1 Hell</td>
+              <td style="padding:6px 8px;">Hell Baal (A5H Q6)</td>
+              <td style="padding:6px 8px;">Endgame gauntlet &amp; equalized speedrun challenge (6&ndash;10 hrs)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- HOW TO HOST -->
+    <div class="section-block">
+      <div class="section-title-bar">
+        <h2>HOW TO HOST A CAMPAIGN (5-MINUTE SETUP)</h2>
+        <div class="section-sub">Host directly over TCP/IP with zero router headaches using a free playit.gg tunnel or port 4000</div>
+      </div>
+      <div style="border:1px solid #4a3c28;background:#14100b;padding:12px 16px;margin:10px 0 12px 0;line-height:1.65;font-size:13px;color:#d8cbb8;">
+        <ol style="margin:0 0 10px 18px;padding:0;">
+          <li style="margin-bottom:6px;"><b class="d2-gold">Install Launcher &amp; D2RLoader:</b> Run <code>CastaliaLauncher-Setup.exe</code> and make sure <b>Settings</b> shows <code>D2RLoader: Ready &#10003;</code>.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Set Up Your Public Address (One-Time):</b>
+            <ul style="margin:4px 0 0 16px;padding:0;">
+              <li><b>Option A &mdash; Free <code>playit.gg</code> Tunnel <i>(recommended &mdash; no router config, works behind CGNAT)</i>:</b> Install the <a href="https://playit.gg/download" target="_blank" rel="noopener" style="color:#8cd0ff;">playit.gg agent</a>, create a <b>Custom TCP Tunnel</b> pointing to local <code>127.0.0.1:4000</code>, and paste your assigned <code>&lt;ip&gt;:&lt;port&gt;</code> into Launcher <b>Settings &rarr; Host Tunnel / Public Address</b>.</li>
+              <li><b>Option B &mdash; Router Port Forward:</b> Forward <b>TCP port <code>4000</code></b> on your router to your PC's LAN IP and enter <code>&lt;your_public_ip&gt;:4000</code> in <b>Settings &rarr; Host Tunnel / Public Address</b>.</li>
+            </ul>
+          </li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Create &amp; Publish Your Campaign:</b> Click <b>+ Create Campaign</b>, pick <b>&#127942; Pilgrimage</b> (plus bracket) or <b>&#9876; Open Party</b>, select <code>v0.4.x</code>, and set your session time. Your campaign automatically posts to <a href="https://discord.gg/3mMNCnaze4" target="_blank" rel="noopener" style="color:#a8b4ff;">#lfg-sessions on Discord</a>.</li>
+          <li style="margin-bottom:6px;"><b class="d2-gold">Launch &amp; Go LIVE Automatically:</b> Create your character, click <b>RSVP with Char</b>, and hit <b>&#9654; Play Campaign</b>. Inside D2R, click <b>Multiplayer &rarr; Create Game</b> &mdash; the launcher automatically configures <code>game_port = 4000</code>, detects when your listener is ready, flips your campaign to <b>&#128994; LIVE</b>, bumps your Discord card, and unlocks <b>Play Campaign</b> for your Joiners!</li>
+          <li style="margin-bottom:0;"><b class="d2-gold">Verify Anytime:</b> Click <b>Test Connection</b> in Settings while hosting to confirm external TCP reachability and D2R handshake. When you exit D2R, your level, Act/WP, elapsed time, and save checksum sync automatically.</li>
+        </ol>
       </div>
     </div>
 

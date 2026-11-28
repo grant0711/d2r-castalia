@@ -3,6 +3,99 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "final1": {
+      "description": "final1: Cursor snowstorm bombardment (Blizzard engine 28/28, 1.6s CD, blizzardcenter pSrvDoFunc=10/pCltDoFunc=13). Scales storm radius with Expansion & Cryostasis (7->10 base), duration with Stasis & Cryostasis (3s->4s base), and faster shard cadence in Cryostasis (4->3 frames). Fizzles in Conflagration or Overcharge.",
+      "no_label": true,
+      "strings": {
+        "name": "Whiteout",
+        "short": "summons a raging snowstorm at the target area",
+        "long": "Calls down a violent snowstorm that chills and bombards enemies\nCryostasis: wider storm radius, longer duration, and faster shard cadence"
+      },
+      "tables": {
+        "missiles.txt": {
+          "blizzardcenter": {
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : ((75 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 25 : 0)) * (100 + stat('conversion_maxhp'.accr)) * 2 / 300)",
+            "Skill": "Blizzard"
+          },
+          "blizzard1": {
+            "NextHit": "1",
+            "NextDelay": "4",
+            "EType": "cold",
+            "HitClass": "48",
+            "Skill": "Blizzard"
+          }
+        },
+        "skills.txt": {
+          "Blizzard": {
+            "localdelay": "40",
+            "minmana": "1",
+            "manashift": "7",
+            "mana": "44",
+            "lvlmana": "3",
+            "calc1": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : ((7 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 3 : 0)) * (100 + stat('ironmaiden_level'.accr)) * 5 / 600)",
+            "*calc1 desc": "Storm radius (7 base, 10 in Cryostasis, scaled by Expansion)",
+            "calc2": "((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 3 : 4",
+            "*calc2 desc": "Shard drop delay in frames (4 base, 3 in Cryostasis)",
+            "HitShift": "8",
+            "EType": "cold",
+            "EMin": "56",
+            "EMinLev1": "8",
+            "EMinLev2": "16",
+            "EMinLev3": "52",
+            "EMinLev4": "132",
+            "EMinLev5": "235",
+            "EMax": "74",
+            "EMaxLev1": "10",
+            "EMaxLev2": "22",
+            "EMaxLev3": "66",
+            "EMaxLev4": "160",
+            "EMaxLev5": "280",
+            "ELen": "100",
+            "ELevLen1": "15",
+            "ELevLen2": "10",
+            "ELevLen3": "8",
+            "ELenSymPerCalc": "stat('conversion_maxhp'.accr) / 2",
+            "EDmgSymPerCalc": "skill('Ice Blast'.blvl) * 18 + skill('Frost Nova'.blvl) * 6"
+          }
+        },
+        "skilldesc.txt": {
+          "blizzard": {
+            "descdam": "5",
+            "descline1": "36",
+            "desctexta1": "StrSkill3",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "256",
+            "descline2": "75",
+            "desctexta2": "StrSkill5",
+            "desctextb2": "",
+            "desccalca2": "enma",
+            "desccalcb2": "exma",
+            "descline3": "12",
+            "desctexta3": "StrSkill18",
+            "desctextb3": "",
+            "desccalca3": "len",
+            "desccalcb3": "",
+            "descline4": "",
+            "descline5": "",
+            "descline6": "",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "ModSorc_whiteout_name",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Colddplev",
+            "dsc3textb2": "ModSorc_permafrost_name",
+            "dsc3calca2": "18",
+            "dsc3line3": "76",
+            "dsc3texta3": "Colddplev",
+            "dsc3textb3": "ModSorc_hoarfrost_burst_name",
+            "dsc3calca3": "6",
+            "dsc3line4": ""
+          }
+        }
+      }
     }
   }
 }

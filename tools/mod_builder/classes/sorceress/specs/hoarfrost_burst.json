@@ -3,6 +3,129 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "final1": {
+      "description": "final1: Instant expanding 64-bolt frost ring (srvdofunc=22/cltdofunc=25, GetHit=1) scaling radius with level via synced calc3/cltcalc1 + Range (expanded further by Expansion & Cryostasis). Chills all struck enemies. Fizzles in Conflagration or Overcharge.",
+      "no_label": true,
+      "strings": {
+        "name": "Hoarfrost Burst",
+        "short": "unleash an expanding ring of frost",
+        "long": "Unleashes an expanding ring of frost around you that chills nearby enemies\nCryostasis: greatly increased ring radius"
+      },
+      "hd_missiles": {
+        "hoarfrost_burst_nova": "frost_nova"
+      },
+      "tables": {
+        "missiles.txt": {
+          "hoarfrost_burst_nova": {
+            "_clone": "frostnova",
+            "pSrvDoFunc": "1",
+            "pCltDoFunc": "1",
+            "pSrvHitFunc": "",
+            "pCltHitFunc": "",
+            "Vel": "14",
+            "MaxVel": "32",
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((9 + lvl / 7 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 2 : 0)) * (100 + stat('ironmaiden_level'.accr)) * 5 / 600)",
+            "CollideType": "3",
+            "CollideKill": "",
+            "AlwaysExplode": "",
+            "NextHit": "1",
+            "NextDelay": "4",
+            "GetHit": "1",
+            "Skill": "Frost Nova",
+            "HitClass": "48",
+            "EType": "cold"
+          }
+        },
+        "skills.txt": {
+          "Frost Nova": {
+            "srvstfunc": "",
+            "srvdofunc": "22",
+            "cltstfunc": "",
+            "cltdofunc": "25",
+            "srvmissilea": "hoarfrost_burst_nova",
+            "srvmissileb": "hoarfrost_burst_nova",
+            "cltmissilea": "hoarfrost_burst_nova",
+            "stsound": "sorceress_cast_cold",
+            "castoverlay": "ice_cast_1",
+            "range": "none",
+            "anim": "SC",
+            "seqtrans": "SC",
+            "leftskill": "0",
+            "rightskill": "1",
+            "localdelay": "",
+            "minmana": "1",
+            "manashift": "7",
+            "mana": "14",
+            "lvlmana": "2",
+            "calc1": "0",
+            "calc2": "",
+            "calc3": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : (min(8, lvl * 2 / 5) + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 4 : 0))",
+            "*calc3 desc": "Server Missile Velocity Adder (scales frost ring radius)",
+            "cltcalc1": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : (min(8, lvl * 2 / 5) + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 4 : 0))",
+            "*cltcalc1 desc": "Client Missile Velocity Adder (synced with calc3)",
+            "Param8": "10",
+            "*Param8 Description": "Damage synergy %",
+            "HitShift": "8",
+            "EType": "cold",
+            "EMin": "10",
+            "EMinLev1": "3",
+            "EMinLev2": "7",
+            "EMinLev3": "30",
+            "EMinLev4": "72",
+            "EMinLev5": "128",
+            "EMax": "16",
+            "EMaxLev1": "4",
+            "EMaxLev2": "9",
+            "EMaxLev3": "38",
+            "EMaxLev4": "86",
+            "EMaxLev5": "152",
+            "ELen": "100",
+            "ELevLen1": "20",
+            "ELevLen2": "15",
+            "ELevLen3": "10",
+            "ELenSymPerCalc": "stat('conversion_maxhp'.accr) / 2",
+            "EDmgSymPerCalc": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? -100 : ((skill('Glacial Spike'.blvl) + skill('Frozen Orb'.blvl)) * par8)"
+          }
+        },
+        "skilldesc.txt": {
+          "frost nova": {
+            "descdam": "5",
+            "descmissile1": "",
+            "descline1": "36",
+            "desctexta1": "StrSkill3",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "256",
+            "descline2": "75",
+            "desctexta2": "StrSkill5",
+            "desctextb2": "",
+            "desccalca2": "enma",
+            "desccalcb2": "exma",
+            "descline3": "12",
+            "desctexta3": "StrSkill18",
+            "desctextb3": "",
+            "desccalca3": "len",
+            "desccalcb3": "",
+            "descline4": "",
+            "descline5": "",
+            "descline6": "",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "ModSorc_hoarfrost_burst_name",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Colddplev",
+            "dsc3textb2": "ModSorc_icicle_spear_name",
+            "dsc3calca2": "10",
+            "dsc3line3": "76",
+            "dsc3texta3": "Colddplev",
+            "dsc3textb3": "ModSorc_frozen_orb_name",
+            "dsc3calca3": "10",
+            "dsc3line4": ""
+          }
+        }
+      }
     }
   }
 }

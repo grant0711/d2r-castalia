@@ -743,16 +743,157 @@ def run_sorc_lightning_report(preset: str = "competent") -> None:
     print(f"  Average Lightning ST DPS vs Fire Role-Equivalent: {sum(ratios)/len(ratios):.2f}x  (Target: ~1.10x)")
 
 
+def eval_cold_skill(
+    world: ModWorldData,
+    slug: str,
+    cp: Checkpoint,
+    gear_skills: int,
+    fcr: int,
+    in_stance: bool,
+    unlock_only: bool = False,
+) -> Optional[Dict[str, float]]:
+    """Return single-target & pack effective DPS for Sorceress Cold skills (pre-res raw DPS)."""
+    SPEC = {
+        "frost_dart":      ("Ice Bolt",      1,  [("Frost Nova", 8, 10), ("Glacial Spike", 32, 10)], "Line 1", 1.2, 3.0),
+        "hoarfrost_burst": ("Frost Nova",    8,  [("Glacial Spike", 32, 10), ("Frozen Orb", 40, 10)], "AoE 1", 4.0, 5.5),
+        "permafrost":      ("Ice Blast",     16, [("Blizzard", 32, 18), ("Frost Nova", 8, 6)], "Combo", 4.0, 5.5),
+        "whiteout":        ("Blizzard",      32, [("Ice Blast", 16, 18), ("Frost Nova", 8, 6)], "AoE 2", 4.5, 6.5),
+        "icicle_spear":    ("Glacial Spike", 32, [("Frost Nova", 8, 10), ("Frozen Orb", 40, 10)], "Line 2", 3.2, 5.0),
+        "frozen_orb":      ("Frozen Orb",    40, [("Frost Nova", 8, 10), ("Glacial Spike", 32, 10)], "Cap", 4.5, 6.5),
+    }
+    vname, req_lvl, syns, role, pack_n, pack_s = SPEC[slug]
+    if cp.clvl < req_lvl:
+        return None
+
+    # Cryostasis (Cold Stance) unlocks at reqlevel 24
+    main_blvl, syn_blvls, stance_blvl = _alloc_skill_points(
+        cp.clvl, cp.quest_pts, req_lvl, [s[1] for s in syns], stance_req=24, unlock_only=unlock_only
+    )
+    slvl = main_blvl + gear_skills
+    stance_slvl = (stance_blvl + gear_skills) if (in_stance and stance_blvl > 0) else 0
+
+    srow = world.skills[vname]
+    sym_pct = sum(blvl * pct for blvl, (_, _, pct) in zip(syn_blvls, syns))
+    elem_mult = 1.0 + (stance_elem_bonus(stance_slvl) / 100.0 if in_stance else 0.0)
+    syn_mult = 1.0 + sym_pct / 100.0
+
+    # Cryostasis FCR penalty (-5% -> -20% FCR)
+    eff_fcr = max(0, fcr - (min(20, 4 + stance_slvl) if in_stance else 0))
+    cast_sec = sorc_cast_frames(eff_fcr) / 25.0
+    cd_frames = _int(srow.get("localdelay", "0"))
+    eff_cycle = max(cast_sec, cd_frames / 25.0) if cd_frames > 0 else cast_sec
+
+    lo, hi = eval_edmg_base(srow, slvl)
+    avg_hit = 0.5 * (lo + hi) * syn_mult * elem_mult
+
+    # Mana/sec
+    mshift = _int(srow.get("manashift", "8"), 8)
+    mbase = _int(srow.get("mana", "0"))
+    mlvl = _int(srow.get("lvlmana", "0"))
+    mmin = _int(srow.get("minmana", "1"), 1)
+    mana_cost = max(float(mmin), (mbase + max(0, slvl - 1) * mlvl) * (2 ** mshift) / 256.0)
+    mana_per_sec = mana_cost / max(0.2, eff_cycle)
+
+    if slug == "frost_dart":
+        st_dps = avg_hit / cast_sec
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+    elif slug == "hoarfrost_burst":
+        st_dps = avg_hit / cast_sec
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+    elif slug == "permafrost":
+        crow = world.missiles["permafrost_center"]
+        clo, chi = eval_edmg_base(crow, slvl, is_missile=True)
+        # ~5 ticks over 2.0s (7.5 ticks over 3.0s in Cryostasis) + shatter detonation
+        ticks = 7.5 if in_stance else 5.0
+        dot_total = 0.5 * (clo + chi) * syn_mult * elem_mult * ticks
+        st_dps = (avg_hit + dot_total) / eff_cycle
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+    elif slug == "whiteout":
+        # Blizzard shards hit ~2.2x/sec single-target (2.9x/sec in Cryostasis with 3-frame drop cadence)
+        hits_per_sec = 2.9 if in_stance else 2.2
+        st_dps = avg_hit * hits_per_sec
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+    elif slug == "icicle_spear":
+        wrow = world.missiles["icicle_wake"]
+        wlo, whi = eval_edmg_base(wrow, slvl, is_missile=True)
+        wake_dps = 0.5 * (wlo + whi) * 25.0 * syn_mult * elem_mult
+        wake_contrib = wake_dps * (1.8 if in_stance else 0.3)
+        st_dps = (avg_hit / cast_sec) + wake_contrib
+        pack_dps = (avg_hit / cast_sec) * (pack_s if in_stance else pack_n) + wake_contrib * (3.0 if in_stance else 1.5)
+    elif slug == "frozen_orb":
+        # ~7 shards hit a single target per orb (9.5 in Cryostasis due to +40% travel); huge pack coverage
+        shards_st = 9.5 if in_stance else 7.0
+        st_dps = (avg_hit * shards_st) / cast_sec
+        pack_dps = st_dps * (pack_s if in_stance else pack_n)
+    else:
+        return None
+
+    return {
+        "slug": slug,
+        "role": role,
+        "slvl": float(slvl),
+        "blvl": float(main_blvl),
+        "sym_pct": float(sym_pct),
+        "st_dps": st_dps,
+        "pack_dps": pack_dps,
+        "mana_s": mana_per_sec,
+    }
+
+
+def run_sorc_cold_report(preset: str = "competent") -> None:
+    world = ModWorldData(EXCEL_DIR)
+    sk_mult, fcr_off = GEAR_PRESETS[preset]
+
+    print("====================================================================================================")
+    print(f"  CASTALIA BALANCE AUDIT — SORCERESS COLD TREE  (Gear Preset: {preset})")
+    print("====================================================================================================\n")
+
+    cp_metrics = {cp.label: world.area_metrics(cp) for cp in CHECKPOINTS}
+    skills_order = ["frost_dart", "hoarfrost_burst", "permafrost", "whiteout", "icicle_spear", "frozen_orb"]
+    fire_equiv = {
+        "frost_dart":      "cinder_lance",
+        "hoarfrost_burst": "pyroclasm",
+        "permafrost":      "backdraft",
+        "whiteout":        "skyfall",
+        "icicle_spear":    "brimstone_lance",
+        "frozen_orb":      "pyre_hydra",
+    }
+
+    cp_end = CHECKPOINTS[-1]
+    gsk = int(round(cp_end.gear_skills * sk_mult))
+    fcr = max(0, cp_end.fcr + fcr_off)
+    m_end = cp_metrics[cp_end.label]
+    print(f"HELL A5 ENDGAME SNAPSHOT (clvl 82, mlvl 85, 30% Res — Boss eHP = {m_end['boss_ehp']:.0f})")
+    print(f"  {'Skill':16s} | {'Role':6s} | {'Neut ST':>8s} | {'Stnc ST':>8s} | {'Pack DPS':>9s} | {'BossTTK':>7s} | {'Mana/s':>6s} | {'vs FireEq':>9s}")
+    print("  " + "-" * 94)
+    ratios = []
+    for slug in skills_order:
+        rn = eval_cold_skill(world, slug, cp_end, gsk, fcr, in_stance=False)
+        rs = eval_cold_skill(world, slug, cp_end, gsk, fcr, in_stance=True)
+        fe = eval_fire_skill(world, fire_equiv[slug], cp_end, gsk, fcr, in_stance=True)
+        boss_ttk = m_end["boss_ehp"] / max(1.0, rs["st_dps"])
+        ratio = rs["st_dps"] / max(1.0, fe["st_dps"])
+        ratios.append(ratio)
+        print(
+            f"  {slug:16s} | {rs['role']:6s} | {rn['st_dps']:8.0f} | {rs['st_dps']:8.0f} | "
+            f"{rs['pack_dps']:9.0f} | {boss_ttk:6.2f}s | {rs['mana_s']:6.1f} | {ratio:8.2f}x"
+        )
+    print("  " + "-" * 94)
+    print(f"  Average Cold ST DPS vs Fire Role-Equivalent: {sum(ratios)/len(ratios):.2f}x  (Target: ~0.95x-1.05x + Chill/Freeze CC)")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Castalia Data-Driven Balance Simulator")
     parser.add_argument("char_class", choices=["sorc"], help="Class to audit")
-    parser.add_argument("tree", choices=["fire", "lightning"], help="Skill tree to audit")
+    parser.add_argument("tree", choices=["fire", "lightning", "cold"], help="Skill tree to audit")
     parser.add_argument("--preset", choices=list(GEAR_PRESETS), default="competent", help="Expected gear preset")
     args = parser.parse_args()
     if args.char_class == "sorc" and args.tree == "fire":
         run_sorc_fire_report(preset=args.preset)
     elif args.char_class == "sorc" and args.tree == "lightning":
         run_sorc_lightning_report(preset=args.preset)
+    elif args.char_class == "sorc" and args.tree == "cold":
+        run_sorc_cold_report(preset=args.preset)
 
 
 if __name__ == "__main__":

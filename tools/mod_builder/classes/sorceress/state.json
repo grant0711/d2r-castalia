@@ -44,12 +44,12 @@
     "variant": "final1"
   },
   "frost_dart": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "final1"
   },
   "frozen_orb": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "final1"
   },
   "glacier_step": {
     "status": "done",
@@ -60,12 +60,12 @@
     "variant": "p6_stance_cancel"
   },
   "hoarfrost_burst": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "final1"
   },
   "icicle_spear": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "final1"
   },
   "ignition": {
     "status": "done",
@@ -80,8 +80,8 @@
     "variant": "final5"
   },
   "permafrost": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "final1"
   },
   "phase_step": {
     "status": "done",
@@ -120,7 +120,7 @@
     "variant": "final1"
   },
   "whiteout": {
-    "status": "stub",
-    "variant": "baseline"
+    "status": "wip",
+    "variant": "final1"
   }
 }

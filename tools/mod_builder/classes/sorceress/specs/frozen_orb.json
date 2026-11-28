@@ -3,6 +3,96 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "final1": {
+      "description": "final1: Zero-cooldown Level 40 capstone (Frozen Orb engine cltdofunc=29, frozenorb pSrvDoFunc=15/pCltDoFunc=19). Travels forward firing a sweeping spiral of ice bolts before detonating in a final frost ring. In Cryostasis: extended travel (+40% more spiral bolts) and wider bolt reach, scaled by Arc & Expansion. Fizzles in Conflagration or Overcharge.",
+      "no_label": true,
+      "strings": {
+        "name": "Frozen Orb",
+        "short": "spinning ice orb firing a sweeping spiral of bolts",
+        "long": "Releases a spinning orb of ice that unleashes a sweeping spiral of chilling bolts\nbefore detonating in a final burst\nCryostasis: extended orb travel and wider bolt reach"
+      },
+      "tables": {
+        "missiles.txt": {
+          "frozenorb": {
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((30 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 12 : 0)) * (100 + stat('lifetap_level'.accr)) * 3 / 400)",
+            "Skill": "Frozen Orb"
+          },
+          "frozenorbbolt": {
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((25 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 8 : 0)) * (100 + stat('lifetap_level'.accr)) * 3 / 400)",
+            "Skill": "Frozen Orb"
+          },
+          "frozenorbnova": {
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((25 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 8 : 0)) * (100 + stat('ironmaiden_level'.accr)) * 5 / 600)",
+            "Skill": "Frozen Orb"
+          }
+        },
+        "skills.txt": {
+          "Frozen Orb": {
+            "localdelay": "",
+            "minmana": "1",
+            "manashift": "7",
+            "mana": "42",
+            "lvlmana": "3",
+            "HitShift": "8",
+            "EType": "cold",
+            "EMin": "18",
+            "EMinLev1": "2",
+            "EMinLev2": "5",
+            "EMinLev3": "16",
+            "EMinLev4": "36",
+            "EMinLev5": "64",
+            "EMax": "24",
+            "EMaxLev1": "3",
+            "EMaxLev2": "6",
+            "EMaxLev3": "20",
+            "EMaxLev4": "45",
+            "EMaxLev5": "78",
+            "ELen": "100",
+            "ELevLen1": "15",
+            "ELevLen2": "10",
+            "ELevLen3": "8",
+            "ELenSymPerCalc": "stat('conversion_maxhp'.accr) / 2",
+            "EDmgSymPerCalc": "(skill('Frost Nova'.blvl) + skill('Glacial Spike'.blvl)) * 10"
+          }
+        },
+        "skilldesc.txt": {
+          "frozen orb": {
+            "descdam": "5",
+            "descline1": "36",
+            "desctexta1": "StrSkill3",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "256",
+            "descline2": "75",
+            "desctexta2": "StrSkill5",
+            "desctextb2": "",
+            "desccalca2": "enma",
+            "desccalcb2": "exma",
+            "descline3": "12",
+            "desctexta3": "StrSkill18",
+            "desctextb3": "",
+            "desccalca3": "len",
+            "desccalcb3": "",
+            "descline4": "",
+            "descline5": "",
+            "descline6": "",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "ModSorc_frozen_orb_name",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Colddplev",
+            "dsc3textb2": "ModSorc_hoarfrost_burst_name",
+            "dsc3calca2": "10",
+            "dsc3line3": "76",
+            "dsc3texta3": "Colddplev",
+            "dsc3textb3": "ModSorc_icicle_spear_name",
+            "dsc3calca3": "10",
+            "dsc3line4": ""
+          }
+        }
+      }
     }
   }
 }

@@ -3,6 +3,140 @@
   "variants": {
     "baseline": {
       "description": "new name/layout only; behaviour is still the vanilla row (stub)"
+    },
+    "final1": {
+      "description": "final1: Fast long-range ice dart (srvdofunc=1/cltdofunc=1, Vel 15+4/lvl max 40, Range scaled by Arc and doubled in Cryostasis). In Cryostasis: impact erupts in a radius-4 frost burst (scaled by Expansion). Fizzles in Conflagration or Overcharge.",
+      "no_label": true,
+      "strings": {
+        "name": "Frost Dart",
+        "short": "ice dart - erupts in a frost burst in Cryostasis",
+        "long": "Hurls a fast bolt of ice that chills its target\nCryostasis: doubles range and erupts in a frost burst on impact"
+      },
+      "hd_missiles": {
+        "frost_dart_crater": "null",
+        "frost_dart_blast": "ice_break_small"
+      },
+      "tables": {
+        "missiles.txt": {
+          "icebolt": {
+            "pSrvDoFunc": "1",
+            "pCltDoFunc": "1",
+            "pSrvHitFunc": "1",
+            "sHitPar1": "0",
+            "pCltHitFunc": "1",
+            "cHitPar1": "1",
+            "cHitPar2": "1",
+            "CollideType": "3",
+            "CollideKill": "1",
+            "LastCollide": "1",
+            "ClientCol": "1",
+            "Size": "1",
+            "AlwaysExplode": "1",
+            "Skill": "Ice Bolt",
+            "ResultFlags": "5",
+            "HitFlags": "2",
+            "EType": "cold",
+            "HitClass": "48",
+            "Vel": "15",
+            "MaxVel": "40",
+            "VelLev": "4",
+            "Accel": "1500",
+            "Range": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 1 : ((15 + (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 15 : 0)) * (100 + stat('lifetap_level'.accr)) * 3 / 400)",
+            "ExplosionMissile": "freezingarrowexp1",
+            "HitSubMissile1": "",
+            "CltHitSubMissile1": "frost_dart_crater"
+          },
+          "frost_dart_crater": {
+            "_clone": "erruption center",
+            "CelFile": "null",
+            "Range": "((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 6 : 0",
+            "Skill": "Ice Bolt",
+            "SubMissile1": "frost_dart_blast",
+            "CltSubMissile1": "frost_dart_blast",
+            "CltSubMissile2": "frost_dart_blast"
+          },
+          "frost_dart_blast": {
+            "_clone": "bladesoficecubes",
+            "pSrvDoFunc": "",
+            "pSrvDmgFunc": "",
+            "pCltDoFunc": "1",
+            "Range": "((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 16 : 0",
+            "CollideType": "0"
+          }
+        },
+        "skills.txt": {
+          "Ice Bolt": {
+            "manashift": "7",
+            "mana": "6",
+            "lvlmana": "1",
+            "calc1": "((stat('skill_handofathena'.accr) + stat('skill_decrepify'.accr)) > 0) ? 0 : (((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? (4 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600) : 1)",
+            "*calc1 desc": "Explosion Radius (1 single-target base, 4 in Cryostasis)",
+            "calc2": "((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 1 : 99",
+            "*calc2 desc": "Frost burst spawn rate in frames",
+            "cltcalc1": "((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? (3 * (100 + stat('ironmaiden_level'.accr)) * 5 / 600) : 0",
+            "cltcalc2": "((stat('skill_frenzy'.accr) + (((stat('target0'.accr) / 1000) == 3) ? 1 : 0)) > 0) ? 1 : 99",
+            "HitShift": "8",
+            "EType": "cold",
+            "EMin": "6",
+            "EMinLev1": "2",
+            "EMinLev2": "4",
+            "EMinLev3": "18",
+            "EMinLev4": "48",
+            "EMinLev5": "90",
+            "EMax": "10",
+            "EMaxLev1": "2",
+            "EMaxLev2": "5",
+            "EMaxLev3": "22",
+            "EMaxLev4": "56",
+            "EMaxLev5": "104",
+            "ELen": "75",
+            "ELevLen1": "15",
+            "ELevLen2": "10",
+            "ELevLen3": "8",
+            "ELenSymPerCalc": "stat('conversion_maxhp'.accr) / 2",
+            "EDmgSymPerCalc": "(skill('Frost Nova'.blvl) + skill('Glacial Spike'.blvl)) * 10"
+          }
+        },
+        "skilldesc.txt": {
+          "ice bolt": {
+            "descdam": "5",
+            "dsc3line1": "40",
+            "dsc3texta1": "Sksyn",
+            "dsc3textb1": "ModSorc_frost_dart_name",
+            "dsc3calca1": "2",
+            "dsc3line2": "76",
+            "dsc3texta2": "Colddplev",
+            "dsc3textb2": "ModSorc_hoarfrost_burst_name",
+            "dsc3calca2": "10",
+            "dsc3line3": "76",
+            "dsc3texta3": "Colddplev",
+            "dsc3textb3": "ModSorc_icicle_spear_name",
+            "dsc3calca3": "10",
+            "descline1": "36",
+            "desctexta1": "StrSkill3",
+            "desctextb1": "",
+            "desccalca1": "usmc",
+            "desccalcb1": "256",
+            "descline2": "75",
+            "desctexta2": "StrSkill5",
+            "desctextb2": "",
+            "desccalca2": "enma",
+            "desccalcb2": "exma",
+            "descline3": "12",
+            "desctexta3": "StrSkill18",
+            "desctextb3": "",
+            "desccalca3": "len",
+            "desccalcb3": "",
+            "descline4": "",
+            "desctexta4": "",
+            "desctextb4": "",
+            "desccalca4": "",
+            "desccalcb4": "",
+            "descline5": "",
+            "descline6": ""
+          }
+        }
+      }
     }
   }
 }

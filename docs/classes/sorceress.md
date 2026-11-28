@@ -1,6 +1,6 @@
 # Sorceress — Elemental Stances, Cross-Tree Passives & Spell Archetypes
 
-- **Status:** **24 / 30 Done** (Fire 10/10, Lightning 10/10, Cold 4/10; 6 Cold stubs remaining)
+- **Status:** **30 / 30 Done** (Fire 10/10, Lightning 10/10, Cold 10/10 — all 30 skills complete & verified!)
 - **Declarative Specs:** [`tools/mod_builder/classes/sorceress/`](file:///home/grant/games/d2r/tools/mod_builder/classes/sorceress) (`registry.py`, `engine.py`, `patterns.py`, `tree.py`, `icons.py`, `statemachine.py`, `state.json`, `specs/*.json`)
 - **CLI:** `./bin/d2r-class sor <map|show|patterns|funcs|variant|set|use|build|test|compact>`
 
@@ -138,16 +138,16 @@ Run `./bin/d2r-sorc patterns <slug>` before implementing any skill below:
 
 | r.c | Lvl | Skill (`slug`) | Status / Variant | Engine Hooks | In-Game Description |
 | :---: | :---: | :--- | :--- | :--- | :--- |
-| 1.2 | 1 | **Frost Dart** (`frost_dart`) | `stub` / `baseline` | `cold` | STUB: still behaves as vanilla Ice Bolt. / Design intent (line 1 (levelling)): / Fast long-range ice bolt that chills enemies and scales velocity/reach with level. In Cryostasis... |
-| 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | `stub` / `baseline` | `func -/22` `cold` | STUB: still behaves as vanilla Frost Nova. / Design intent (AoE 1 (levelling)): / Instant expanding frost ring around the caster that chills/freezes nearby enemies; ring radius... |
+| 1.2 | 1 | **Frost Dart** (`frost_dart`) | `wip` / `final1` | `cold` `Conduction` | Hurls a fast bolt of ice that chills its target / Cryostasis: doubles range and erupts in a frost burst on impact |
+| 2.2 | 8 | **Hoarfrost Burst** (`hoarfrost_burst`) | `wip` / `final1` | `func -/22` `cold` `Conduction` | Unleashes an expanding ring of frost around you that chills nearby enemies / Cryostasis: greatly increased ring radius |
 | 3.1 | 16 | **Glacier Step** (`glacier_step`) | `done` / `p3_freeze_curve` | `func -/166` `CD 3s` `req:sorc_stance_cold` `frze` | requires Cryostasis to cast / blink across an icy path, freezing and damaging enemies along your wake and in a burst of ice spikes where you arrive |
-| 3.3 | 16 | **Permafrost** (`permafrost`) | `stub` / `baseline` | `cold` | STUB: still behaves as vanilla Ice Blast. / Design intent (combo (CC/AoE)): / Cursor ground freeze field that chills/slows and damages enemies inside it, with expanded radius an... |
+| 3.3 | 16 | **Permafrost** (`permafrost`) | `wip` / `final1` | `func 14/28` `CD 2s` `state:permafrost_chill` `frze` `Conduction` | Freezes the ground at the target location, chilling and damaging enemies / before shattering in a freezing blast / Cryostasis: wider radius and longer duration |
 | 4.1 | 24 | **Cryostasis** (`cryostasis`) | `done` / `final5` | `func -/18` `CD 3s` `state:sorc_stance_cold` | Stance / encase yourself in frost, boosting cold damage and reducing physical damage taken and raising defense / at the cost of movement and cast speed / melee attackers that hi... |
 | 4.2 | 24 | **Equilibrium** (`equilibrium`) | `done` / `final1` | `passive` | Passive / restores mana after each enemy you kill |
 | 4.3 | 24 | **Stasis** (`brittle_touch`) | `done` / `final2` | `passive` | Passive / extends the duration of all lingering Sorceress / spell effects, wakes, storms, summons, and stances |
-| 5.1 | 32 | **Whiteout** (`whiteout`) | `stub` / `baseline` | `func -/28` `CD 1.8s` `cold` | STUB: still behaves as vanilla Blizzard. / Design intent (AoE 2 (power spike)): / Cursor snowstorm bombardment that chills and damages enemies in a growing radius, with expanded... |
-| 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | `stub` / `baseline` | `cold` | STUB: still behaves as vanilla Glacial Spike. / Design intent (line 2 (boss killer)): / Heavy all-piercing ice lance that deep-chills targets and leaves a freezing wake (persist... |
-| 6.2 | 40 | **Frozen Orb** (`frozen_orb`) | `stub` / `baseline` | `CD 1s` `cold` | STUB: still behaves as vanilla Frozen Orb. / Design intent (capstone): / Zero-cooldown Level 40 capstone: spinning orb travels forward firing a sweeping spiral of ice bolts befo... |
+| 5.1 | 32 | **Whiteout** (`whiteout`) | `wip` / `final1` | `func -/28` `CD 1.6s` `cold` `Conduction` | Calls down a violent snowstorm that chills and bombards enemies / Cryostasis: wider storm radius, longer duration, and faster shard cadence |
+| 5.3 | 32 | **Icicle Spear** (`icicle_spear`) | `wip` / `final1` | `func -/1` `frze` `Conduction` | Hurls a heavy ice lance that pierces and freezes enemies / and leaves a freezing wake / Cryostasis: wake persists 10x longer |
+| 6.2 | 40 | **Frozen Orb** (`frozen_orb`) | `wip` / `final1` | `cold` | Releases a spinning orb of ice that unleashes a sweeping spiral of chilling bolts / before detonating in a final burst / Cryostasis: extended orb travel and wider bolt reach |
 
 ### Shared Helpers (`specs/_shared.json` — variant `anim_v3`)
 

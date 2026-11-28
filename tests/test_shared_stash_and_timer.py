@@ -384,6 +384,56 @@ class TestSharedStashAndTimer(unittest.TestCase):
         with self.assertRaises(Exception):
             self.hub.complete_campaign(cid, summary="Voided run", death_count=0, sessions_played=2)
 
+    def test_pilgrimage_scopes_and_victory_gating(self):
+        from castalia_hub.d2s_telemetry import parse_d2s_telemetry
+
+        expected_starts = {
+            "full": (1, "a1n"),
+            "normal": (1, "a1n"),
+            "nightmare": (38, "a1nm"),
+            "hell": (65, "a1h"),
+        }
+        cids = {}
+        for scope, (exp_lvl, exp_wp) in expected_starts.items():
+            res = self.hub.create_campaign({
+                "title": f"Pilgrimage {scope}",
+                "campaign_mode": "pilgrimage",
+                "pilgrimage_scope": scope,
+                "current_level": 99,  # must be overridden by scope!
+                "current_wp": "a5h",
+                "castalia_version": "0.4.3",
+            })
+            camp = res["campaign"]
+            cids[scope] = camp["id"]
+            self.assertEqual(camp["pilgrimage_scope"], scope)
+            self.assertEqual(camp["current_level"], exp_lvl)
+            self.assertEqual(camp["current_wp"], exp_wp)
+
+        # Scope is locked at creation (cannot PATCH)
+        patched = self.hub.update_campaign(cids["normal"], {"pilgrimage_scope": "hell"})
+        self.assertEqual(patched["pilgrimage_scope"], "normal")
+
+        # Verify per-difficulty Baal quest detection in parse_d2s_telemetry & pilgrimage_victory_met
+        t_nm_start = parse_d2s_telemetry(self.hub.create_dropin_char(cids["nightmare"], "NmHero", "pal", 38, "a1nm")["path"])
+        self.assertTrue(t_nm_start["normal_baal_cleared"])
+        self.assertFalse(t_nm_start["nm_baal_cleared"])
+        self.assertFalse(t_nm_start["hell_baal_cleared"])
+        self.assertTrue(self.hub.pilgrimage_victory_met(t_nm_start, "normal"))
+        self.assertFalse(self.hub.pilgrimage_victory_met(t_nm_start, "nightmare"))
+        self.assertFalse(self.hub.pilgrimage_victory_met(t_nm_start, "full"))
+
+        t_hell_start = parse_d2s_telemetry(self.hub.create_dropin_char(cids["hell"], "HellHero", "sor", 65, "a1h")["path"])
+        self.assertTrue(t_hell_start["normal_baal_cleared"])
+        self.assertTrue(t_hell_start["nm_baal_cleared"])
+        self.assertFalse(t_hell_start["hell_baal_cleared"])
+        self.assertTrue(self.hub.pilgrimage_victory_met(t_hell_start, "nightmare"))
+        self.assertFalse(self.hub.pilgrimage_victory_met(t_hell_start, "hell"))
+
+        # Complete Nightmare Pilgrimage -> Hall of Heroes preserves pilgrimage_scope
+        self.hub.complete_campaign(cids["nightmare"], summary="NM Baal down!", death_count=1, sessions_played=2)
+        hoh = self.hub.list_chronicles()
+        self.assertEqual(hoh[0]["pilgrimage_scope"], "nightmare")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -141,8 +141,17 @@
       <div style="flex:1">
         <label>Campaign Mode (locked at creation)</label>
         <select id="c-mode" style="width:100%" onchange="onCreateModeChange()">
-          <option value="pilgrimage">&#127942; Pilgrimage (Fresh Lvl 1 &rarr; Hell Baal &middot; Timed &amp; Hall of Heroes)</option>
+          <option value="pilgrimage">&#127942; Pilgrimage (Timed &amp; Hall of Heroes)</option>
           <option value="open">&#9876; Open Party (Allow imported chars &middot; Untimed casual)</option>
+        </select>
+      </div>
+      <div style="flex:1" id="c-scope-wrap">
+        <label>Pilgrimage Bracket (locked at creation)</label>
+        <select id="c-scope" style="width:100%" onchange="onCreateModeChange()">
+          <option value="full">&#127942; Full (Normal &rarr; Hell, Lvl 1)</option>
+          <option value="normal">&#129353; Normal Only (Lvl 1 &rarr; Norm Baal)</option>
+          <option value="nightmare">&#129352; Nightmare Only (Lvl 38 &rarr; NM Baal)</option>
+          <option value="hell">&#129351; Hell Only (Lvl 65 &rarr; Hell Baal)</option>
         </select>
       </div>
     </div>
@@ -352,7 +361,7 @@ async function loadCampaignList() {
             ${c.status === 'live' ? '<span class="pill live">&#128994; LIVE</span>' : `<span class="pill">${esc(String(c.status || "").toUpperCase())}</span>`}
             <b class="serif" style="font-size:16px;color:var(--gold);">${esc(c.title)}</b>
             <span class="pill">v${esc(c.castalia_version)}</span>
-            <span class="pill">${(c.campaign_mode || 'pilgrimage') === 'pilgrimage' ? '&#127942; Pilgrimage' : '&#9876; Open Party'}</span>
+            <span class="pill">${fmtModeBadge(c)}</span>
             <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
             ${(c.campaign_mode || 'pilgrimage') === 'pilgrimage' && Number(c.total_play_seconds) >= 60 ? `<span class="pill">&#9201; ${esc(fmtDuration(c.total_play_seconds))}</span>` : ''}
           </div>
@@ -430,13 +439,18 @@ async function openCampaign(cid) {
     </tr>`).join("") || `<tr><td colspan="6" style="color:var(--muted);">No RSVPs yet.</td></tr>`;
 
   const hostLockedChar = Boolean(c.is_host && isPilgrimage && chars.length > 0);
-  const hostClearedHellBaal = isPilgrimage && !c.pilgrimage_invalidated_reason && chars.some(ch => Boolean(ch.hell_baal_cleared));
+  const scope = String(c.pilgrimage_scope || "full").toLowerCase();
+  const hostClearedGoal = isPilgrimage && !c.pilgrimage_invalidated_reason && chars.some(ch => {
+    if (scope === "normal") return Boolean(ch.normal_baal_cleared);
+    if (scope === "nightmare") return Boolean(ch.nm_baal_cleared);
+    return Boolean(ch.hell_baal_cleared);
+  });
   const hostBar = c.is_host ? `
     <div class="card">
       <h3 style="margin-bottom:8px;">Host Controls</h3>
       <div class="row">
         <button class="btn" onclick="openScheduleModal()">Edit Schedule</button>
-        ${hostClearedHellBaal ? `<button class="btn primary" onclick="promptComplete(STATE.activeCampaign.id)">&#127942; Complete &#8594; Hall of Heroes</button>` : ""}
+        ${hostClearedGoal ? `<button class="btn primary" onclick="promptComplete(STATE.activeCampaign.id)">&#127942; Complete &#8594; Hall of Heroes</button>` : ""}
         <button class="btn danger" onclick="promptDelete(STATE.activeCampaign.id, STATE.activeCampaign.title)">Delete Campaign</button>
       </div>
     </div>` : "";
@@ -447,7 +461,7 @@ async function openCampaign(cid) {
         <button class="btn ghost" onclick="showTab('campaigns')">&#8592; Back</button>
         <h2>${esc(c.title)}</h2>
         <span class="pill">v${esc(c.castalia_version)}</span>
-        <span class="pill">${isPilgrimage ? '&#127942; Pilgrimage' : '&#9876; Open Party'}</span>
+        <span class="pill">${fmtModeBadge(c)}</span>
         <span class="pill">${c.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
       </div>
       <div style="font-size:12px;">Progress: <b>Lvl ${Number(c.current_level) || 1} (${esc(c.current_wp)})</b>${isPilgrimage ? ` &middot; Elapsed: <b>&#9201; ${esc(fmtDuration(c.total_play_seconds))}</b>` : ""} &middot; Next: <b>${esc(fmtLocalTime(c.next_session_utc))}</b>${buildGcalUrl(c) ? ` &middot; <a href="${esc(buildGcalUrl(c))}" target="_blank" rel="noopener">&#128197; Add to Google Calendar &#8599;</a>` : ""}</div>
@@ -508,14 +522,42 @@ function fmtDuration(sec) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
-async function renderHoH() {
+function fmtScopeBadge(scope) {
+  const s = String(scope || "full").toLowerCase();
+  if (s === "normal") return "&#129353; Normal Pilgrimage";
+  if (s === "nightmare") return "&#129352; Nightmare Pilgrimage";
+  if (s === "hell") return "&#129351; Hell Pilgrimage";
+  return "&#127942; Full Pilgrimage";
+}
+
+function fmtModeBadge(c) {
+  return (c.campaign_mode || "pilgrimage") === "pilgrimage"
+    ? fmtScopeBadge(c.pilgrimage_scope)
+    : "&#9876; Open Party";
+}
+
+let HOH_FILTER = "all";
+
+async function renderHoH(filterScope = HOH_FILTER) {
+  HOH_FILTER = filterScope || "all";
   const main = document.getElementById("main");
-  const items = await api("/local/chronicles");
-  main.innerHTML = `<h2 style="margin-bottom:12px;">&#127942; Hall of Heroes</h2>` + (items.length ? items.map(x => `
+  const allItems = await api("/local/chronicles");
+  const items = HOH_FILTER === "all"
+    ? allItems
+    : allItems.filter(x => String(x.pilgrimage_scope || "full").toLowerCase() === HOH_FILTER);
+  const filters = [
+    ["all", "All Brackets"],
+    ["full", "&#127942; Full"],
+    ["normal", "&#129353; Normal"],
+    ["nightmare", "&#129352; Nightmare"],
+    ["hell", "&#129351; Hell"],
+  ].map(([k, lbl]) => `<button class="btn ${HOH_FILTER === k ? 'primary' : 'ghost'}" style="padding:4px 10px;font-size:12px;" onclick="renderHoH('${k}')">${lbl}</button>`).join("");
+  main.innerHTML = `<div class="space-between" style="margin-bottom:12px;"><h2>&#127942; Hall of Heroes</h2><div class="row">${filters}</div></div>` + (items.length ? items.map(x => `
     <div class="card">
       <div class="space-between">
         <b class="serif" style="font-size:16px;color:var(--gold);">${esc(x.title)}</b>
         <div>
+          <span class="pill">${fmtScopeBadge(x.pilgrimage_scope)}</span>
           <span class="pill">v${esc(x.castalia_version)} &middot; ${esc(x.ruleset)}</span>
           <span class="pill">${x.shared_stash ? '&#128230; Global Stash' : '&#128274; Isolated Stash'}</span>
           ${Number(x.total_play_seconds) > 0 ? `<span class="pill">&#9201; ${esc(fmtDuration(x.total_play_seconds))}</span>` : ''}
@@ -649,9 +691,18 @@ function onCreateModeChange() {
   const lvEl = document.getElementById("c-level");
   const wpEl = document.getElementById("c-wp");
   const rulesEl = document.getElementById("c-pilgrimage-rules");
+  const scopeWrap = document.getElementById("c-scope-wrap");
+  const scopeEl = document.getElementById("c-scope");
   lvEl.disabled = isPilg;
   wpEl.disabled = isPilg;
-  if (isPilg) { lvEl.value = "1"; wpEl.value = "a1n"; }
+  if (scopeWrap) scopeWrap.style.display = isPilg ? "block" : "none";
+  if (isPilg) {
+    const sc = scopeEl ? scopeEl.value : "full";
+    const starts = { full: ["1", "a1n"], normal: ["1", "a1n"], nightmare: ["38", "a1nm"], hell: ["65", "a1h"] };
+    const [lvl, wp] = starts[sc] || ["1", "a1n"];
+    lvEl.value = lvl;
+    wpEl.value = wp;
+  }
   if (rulesEl) rulesEl.style.display = isPilg ? "block" : "none";
 }
 
@@ -666,6 +717,7 @@ async function submitCreateCampaign() {
       description: document.getElementById("c-desc").value,
       ruleset: "standard",
       campaign_mode: document.getElementById("c-mode").value,
+      pilgrimage_scope: document.getElementById("c-scope") ? document.getElementById("c-scope").value : "full",
       castalia_version: document.getElementById("c-version").value,
       current_level: Number(document.getElementById("c-level").value || 1),
       current_wp: document.getElementById("c-wp").value,

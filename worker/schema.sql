@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   host_progress_b64 TEXT,
   shared_stash      INTEGER NOT NULL DEFAULT 0,
   campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
+  pilgrimage_scope  TEXT NOT NULL DEFAULT 'full',
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
   host_char_name    TEXT,
   host_char_hash    TEXT,
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS chronicles (
   sessions_played   INTEGER NOT NULL DEFAULT 1,
   death_count       INTEGER NOT NULL DEFAULT 0,
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  pilgrimage_scope  TEXT NOT NULL DEFAULT 'full',
   party_roster_json TEXT NOT NULL,
   summary           TEXT NOT NULL,
   screenshot_url    TEXT

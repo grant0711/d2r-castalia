@@ -121,18 +121,22 @@ def _load_castalia_skill_names(d2r_game_dir: Optional[str] = None) -> Dict[int, 
     return names
 
 
-def _detect_hell_baal_cleared(raw: bytearray) -> bool:
-    """Check Woo! Hell Act 5 Quest 6 (Eve of Destruction / Baal) completion bit."""
+def _detect_baal_cleared(raw: bytearray, diff_idx: int) -> bool:
+    """Check Woo! Act 5 Quest 6 (Eve of Destruction / Baal) completion bit for Normal=0, NM=1, Hell=2."""
     woo_idx = raw.find(b"Woo!")
     if woo_idx < 0:
         return False
     # Each difficulty block is 96 bytes starting at woo_idx + 10 (Normal=0, NM=1, Hell=2).
     # Act 5 Quest 6 (Baal) is word index 40 (offset 80 bytes into the 96-byte difficulty block).
-    hell_baal_off = woo_idx + 10 + (2 * 96) + (40 * 2)
-    if hell_baal_off + 2 > len(raw):
+    baal_off = woo_idx + 10 + (int(diff_idx) * 96) + (40 * 2)
+    if baal_off + 2 > len(raw):
         return False
-    word = struct.unpack_from("<H", raw, hell_baal_off)[0]
+    word = struct.unpack_from("<H", raw, baal_off)[0]
     return bool(word & 0x0001)
+
+
+def _detect_hell_baal_cleared(raw: bytearray) -> bool:
+    return _detect_baal_cleared(raw, 2)
 
 
 def _detect_horadric_cube(raw: bytearray, wp_code: str) -> bool:
@@ -206,7 +210,9 @@ def parse_d2s_telemetry(d2s_path: str, d2r_game_dir: Optional[str] = None) -> Di
         "stat_pts": int(info["stat_pts"]),
         "build_summary": build_summary,
         "top_skills": top_skills,
-        "hell_baal_cleared": _detect_hell_baal_cleared(raw),
+        "normal_baal_cleared": _detect_baal_cleared(raw, 0),
+        "nm_baal_cleared": _detect_baal_cleared(raw, 1),
+        "hell_baal_cleared": _detect_baal_cleared(raw, 2),
         "has_cube": _detect_horadric_cube(raw, str(info["wp_code"])),
         "host_progress_b64": base64.b64encode(snap).decode("ascii") if snap else None,
         "mtime": os.path.getmtime(d2s_path),

@@ -1521,6 +1521,15 @@ class CastaliaHub:
         except Exception:
             return None
 
+    @staticmethod
+    def pilgrimage_victory_met(telem: Dict[str, Any], scope: Optional[str] = "full") -> bool:
+        sc = str(scope or "full").strip().lower()
+        if sc == "normal":
+            return bool(telem.get("normal_baal_cleared"))
+        if sc == "nightmare":
+            return bool(telem.get("nm_baal_cleared"))
+        return bool(telem.get("hell_baal_cleared"))
+
     def verify_pilgrimage_integrity(
         self,
         campaign_id: str,
@@ -1755,6 +1764,6 @@ class CastaliaHub:
                     result["host_rollover"] = rolled
                 except Exception as e:
                     result["rollover_error"] = str(e)
-                if latest_char.get("hell_baal_cleared") and not inval_reason and not campaign.get("pilgrimage_invalidated_reason"):
+                if self.pilgrimage_victory_met(latest_char, campaign.get("pilgrimage_scope")) and not inval_reason and not campaign.get("pilgrimage_invalidated_reason"):
                     result["hell_baal_victory_prompt"] = True
         return result

@@ -176,14 +176,16 @@ export default {
         const mode = (rawMode === "pilgrimage" || rawMode === "open")
           ? rawMode
           : ((reqLvl > 1 || reqWp.toLowerCase() !== "a1n") ? "open" : "pilgrimage");
-        const startLvl = mode === "pilgrimage" ? 1 : reqLvl;
-        const startWp = mode === "pilgrimage" ? "a1n" : reqWp;
+        const rawScope = String(body.pilgrimage_scope || "full").trim().toLowerCase();
+        const scope = ["full", "normal", "nightmare", "hell"].includes(rawScope) ? rawScope : "full";
+        const scopeStarts = { full: [1, "a1n"], normal: [1, "a1n"], nightmare: [38, "a1nm"], hell: [65, "a1h"] };
+        const [startLvl, startWp] = mode === "pilgrimage" ? scopeStarts[scope] : [reqLvl, reqWp];
         await env.DB.prepare(
           `INSERT INTO campaigns (
             id, host_name, host_token_hash, title, description, ruleset,
-            castalia_version, current_level, current_wp, shared_stash, campaign_mode, max_seats,
+            castalia_version, current_level, current_wp, shared_stash, campaign_mode, pilgrimage_scope, max_seats,
             schedule_text, recurrence_days, next_session_utc, status, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)`
         ).bind(
           cid,
           String(body.host_name || "Host").trim().slice(0, 32),
@@ -196,6 +198,7 @@ export default {
           startWp,
           body.shared_stash ? 1 : 0,
           mode,
+          scope,
           Math.max(2, Math.min(8, Number(body.max_seats || 5))),
           String(body.schedule_text || "Weekly").trim().slice(0, 60),
           Math.max(0, Math.min(365, Number(body.recurrence_days ?? 7))),
@@ -404,8 +407,8 @@ export default {
           await env.DB.prepare("UPDATE campaigns SET status = 'completed', live_join_info = NULL, updated_at = ? WHERE id = ?")
             .bind(now, cid).run();
           await env.DB.prepare(
-            "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, total_play_seconds, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-          ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), Number(row.total_play_seconds || 0), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
+            "INSERT INTO chronicles (id, campaign_id, completed_at, sessions_played, death_count, total_play_seconds, pilgrimage_scope, party_roster_json, summary, screenshot_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+          ).bind(chid, cid, now, Number(body.sessions_played || 1), Number(body.death_count || 0), Number(row.total_play_seconds || 0), String(row.pilgrimage_scope || "full"), JSON.stringify(rsvps), body.summary || "", body.screenshot_url || null).run();
           const completedRow = await env.DB.prepare("SELECT * FROM campaigns WHERE id = ?").bind(cid).first();
           await syncDiscordWithCount(env, sanitizeCampaign(completedRow, false), cid);
           return jsonResp({ id: chid, campaign_id: cid, party_roster: rsvps });

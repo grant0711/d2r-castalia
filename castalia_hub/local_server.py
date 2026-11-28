@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   host_progress_b64 TEXT,
   shared_stash      INTEGER NOT NULL DEFAULT 0,
   campaign_mode     TEXT NOT NULL DEFAULT 'pilgrimage',
+  pilgrimage_scope  TEXT NOT NULL DEFAULT 'full',
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
   host_char_name    TEXT,
   host_char_hash    TEXT,
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS chronicles (
   sessions_played   INTEGER NOT NULL DEFAULT 1,
   death_count       INTEGER NOT NULL DEFAULT 0,
   total_play_seconds INTEGER NOT NULL DEFAULT 0,
+  pilgrimage_scope  TEXT NOT NULL DEFAULT 'full',
   party_roster_json TEXT NOT NULL,
   summary           TEXT NOT NULL,
   screenshot_url    TEXT
@@ -222,16 +224,21 @@ class CampaignDB:
             mode = raw_mode
         else:
             mode = "open" if (req_lvl > 1 or req_wp.lower() != "a1n") else "pilgrimage"
-        start_lvl = 1 if mode == "pilgrimage" else req_lvl
-        start_wp = "a1n" if mode == "pilgrimage" else req_wp
+        raw_scope = str(body.get("pilgrimage_scope") or "full").strip().lower()
+        scope = raw_scope if raw_scope in ("full", "normal", "nightmare", "hell") else "full"
+        scope_starts = {"full": (1, "a1n"), "normal": (1, "a1n"), "nightmare": (38, "a1nm"), "hell": (65, "a1h")}
+        if mode == "pilgrimage":
+            start_lvl, start_wp = scope_starts[scope]
+        else:
+            start_lvl, start_wp = req_lvl, req_wp
         with self._lock, self._conn() as conn:
             conn.execute(
                 """INSERT INTO campaigns (
                     id, host_name, host_token_hash, title, description, ruleset,
-                    castalia_version, current_level, current_wp, shared_stash, campaign_mode, max_seats,
+                    castalia_version, current_level, current_wp, shared_stash, campaign_mode, pilgrimage_scope, max_seats,
                     schedule_text, recurrence_days, next_session_utc, status,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'recruiting', ?, ?)""",
                 (
                     cid,
                     str(body.get("host_name") or "Host").strip(),
@@ -244,6 +251,7 @@ class CampaignDB:
                     start_wp,
                     1 if body.get("shared_stash") else 0,
                     mode,
+                    scope,
                     max(2, min(8, int(body.get("max_seats", 5)))),
                     str(body.get("schedule_text") or "Weekly").strip(),
                     body.get("recurrence_days", 7),
@@ -488,8 +496,8 @@ class CampaignDB:
             conn.execute(
                 """INSERT INTO chronicles (
                     id, campaign_id, completed_at, sessions_played, death_count,
-                    total_play_seconds, party_roster_json, summary, screenshot_url
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    total_play_seconds, pilgrimage_scope, party_roster_json, summary, screenshot_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     chid,
                     cid,
@@ -497,8 +505,9 @@ class CampaignDB:
                     int(body.get("sessions_played", 1)),
                     int(body.get("death_count", 0)),
                     int(crow["total_play_seconds"] or 0),
+                    str(crow["pilgrimage_scope"] or "full"),
                     roster_json,
-                    str(body.get("summary") or f"{crow['title']} cleared Hell Baal!"),
+                    str(body.get("summary") or f"{crow['title']} cleared Baal!"),
                     body.get("screenshot_url"),
                 ),
             )

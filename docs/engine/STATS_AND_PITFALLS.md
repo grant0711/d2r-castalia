@@ -57,6 +57,7 @@ Every entry below is empirically verified in-game in D2R Castalia. Anything not 
 5. **`srvdofunc = 150` (`Smite`) Engine Hardcodes:**
    - **Fact:** `srvdofunc = 150` ignores `aurastate`/`auratargetstate`/`HitClass`, hardcodes `HITCLASS_STUN` impact audio (`impact_stun_1..3`) in C++, and treats `ResultFlags = 8` (Knockback) as a static boolean bit.
    - **Fact:** Pairing `srvstfunc = 32` (`Concentrate`) or `srvstfunc = 39` (`Berserk`) with `srvdofunc = 150` clobbers `Smite`'s stun execution (and `srvstfunc = 39` hardcodes `armor_override_percent = 100`, dropping Defense to 0!).
+   - **Fact (`descdam = 10` LCS Quirk — Verified 2026-11-28):** `skilldesc.txt` `descdam = 10` (Smite Character Screen damage) ignores both `ddam calc1` and live `calc1` Stamina scaling — it hardcodes vanilla `ln34` (`Param3 + (lvl-1)*Param4`). Actual server-side Smite damage (`srvdofunc = 150`) and the Skill Tree tooltip (`desccalca2 = clc1`) **do** evaluate `calc1` dynamically with Stamina.
 6. **`srvdofunc = 67` (`Charge`) Engine Hardcode:**
    - **Fact:** Knockback is hardcoded inside `srvdofunc = 67` in C++ even when `ResultFlags = ""`.
 7. **Negative `staminarecoverybonus` Cannot Drain Stamina:**
